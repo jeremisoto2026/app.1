@@ -1,19 +1,8 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { signInAnonymously } from 'firebase/auth';
-import { auth } from '../firebase';
 
 const Header = ({ onShowAuth }) => {
   const { user, signOut } = useAuth();
-
-  const testFirebaseConnection = async () => {
-    try {
-      await signInAnonymously(auth);
-      alert('✅ Firebase Conectado - Login Anónimo Exitoso!');
-    } catch (error) {
-      alert(`❌ Error Firebase: ${error.code} - ${error.message}`);
-    }
-  };
 
   const handleSignOut = async () => {
     try {

@@ -78,3 +78,4 @@ agenthub/agents/youtube/db
 
 # Mobile development
 android-sdk/ node_modules/.cache/default-development/0.pack
+node_modules/.cache/default-development/0.pack
