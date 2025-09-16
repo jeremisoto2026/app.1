@@ -22,7 +22,7 @@ const Dashboard = ({ refreshTrigger }) => {
         setStats(dashboardStats);
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
-        setError(err.message || "Error al cargar las estadísticas del dashboard. Por favor, revisa la consola de Firebase.");
+        setError('Error al cargar estadísticas del dashboard');
       } finally {
         setLoading(false);
       }
