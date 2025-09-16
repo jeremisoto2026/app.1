@@ -63,14 +63,6 @@ const Header = ({ onShowAuth }) => {
             Iniciar Sesión
           </button>
         </div>
-        
-        {/* Botón de prueba Firebase */}
-        <button
-          onClick={testFirebaseConnection}
-          className="mt-4 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition-colors duration-200"
-        >
-          🧪 Probar Firebase Connection
-        </button>
       </div>
     </header>
   );
