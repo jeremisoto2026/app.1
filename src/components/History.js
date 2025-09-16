@@ -35,7 +35,7 @@ const History = ({ refreshTrigger }) => {
         setFilteredOperations(userOperations);
       } catch (err) {
         console.error('Error fetching operations:', err);
-        setError(err.message || "Error al cargar el historial de operaciones. Por favor, revisa la consola de Firebase.");
+        setError('Error al cargar el historial de operaciones');
       } finally {
         setLoading(false);
       }
