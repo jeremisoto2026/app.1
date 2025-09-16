@@ -1,27 +1,27 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
-import { getAnalytics } from 'firebase/analytics';
+// Firebase configuration from JJXCAPITAL-main (improved version)
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
+// Configuración mejorada de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyC2ehh6VGue2Rme9wvB1LspxNiTVqEAXpk",
-  authDomain: "jjxcapital-bf5a6.firebaseapp.com",
-  projectId: "jjxcapital-bf5a6",
-  storageBucket: "jjxcapital-bf5a6.firebasestorage.app",
-  messagingSenderId: "338896648629",
-  appId: "1:338896648629:web:2eb766cace7454099141fc",
-  measurementId: "G-XED5HH0YEF"
+  apiKey: "AIzaSyBMHC2YuUO3mwHQORDDGZaQ84-k4tmJGjY",
+  authDomain: "jjxcapital-2.firebaseapp.com",
+  projectId: "jjxcapital-2",
+  storageBucket: "jjxcapital-2.appspot.com",
+  messagingSenderId: "842768954334",
+  appId: "1:842768954334:web:63248c0a432f583abf234f",
+  measurementId: "G-VVYKFN4WPD"
 };
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 
-// Inicializar servicios
+// Servicios Firebase
 export const auth = getAuth(app);
-export const analytics = getAnalytics(app);
+export const db = getFirestore(app);
 
 // Proveedores de autenticación
 export const googleProvider = new GoogleAuthProvider();
-export const microsoftProvider = new OAuthProvider('microsoft.com');
-export const appleProvider = new OAuthProvider('apple.com');
 
 export default app;

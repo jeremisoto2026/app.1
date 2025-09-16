@@ -1,20 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  onAuthStateChanged, 
-  signOut as firebaseSignOut,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
+// AuthContext mejorado basado en JJXCAPITAL-main
+import React, { createContext, useContext, useEffect, useState } from "react";
+import {
+  GoogleAuthProvider,
   signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut as firebaseSignOut,
   updateProfile
-} from 'firebase/auth';
-import { auth, googleProvider, microsoftProvider, appleProvider } from '../firebase';
+} from "firebase/auth";
+import { auth } from "../firebase";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -40,6 +42,7 @@ export const AuthProvider = ({ children }) => {
       });
       return result;
     } catch (error) {
+      console.error("Error creating account:", error);
       throw error;
     }
   };
@@ -48,30 +51,17 @@ export const AuthProvider = ({ children }) => {
     try {
       return await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
+      console.error("Error signing in:", error);
       throw error;
     }
   };
 
   const signInWithGoogle = async () => {
     try {
-      return await signInWithPopup(auth, googleProvider);
+      const provider = new GoogleAuthProvider();
+      return await signInWithPopup(auth, provider);
     } catch (error) {
-      throw error;
-    }
-  };
-
-  const signInWithMicrosoft = async () => {
-    try {
-      return await signInWithPopup(auth, microsoftProvider);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const signInWithApple = async () => {
-    try {
-      return await signInWithPopup(auth, appleProvider);
-    } catch (error) {
+      console.error("Error signing in with Google:", error);
       throw error;
     }
   };
@@ -80,19 +70,18 @@ export const AuthProvider = ({ children }) => {
     try {
       return await firebaseSignOut(auth);
     } catch (error) {
+      console.error("Error signing out:", error);
       throw error;
     }
   };
 
   const value = {
     user,
+    loading,
     signUp,
     signIn,
     signInWithGoogle,
-    signInWithMicrosoft,
-    signInWithApple,
-    signOut,
-    loading
+    signOut
   };
 
   return (
