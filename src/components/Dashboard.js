@@ -1,179 +1,285 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { getDashboardStats } from '../services/database';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Separator } from './ui/separator';
+import { Badge } from './ui/badge';
 
-const API = 'https://jjxcapital-backend.onrender.com/api';
-
-
-const Dashboard = () => {
+const Dashboard = ({ refreshTrigger }) => {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      fetchDashboardStats();
-    }
-  }, [user]);
+    const fetchStats = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        const dashboardStats = await getDashboardStats(user.uid);
+        setStats(dashboardStats);
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        setError('Error al cargar estadísticas del dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchDashboardStats = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API}/dashboard/${user.uid}`);
-      setStats(response.data);
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchStats();
+  }, [user, refreshTrigger]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-yellow-400 text-xl">Cargando dashboard...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+          <p className="text-gray-300">Cargando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-red-400 text-xl mb-2">Error</h2>
+          <p className="text-gray-300">{error}</p>
+        </div>
       </div>
     );
   }
 
   if (!stats) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-400 text-lg mb-4">No hay datos disponibles</div>
-        <div className="text-sm text-gray-500">Realiza tu primera operación para ver estadísticas</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-yellow-400 text-6xl mb-4">📊</div>
+          <h2 className="text-yellow-400 text-xl mb-2">Sin datos</h2>
+          <p className="text-gray-300">No hay estadísticas disponibles</p>
+        </div>
       </div>
     );
   }
 
+  const formatCurrency = (amount, currency = 'USD') => {
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    
+    let date;
+    if (timestamp.toDate) {
+      date = timestamp.toDate();
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      date = new Date(timestamp);
+    }
+    
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-yellow-400 mb-2">📊 Dashboard</h2>
-        <p className="text-gray-300">Resumen de tus operaciones y ganancias</p>
-      </div>
-
-      {/* Estadísticas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gray-800 rounded-lg p-6 text-center">
-          <div className="text-3xl mb-2">💼</div>
-          <div className="text-2xl font-bold text-white">{stats.total_operations}</div>
-          <div className="text-gray-400 text-sm">Operaciones Totales</div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-yellow-400 mb-2">
+            Dashboard ⚡
+          </h1>
+          <p className="text-gray-300">
+            Bienvenido de vuelta, {user?.displayName || user?.email || 'Usuario'}
+          </p>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-6 text-center">
-          <div className="text-3xl mb-2">💰</div>
-          <div className={`text-2xl font-bold ${stats.total_profit_usdt >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            ${stats.total_profit_usdt.toFixed(2)}
-          </div>
-          <div className="text-gray-400 text-sm">Ganancia USDT</div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg p-6 text-center">
-          <div className="text-3xl mb-2">🇪🇺</div>
-          <div className={`text-2xl font-bold ${stats.total_profit_eur >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            €{stats.total_profit_eur.toFixed(2)}
-          </div>
-          <div className="text-gray-400 text-sm">Ganancia EUR</div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg p-6 text-center">
-          <div className="text-3xl mb-2">📈</div>
-          <div className={`text-2xl font-bold ${stats.success_rate >= 50 ? 'text-green-400' : 'text-yellow-400'}`}>
-            {stats.success_rate.toFixed(1)}%
-          </div>
-          <div className="text-gray-400 text-sm">Tasa de Éxito</div>
-        </div>
-      </div>
-
-      {/* Resumen adicional */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-xl font-bold text-yellow-400 mb-4">💵 Ganancias por Moneda</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">USDT:</span>
-              <span className={`font-semibold ${stats.total_profit_usdt >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                ${stats.total_profit_usdt.toFixed(4)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">EUR:</span>
-              <span className={`font-semibold ${stats.total_profit_eur >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                €{stats.total_profit_eur.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">USD:</span>
-              <span className={`font-semibold ${stats.total_profit_usd >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                ${stats.total_profit_usd.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-xl font-bold text-yellow-400 mb-4">📅 Rendimiento Mensual</h3>
-          <div className="text-center">
-            <div className={`text-3xl font-bold mb-2 ${stats.monthly_profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              ${stats.monthly_profit.toFixed(2)}
-            </div>
-            <div className="text-gray-400 text-sm">Últimos 30 días</div>
-            {stats.monthly_profit > 0 && (
-              <div className="mt-3 text-green-300 text-sm">
-                📈 Tendencia positiva
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-yellow-400 text-sm font-medium">
+                Total Operaciones
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">
+                {stats.total_operations}
               </div>
-            )}
-          </div>
-        </div>
-      </div>
+              <p className="text-gray-400 text-xs mt-1">
+                Operaciones realizadas
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Mejores y peores operaciones */}
-      {(stats.best_operation || stats.worst_operation) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {stats.best_operation && (
-            <div className="bg-green-900 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-green-100 mb-4">🏆 Mejor Operación</h3>
-              <div className="space-y-2 text-green-200">
-                <p><strong>Exchange:</strong> {stats.best_operation.exchange}</p>
-                <p><strong>Tipo:</strong> {stats.best_operation.operation_type}</p>
-                <p><strong>Cripto:</strong> {stats.best_operation.crypto}</p>
-                <p><strong>Ganancia:</strong> ${stats.best_operation.fiat_amount.toFixed(4)}</p>
-                <p className="text-xs text-green-300">
-                  {new Date(stats.best_operation.timestamp).toLocaleDateString()}
-                </p>
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-green-400 text-sm font-medium">
+                Ganancia USDT
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">
+                {formatCurrency(stats.total_profit_usdt, 'USD')}
               </div>
-            </div>
-          )}
+              <p className="text-gray-400 text-xs mt-1">
+                Total en USDT
+              </p>
+            </CardContent>
+          </Card>
 
-          {stats.worst_operation && (
-            <div className="bg-red-900 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-red-100 mb-4">⚠️ Operación Menos Rentable</h3>
-              <div className="space-y-2 text-red-200">
-                <p><strong>Exchange:</strong> {stats.worst_operation.exchange}</p>
-                <p><strong>Tipo:</strong> {stats.worst_operation.operation_type}</p>
-                <p><strong>Cripto:</strong> {stats.worst_operation.crypto}</p>
-                <p><strong>Resultado:</strong> ${stats.worst_operation.fiat_amount.toFixed(4)}</p>
-                <p className="text-xs text-red-300">
-                  {new Date(stats.worst_operation.timestamp).toLocaleDateString()}
-                </p>
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-blue-400 text-sm font-medium">
+                Ganancia EUR
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">
+                {formatCurrency(stats.total_profit_eur, 'EUR')}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+              <p className="text-gray-400 text-xs mt-1">
+                Total en EUR
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Mensaje motivacional */}
-      <div className="bg-gradient-to-r from-yellow-900 to-yellow-800 rounded-lg p-6 text-center">
-        <div className="text-2xl mb-2">⚡</div>
-        <h3 className="text-xl font-bold text-yellow-100 mb-2">JJXCAPITAL ⚡</h3>
-        <p className="text-yellow-200">
-          {stats.total_operations === 0 
-            ? "¡Comienza tu primera operación y construye tu portfolio!"
-            : stats.success_rate >= 70 
-              ? "¡Excelente rendimiento! Sigue así."
-              : "Continúa mejorando tus estrategias de trading."
-          }
-        </p>
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-purple-400 text-sm font-medium">
+                Tasa de Éxito
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">
+                {stats.success_rate.toFixed(1)}%
+              </div>
+              <p className="text-gray-400 text-xs mt-1">
+                Operaciones exitosas
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Performance Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Monthly Performance */}
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-yellow-400 flex items-center gap-2">
+                📈 Rendimiento Mensual
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Últimos 30 días
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white mb-2">
+                {formatCurrency(stats.monthly_profit, 'USD')}
+              </div>
+              <Badge 
+                variant={stats.monthly_profit > 0 ? "default" : "destructive"}
+                className={stats.monthly_profit > 0 ? "bg-green-600" : "bg-red-600"}
+              >
+                {stats.monthly_profit > 0 ? "📈 Positivo" : "📉 Negativo"}
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* Best/Worst Operations */}
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-yellow-400 flex items-center gap-2">
+                🎯 Mejores Operaciones
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Mejor y peor rendimiento
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {stats.best_operation && (
+                <div className="border border-green-600 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-green-400 text-sm font-medium">
+                      Mejor Operación
+                    </span>
+                    <Badge className="bg-green-600">
+                      {formatCurrency(stats.best_operation.fiat_amount || 0)}
+                    </Badge>
+                  </div>
+                  <p className="text-gray-300 text-xs">
+                    {stats.best_operation.crypto}/{stats.best_operation.fiat} • 
+                    {formatDate(stats.best_operation.timestamp)}
+                  </p>
+                </div>
+              )}
+
+              {stats.worst_operation && (
+                <div className="border border-red-600 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-red-400 text-sm font-medium">
+                      Peor Operación
+                    </span>
+                    <Badge variant="destructive">
+                      {formatCurrency(stats.worst_operation.fiat_amount || 0)}
+                    </Badge>
+                  </div>
+                  <p className="text-gray-300 text-xs">
+                    {stats.worst_operation.crypto}/{stats.worst_operation.fiat} • 
+                    {formatDate(stats.worst_operation.timestamp)}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-yellow-400 flex items-center gap-2">
+              ⚡ Acciones Rápidas
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Herramientas más utilizadas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <button className="p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                <div className="text-2xl mb-2">🤝</div>
+                <div className="text-white text-sm font-medium">P2P Simulator</div>
+              </button>
+              <button className="p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+                <div className="text-2xl mb-2">⚡</div>
+                <div className="text-white text-sm font-medium">Arbitraje</div>
+              </button>
+              <button className="p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                <div className="text-2xl mb-2">📊</div>
+                <div className="text-white text-sm font-medium">Nueva Operación</div>
+              </button>
+              <button className="p-4 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors">
+                <div className="text-2xl mb-2">📜</div>
+                <div className="text-white text-sm font-medium">Historial</div>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
