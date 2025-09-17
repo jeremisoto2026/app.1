@@ -7,9 +7,10 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-// 👇 si antes usabas "@/lib/firebase", cámbialo por ruta relativa
-// import { db } from "@/lib/firebase";
-import { db } from '../../lib/firebase';
+// ✅ Cambio realizado aquí: ruta de importación corregida
+// Si 'History.js' está en 'src/components' y 'firebase.js' en 'src/lib',
+// esta es la ruta relativa correcta.
+import { db } from '../lib/firebase';
 
 const History = ({ refreshTrigger }) => {
   const { user } = useAuth();
