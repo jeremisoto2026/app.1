@@ -295,7 +295,7 @@ const Operations = ({ onOperationSaved }) => {
                   <h3 className="text-yellow-400 font-medium mb-3">Vista Previa</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-400">Cantidad {formData}:</span>
+                      <span className="text-gray-400">Cantidad:</span>
                       <span className="text-white ml-2">{formData.amount}</span>
                     </div>
                     <div>
@@ -307,7 +307,7 @@ const Operations = ({ onOperationSaved }) => {
                       <span className="text-white ml-2">{formData.fee}</span>
                     </div>
                     <div>
-                      <span className="text-gray-400">Monto {formData.fiat}:</span>
+                      <span className="text-gray-400">Monto:</span>
                       <Badge className="ml-2 bg-yellow-600">
                         {previewFiatAmount.toFixed(2)}
                       </Badge>
