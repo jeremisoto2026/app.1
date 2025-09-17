@@ -31,11 +31,11 @@ const History = ({ refreshTrigger }) => {
         setLoading(true);
         setError('');
         const userOperations = await getUserOperations(user.uid);
-        setOperations(userOperations);
-        setFilteredOperations(userOperations);
+        setOperations(userOperations || []);
+        setFilteredOperations(userOperations || []);
       } catch (err) {
         console.error('Error fetching operations:', err);
-        setError(err.message || "Error al cargar el historial de operaciones. Por favor, revisa la consola de Firebase.");
+        setError(err.message || "Error al cargar el historial de operaciones. Revisa la consola.");
       } finally {
         setLoading(false);
       }
@@ -48,7 +48,7 @@ const History = ({ refreshTrigger }) => {
   useEffect(() => {
     let filtered = [...operations];
 
-    // Apply filters
+    // Filters
     if (filters.exchange) {
       filtered = filtered.filter(op => op.exchange === filters.exchange);
     }
@@ -71,15 +71,14 @@ const History = ({ refreshTrigger }) => {
       );
     }
 
-    // Apply sorting
+    // Sorting
     filtered.sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
 
-      // Handle timestamp sorting
       if (sortBy === 'timestamp') {
-        aValue = aValue?.toDate ? aValue.toDate() : new Date(aValue);
-        bValue = bValue?.toDate ? bValue.toDate() : new Date(bValue);
+        aValue = aValue?.toDate ? aValue.toDate() : (aValue ? new Date(aValue) : 0);
+        bValue = bValue?.toDate ? bValue.toDate() : (bValue ? new Date(bValue) : 0);
       }
 
       if (sortOrder === 'asc') {
@@ -112,31 +111,43 @@ const History = ({ refreshTrigger }) => {
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
     
-    let date;
-    if (timestamp.toDate) {
-      date = timestamp.toDate();
-    } else if (timestamp instanceof Date) {
-      date = timestamp;
-    } else {
-      date = new Date(timestamp);
+    try {
+      let date;
+      if (timestamp.toDate) {
+        date = timestamp.toDate();
+      } else if (timestamp instanceof Date) {
+        date = timestamp;
+      } else {
+        date = new Date(timestamp);
+      }
+
+      if (isNaN(date)) return 'N/A';
+
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      console.error("Error formateando fecha:", e, timestamp);
+      return "N/A";
     }
-    
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const formatCurrency = (amount, currency = 'USD') => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    try {
+      return new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: currency || 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount || 0);
+    } catch (e) {
+      console.error("Error formateando moneda:", e, amount, currency);
+      return `${amount || 0} ${currency || ''}`;
+    }
   };
 
   const getUniqueValues = (field) => {
@@ -326,16 +337,16 @@ const History = ({ refreshTrigger }) => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <Badge className="bg-blue-600">
-                          {operation.exchange}
+                          {operation.exchange || "N/A"}
                         </Badge>
                         <Badge 
                           variant={operation.operation_type === 'Venta' ? 'default' : 'secondary'}
                           className={operation.operation_type === 'Venta' ? 'bg-green-600' : 'bg-purple-600'}
                         >
-                          {operation.operation_type}
+                          {operation.operation_type || "N/A"}
                         </Badge>
                         <span className="text-yellow-400 font-medium">
-                          {operation.crypto}/{operation.fiat}
+                          {(operation.crypto || "??")}/{(operation.fiat || "??")}
                         </span>
                       </div>
                       
@@ -343,13 +354,13 @@ const History = ({ refreshTrigger }) => {
                         <div>
                           <span className="text-gray-400">Cantidad:</span>
                           <div className="text-white font-medium">
-                            {operation.crypto_amount} {operation.crypto}
+                            {operation.crypto_amount || 0} {operation.crypto || ""}
                           </div>
                         </div>
                         <div>
                           <span className="text-gray-400">Tasa:</span>
                           <div className="text-white font-medium">
-                            {operation.exchange_rate}
+                            {operation.exchange_rate || 0}
                           </div>
                         </div>
                         <div>
@@ -370,10 +381,10 @@ const History = ({ refreshTrigger }) => {
                     {/* Amount and Profit */}
                     <div className="text-right">
                       <div className="text-2xl font-bold text-white mb-1">
-                        {formatCurrency(operation.fiat_amount || 0, operation.fiat)}
+                        {formatCurrency(operation.fiat_amount || 0, operation.fiat || "USD")}
                       </div>
                       <div className="text-xs text-gray-400">
-                        ID: {operation.order_id}
+                        ID: {operation.order_id || "N/A"}
                       </div>
                     </div>
                   </div>
