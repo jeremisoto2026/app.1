@@ -1,399 +1,190 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { getUserOperations } from '../services/database';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import React, { useEffect, useState } from "react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 
-const History = ({ refreshTrigger }) => {
-  const { user } = useAuth();
+// Función para dar color según ganancia
+const getProfitabilityColor = (profit) => {
+  if (profit > 0) return "text-green-400";
+  if (profit < 0) return "text-red-400";
+  return "text-gray-400";
+};
+
+// Formatear fecha
+const formatDate = (timestamp) => {
+  if (!timestamp) return "N/A";
+  try {
+    let date;
+    if (typeof timestamp.toDate === "function") {
+      date = timestamp.toDate();
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      date = new Date(timestamp);
+    }
+    if (isNaN(date.getTime())) return "N/A";
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch (e) {
+    console.error("Error al formatear fecha:", e, timestamp);
+    return "N/A";
+  }
+};
+
+// Formatear moneda
+const formatCurrency = (value, currency = "USD") => {
+  try {
+    return new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: currency || "USD",
+      minimumFractionDigits: 2,
+    }).format(value || 0);
+  } catch (e) {
+    console.error("Error al formatear moneda:", e, value, currency);
+    return `${value || 0} ${currency || ""}`;
+  }
+};
+
+const History = () => {
   const [operations, setOperations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [filteredOperations, setFilteredOperations] = useState([]);
-  const [filters, setFilters] = useState({
-    exchange: '',
-    crypto: '',
-    fiat: '',
-    operation_type: '',
-    search: ''
-  });
-  const [sortBy, setSortBy] = useState('timestamp');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortBy, setSortBy] = useState("timestamp");
+  const [sortOrder, setSortOrder] = useState("desc");
 
   useEffect(() => {
-    const fetchOperations = async () => {
-      if (!user) return;
-
-      try {
-        setLoading(true);
-        setError('');
-        const userOperations = await getUserOperations(user.uid);
-        setOperations(userOperations || []);
-        setFilteredOperations(userOperations || []);
-      } catch (err) {
-        console.error('Error fetching operations:', err);
-        setError(err.message || "Error al cargar el historial de operaciones. Revisa la consola.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOperations();
-  }, [user, refreshTrigger]);
-
-  // Apply filters and sorting
-  useEffect(() => {
-    let filtered = [...operations];
-
-    // Filters
-    if (filters.exchange) {
-      filtered = filtered.filter(op => op.exchange === filters.exchange);
-    }
-    if (filters.crypto) {
-      filtered = filtered.filter(op => op.crypto === filters.crypto);
-    }
-    if (filters.fiat) {
-      filtered = filtered.filter(op => op.fiat === filters.fiat);
-    }
-    if (filters.operation_type) {
-      filtered = filtered.filter(op => op.operation_type === filters.operation_type);
-    }
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(op => 
-        op.order_id?.toLowerCase().includes(searchLower) ||
-        op.crypto?.toLowerCase().includes(searchLower) ||
-        op.fiat?.toLowerCase().includes(searchLower) ||
-        op.exchange?.toLowerCase().includes(searchLower)
+    try {
+      const q = query(collection(db, "operations"), orderBy("timestamp", "desc"));
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const ops = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setOperations(ops || []);
+        },
+        (error) => {
+          console.error("Error cargando operaciones:", error);
+        }
       );
+      return () => unsubscribe();
+    } catch (err) {
+      console.error("Error en useEffect History:", err);
+    }
+  }, []);
+
+  // Ordenar operaciones
+  const sortedOperations = [...operations].sort((a, b) => {
+    let aValue = a?.[sortBy];
+    let bValue = b?.[sortBy];
+
+    if (sortBy === "timestamp") {
+      aValue = aValue?.toDate ? aValue.toDate() : aValue ? new Date(aValue) : 0;
+      bValue = bValue?.toDate ? bValue.toDate() : bValue ? new Date(bValue) : 0;
     }
 
-    // Sorting
-    filtered.sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
-
-      if (sortBy === 'timestamp') {
-        aValue = aValue?.toDate ? aValue.toDate() : (aValue ? new Date(aValue) : 0);
-        bValue = bValue?.toDate ? bValue.toDate() : (bValue ? new Date(bValue) : 0);
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    setFilteredOperations(filtered);
-  }, [operations, filters, sortBy, sortOrder]);
-
-  const handleFilterChange = (field, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      exchange: '',
-      crypto: '',
-      fiat: '',
-      operation_type: '',
-      search: ''
-    });
-  };
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    
-    try {
-      let date;
-      if (timestamp.toDate) {
-        date = timestamp.toDate();
-      } else if (timestamp instanceof Date) {
-        date = timestamp;
-      } else {
-        date = new Date(timestamp);
-      }
-
-      if (isNaN(date)) return 'N/A';
-
-      return date.toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (e) {
-      console.error("Error formateando fecha:", e, timestamp);
-      return "N/A";
-    }
-  };
-
-  const formatCurrency = (amount, currency = 'USD') => {
-    try {
-      return new Intl.NumberFormat('es-ES', {
-        style: 'currency',
-        currency: currency || 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(amount || 0);
-    } catch (e) {
-      console.error("Error formateando moneda:", e, amount, currency);
-      return `${amount || 0} ${currency || ''}`;
-    }
-  };
-
-  const getUniqueValues = (field) => {
-    return [...new Set(operations.map(op => op[field]).filter(Boolean))];
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-          <p className="text-gray-300">Cargando historial...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-400 text-6xl mb-4">⚠️</div>
-          <h2 className="text-red-400 text-xl mb-2">Error</h2>
-          <p className="text-gray-300">{error}</p>
-        </div>
-      </div>
-    );
-  }
+    if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-yellow-400 mb-2">
-            Historial de Operaciones 📜
-          </h1>
-          <p className="text-gray-300">
-            Revisa y analiza todas tus operaciones pasadas
-          </p>
-        </div>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Historial de Operaciones</h2>
 
-        {/* Filters */}
-        <Card className="bg-gray-800 border-gray-700 mb-6">
-          <CardHeader>
-            <CardTitle className="text-yellow-400 flex items-center gap-2">
-              🔍 Filtros y Búsqueda
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
-              {/* Search */}
-              <div className="md:col-span-2">
-                <Input
-                  placeholder="Buscar por ID, crypto, fiat..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                />
-              </div>
+      {sortedOperations.length === 0 ? (
+        <p className="text-gray-400">No hay operaciones registradas.</p>
+      ) : (
+        sortedOperations.map((operation, index) => {
+          const profit =
+            (operation?.revenue || 0) - (operation?.investment || 0);
+          const roi =
+            operation?.investment > 0
+              ? (profit / operation.investment) * 100
+              : 0;
 
-              {/* Exchange Filter */}
-              <Select value={filters.exchange} onValueChange={(value) => handleFilterChange('exchange', value)}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Exchange" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="" className="text-white">Todos</SelectItem>
-                  {getUniqueValues('exchange').map(exchange => (
-                    <SelectItem key={exchange} value={exchange} className="text-white hover:bg-gray-600">
-                      {exchange}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Crypto Filter */}
-              <Select value={filters.crypto} onValueChange={(value) => handleFilterChange('crypto', value)}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Crypto" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="" className="text-white">Todas</SelectItem>
-                  {getUniqueValues('crypto').map(crypto => (
-                    <SelectItem key={crypto} value={crypto} className="text-white hover:bg-gray-600">
-                      {crypto}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Fiat Filter */}
-              <Select value={filters.fiat} onValueChange={(value) => handleFilterChange('fiat', value)}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Fiat" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="" className="text-white">Todas</SelectItem>
-                  {getUniqueValues('fiat').map(fiat => (
-                    <SelectItem key={fiat} value={fiat} className="text-white hover:bg-gray-600">
-                      {fiat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Operation Type Filter */}
-              <Select value={filters.operation_type} onValueChange={(value) => handleFilterChange('operation_type', value)}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="" className="text-white">Todos</SelectItem>
-                  {getUniqueValues('operation_type').map(type => (
-                    <SelectItem key={type} value={type} className="text-white hover:bg-gray-600">
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Sort and Clear */}
-            <div className="flex justify-between items-center">
-              <div className="flex gap-2">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600">
-                    <SelectItem value="timestamp" className="text-white">Fecha</SelectItem>
-                    <SelectItem value="fiat_amount" className="text-white">Monto</SelectItem>
-                    <SelectItem value="crypto_amount" className="text-white">Cantidad</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  variant="outline"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                >
-                  {sortOrder === 'asc' ? '⬆️' : '⬇️'}
-                </Button>
-              </div>
-
-              <Button
-                onClick={clearFilters}
-                variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                🗑️ Limpiar Filtros
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Results Summary */}
-        <div className="mb-6">
-          <p className="text-gray-300">
-            Mostrando {filteredOperations.length} de {operations.length} operaciones
-          </p>
-        </div>
-
-        {/* Operations List */}
-        {filteredOperations.length === 0 ? (
-          <Card className="bg-gray-800 border-gray-700">
-            <CardContent className="py-12">
-              <div className="text-center">
-                <div className="text-6xl mb-4">📭</div>
-                <h3 className="text-xl text-gray-300 mb-2">No hay operaciones</h3>
-                <p className="text-gray-400">
-                  {operations.length === 0 
-                    ? "Aún no has registrado ninguna operación. ¡Comienza a operar!"
-                    : "No se encontraron operaciones con los filtros aplicados."
-                  }
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {filteredOperations.map((operation, index) => (
-              <Card key={operation.id || index} className="bg-gray-800 border-gray-700">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    {/* Operation Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge className="bg-blue-600">
-                          {operation.exchange || "N/A"}
-                        </Badge>
-                        <Badge 
-                          variant={operation.operation_type === 'Venta' ? 'default' : 'secondary'}
-                          className={operation.operation_type === 'Venta' ? 'bg-green-600' : 'bg-purple-600'}
-                        >
-                          {operation.operation_type || "N/A"}
-                        </Badge>
-                        <span className="text-yellow-400 font-medium">
-                          {(operation.crypto || "??")}/{(operation.fiat || "??")}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-400">Cantidad:</span>
-                          <div className="text-white font-medium">
-                            {operation.crypto_amount || 0} {operation.crypto || ""}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Tasa:</span>
-                          <div className="text-white font-medium">
-                            {operation.exchange_rate || 0}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Comisión:</span>
-                          <div className="text-white font-medium">
-                            {operation.fee || 0}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Fecha:</span>
-                          <div className="text-white font-medium">
-                            {formatDate(operation.timestamp)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Amount and Profit */}
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-white mb-1">
-                        {formatCurrency(operation.fiat_amount || 0, operation.fiat || "USD")}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        ID: {operation.order_id || "N/A"}
-                      </div>
-                    </div>
+          return (
+            <Card key={operation?.id || index}>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">
+                    {operation?.crypto_amount || 0}{" "}
+                    {operation?.crypto || "N/A"}
+                  </h3>
+                  <Badge
+                    className={`text-lg ${getProfitabilityColor(profit)}`}
+                  >
+                    {profit.toFixed(2)}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-400">Exchange:</span>
+                    <span className="ml-2">{operation?.exchange || "N/A"}</span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                  <div>
+                    <span className="text-gray-400">Tasa:</span>
+                    <span className="ml-2">{operation?.exchange_rate || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Fecha:</span>
+                    <span className="ml-2">
+                      {formatDate(operation?.timestamp)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Monto Fiat:</span>
+                    <span className="ml-2">
+                      {formatCurrency(
+                        operation?.fiat_amount,
+                        operation?.fiat
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Inversión:</span>
+                    <span className="ml-2">
+                      {formatCurrency(
+                        operation?.investment,
+                        operation?.fiat
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Ingresos:</span>
+                    <span className="ml-2">
+                      {formatCurrency(operation?.revenue, operation?.fiat)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Fee:</span>
+                    <span className="ml-2">
+                      {formatCurrency(operation?.fee, operation?.fiat)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">ROI:</span>
+                    <span
+                      className={`ml-2 font-medium ${getProfitabilityColor(
+                        profit
+                      )}`}
+                    >
+                      {roi.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })
+      )}
     </div>
   );
 };
