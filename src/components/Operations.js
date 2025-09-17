@@ -16,7 +16,7 @@ const Operations = ({ onOperationSaved }) => {
     operation_type: '',
     crypto: '',
     fiat: '',
-    crypto_amount: '',
+    amount: '',
     exchange_rate: '',
     fee: '0'
   });
@@ -91,7 +91,7 @@ const Operations = ({ onOperationSaved }) => {
         operation_type: formData.operation_type,
         crypto: formData.crypto,
         fiat: formData.fiat,
-        crypto_amount: cryptoAmount,
+        amount: cryptoAmount,
         exchange_rate: exchangeRate,
         fee: fee,
         fiat_amount: fiatAmount,
@@ -108,7 +108,7 @@ const Operations = ({ onOperationSaved }) => {
         operation_type: '',
         crypto: '',
         fiat: '',
-        crypto_amount: '',
+        amount: '',
         exchange_rate: '',
         fee: '0'
       });
@@ -240,7 +240,7 @@ const Operations = ({ onOperationSaved }) => {
                   </Select>
                 </div>
 
-                {/* Crypto Amount */}
+                {/* Amount */}
                 <div className="space-y-2">
                   <Label htmlFor="crypto_amount" className="text-white">
                     Cantidad de Crypto *
@@ -249,7 +249,7 @@ const Operations = ({ onOperationSaved }) => {
                     id="crypto_amount"
                     type="number"
                     step="0.00000001"
-                    placeholder="0.00000000"
+                    placeholder="0.000"
                     value={formData.crypto_amount}
                     onChange={(e) => handleInputChange('crypto_amount', e.target.value)}
                     className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
