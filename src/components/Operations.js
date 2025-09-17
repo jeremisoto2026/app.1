@@ -50,7 +50,7 @@ const Operations = ({ onOperationSaved }) => {
       return (cryptoAmount * rate) - feeAmount;
     } else {
       // Buying crypto with fiat
-      return (cryptoAmount - feeAmount) * rate;
+      return (cryptoAmount / rate) - feeAmount;
     }
   };
 
