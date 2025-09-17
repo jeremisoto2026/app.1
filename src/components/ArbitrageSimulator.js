@@ -396,11 +396,11 @@ const ArbitrageSimulator = () => {
                       </div>
                       <div className="border-t border-gray-600 pt-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">Ganancia Fiat:</span>
-                          <Badge className={`text-lg {getProfitabilityBadgeColor(result.profit)}`}>
-                            {result.profit.toFixed(2)}
-                          </Badge>
-                        </div>
+  <span className="text-white font-medium">Ganancia Fiat:</span>
+  <Badge className={`text-lg ${getProfitabilityBadgeColor(result.profit)}`}>
+    {result.profit.toFixed(2)}
+  </Badge>
+</div>
                       </div>
                     </div>
                   </div>
