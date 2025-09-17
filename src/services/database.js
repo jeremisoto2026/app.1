@@ -21,7 +21,7 @@ export const saveOperation = async (userId, operationData) => {
       ...operationData,
       user_id: userId,
       order_id: String(Date.now()),
-      timestamp: servertimest(),
+      timestamp: serverTomestamp(),
       id: crypto.randomUUID()
     };
 
@@ -38,7 +38,7 @@ export const getUserOperations = async (userId) => {
     const q = query(
       collection(db, "operations"),
       where("user_id", "==", userId),
-      orderBy("timest", "desc")
+      orderBy("timestamp", "desc")
     );
     
     const querySnapshot = await getDocs(q);
