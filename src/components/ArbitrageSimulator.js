@@ -396,9 +396,9 @@ const ArbitrageSimulator = () => {
                       </div>
                       <div className="border-t border-gray-600 pt-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">Ganancia Neta:</span>
-                          <Badge className={`text-lg ${getProfitabilityBadgeColor(result.profit)}`}>
-                            ${result.profit.toFixed(2)}
+                          <span className="text-white font-medium">Ganancia Fiat:</span>
+                          <Badge className={`text-lg {getProfitabilityBadgeColor(result.profit)}`}>
+                            {result.profit.toFixed(2)}
                           </Badge>
                         </div>
                       </div>
@@ -436,14 +436,14 @@ const ArbitrageSimulator = () => {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-gray-400">ROI:</span>
-                        <span className={`ml-2 font-medium ${getProfitabilityColor(result.profit)}`}>
+                        <span className={`ml-2 font-medium {getProfitabilityColor(result.profit)}`}>
                           {result.profit_percentage.toFixed(2)}%
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-400">Diferencia:</span>
                         <span className="text-white ml-2 font-medium">
-                          ${(result.revenue - result.investment).toFixed(2)}
+                          {(result.revenue - result.investment).toFixed(2)}
                         </span>
                       </div>
                     </div>
