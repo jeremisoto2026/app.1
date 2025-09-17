@@ -110,25 +110,25 @@ const History = ({ refreshTrigger }) => {
   };
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    
-    let date;
-    if (timestamp.toDate) {
-      date = timestamp.toDate();
-    } else if (timestamp instanceof Date) {
-      date = timestamp;
-    } else {
-      date = new Date(timestamp);
-    }
-    
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  if (!timestamp) return 'N/A';
+
+  let date;
+  if (timestamp.toDate) {
+    date = timestamp.toDate();
+  } else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+    date = new Date(timestamp);
+  } else {
+    date = new Date();
+  }
+
+  return date.toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
   const formatCurrency = (amount, currency = 'USD') => {
     return new Intl.NumberFormat('es-ES', {
