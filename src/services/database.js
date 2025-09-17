@@ -38,7 +38,7 @@ export const getUserOperations = async (userId) => {
     const q = query(
       collection(db, "operations"),
       where("user_id", "==", userId),
-      orderBy("timestamp", "desc")
+      orderBy("timest", "desc")
     );
     
     const querySnapshot = await getDocs(q);
