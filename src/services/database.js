@@ -21,7 +21,7 @@ export const saveOperation = async (userId, operationData) => {
       ...operationData,
       user_id: userId,
       order_id: String(Date.now()),
-      timestamp: serverTimestamp(),
+      timestamp: servertimest(),
       id: crypto.randomUUID()
     };
 
