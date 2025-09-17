@@ -40,8 +40,8 @@ const Operations = ({ onOperationSaved }) => {
   };
 
   const calculateFiatAmount = () => {
-    const { operation_type, crypto_amount, exchange_rate, fee } = formData;
-    const cryptoAmount = parseFloat(crypto_amount) || 0;
+    const { operation_type, amount, exchange_rate, fee } = formData;
+    const Amount = parseFloat(amount) || 0;
     const rate = parseFloat(exchange_rate) || 0;
     const feeAmount = parseFloat(fee) || 0;
 
@@ -63,7 +63,7 @@ const Operations = ({ onOperationSaved }) => {
     }
 
     // Validation
-    const requiredFields = ['exchange', 'operation_type', 'crypto', 'fiat', 'crypto_amount', 'exchange_rate'];
+    const requiredFields = ['exchange', 'operation_type', 'crypto', 'fiat', 'amount', 'exchange_rate'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
@@ -71,11 +71,11 @@ const Operations = ({ onOperationSaved }) => {
       return;
     }
 
-    const cryptoAmount = parseFloat(formData.crypto_amount);
+    const Amount = parseFloat(formData.amount);
     const exchangeRate = parseFloat(formData.exchange_rate);
     const fee = parseFloat(formData.fee) || 0;
 
-    if (cryptoAmount <= 0 || exchangeRate <= 0) {
+    if (Amount <= 0 || exchangeRate <= 0) {
       setError('Los montos y tasas de cambio deben ser mayores a 0');
       return;
     }
@@ -91,7 +91,7 @@ const Operations = ({ onOperationSaved }) => {
         operation_type: formData.operation_type,
         crypto: formData.crypto,
         fiat: formData.fiat,
-        amount: cryptoAmount,
+        amount: Amount,
         exchange_rate: exchangeRate,
         fee: fee,
         fiat_amount: fiatAmount,
@@ -242,16 +242,16 @@ const Operations = ({ onOperationSaved }) => {
 
                 {/* Amount */}
                 <div className="space-y-2">
-                  <Label htmlFor="crypto_amount" className="text-white">
-                    Cantidad de Crypto *
+                  <Label htmlFor="amount" className="text-white">
+                    Cantidad *
                   </Label>
                   <Input
-                    id="crypto_amount"
+                    id="amount"
                     type="number"
                     step="0.00000001"
                     placeholder="0.000"
-                    value={formData.crypto_amount}
-                    onChange={(e) => handleInputChange('crypto_amount', e.target.value)}
+                    value={formData.amount}
+                    onChange={(e) => handleInputChange('amount', e.target.value)}
                     className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                   />
                 </div>
@@ -290,13 +290,13 @@ const Operations = ({ onOperationSaved }) => {
               </div>
 
               {/* Preview */}
-              {formData.crypto_amount && formData.exchange_rate && (
+              {formData.amount && formData.exchange_rate && (
                 <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
                   <h3 className="text-yellow-400 font-medium mb-3">Vista Previa</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-400">Cantidad {formData.crypto}:</span>
-                      <span className="text-white ml-2">{formData.crypto_amount}</span>
+                      <span className="text-white ml-2">{formData.amount}</span>
                     </div>
                     <div>
                       <span className="text-gray-400">Tasa:</span>
