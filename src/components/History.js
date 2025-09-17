@@ -6,9 +6,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-
-// ✅ ¡Aquí está el cambio! La ruta ahora es correcta.
-import { db } from '../firebase';
+import { db } from '../firebase'; // La ruta corregida
 
 const History = ({ refreshTrigger }) => {
   const { user } = useAuth();
@@ -28,17 +26,27 @@ const History = ({ refreshTrigger }) => {
 
   useEffect(() => {
     const fetchOperations = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
         setError('');
         const userOperations = await getUserOperations(user.uid);
-        setOperations(userOperations || []);
-        setFilteredOperations(userOperations || []);
+        if (userOperations) {
+          setOperations(userOperations);
+          setFilteredOperations(userOperations);
+        } else {
+          setOperations([]);
+          setFilteredOperations([]);
+        }
       } catch (err) {
         console.error('Error fetching operations:', err);
-        setError(err.message || "Error al cargar el historial de operaciones. Revisa la consola de Firebase.");
+        setError(err.message || "Error al cargar el historial de operaciones.");
+        setOperations([]);
+        setFilteredOperations([]);
       } finally {
         setLoading(false);
       }
@@ -111,7 +119,6 @@ const History = ({ refreshTrigger }) => {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
-
     let date;
     try {
       if (timestamp.toDate) {
@@ -178,7 +185,6 @@ const History = ({ refreshTrigger }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-yellow-400 mb-2">
             Historial de Operaciones 📜
@@ -187,8 +193,6 @@ const History = ({ refreshTrigger }) => {
             Revisa y analiza todas tus operaciones pasadas
           </p>
         </div>
-
-        {/* Filters */}
         <Card className="bg-gray-800 border-gray-700 mb-6">
           <CardHeader>
             <CardTitle className="text-yellow-400 flex items-center gap-2">
@@ -197,7 +201,6 @@ const History = ({ refreshTrigger }) => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
-              {/* Search */}
               <div className="md:col-span-2">
                 <Input
                   placeholder="Buscar por ID, crypto, fiat..."
@@ -206,8 +209,6 @@ const History = ({ refreshTrigger }) => {
                   className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                 />
               </div>
-
-              {/* Exchange Filter */}
               <Select value={filters.exchange} onValueChange={(value) => handleFilterChange('exchange', value)}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="Exchange" />
@@ -221,8 +222,6 @@ const History = ({ refreshTrigger }) => {
                   ))}
                 </SelectContent>
               </Select>
-
-              {/* Crypto Filter */}
               <Select value={filters.crypto} onValueChange={(value) => handleFilterChange('crypto', value)}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="Crypto" />
@@ -236,8 +235,6 @@ const History = ({ refreshTrigger }) => {
                   ))}
                 </SelectContent>
               </Select>
-
-              {/* Fiat Filter */}
               <Select value={filters.fiat} onValueChange={(value) => handleFilterChange('fiat', value)}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="Fiat" />
@@ -251,8 +248,6 @@ const History = ({ refreshTrigger }) => {
                   ))}
                 </SelectContent>
               </Select>
-
-              {/* Operation Type Filter */}
               <Select value={filters.operation_type} onValueChange={(value) => handleFilterChange('operation_type', value)}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="Tipo" />
@@ -267,8 +262,6 @@ const History = ({ refreshTrigger }) => {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Sort and Clear */}
             <div className="flex justify-between items-center">
               <div className="flex gap-2">
                 <Select value={sortBy} onValueChange={setSortBy}>
@@ -281,7 +274,6 @@ const History = ({ refreshTrigger }) => {
                     <SelectItem value="crypto_amount" className="text-white">Cantidad</SelectItem>
                   </SelectContent>
                 </Select>
-
                 <Button
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                   variant="outline"
@@ -290,7 +282,6 @@ const History = ({ refreshTrigger }) => {
                   {sortOrder === 'asc' ? '⬆️' : '⬇️'}
                 </Button>
               </div>
-
               <Button
                 onClick={clearFilters}
                 variant="outline"
@@ -301,15 +292,11 @@ const History = ({ refreshTrigger }) => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Results Summary */}
         <div className="mb-6">
           <p className="text-gray-300">
             Mostrando {filteredOperations.length} de {operations.length} operaciones
           </p>
         </div>
-
-        {/* Operations List */}
         {filteredOperations.length === 0 ? (
           <Card className="bg-gray-800 border-gray-700">
             <CardContent className="py-12">
@@ -331,7 +318,6 @@ const History = ({ refreshTrigger }) => {
               <Card key={operation.id || index} className="bg-gray-800 border-gray-700">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    {/* Operation Info */}
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <Badge className="bg-blue-600">
@@ -347,7 +333,6 @@ const History = ({ refreshTrigger }) => {
                           {operation.crypto}/{operation.fiat}
                         </span>
                       </div>
-
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-gray-400">Cantidad:</span>
@@ -375,8 +360,6 @@ const History = ({ refreshTrigger }) => {
                         </div>
                       </div>
                     </div>
-
-                    {/* Amount and Profit */}
                     <div className="text-right">
                       <div className="text-2xl font-bold text-white mb-1">
                         {formatCurrency(operation.fiat_amount || 0, operation.fiat || "USD")}
