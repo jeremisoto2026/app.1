@@ -49,9 +49,9 @@ const ArbitrageSimulator = () => {
     }
 
     if (formData.buy_exchange === formData.sell_exchange) {
-      setError('Los exchanges de compra y venta deben ser diferentes');
-      return;
-    }
+  setError('⚠️ Estás usando el mismo exchange para compra y venta. Puede que no haya arbitraje real.');
+  // No retornamos, dejamos que la simulación continúe
+}
 
     const amount = parseFloat(formData.amount);
     const buyPrice = parseFloat(formData.buy_price);
@@ -433,20 +433,20 @@ const ArbitrageSimulator = () => {
                     </div>
                     
                     {/* Profitability Details */}
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-400">ROI:</span>
-                        <span className={`ml-2 font-medium {getProfitabilityColor(result.profit)}`}>
-                          {result.profit_percentage.toFixed(2)}%
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Diferencia:</span>
-                        <span className="text-white ml-2 font-medium">
-                          {(result.revenue - result.investment).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
+<div className="grid grid-cols-2 gap-4 text-sm">
+  <div>
+    <span className="text-gray-400">ROI:</span>
+    <span className={`ml-2 font-medium ${getProfitabilityColor(result.profit)}`}>
+      {result.profit_percentage.toFixed(2)}%
+    </span>
+  </div>
+  <div>
+    <span className="text-gray-400">Diferencia:</span>
+    <span className={`ml-2 font-medium ${getProfitabilityColor(result.profit)}`}>
+      {(result.revenue - result.investment).toFixed(2)}
+    </span>
+  </div>
+</div>
 
                     {/* Recommendation */}
                     <div className="mt-4 p-3 bg-gray-800 rounded border border-gray-600">
