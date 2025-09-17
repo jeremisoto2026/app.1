@@ -47,10 +47,10 @@ const Operations = ({ onOperationSaved }) => {
 
     if (operation_type === 'Venta') {
       // Selling crypto, receiving fiat
-      return (cryptoAmount * rate) - feeAmount;
+      return (Amount * rate) - feeAmount;
     } else {
       // Buying crypto with fiat
-      return (cryptoAmount / rate) - feeAmount;
+      return (Amount / rate) - feeAmount;
     }
   };
 
