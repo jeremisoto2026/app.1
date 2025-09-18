@@ -81,7 +81,6 @@ export const getDashboardStats = async (userId) => {
 
     let totalProfitUsdt = 0;
     let totalProfitEur = 0;
-    let totalProfitUsd = 0;
     let bestOperation = null;
     let worstOperation = null;
     let monthlyProfit = 0;
@@ -99,28 +98,26 @@ export const getDashboardStats = async (userId) => {
         return;
       }
       
-      // Calculate profit based on operation type
-      if (op.operation_type === 'Compra') {
-        profit = amountReceived - amountSent;
-      } else if (op.operation_type === 'Venta') {
-        profit = amountReceived - amountSent;
-      }
+      // Calculate profit based on the amount received and sent
+      profit = amountReceived - amountSent;
       
       // Sum up total profits based on fiat type
       if (op.fiat === 'USD') {
-        totalProfitUsd += profit;
+        totalProfitUsdt += profit;
       } else if (op.fiat === 'EUR') {
         totalProfitEur += profit;
       }
 
       // Update best and worst operations based on profit
-      if (!bestOperation || profit > bestOperation.profit) {
-        bestOperation = { ...op, profit: profit };
+      if (profit !== 0) {
+        if (!bestOperation || profit > bestOperation.profit) {
+          bestOperation = { ...op, profit: profit };
+        }
+        if (!worstOperation || profit < worstOperation.profit) {
+          worstOperation = { ...op, profit: profit };
+        }
       }
-      if (!worstOperation || profit < worstOperation.profit) {
-        worstOperation = { ...op, profit: profit };
-      }
-
+      
       // Calculate monthly profit
       const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : new Date(op.timestamp);
       if (opDate >= thirtyDaysAgo) {
@@ -131,14 +128,14 @@ export const getDashboardStats = async (userId) => {
         successfulOperations++;
       }
     });
-    
+
     const successRate = operations.length > 0 ? (successfulOperations / operations.length) * 100 : 0;
     
     return {
       total_operations: operations.length,
-      total_profit_usdt: totalProfitUsd, // Assuming USDT is the main crypto, adjust if needed
+      total_profit_usdt: totalProfitUsdt,
       total_profit_eur: totalProfitEur,
-      total_profit_usd: totalProfitUsd,
+      total_profit_usd: totalProfitUsdt,
       best_operation: bestOperation,
       worst_operation: worstOperation,
       monthly_profit: monthlyProfit,
