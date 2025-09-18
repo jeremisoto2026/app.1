@@ -91,21 +91,14 @@ export const getDashboardStats = async (userId) => {
     operations.forEach(op => {
       let profit = 0;
       
-      const cryptoAmount = parseFloat(op.crypto_amount);
-      const fiatAmount = parseFloat(op.fiat_amount);
-      const exchangeRate = parseFloat(op.exchange_rate);
+      const amountSent = parseFloat(op.amount_sent);
+      const amountReceived = parseFloat(op.amount_received);
 
-      if (isNaN(cryptoAmount) || isNaN(fiatAmount) || isNaN(exchangeRate)) {
+      if (isNaN(amountSent) || isNaN(amountReceived)) {
         return;
       }
-
-      if (op.operation_type === 'Compra') {
-        // En una compra, ganancia es el crypto_amount - fiat_amount/exchange_rate
-        profit = cryptoAmount - (fiatAmount / exchangeRate);
-      } else if (op.operation_type === 'Venta') {
-        // En una venta, ganancia es el fiat_amount/exchange_rate - crypto_amount
-        profit = (fiatAmount / exchangeRate) - cryptoAmount;
-      }
+      
+      profit = amountReceived - amountSent;
       
       if (op.fiat === 'USD') {
         totalProfitUsdt += profit;
