@@ -50,6 +50,7 @@ const History = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      console.log("Estado de autenticación cambiado. Usuario:", currentUser); // ✅ LÍNEA DE DIAGNÓSTICO CLAVE
       if (currentUser) {
         fetchOperations();
       } else {
@@ -70,7 +71,6 @@ const History = () => {
       try {
         await deleteDoc(doc(db, "operations", id));
         setOperations(operations.filter((op) => op.id !== id));
-        console.log("Operación eliminada con éxito del estado local.");
       } catch (error) {
         console.error("Error al eliminar la operación en Firebase:", error);
         alert(`Error al eliminar: ${error.message}. Revisa la consola para más detalles.`);
