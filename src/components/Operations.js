@@ -12,7 +12,6 @@ import { Alert, AlertDescription } from './ui/alert';
 const Operations = ({ onOperationSaved }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    order_id: '',
     exchange: '',
     operation_type: '',
     crypto: '',
@@ -85,7 +84,6 @@ const Operations = ({ onOperationSaved }) => {
       setError('');
 
       const operationData = {
-        order_id: formData.order_id,
         exchange: formData.exchange,
         operation_type: formData.operation_type,
         crypto: formData.crypto,
@@ -103,7 +101,6 @@ const Operations = ({ onOperationSaved }) => {
       setSuccess('¡Operación guardada exitosamente!');
       
       setFormData({
-        order_id: '',
         exchange: '',
         operation_type: '',
         crypto: '',
@@ -128,18 +125,13 @@ const Operations = ({ onOperationSaved }) => {
 
   let previewAmountCrypto = 0;
   let previewAmountFiat = 0;
-  const previewFee = parseFloat(formData.fee) || 0;
 
   if (formData.operation_type === 'Venta') {
-    const cryptoInput = parseFloat(formData.crypto_amount) || 0;
-    const rateInput = parseFloat(formData.exchange_rate) || 0;
-    previewAmountCrypto = cryptoInput;
-    previewAmountFiat = (cryptoInput * rateInput) - previewFee;
+    previewAmountCrypto = parseFloat(formData.crypto_amount) || 0;
+    previewAmountFiat = (previewAmountCrypto * parseFloat(formData.exchange_rate)) - (parseFloat(formData.fee) || 0);
   } else if (formData.operation_type === 'Compra') {
-    const fiatInput = parseFloat(formData.fiat_amount) || 0;
-    const rateInput = parseFloat(formData.exchange_rate) || 0;
-    previewAmountFiat = fiatInput;
-    previewAmountCrypto = (fiatInput / rateInput) - previewFee;
+    previewAmountFiat = parseFloat(formData.fiat_amount) || 0;
+    previewAmountCrypto = (previewAmountFiat / parseFloat(formData.exchange_rate)) - (parseFloat(formData.fee) || 0);
   }
 
   return (
@@ -174,20 +166,6 @@ const Operations = ({ onOperationSaved }) => {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="order_id" className="text-white">
-                    Número de Orden
-                  </Label>
-                  <Input
-                    id="order_id"
-                    type="text"
-                    placeholder="Escribe el ID de la orden"
-                    value={formData.order_id}
-                    onChange={(e) => handleInputChange('order_id', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                  />
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="exchange" className="text-white">
                     Exchange *
@@ -323,31 +301,37 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
               </div>
 
-              <Card className="bg-gray-900 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-yellow-400">Previsión de Operación</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-gray-300">
-                  <div className="flex items-center gap-2">
-                    <Label>Cantidad Cripto:</Label>
-                    <Badge variant="outline" className="text-white border-gray-600">
-                      {previewAmountCrypto.toFixed(3)} {formData.crypto}
-                    </Badge>
+              {/* Vista Previa */}
+              {formData.exchange_rate && (formData.crypto_amount || formData.fiat_amount) && (
+                <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                  <h3 className="text-yellow-400 font-medium mb-3">Vista Previa</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-400">Cantidad {formData.crypto}:</span>
+                      <span className="text-white ml-2">
+                        {/* ✅ Ajuste para mostrar 3 decimales */}
+                        {previewAmountCrypto.toFixed(3)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Cantidad {formData.fiat}:</span>
+                      <span className="text-white ml-2">
+                        {previewAmountFiat.toFixed(2)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Tasa:</span>
+                      <span className="text-white ml-2">{formData.exchange_rate}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Comisión:</span>
+                      <Badge className="ml-2 bg-yellow-600">
+                        {parseFloat(formData.fee).toFixed(2)}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Label>Cantidad Fiat:</Label>
-                    <Badge variant="outline" className="text-white border-gray-600">
-                      {previewAmountFiat.toFixed(2)} {formData.fiat}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label>Comisión:</Label>
-                    <Badge variant="outline" className="text-white border-gray-600">
-                      {previewFee.toFixed(2)} {formData.crypto}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              )}
 
               <Button
                 type="submit"
