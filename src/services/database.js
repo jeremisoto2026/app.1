@@ -86,57 +86,70 @@ export const getDashboardStats = async (userId) => {
     let worstOperation = null;
     let monthlyProfit = 0;
     let successfulOperations = 0;
-
+    const processedOrders = new Set();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    operations.forEach(op => {
-      const cantidadInicial = parseFloat(op.crypto_in);
-      const tasaVenta = parseFloat(op.sell_rate);
-      const tasaCompra = parseFloat(op.buy_rate);
-
-      if (isNaN(cantidadInicial) || isNaN(tasaVenta) || isNaN(tasaCompra) || tasaCompra === 0) {
-        // Skip operation if data is invalid
-        return;
+    // Group operations by order ID
+    const groupedByOrderId = operations.reduce((acc, op) => {
+      if (op.orderId) {
+        if (!acc[op.orderId]) {
+          acc[op.orderId] = [];
+        }
+        acc[op.orderId].push(op);
       }
+      return acc;
+    }, {});
 
-      // Calculate profit in crypto
-      const gananciaCripto = (cantidadInicial * tasaVenta / tasaCompra) - cantidadInicial;
+    for (const orderId in groupedByOrderId) {
+      if (groupedByOrderId[orderId].length < 2) continue; // Skip if a cycle is not complete
 
-      // Sum up total profits based on crypto and fiat type
-      if (op.crypto === 'USDT') {
-        totalProfitUsdt += gananciaCripto;
-      } else if (op.crypto === 'EUR') {
-        totalProfitEur += gananciaCripto;
-      } else if (op.crypto === 'USD') {
-        totalProfitUsd += gananciaCripto;
+      const buyOp = groupedByOrderId[orderId].find(op => op.operation_type === 'Compra');
+      const sellOp = groupedByOrderId[orderId].find(op => op.operation_type === 'Venta');
+
+      if (buyOp && sellOp) {
+        const amountBought = parseFloat(buyOp.amount_received);
+        const amountSold = parseFloat(sellOp.amount_sent);
+        
+        if (isNaN(amountBought) || isNaN(amountSold)) continue;
+
+        const profitCripto = amountBought - amountSold;
+        
+        // Use the first operation's fiat type for profit tracking
+        const fiatType = buyOp.fiat;
+
+        if (fiatType === 'USD') {
+          totalProfitUsd += profitCripto;
+        } else if (fiatType === 'EUR') {
+          totalProfitEur += profitCripto;
+        }
+        
+        // Update best and worst operations based on crypto profit
+        if (!bestOperation || profitCripto > bestOperation.profitCripto) {
+          bestOperation = { ...buyOp, profitCripto: profitCripto };
+        }
+        if (!worstOperation || profitCripto < worstOperation.profitCripto) {
+          worstOperation = { ...sellOp, profitCripto: profitCripto };
+        }
+
+        // Calculate monthly profit
+        const opDate = buyOp.timestamp?.toDate ? buyOp.timestamp.toDate() : new Date(buyOp.timestamp);
+        if (opDate >= thirtyDaysAgo) {
+          monthlyProfit += profitCripto;
+        }
+
+        if (profitCripto > 0) {
+          successfulOperations++;
+        }
       }
-      
-      // Update best and worst operations based on crypto profit
-      if (!bestOperation || gananciaCripto > bestOperation.gananciaCripto) {
-        bestOperation = { ...op, gananciaCripto: gananciaCripto };
-      }
-      if (!worstOperation || gananciaCripto < worstOperation.gananciaCripto) {
-        worstOperation = { ...op, gananciaCripto: gananciaCripto };
-      }
+    }
 
-      // Calculate monthly profit
-      const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : new Date(op.timestamp);
-      if (opDate >= thirtyDaysAgo) {
-        monthlyProfit += gananciaCripto;
-      }
-
-      // Check for successful operations
-      if (gananciaCripto > 0) {
-        successfulOperations++;
-      }
-    });
-
-    const successRate = operations.length > 0 ? (successfulOperations / operations.length) * 100 : 0;
-
+    const totalCalculatedOperations = Object.keys(groupedByOrderId).length;
+    const successRate = totalCalculatedOperations > 0 ? (successfulOperations / totalCalculatedOperations) * 100 : 0;
+    
     return {
-      total_operations: operations.length,
-      total_profit_usdt: totalProfitUsdt,
+      total_operations: totalCalculatedOperations,
+      total_profit_usdt: totalProfitUsd, // Assuming USDT is the main crypto, adjust if needed
       total_profit_eur: totalProfitEur,
       total_profit_usd: totalProfitUsd,
       best_operation: bestOperation,
