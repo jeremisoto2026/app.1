@@ -11,10 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { db } from "../firebase";
+import { db, auth } from "../firebase"; // Asegúrate de importar auth
 import { Loader2, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
+import { onAuthStateChanged } from "firebase/auth"; // Importa esta función
 
 const History = () => {
   const [operations, setOperations] = useState([]);
@@ -25,10 +26,11 @@ const History = () => {
     exchange: "",
     search: "",
   });
-
+  const [user, setUser] = useState(null); // Nuevo estado para el usuario
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
+  // 🚨 Función para verificar la autenticación y cargar los datos
   const fetchOperations = async () => {
     try {
       setLoading(true);
@@ -47,10 +49,26 @@ const History = () => {
   };
 
   useEffect(() => {
-    fetchOperations();
+    // Escuchar el estado de autenticación
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        fetchOperations();
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Limpiar el listener al desmontar el componente
+    return () => unsubscribe();
   }, []);
 
   const handleDelete = async (id) => {
+    if (!user) {
+      alert("Debes iniciar sesión para eliminar operaciones.");
+      return;
+    }
+
     if (window.confirm("¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.")) {
       try {
         await deleteDoc(doc(db, "operations", id));
@@ -210,7 +228,6 @@ const History = () => {
           <CardTitle className="flex justify-between items-center">
             <div className="flex-1">
               <span className="text-yellow-400">
-                {/* ✅ Lógica de corrección: solo muestra el número de orden que tú registras, si no existe muestra "N/A" */}
                 Orden #{operation.order_id && operation.order_id.length > 0 ? operation.order_id : "N/A"}
               </span>
             </div>
