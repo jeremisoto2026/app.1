@@ -13,7 +13,7 @@ import {
 } from "./ui/select";
 import { db } from "../firebase";
 import { Loader2 } from "lucide-react";
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 
 const History = () => {
   const [operations, setOperations] = useState([]);
@@ -25,7 +25,6 @@ const History = () => {
     search: "",
   });
 
-  // Nuevo estado para la exportación por fecha
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
@@ -36,9 +35,11 @@ const History = () => {
       return;
     }
 
+    // ✅ ¡Aquí están las nuevas columnas para los cálculos!
     const headers = [
       "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
-      "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Fecha"
+      "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Rentabilidad", 
+      "ROI (%)", "Diferencia", "Fecha"
     ];
 
     const rows = data.map(op => [
@@ -51,6 +52,9 @@ const History = () => {
       op.fiat_amount || 0,
       op.exchange_rate || 0,
       op.fee || 0,
+      op.profit || 0, // ✅ Valor de rentabilidad
+      op.profit_percentage || 0, // ✅ Valor de ROI
+      (op.revenue - op.investment) || 0, // ✅ Valor de diferencia
       formatDateForCSV(op.timestamp)
     ]);
 
@@ -75,7 +79,6 @@ const History = () => {
   const handleExport = () => {
     let dataToExport = [...operations];
     
-    // Filtra por rango de fechas si están definidas
     if (exportStartDate && exportEndDate) {
       const start = new Date(exportStartDate);
       const end = new Date(exportEndDate);
