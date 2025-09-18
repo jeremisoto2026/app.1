@@ -183,7 +183,6 @@ const History = () => {
       const searchLower = filters.search.toLowerCase().trim();
       const orderIdToSearch = String(op.order_id || '').toLowerCase();
       
-      // ✅ La búsqueda ahora solo usa el order_id que tu registras
       filtered =
         orderIdToSearch.includes(searchLower) ||
         String(op.crypto)?.toLowerCase().includes(searchLower) ||
@@ -211,8 +210,8 @@ const History = () => {
           <CardTitle className="flex justify-between items-center">
             <div className="flex-1">
               <span className="text-yellow-400">
-                {/* Muestra el order_id si existe, si no, el id de la base de datos como último recurso */}
-                Orden #{operation.order_id && operation.order_id.length > 0 ? operation.order_id : operation.id}
+                {/* ✅ Muestra solo el order_id que tú registras, si no existe muestra N/A */}
+                Orden #{operation.order_id && operation.order_id.length > 0 ? operation.order_id : "N/A"}
               </span>
             </div>
             <div className="flex items-center gap-2">
