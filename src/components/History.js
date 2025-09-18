@@ -192,8 +192,8 @@ const History = () => {
         className="bg-gray-900 border border-gray-700"
       >
         <CardHeader>
-          <CardTitle className="flex justify-between">
-            <span>Orden #{operation.order_id || "N/A"}</span>
+          <CardTitle className="flex justify-between items-center">
+            <span className="text-yellow-400">Orden #{operation.order_id || "N/A"}</span>
             <Badge className={operation.operation_type === 'Compra' ? "bg-green-900/20 text-green-400 border border-green-600" : "bg-red-900/20 text-red-400 border border-red-600"}>
               {operation.operation_type || "N/A"}
             </Badge>
@@ -216,7 +216,13 @@ const History = () => {
             <div>
               <strong>Exchange:</strong> {operation.exchange || "N/A"}
             </div>
-            <div>
+            <div className="md:col-span-1">
+              <strong>Tasa de cambio:</strong>
+              <Badge variant="outline" className="ml-2 text-gray-400 border-gray-600">
+                {operation.exchange_rate?.toFixed(2) ?? "0.00"}
+              </Badge>
+            </div>
+            <div className="md:col-span-2">
               <strong>Fecha:</strong>{" "}
               {operation.timestamp ? formatDate(operation.timestamp) : "N/A"}
             </div>
