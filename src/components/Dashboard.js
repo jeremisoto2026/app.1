@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getDashboardStats } from '../services/database';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'; // Se eliminó CardDescription
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { useNavigate } from 'react-router-dom';
 
@@ -172,7 +172,6 @@ const Dashboard = ({ refreshTrigger }) => {
               <CardTitle className="text-yellow-400 flex items-center gap-2">
                 📈 Rendimiento Mensual
               </CardTitle>
-              {/* <CardDescription> se eliminó porque no se usa en el código */}
               <p className="text-gray-400 text-sm">Últimos 30 días</p>
             </CardHeader>
             <CardContent>
@@ -194,7 +193,6 @@ const Dashboard = ({ refreshTrigger }) => {
               <CardTitle className="text-yellow-400 flex items-center gap-2">
                 🎯 Mejores Operaciones
               </CardTitle>
-              {/* <CardDescription> se eliminó porque no se usa en el código */}
               <p className="text-gray-400 text-sm">Mejor y peor rendimiento</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -241,7 +239,6 @@ const Dashboard = ({ refreshTrigger }) => {
             <CardTitle className="text-yellow-400 flex items-center gap-2">
               ⚡ Acciones Rápidas
             </CardTitle>
-            {/* <CardDescription> se eliminó porque no se usa en el código */}
             <p className="text-gray-400 text-sm">Herramientas más utilizadas</p>
           </CardHeader>
           <CardContent>
