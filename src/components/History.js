@@ -207,7 +207,11 @@ const History = () => {
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <div className="flex-1">
-              <span className="text-yellow-400">Orden #{operation.order_id || "N/A"}</span>
+              <span className="text-yellow-400">
+                Orden #
+                {/* ✅ Muestra el order_id si existe, si no, el id de la base de datos */}
+                {operation.order_id && operation.order_id.length > 0 ? operation.order_id : operation.id}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Badge className={operation.operation_type === 'Compra' ? "bg-green-900/20 text-green-400 border border-green-600" : "bg-red-900/20 text-red-400 border border-red-600"}>
