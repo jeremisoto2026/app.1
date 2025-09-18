@@ -85,7 +85,6 @@ const Operations = ({ onOperationSaved }) => {
       setError('');
 
       const operationData = {
-        // ✅ Asegura que el order_id se guarde correctamente
         order_id: formData.order_id.trim(),
         exchange: formData.exchange,
         operation_type: formData.operation_type,
@@ -176,7 +175,7 @@ const Operations = ({ onOperationSaved }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="order_id" className="text-white">
+                  <Label htmlFor="order_id" className="text-gray-100">
                     Número de Orden
                   </Label>
                   <Input
@@ -185,21 +184,21 @@ const Operations = ({ onOperationSaved }) => {
                     placeholder="Escribe el ID de la orden"
                     value={formData.order_id}
                     onChange={(e) => handleInputChange('order_id', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="exchange" className="text-white">
-                    Exchange *
+                  <Label htmlFor="exchange" className="text-gray-100">
+                    Exchange <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.exchange} onValueChange={(value) => handleInputChange('exchange', value)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100">
                       <SelectValue placeholder="Selecciona exchange" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
                       {exchanges.map(exchange => (
-                        <SelectItem key={exchange} value={exchange} className="text-white hover:bg-gray-600">
+                        <SelectItem key={exchange} value={exchange} className="text-gray-100 hover:bg-gray-600">
                           {exchange}
                         </SelectItem>
                       ))}
@@ -208,16 +207,16 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="operation_type" className="text-white">
-                    Tipo de Operación *
+                  <Label htmlFor="operation_type" className="text-gray-100">
+                    Tipo de Operación <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100">
                       <SelectValue placeholder="Selecciona tipo" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
                       {operationTypes.map(type => (
-                        <SelectItem key={type} value={type} className="text-white hover:bg-gray-600">
+                        <SelectItem key={type} value={type} className="text-gray-100 hover:bg-gray-600">
                           {type}
                         </SelectItem>
                       ))}
@@ -226,16 +225,16 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="crypto" className="text-white">
-                    Criptomoneda *
+                  <Label htmlFor="crypto" className="text-gray-100">
+                    Criptomoneda <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.crypto} onValueChange={(value) => handleInputChange('crypto', value)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100">
                       <SelectValue placeholder="Selecciona crypto" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
                       {cryptos.map(crypto => (
-                        <SelectItem key={crypto} value={crypto} className="text-white hover:bg-gray-600">
+                        <SelectItem key={crypto} value={crypto} className="text-gray-100 hover:bg-gray-600">
                           {crypto}
                         </SelectItem>
                       ))}
@@ -244,16 +243,16 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fiat" className="text-white">
-                    Moneda Fiat *
+                  <Label htmlFor="fiat" className="text-gray-100">
+                    Moneda Fiat <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100">
                       <SelectValue placeholder="Selecciona fiat" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
                       {fiats.map(fiat => (
-                        <SelectItem key={fiat} value={fiat} className="text-white hover:bg-gray-600">
+                        <SelectItem key={fiat} value={fiat} className="text-gray-100 hover:bg-gray-600">
                           {fiat}
                         </SelectItem>
                       ))}
@@ -262,8 +261,8 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="crypto_amount" className="text-white">
-                    Cantidad Cripto {formData.operation_type === 'Venta' ? '*' : ''}
+                  <Label htmlFor="crypto_amount" className="text-gray-100">
+                    Cantidad Cripto {formData.operation_type === 'Venta' && <span className="text-red-500">*</span>}
                   </Label>
                   <Input
                     id="crypto_amount"
@@ -272,14 +271,14 @@ const Operations = ({ onOperationSaved }) => {
                     placeholder="0.000"
                     value={formData.crypto_amount}
                     onChange={(e) => handleInputChange('crypto_amount', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
                     disabled={formData.operation_type === 'Compra'}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fiat_amount" className="text-white">
-                    Cantidad Fiat {formData.operation_type === 'Compra' ? '*' : ''}
+                  <Label htmlFor="fiat_amount" className="text-gray-100">
+                    Cantidad Fiat {formData.operation_type === 'Compra' && <span className="text-red-500">*</span>}
                   </Label>
                   <Input
                     id="fiat_amount"
@@ -288,14 +287,14 @@ const Operations = ({ onOperationSaved }) => {
                     placeholder="0.00"
                     value={formData.fiat_amount}
                     onChange={(e) => handleInputChange('fiat_amount', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
                     disabled={formData.operation_type === 'Venta'}
                   />
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="exchange_rate" className="text-white">
-                    Tasa de Cambio *
+                  <Label htmlFor="exchange_rate" className="text-gray-100">
+                    Tasa de Cambio <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="exchange_rate"
@@ -304,12 +303,12 @@ const Operations = ({ onOperationSaved }) => {
                     placeholder="0.00"
                     value={formData.exchange_rate}
                     onChange={(e) => handleInputChange('exchange_rate', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
                   />
                 </div>
                 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="fee" className="text-white">
+                  <Label htmlFor="fee" className="text-gray-100">
                     Comisión
                   </Label>
                   <Input
@@ -319,7 +318,7 @@ const Operations = ({ onOperationSaved }) => {
                     placeholder="0.00"
                     value={formData.fee}
                     onChange={(e) => handleInputChange('fee', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -331,20 +330,20 @@ const Operations = ({ onOperationSaved }) => {
                 <CardContent className="space-y-2 text-gray-300">
                   <div className="flex items-center gap-2">
                     <Label>Cantidad Cripto:</Label>
-                    <Badge variant="outline" className="text-white border-gray-600">
+                    <Badge variant="outline" className="text-gray-100 border-gray-600">
                       {previewAmountCrypto.toFixed(3)} {formData.crypto}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
                     <Label>Cantidad Fiat:</Label>
-                    <Badge variant="outline" className="text-white border-gray-600">
+                    <Badge variant="outline" className="text-gray-100 border-gray-600">
                       {previewAmountFiat.toFixed(2)} {formData.fiat}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
                     <Label>Comisión:</Label>
-                    <Badge variant="outline" className="text-white border-gray-600">
-                      {previewFee.toFixed(2)} {formData.crypto}
+                    <Badge variant="outline" className="text-gray-100 border-gray-600">
+                      {previewFee.toFixed(2)} {formData.fiat} {/* La comisión en fiat es más común, lo cambié */}
                     </Badge>
                   </div>
                 </CardContent>
