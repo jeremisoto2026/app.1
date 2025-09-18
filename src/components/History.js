@@ -180,9 +180,12 @@ const History = () => {
     if (filters.exchange && op.exchange !== filters.exchange) filtered = false;
 
     if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
+      const searchLower = filters.search.toLowerCase().trim();
+      const orderIdToSearch = String(op.order_id || '').toLowerCase();
+      
+      // ✅ La búsqueda ahora solo usa el order_id que tu registras
       filtered =
-        String(op.order_id)?.toLowerCase().includes(searchLower) ||
+        orderIdToSearch.includes(searchLower) ||
         String(op.crypto)?.toLowerCase().includes(searchLower) ||
         String(op.fiat)?.toLowerCase().includes(searchLower) ||
         String(op.exchange)?.toLowerCase().includes(searchLower);
@@ -208,9 +211,8 @@ const History = () => {
           <CardTitle className="flex justify-between items-center">
             <div className="flex-1">
               <span className="text-yellow-400">
-                Orden #
-                {/* ✅ Muestra el order_id si existe, si no, el id de la base de datos */}
-                {operation.order_id && operation.order_id.length > 0 ? operation.order_id : operation.id}
+                {/* Muestra el order_id si existe, si no, el id de la base de datos como último recurso */}
+                Orden #{operation.order_id && operation.order_id.length > 0 ? operation.order_id : operation.id}
               </span>
             </div>
             <div className="flex items-center gap-2">
