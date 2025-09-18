@@ -55,7 +55,7 @@ const DashboardScreen = () => {
         <Text style={styles.cardValue}>${stats.total_profit_usdt.toFixed(2)}</Text>
         <Text style={styles.cardSubtitle}>Total en Criptomonedas</Text>
       </View>
-
+      
       {/* Tarjeta de Tasa de Éxito */}
       <View style={[styles.card, styles.purpleCard]}>
         <Text style={styles.cardTitle}>Tasa de Éxito</Text>
