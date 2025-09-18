@@ -45,7 +45,6 @@ const History = () => {
     const sortedData = [...buyOperations, ...sellOperations];
 
     const rows = sortedData.map(op => {
-      // ✅ Aplicar 3 decimales a la cantidad de cripto
       const formattedCryptoAmount = op.crypto_amount ? parseFloat(op.crypto_amount).toFixed(3) : "0.000";
 
       return [
@@ -53,7 +52,7 @@ const History = () => {
         op.operation_type || 'N/A',
         op.exchange || 'N/A',
         op.crypto || 'N/A',
-        formattedCryptoAmount, // ✅ Campo formateado
+        formattedCryptoAmount,
         op.fiat || 'N/A',
         op.fiat_amount || 0,
         op.exchange_rate || 0,
@@ -184,7 +183,7 @@ const History = () => {
 
   const renderOperations = (ops) => {
     if (ops.length === 0) {
-      return <p className="text-center text-gray-400">No hay operaciones de {ops[0]?.operation_type || 'este tipo'} registradas.</p>;
+      return <p className="text-center text-gray-400">No hay operaciones registradas.</p>;
     }
     
     return ops.map((operation, index) => (
@@ -228,117 +227,129 @@ const History = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Filtros */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Select onValueChange={(value) => setFilters({ ...filters, crypto: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por Cripto" />
-            </SelectTrigger>
-            <SelectContent>
-              {getUniqueValues("crypto").map((crypto) => (
-                <SelectItem key={crypto} value={crypto}>
-                  {crypto}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select onValueChange={(value) => setFilters({ ...filters, fiat: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por Fiat" />
-            </SelectTrigger>
-            <SelectContent>
-              {getUniqueValues("fiat").map((fiat) => (
-                <SelectItem key={fiat} value={fiat}>
-                  {fiat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select onValueChange={(value) => setFilters({ ...filters, exchange: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por Exchange" />
-            </SelectTrigger>
-            <SelectContent>
-              {getUniqueValues("exchange").map((exchange) => (
-                <SelectItem key={exchange} value={exchange}>
-                  {exchange}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Input
-            placeholder="Buscar..."
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Título de la sección */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-yellow-400 mb-2">
+            Historial de Operaciones 📋
+          </h1>
+          <p className="text-gray-300">
+            Revisa y gestiona tus transacciones de compra y venta.
+          </p>
         </div>
-      </Card>
+        {/* Contenido principal */}
+        <Card className="p-4 bg-gray-800 border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Select onValueChange={(value) => setFilters({ ...filters, crypto: value })}>
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectValue placeholder="Filtrar por Cripto" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {getUniqueValues("crypto").map((crypto) => (
+                  <SelectItem key={crypto} value={crypto}>
+                    {crypto}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-      {/* Apartado de exportación */}
-      <Card className="bg-gray-800 border-gray-700 p-4">
-        <CardHeader className="p-0 mb-4">
-          <CardTitle className="text-yellow-400 flex items-center gap-2">
-            📂 Exportar Historial
-          </CardTitle>
-        </CardHeader>
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex-1 w-full md:w-auto">
-            <Label className="block text-gray-400 text-sm mb-1">Fecha de inicio</Label>
+            <Select onValueChange={(value) => setFilters({ ...filters, fiat: value })}>
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectValue placeholder="Filtrar por Fiat" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {getUniqueValues("fiat").map((fiat) => (
+                  <SelectItem key={fiat} value={fiat}>
+                    {fiat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select onValueChange={(value) => setFilters({ ...filters, exchange: value })}>
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectValue placeholder="Filtrar por Exchange" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {getUniqueValues("exchange").map((exchange) => (
+                  <SelectItem key={exchange} value={exchange}>
+                    {exchange}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Input
-              type="date"
-              value={exportStartDate}
-              onChange={(e) => setExportStartDate(e.target.value)}
+              placeholder="Buscar..."
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
             />
           </div>
-          <div className="flex-1 w-full md:w-auto">
-            <Label className="block text-gray-400 text-sm mb-1">Fecha de fin</Label>
-            <Input
-              type="date"
-              value={exportEndDate}
-              onChange={(e) => setExportEndDate(e.target.value)}
-              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-            />
-          </div>
-          <Button
-            onClick={handleExport}
-            className="mt-6 md:mt-auto bg-green-600 hover:bg-green-700 text-white"
-          >
-            Exportar CSV
-          </Button>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Historial */}
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Sección de Compras */}
-          <h2 className="text-2xl font-bold text-green-400 mt-8">
-            Compras 🟢
-          </h2>
-          <div className="grid gap-4">
-            {renderOperations(buyOperations)}
+        {/* Apartado de exportación */}
+        <Card className="bg-gray-800 border-gray-700 p-4">
+          <CardHeader className="p-0 mb-4">
+            <CardTitle className="text-yellow-400 flex items-center gap-2">
+              📂 Exportar Historial
+            </CardTitle>
+          </CardHeader>
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="flex-1 w-full md:w-auto">
+              <Label className="block text-gray-400 text-sm mb-1">Fecha de inicio</Label>
+              <Input
+                type="date"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+              />
+            </div>
+            <div className="flex-1 w-full md:w-auto">
+              <Label className="block text-gray-400 text-sm mb-1">Fecha de fin</Label>
+              <Input
+                type="date"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+              />
+            </div>
+            <Button
+              onClick={handleExport}
+              className="mt-6 md:mt-auto bg-green-600 hover:bg-green-700 text-white"
+            >
+              Exportar CSV
+            </Button>
           </div>
+        </Card>
 
-          <div className="w-full h-px bg-gray-700 my-8"></div>
-
-          {/* Sección de Ventas */}
-          <h2 className="text-2xl font-bold text-red-400">
-            Ventas 🔴
-          </h2>
-          <div className="grid gap-4">
-            {renderOperations(sellOperations)}
+        {/* Historial */}
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="space-y-6">
+            {/* Sección de Compras */}
+            <h2 className="text-2xl font-bold text-green-400 mt-8">
+              Compras 🟢
+            </h2>
+            <div className="grid gap-4">
+              {renderOperations(buyOperations)}
+            </div>
+
+            <div className="w-full h-px bg-gray-700 my-8"></div>
+
+            {/* Sección de Ventas */}
+            <h2 className="text-2xl font-bold text-red-400">
+              Ventas 🔴
+            </h2>
+            <div className="grid gap-4">
+              {renderOperations(sellOperations)}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
