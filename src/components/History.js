@@ -6,7 +6,6 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { db } from '../firebase'; // La ruta corregida
 
 const History = ({ refreshTrigger }) => {
   const { user } = useAuth();
@@ -355,14 +354,14 @@ const History = ({ refreshTrigger }) => {
                         <div>
                           <span className="text-gray-400">Fecha:</span>
                           <div className="text-white font-medium">
-                            {formatDate(operation.timestamp)}
+                            {operation.timestamp ? formatDate(operation.timestamp) : "N/A"}
                           </div>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-white mb-1">
-                        {formatCurrency(operation.fiat_amount || 0, operation.fiat || "USD")}
+                        {formatCurrency(operation.fiat_amount || 0, operation.fiat && operation.fiat.length === 3 ? operation.fiat : "USD")}
                       </div>
                       <div className="text-xs text-gray-400">
                         ID: {operation.order_id}
