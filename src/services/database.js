@@ -79,46 +79,68 @@ export const getDashboardStats = async (userId) => {
       };
     }
 
-    const totalProfitUsdt = operations
-      .filter(op => op.crypto === "USDT")
-      .reduce((sum, op) => sum + (op.fiat_amount || 0), 0);
-    
-    const totalProfitEur = operations
-      .filter(op => op.fiat === "EUR")
-      .reduce((sum, op) => sum + (op.fiat_amount || 0), 0);
-    
-    const totalProfitUsd = operations
-      .filter(op => op.fiat === "USD")
-      .reduce((sum, op) => sum + (op.fiat_amount || 0), 0);
-
-    const bestOp = operations.reduce((max, op) => 
-      (op.fiat_amount || 0) > (max.fiat_amount || 0) ? op : max
-    );
-    
-    const worstOp = operations.reduce((min, op) => 
-      (op.fiat_amount || 0) < (min.fiat_amount || 0) ? op : min
-    );
+    let totalProfitUsdt = 0;
+    let totalProfitEur = 0;
+    let totalProfitUsd = 0;
+    let bestOperation = null;
+    let worstOperation = null;
+    let monthlyProfit = 0;
+    let successfulOperations = 0;
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const monthlyOps = operations.filter(op => {
-      const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : new Date(op.timestamp);
-      return opDate >= thirtyDaysAgo;
-    });
-    
-    const monthlyProfit = monthlyOps.reduce((sum, op) => sum + (op.fiat_amount || 0), 0);
 
-    const successfulOps = operations.filter(op => (op.fiat_amount || 0) > 0).length;
-    const successRate = operations.length > 0 ? (successfulOps / operations.length) * 100 : 0;
+    operations.forEach(op => {
+      const cantidadInicial = parseFloat(op.crypto_in);
+      const tasaVenta = parseFloat(op.sell_rate);
+      const tasaCompra = parseFloat(op.buy_rate);
+
+      if (isNaN(cantidadInicial) || isNaN(tasaVenta) || isNaN(tasaCompra) || tasaCompra === 0) {
+        // Skip operation if data is invalid
+        return;
+      }
+
+      // Calculate profit in crypto
+      const gananciaCripto = (cantidadInicial * tasaVenta / tasaCompra) - cantidadInicial;
+
+      // Sum up total profits based on crypto and fiat type
+      if (op.crypto === 'USDT') {
+        totalProfitUsdt += gananciaCripto;
+      } else if (op.crypto === 'EUR') {
+        totalProfitEur += gananciaCripto;
+      } else if (op.crypto === 'USD') {
+        totalProfitUsd += gananciaCripto;
+      }
+      
+      // Update best and worst operations based on crypto profit
+      if (!bestOperation || gananciaCripto > bestOperation.gananciaCripto) {
+        bestOperation = { ...op, gananciaCripto: gananciaCripto };
+      }
+      if (!worstOperation || gananciaCripto < worstOperation.gananciaCripto) {
+        worstOperation = { ...op, gananciaCripto: gananciaCripto };
+      }
+
+      // Calculate monthly profit
+      const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : new Date(op.timestamp);
+      if (opDate >= thirtyDaysAgo) {
+        monthlyProfit += gananciaCripto;
+      }
+
+      // Check for successful operations
+      if (gananciaCripto > 0) {
+        successfulOperations++;
+      }
+    });
+
+    const successRate = operations.length > 0 ? (successfulOperations / operations.length) * 100 : 0;
 
     return {
       total_operations: operations.length,
       total_profit_usdt: totalProfitUsdt,
       total_profit_eur: totalProfitEur,
       total_profit_usd: totalProfitUsd,
-      best_operation: bestOp,
-      worst_operation: worstOp,
+      best_operation: bestOperation,
+      worst_operation: worstOperation,
       monthly_profit: monthlyProfit,
       success_rate: successRate
     };
