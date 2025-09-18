@@ -24,7 +24,7 @@ import { Bolt } from "lucide-react";
 const ArbitrageSimulator = () => {
   const [formData, setFormData] = useState({
     crypto: "",
-    fiat_currency: "", // Nuevo estado para la moneda Fiat
+    fiat_currency: "",
     amount: "",
     buy_price: "",
     sell_price: "",
@@ -36,7 +36,7 @@ const ArbitrageSimulator = () => {
   const [error, setError] = useState(null);
 
   const cryptos = ["USDT", "ETH", "BTC", "SOL", "BNB"];
-  const fiatCurrencies = ["USD", "EUR", "VES"];
+  const fiatCurrencies = ["USD", "EUR", "VES", "COP", "MXN", "CLP", "ARS", "BRL"];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,8 +50,8 @@ const ArbitrageSimulator = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const { amount, buy_price, sell_price, crypto } = formData;
-    if (!amount || !buy_price || !sell_price || !crypto) {
+    const { amount, buy_price, sell_price, crypto, fiat_currency } = formData;
+    if (!amount || !buy_price || !sell_price || !crypto || !fiat_currency) {
       setError("Por favor, completa todos los campos obligatorios.");
       setResult(null);
       return;
@@ -147,7 +147,7 @@ const ArbitrageSimulator = () => {
                     value={formData.amount}
                     onChange={handleChange}
                     placeholder="0.00000000"
-                    className="w-full bg-gray-700 border-gray-600 text-white mt-1"
+                    className="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
                   />
                 </div>
               </div>
@@ -164,7 +164,7 @@ const ArbitrageSimulator = () => {
                     value={formData.buy_price}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="w-full bg-gray-700 border-gray-600 text-white mt-1"
+                    className="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
                   />
                 </div>
                 <div>
@@ -178,7 +178,7 @@ const ArbitrageSimulator = () => {
                     value={formData.sell_price}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="w-full bg-gray-700 border-gray-600 text-white mt-1"
+                    className="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
                   />
                 </div>
               </div>
@@ -205,9 +205,6 @@ const ArbitrageSimulator = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  {/* Este div está vacío para mantener la alineación. */}
-                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -220,7 +217,7 @@ const ArbitrageSimulator = () => {
                     value={formData.buy_fee}
                     onChange={handleChange}
                     placeholder="0"
-                    className="w-full bg-gray-700 border-gray-600 text-white mt-1"
+                    className="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
                   />
                 </div>
                 <div>
@@ -232,7 +229,7 @@ const ArbitrageSimulator = () => {
                     value={formData.sell_fee}
                     onChange={handleChange}
                     placeholder="0"
-                    className="w-full bg-gray-700 border-gray-600 text-white mt-1"
+                    className="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
                   />
                 </div>
               </div>
