@@ -28,18 +28,25 @@ const History = () => {
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
+  // Función de exportación a CSV
   const exportToCSV = (data) => {
     if (data.length === 0) {
       alert("No hay datos para exportar.");
       return;
     }
 
+    // ✅ Encabezados de columna SIN las métricas de rentabilidad
     const headers = [
       "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
       "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Fecha"
     ];
 
-    const rows = data.map(op => [
+    // ✅ Separar y ordenar las operaciones por tipo
+    const buyOperations = data.filter(op => op.operation_type === 'Compra');
+    const sellOperations = data.filter(op => op.operation_type === 'Venta');
+    const sortedData = [...buyOperations, ...sellOperations];
+
+    const rows = sortedData.map(op => [
       op.order_id || 'N/A',
       op.operation_type || 'N/A',
       op.exchange || 'N/A',
