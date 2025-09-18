@@ -128,13 +128,18 @@ const Operations = ({ onOperationSaved }) => {
 
   let previewAmountCrypto = 0;
   let previewAmountFiat = 0;
+  const previewFee = parseFloat(formData.fee) || 0;
 
   if (formData.operation_type === 'Venta') {
-    previewAmountCrypto = parseFloat(formData.crypto_amount) || 0;
-    previewAmountFiat = (previewAmountCrypto * parseFloat(formData.exchange_rate)) - (parseFloat(formData.fee) || 0);
+    const cryptoInput = parseFloat(formData.crypto_amount) || 0;
+    const rateInput = parseFloat(formData.exchange_rate) || 0;
+    previewAmountCrypto = cryptoInput;
+    previewAmountFiat = (cryptoInput * rateInput) - previewFee;
   } else if (formData.operation_type === 'Compra') {
-    previewAmountFiat = parseFloat(formData.fiat_amount) || 0;
-    previewAmountCrypto = (previewAmountFiat / parseFloat(formData.exchange_rate)) - (parseFloat(formData.fee) || 0);
+    const fiatInput = parseFloat(formData.fiat_amount) || 0;
+    const rateInput = parseFloat(formData.exchange_rate) || 0;
+    previewAmountFiat = fiatInput;
+    previewAmountCrypto = (fiatInput / rateInput) - previewFee;
   }
 
   return (
@@ -327,13 +332,19 @@ const Operations = ({ onOperationSaved }) => {
                   <div className="flex items-center gap-2">
                     <Label>Cantidad Cripto:</Label>
                     <Badge variant="outline" className="text-white border-gray-600">
-                      {previewAmountCrypto.toFixed(8)} {formData.crypto}
+                      {previewAmountCrypto.toFixed(3)} {formData.crypto}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
                     <Label>Cantidad Fiat:</Label>
                     <Badge variant="outline" className="text-white border-gray-600">
                       {previewAmountFiat.toFixed(2)} {formData.fiat}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label>Comisión:</Label>
+                    <Badge variant="outline" className="text-white border-gray-600">
+                      {previewFee.toFixed(2)} {formData.fiat}
                     </Badge>
                   </div>
                 </CardContent>
