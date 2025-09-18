@@ -11,11 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { db, auth } from "../firebase"; // Asegúrate de importar auth
+import { db, auth } from "../firebase";
 import { Loader2, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
-import { onAuthStateChanged } from "firebase/auth"; // Importa esta función
+import { onAuthStateChanged } from "firebase/auth";
 
 const History = () => {
   const [operations, setOperations] = useState([]);
@@ -26,11 +26,10 @@ const History = () => {
     exchange: "",
     search: "",
   });
-  const [user, setUser] = useState(null); // Nuevo estado para el usuario
+  const [user, setUser] = useState(null);
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
-  // 🚨 Función para verificar la autenticación y cargar los datos
   const fetchOperations = async () => {
     try {
       setLoading(true);
@@ -49,7 +48,6 @@ const History = () => {
   };
 
   useEffect(() => {
-    // Escuchar el estado de autenticación
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -59,7 +57,6 @@ const History = () => {
       }
     });
 
-    // Limpiar el listener al desmontar el componente
     return () => unsubscribe();
   }, []);
 
@@ -73,9 +70,10 @@ const History = () => {
       try {
         await deleteDoc(doc(db, "operations", id));
         setOperations(operations.filter((op) => op.id !== id));
+        console.log("Operación eliminada con éxito del estado local.");
       } catch (error) {
-        console.error("Error removing operation: ", error);
-        alert("Error al eliminar la operación. Por favor, inténtalo de nuevo.");
+        console.error("Error al eliminar la operación en Firebase:", error);
+        alert(`Error al eliminar: ${error.message}. Revisa la consola para más detalles.`);
       }
     }
   };
