@@ -210,7 +210,7 @@ const History = () => {
           <CardTitle className="flex justify-between items-center">
             <div className="flex-1">
               <span className="text-yellow-400">
-                {/* ✅ Muestra solo el order_id que tú registras, si no existe muestra N/A */}
+                {/* ✅ Lógica de corrección: solo muestra el número de orden que tú registras, si no existe muestra "N/A" */}
                 Orden #{operation.order_id && operation.order_id.length > 0 ? operation.order_id : "N/A"}
               </span>
             </div>
