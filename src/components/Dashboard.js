@@ -67,12 +67,21 @@ const Dashboard = ({ refreshTrigger }) => {
   }
 
   const formatCurrency = (amount, currency = 'USD') => {
-    return new Intl.NumberFormat('es-ES', {
+    const formatter = new Intl.NumberFormat('es-ES', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(amount);
+    });
+    
+    let formatted = formatter.format(amount);
+    
+    // Si la moneda es USD, reemplaza "US$" por "$"
+    if (currency === 'USD') {
+      formatted = formatted.replace('US$', '$');
+    }
+
+    return formatted;
   };
 
   const formatDate = (timestamp) => {
