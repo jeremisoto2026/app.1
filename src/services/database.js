@@ -86,69 +86,56 @@ export const getDashboardStats = async (userId) => {
     let worstOperation = null;
     let monthlyProfit = 0;
     let successfulOperations = 0;
-    const processedOrders = new Set();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Group operations by order ID
-    const groupedByOrderId = operations.reduce((acc, op) => {
-      if (op.orderId) {
-        if (!acc[op.orderId]) {
-          acc[op.orderId] = [];
-        }
-        acc[op.orderId].push(op);
+    operations.forEach(op => {
+      let profit = 0;
+      
+      const amountSent = parseFloat(op.amount_sent);
+      const amountReceived = parseFloat(op.amount_received);
+
+      if (isNaN(amountSent) || isNaN(amountReceived)) {
+        return;
       }
-      return acc;
-    }, {});
-
-    for (const orderId in groupedByOrderId) {
-      if (groupedByOrderId[orderId].length < 2) continue; // Skip if a cycle is not complete
-
-      const buyOp = groupedByOrderId[orderId].find(op => op.operation_type === 'Compra');
-      const sellOp = groupedByOrderId[orderId].find(op => op.operation_type === 'Venta');
-
-      if (buyOp && sellOp) {
-        const amountBought = parseFloat(buyOp.amount_received);
-        const amountSold = parseFloat(sellOp.amount_sent);
-        
-        if (isNaN(amountBought) || isNaN(amountSold)) continue;
-
-        const profitCripto = amountBought - amountSold;
-        
-        // Use the first operation's fiat type for profit tracking
-        const fiatType = buyOp.fiat;
-
-        if (fiatType === 'USD') {
-          totalProfitUsd += profitCripto;
-        } else if (fiatType === 'EUR') {
-          totalProfitEur += profitCripto;
-        }
-        
-        // Update best and worst operations based on crypto profit
-        if (!bestOperation || profitCripto > bestOperation.profitCripto) {
-          bestOperation = { ...buyOp, profitCripto: profitCripto };
-        }
-        if (!worstOperation || profitCripto < worstOperation.profitCripto) {
-          worstOperation = { ...sellOp, profitCripto: profitCripto };
-        }
-
-        // Calculate monthly profit
-        const opDate = buyOp.timestamp?.toDate ? buyOp.timestamp.toDate() : new Date(buyOp.timestamp);
-        if (opDate >= thirtyDaysAgo) {
-          monthlyProfit += profitCripto;
-        }
-
-        if (profitCripto > 0) {
-          successfulOperations++;
-        }
+      
+      // Calculate profit based on operation type
+      if (op.operation_type === 'Compra') {
+        profit = amountReceived - amountSent;
+      } else if (op.operation_type === 'Venta') {
+        profit = amountReceived - amountSent;
       }
-    }
+      
+      // Sum up total profits based on fiat type
+      if (op.fiat === 'USD') {
+        totalProfitUsd += profit;
+      } else if (op.fiat === 'EUR') {
+        totalProfitEur += profit;
+      }
 
-    const totalCalculatedOperations = Object.keys(groupedByOrderId).length;
-    const successRate = totalCalculatedOperations > 0 ? (successfulOperations / totalCalculatedOperations) * 100 : 0;
+      // Update best and worst operations based on profit
+      if (!bestOperation || profit > bestOperation.profit) {
+        bestOperation = { ...op, profit: profit };
+      }
+      if (!worstOperation || profit < worstOperation.profit) {
+        worstOperation = { ...op, profit: profit };
+      }
+
+      // Calculate monthly profit
+      const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : new Date(op.timestamp);
+      if (opDate >= thirtyDaysAgo) {
+        monthlyProfit += profit;
+      }
+
+      if (profit > 0) {
+        successfulOperations++;
+      }
+    });
+    
+    const successRate = operations.length > 0 ? (successfulOperations / operations.length) * 100 : 0;
     
     return {
-      total_operations: totalCalculatedOperations,
+      total_operations: operations.length,
       total_profit_usdt: totalProfitUsd, // Assuming USDT is the main crypto, adjust if needed
       total_profit_eur: totalProfitEur,
       total_profit_usd: totalProfitUsd,
