@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from './ui/alert';
 const Operations = ({ onOperationSaved }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    order_id: '', // ✅ Nuevo campo para el número de orden
+    order_id: '',
     exchange: '',
     operation_type: '',
     crypto: '',
@@ -85,7 +85,7 @@ const Operations = ({ onOperationSaved }) => {
       setError('');
 
       const operationData = {
-        order_id: formData.order_id, // ✅ Guardar el nuevo campo en la base de datos
+        order_id: formData.order_id,
         exchange: formData.exchange,
         operation_type: formData.operation_type,
         crypto: formData.crypto,
@@ -169,7 +169,6 @@ const Operations = ({ onOperationSaved }) => {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* ✅ Nuevo campo para el número de orden */}
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="order_id" className="text-white">
                     Número de Orden
@@ -318,6 +317,27 @@ const Operations = ({ onOperationSaved }) => {
                   />
                 </div>
               </div>
+
+              {/* ✅ Sección de Previsión */}
+              <Card className="bg-gray-900 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-yellow-400">Previsión de Operación</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-gray-300">
+                  <div className="flex items-center gap-2">
+                    <Label>Cantidad Cripto:</Label>
+                    <Badge variant="outline" className="text-white border-gray-600">
+                      {previewAmountCrypto.toFixed(8)} {formData.crypto}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label>Cantidad Fiat:</Label>
+                    <Badge variant="outline" className="text-white border-gray-600">
+                      {previewAmountFiat.toFixed(2)} {formData.fiat}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
 
               <Button
                 type="submit"
