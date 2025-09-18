@@ -7,7 +7,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [totalOperations, setTotalOperations] = useState(0);
   const [totalProfitUsdt, setTotalProfitUsdt] = useState(0);
-  const [totalProfitEur, setTotalProfitEur] = useState(0);
   const [successRate, setSuccessRate] = useState(0);
   const [monthlyPerformance, setMonthlyPerformance] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -20,12 +19,12 @@ const Dashboard = () => {
         setError("User not authenticated.");
         return;
       }
-      
+
       try {
         const operationsRef = collection(db, "users", user.uid, "operations");
         const q = query(operationsRef, orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
-        
+
         const operations = [];
         querySnapshot.forEach((doc) => {
           operations.push({ id: doc.id, ...doc.data() });
@@ -36,56 +35,50 @@ const Dashboard = () => {
 
           let totalCryptoBought = 0;
           let totalCryptoSold = 0;
-          let totalFiatSpent = 0;
-          let totalFiatReceived = 0;
-          let successfulOpsCount = 0;
-          
+          let monthlyCryptoBought = 0;
+          let monthlyCryptoSold = 0;
+
           const last30Days = new Date();
           last30Days.setDate(last30Days.getDate() - 30);
-          let monthlyProfit = 0;
 
-          operations.forEach(op => {
+          operations.forEach((op) => {
             const cryptoAmount = parseFloat(op.crypto_amount);
-            const fiatAmount = parseFloat(op.fiat_amount);
-            const profit = parseFloat(op.profit); // Asegúrate de que este campo exista o calcula la ganancia de otra forma.
 
-            if (op.operation_type === 'Venta') {
-                totalCryptoSold += cryptoAmount;
-                totalFiatReceived += fiatAmount;
-                if (profit > 0) successfulOpsCount++;
-                if (op.timestamp && op.timestamp.toDate() >= last30Days) {
-                    monthlyProfit += profit;
-                }
-            } else if (op.operation_type === 'Compra') {
-                totalCryptoBought += cryptoAmount;
-                totalFiatSpent += fiatAmount;
-                if (profit > 0) successfulOpsCount++;
-                if (op.timestamp && op.timestamp.toDate() >= last30Days) {
-                    monthlyProfit += profit;
-                }
+            if (op.operation_type === "Venta") {
+              totalCryptoSold += cryptoAmount;
+            } else if (op.operation_type === "Compra") {
+              totalCryptoBought += cryptoAmount;
+            }
+
+            if (op.timestamp && op.timestamp.toDate() >= last30Days) {
+              if (op.operation_type === "Venta") {
+                monthlyCryptoSold += cryptoAmount;
+              } else if (op.operation_type === "Compra") {
+                monthlyCryptoBought += cryptoAmount;
+              }
             }
           });
 
-          // Asegúrate de que los campos existan en tu base de datos para que esto funcione
           const totalProfitUsdtCalc = totalCryptoSold - totalCryptoBought;
-          const totalProfitEurCalc = totalFiatReceived - totalFiatSpent;
+          const monthlyPerformanceCalc = monthlyCryptoSold - monthlyCryptoBought;
+          const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
 
           setTotalProfitUsdt(totalProfitUsdtCalc);
-          setTotalProfitEur(totalProfitEurCalc);
-          setSuccessRate(((successfulOpsCount / operations.length) * 100).toFixed(1));
-          setMonthlyPerformance(monthlyProfit);
-
+          setSuccessRate(successRateCalc);
+          setMonthlyPerformance(monthlyPerformanceCalc);
+          setLoading(false);
         } else {
           setTotalOperations(0);
           setTotalProfitUsdt(0);
-          setTotalProfitEur(0);
           setSuccessRate(0);
           setMonthlyPerformance(0);
+          setLoading(false);
         }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
-        setError("Error al cargar los datos del dashboard. Por favor, revisa la consola para más detalles.");
-      } finally {
+        setError(
+          "Error al cargar los datos del dashboard. Por favor, revisa la consola para más detalles."
+        );
         setLoading(false);
       }
     };
@@ -132,13 +125,6 @@ const Dashboard = () => {
         <h3 className="text-green-400 font-medium">Ganancia USDT</h3>
         <p className="text-2xl font-bold">${totalProfitUsdt.toFixed(2)}</p>
         <p className="text-gray-400 text-sm">Total en USDT</p>
-      </div>
-      
-      {/* Ganancia EUR */}
-      <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
-        <h3 className="text-blue-400 font-medium">Ganancia EUR</h3>
-        <p className="text-2xl font-bold">€{totalProfitEur.toFixed(2)}</p>
-        <p className="text-gray-400 text-sm">Total en EUR</p>
       </div>
 
       {/* Tasa de Éxito */}
