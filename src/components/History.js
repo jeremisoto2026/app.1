@@ -15,10 +15,18 @@ import { db } from "../firebase";
 import { Loader2, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
-import { useAuth } from "../contexts/AuthContext"; // Asegúrate de tener este hook de autenticación
+import { useAuth } from "../contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 const History = () => {
-  const { user } = useAuth(); // Obtén el usuario actual
+  const { user } = useAuth();
   const [operations, setOperations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -31,8 +39,12 @@ const History = () => {
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
+  // Estados para el diálogo de confirmación
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [operationToDelete, setOperationToDelete] = useState(null);
+
   const fetchOperations = async () => {
-    if (!user) { // Si no hay usuario, no se puede buscar
+    if (!user) {
       setOperations([]);
       setLoading(false);
       return;
@@ -40,7 +52,6 @@ const History = () => {
     
     try {
       setLoading(true);
-      // CORRECCIÓN: Apunta a la subcolección de operaciones del usuario actual
       const q = query(collection(db, "users", user.uid, "operations"), orderBy("timestamp", "desc"));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map((doc) => ({
@@ -56,22 +67,27 @@ const History = () => {
   };
 
   useEffect(() => {
-    // Vuelve a buscar las operaciones si el usuario cambia
     if (user) {
       fetchOperations();
     }
   }, [user]);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.")) {
-      try {
-        // CORRECCIÓN: Usa la ruta completa del documento para borrarlo
-        await deleteDoc(doc(db, "users", user.uid, "operations", id));
-        setOperations(operations.filter((op) => op.id !== id));
-      } catch (error) {
-        console.error("Error removing operation: ", error);
-        alert("Error al eliminar la operación. Por favor, inténtalo de nuevo.");
-      }
+  const confirmDelete = (operationId) => {
+    setOperationToDelete(operationId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!operationToDelete) return;
+
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "operations", operationToDelete));
+      setOperations(operations.filter((op) => op.id !== operationToDelete));
+      setIsDeleteDialogOpen(false);
+      setOperationToDelete(null);
+    } catch (error) {
+      console.error("Error removing operation: ", error);
+      alert("Error al eliminar la operación. Por favor, inténtalo de nuevo.");
     }
   };
 
@@ -229,7 +245,7 @@ const History = () => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={() => handleDelete(operation.id)}
+                onClick={() => confirmDelete(operation.id)}
                 className="hover:bg-red-900/20 text-red-400"
               >
                 <Trash2 size={16} />
@@ -388,6 +404,34 @@ const History = () => {
           </div>
         )}
       </div>
+      
+      {/* Diálogo de Confirmación */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-gray-800 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-yellow-400">Confirmar Eliminación</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              ¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
