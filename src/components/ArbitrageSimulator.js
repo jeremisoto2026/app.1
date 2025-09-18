@@ -4,7 +4,6 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  CardDescription,
 } from "./ui/card";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -16,10 +15,46 @@ import {
   SelectContent,
   SelectItem,
 } from "./ui/select";
-import { simulateArbitrage } from "../services/database";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
 import { Bolt } from "lucide-react";
+
+// Nueva función de cálculo para la ganancia en criptomonedas
+const calculateCryptoArbitrage = (data) => {
+  const { amount, buy_price, sell_price, buy_fee, sell_fee } = data;
+  
+  // Convertimos todos los valores a números flotantes
+  const initial_investment = parseFloat(amount);
+  const sell_price_num = parseFloat(sell_price);
+  const buy_price_num = parseFloat(buy_price);
+  const buy_fee_num = parseFloat(buy_fee) / 100;
+  const sell_fee_num = parseFloat(sell_fee) / 100;
+
+  // Paso 1: Venta
+  const result1 = initial_investment * sell_price_num;
+
+  // Paso 2: Restar la comisión de venta
+  const result2 = result1 - (result1 * sell_fee_num);
+
+  // Paso 3: Comprar
+  const result3 = result2 / buy_price_num;
+
+  // Paso 4: Restar la comisión de compra
+  const final_amount = result3 - (result3 * buy_fee_num);
+  
+  // Ganancia en criptomoneda
+  const crypto_profit = final_amount - initial_investment;
+  
+  // Porcentaje de ganancia
+  const profit_percentage = (crypto_profit / initial_investment) * 100;
+
+  return {
+    investment: initial_investment,
+    revenue: final_amount,
+    profit: crypto_profit,
+    profit_percentage: profit_percentage,
+  };
+};
 
 const ArbitrageSimulator = () => {
   const [formData, setFormData] = useState({
@@ -58,7 +93,7 @@ const ArbitrageSimulator = () => {
     }
 
     try {
-      const calculatedResult = simulateArbitrage(formData);
+      const calculatedResult = calculateCryptoArbitrage(formData); 
       setResult(calculatedResult);
       setError(null);
     } catch (err) {
@@ -81,19 +116,8 @@ const ArbitrageSimulator = () => {
     setError(null);
   };
 
-  const formatCurrency = (value, currency = "USD") => {
-    try {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency,
-      }).format(value);
-    } catch (error) {
-      return `${value} ${currency}`;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4 text-gray-100"> {/* Texto claro para mejor legibilidad */}
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-yellow-400 flex items-center justify-center">
@@ -116,7 +140,7 @@ const ArbitrageSimulator = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="crypto" className="flex items-center">
+                  <Label htmlFor="crypto" className="text-gray-300 flex items-center">
                     Criptomoneda <span className="text-red-500 ml-1">*</span>
                   </Label>
                   <Select
@@ -137,7 +161,7 @@ const ArbitrageSimulator = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="amount" className="flex items-center">
+                  <Label htmlFor="amount" className="text-gray-300 flex items-center">
                     Cantidad <span className="text-red-500 ml-1">*</span>
                   </Label>
                   <Input
@@ -154,7 +178,7 @@ const ArbitrageSimulator = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="buy_price" className="flex items-center">
+                  <Label htmlFor="buy_price" className="text-gray-300 flex items-center">
                     Precio de Compra <span className="text-red-500 ml-1">*</span>
                   </Label>
                   <Input
@@ -168,7 +192,7 @@ const ArbitrageSimulator = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="sell_price" className="flex items-center">
+                  <Label htmlFor="sell_price" className="text-gray-300 flex items-center">
                     Precio de Venta <span className="text-red-500 ml-1">*</span>
                   </Label>
                   <Input
@@ -185,7 +209,7 @@ const ArbitrageSimulator = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="fiat_currency" className="flex items-center">
+                  <Label htmlFor="fiat_currency" className="text-gray-300 flex items-center">
                     Moneda Fiat <span className="text-red-500 ml-1">*</span>
                   </Label>
                   <Select
@@ -209,7 +233,7 @@ const ArbitrageSimulator = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="buy_fee">Comisión Compra</Label>
+                  <Label htmlFor="buy_fee" className="text-gray-300">Comisión Compra</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -221,7 +245,7 @@ const ArbitrageSimulator = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="sell_fee">Comisión Venta</Label>
+                  <Label htmlFor="sell_fee" className="text-gray-300">Comisión Venta</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -265,23 +289,23 @@ const ArbitrageSimulator = () => {
               <div>
                 <Label className="block text-sm text-gray-400">Inversión Total</Label>
                 <Badge className="text-lg font-bold bg-gray-700 text-white">
-                  {formatCurrency(result.investment, formData.fiat_currency || "USD")}
+                  {result.investment.toFixed(2)} {formData.crypto}
                 </Badge>
               </div>
               <div>
                 <Label className="block text-sm text-gray-400">Ingresos Totales</Label>
                 <Badge className="text-lg font-bold bg-gray-700 text-white">
-                  {formatCurrency(result.revenue, formData.fiat_currency || "USD")}
+                  {result.revenue.toFixed(2)} {formData.crypto}
                 </Badge>
               </div>
               <div>
-                <Label className="block text-sm text-gray-400">Ganancia Fiat</Label>
+                <Label className="block text-sm text-gray-400">Ganancia Cripto</Label>
                 <Badge
                   className={`text-lg font-bold ${
                     result.profit > 0 ? "bg-green-600" : "bg-red-600"
                   }`}
                 >
-                  {formatCurrency(result.profit, formData.fiat_currency || "USD")}
+                  {result.profit.toFixed(2)} {formData.crypto}
                 </Badge>
               </div>
               <div>
