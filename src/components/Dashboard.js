@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getDashboardStats } from '../services/database';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'; // Se importó CardDescription de nuevo
 import { Badge } from './ui/badge';
 import { useNavigate } from 'react-router-dom';
 
@@ -172,7 +172,9 @@ const Dashboard = ({ refreshTrigger }) => {
               <CardTitle className="text-yellow-400 flex items-center gap-2">
                 📈 Rendimiento Mensual
               </CardTitle>
-              <p className="text-gray-400 text-sm">Últimos 30 días</p>
+              <CardDescription className="text-gray-400">
+                Últimos 30 días
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white mb-2">
@@ -193,7 +195,9 @@ const Dashboard = ({ refreshTrigger }) => {
               <CardTitle className="text-yellow-400 flex items-center gap-2">
                 🎯 Mejores Operaciones
               </CardTitle>
-              <p className="text-gray-400 text-sm">Mejor y peor rendimiento</p>
+              <CardDescription className="text-gray-400">
+                Mejor y peor rendimiento
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {stats.best_operation && (
@@ -239,7 +243,9 @@ const Dashboard = ({ refreshTrigger }) => {
             <CardTitle className="text-yellow-400 flex items-center gap-2">
               ⚡ Acciones Rápidas
             </CardTitle>
-            <p className="text-gray-400 text-sm">Herramientas más utilizadas</p>
+            <CardDescription className="text-gray-400">
+              Herramientas más utilizadas
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
