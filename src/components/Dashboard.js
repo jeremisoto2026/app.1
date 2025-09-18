@@ -37,7 +37,7 @@ const Dashboard = () => {
           let totalCryptoSold = 0;
           let monthlyCryptoBought = 0;
           let monthlyCryptoSold = 0;
-
+          
           const last30Days = new Date();
           last30Days.setDate(last30Days.getDate() - 30);
 
@@ -59,8 +59,11 @@ const Dashboard = () => {
             }
           });
 
-          const totalProfitUsdtCalc = totalCryptoSold - totalCryptoBought;
-          const monthlyPerformanceCalc = monthlyCryptoSold - monthlyCryptoBought;
+          // Lógica de cálculo corregida: Compra total - Venta total
+          const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
+          const monthlyPerformanceCalc = monthlyCryptoBought - monthlyCryptoSold;
+          
+          // La tasa de éxito es 100% si la ganancia total es positiva, de lo contrario 0%
           const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
 
           setTotalProfitUsdt(totalProfitUsdtCalc);
