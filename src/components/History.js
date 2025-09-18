@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, deleteDoc, doc } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
 
@@ -28,6 +28,39 @@ const History = () => {
 
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
+
+  const fetchOperations = async () => {
+    try {
+      setLoading(true);
+      const q = query(collection(db, "operations"), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setOperations(data);
+    } catch (error) {
+      console.error("Error fetching operations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOperations();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.")) {
+      try {
+        await deleteDoc(doc(db, "operations", id));
+        setOperations(operations.filter((op) => op.id !== id));
+      } catch (error) {
+        console.error("Error removing operation: ", error);
+        alert("Error al eliminar la operación. Por favor, inténtalo de nuevo.");
+      }
+    }
+  };
 
   const exportToCSV = (data) => {
     if (data.length === 0) {
@@ -115,26 +148,6 @@ const History = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchOperations = async () => {
-      try {
-        const q = query(collection(db, "operations"), orderBy("timestamp", "desc"));
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setOperations(data);
-      } catch (error) {
-        console.error("Error fetching operations:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOperations();
-  }, []);
-
   const formatCurrency = (value, currency = "USD") => {
     try {
       return new Intl.NumberFormat("en-US", {
@@ -169,10 +182,10 @@ const History = () => {
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered =
-        op.order_id?.toLowerCase().includes(searchLower) ||
-        op.crypto?.toLowerCase().includes(searchLower) ||
-        op.fiat?.toLowerCase().includes(searchLower) ||
-        op.exchange?.toLowerCase().includes(searchLower);
+        String(op.order_id)?.toLowerCase().includes(searchLower) ||
+        String(op.crypto)?.toLowerCase().includes(searchLower) ||
+        String(op.fiat)?.toLowerCase().includes(searchLower) ||
+        String(op.exchange)?.toLowerCase().includes(searchLower);
     }
 
     return filtered;
@@ -193,10 +206,22 @@ const History = () => {
       >
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            <span className="text-yellow-400">Orden #{operation.order_id || "N/A"}</span>
-            <Badge className={operation.operation_type === 'Compra' ? "bg-green-900/20 text-green-400 border border-green-600" : "bg-red-900/20 text-red-400 border border-red-600"}>
-              {operation.operation_type || "N/A"}
-            </Badge>
+            <div className="flex-1">
+              <span className="text-yellow-400">Orden #{operation.order_id || "N/A"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className={operation.operation_type === 'Compra' ? "bg-green-900/20 text-green-400 border border-green-600" : "bg-red-900/20 text-red-400 border border-red-600"}>
+                {operation.operation_type || "N/A"}
+              </Badge>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleDelete(operation.id)}
+                className="hover:bg-red-900/20 text-red-400"
+              >
+                <Trash2 size={16} />
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-gray-300">
