@@ -88,47 +88,62 @@ export const getDashboardStats = async (userId) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    operations.forEach(op => {
-      let profit = 0;
-      
-      const amountSent = parseFloat(op.amount_sent);
-      const amountReceived = parseFloat(op.amount_received);
-
-      if (isNaN(amountSent) || isNaN(amountReceived)) {
-        return;
-      }
-      
-      profit = amountReceived - amountSent;
-      
-      if (op.fiat === 'USD') {
-        totalProfitUsdt += profit;
-      } else if (op.fiat === 'EUR') {
-        totalProfitEur += profit;
-      }
-
-      if (profit !== 0) {
-        if (!bestOperation || profit > bestOperation.profit) {
-          bestOperation = { ...op, profit: profit };
+    // Group operations by order ID
+    const groupedByOrderId = operations.reduce((acc, op) => {
+      if (op.order_id) {
+        if (!acc[op.order_id]) {
+          acc[op.order_id] = [];
         }
-        if (!worstOperation || profit < worstOperation.profit) {
-          worstOperation = { ...op, profit: profit };
+        acc[op.order_id].push(op);
+      }
+      return acc;
+    }, {});
+
+    for (const orderId in groupedByOrderId) {
+      const cycleOps = groupedByOrderId[orderId];
+      if (cycleOps.length === 2) {
+        const buyOp = cycleOps.find(op => op.operation_type === 'Compra');
+        const sellOp = cycleOps.find(op => op.operation_type === 'Venta');
+
+        if (buyOp && sellOp) {
+          const cryptoBought = parseFloat(buyOp.crypto_amount);
+          const cryptoSold = parseFloat(sellOp.crypto_amount);
+          
+          if (isNaN(cryptoBought) || isNaN(cryptoSold)) continue;
+
+          // Calculate profit as the difference between the crypto amounts
+          const profit = cryptoBought - cryptoSold;
+          
+          if (buyOp.crypto === 'USDT') {
+            totalProfitUsdt += profit;
+          } else if (buyOp.fiat === 'EUR') {
+            totalProfitEur += profit;
+          }
+          
+          if (!bestOperation || profit > bestOperation.profit) {
+            bestOperation = { ...buyOp, profit: profit };
+          }
+          if (!worstOperation || profit < worstOperation.profit) {
+            worstOperation = { ...sellOp, profit: profit };
+          }
+
+          const opDate = buyOp.timestamp?.toDate ? buyOp.timestamp.toDate() : new Date(buyOp.timestamp);
+          if (opDate >= thirtyDaysAgo) {
+            monthlyProfit += profit;
+          }
+
+          if (profit > 0) {
+            successfulOperations++;
+          }
         }
       }
-      
-      const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : new Date(op.timestamp);
-      if (opDate >= thirtyDaysAgo) {
-        monthlyProfit += profit;
-      }
+    }
 
-      if (profit > 0) {
-        successfulOperations++;
-      }
-    });
-
-    const successRate = operations.length > 0 ? (successfulOperations / operations.length) * 100 : 0;
+    const totalCalculatedOperations = Object.keys(groupedByOrderId).length;
+    const successRate = totalCalculatedOperations > 0 ? (successfulOperations / totalCalculatedOperations) * 100 : 0;
     
     return {
-      total_operations: operations.length,
+      total_operations: totalCalculatedOperations,
       total_profit_usdt: totalProfitUsdt,
       total_profit_eur: totalProfitEur,
       total_profit_usd: totalProfitUsdt,
