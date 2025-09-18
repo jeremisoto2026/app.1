@@ -15,8 +15,10 @@ import { db } from "../firebase";
 import { Loader2, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
+import { useAuth } from "../contexts/AuthContext"; // Asegúrate de tener este hook de autenticación
 
 const History = () => {
+  const { user } = useAuth(); // Obtén el usuario actual
   const [operations, setOperations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -30,9 +32,16 @@ const History = () => {
   const [exportEndDate, setExportEndDate] = useState('');
 
   const fetchOperations = async () => {
+    if (!user) { // Si no hay usuario, no se puede buscar
+      setOperations([]);
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
-      const q = query(collection(db, "operations"), orderBy("timestamp", "desc"));
+      // CORRECCIÓN: Apunta a la subcolección de operaciones del usuario actual
+      const q = query(collection(db, "users", user.uid, "operations"), orderBy("timestamp", "desc"));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -47,13 +56,17 @@ const History = () => {
   };
 
   useEffect(() => {
-    fetchOperations();
-  }, []);
+    // Vuelve a buscar las operaciones si el usuario cambia
+    if (user) {
+      fetchOperations();
+    }
+  }, [user]);
 
   const handleDelete = async (id) => {
     if (window.confirm("¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.")) {
       try {
-        await deleteDoc(doc(db, "operations", id));
+        // CORRECCIÓN: Usa la ruta completa del documento para borrarlo
+        await deleteDoc(doc(db, "users", user.uid, "operations", id));
         setOperations(operations.filter((op) => op.id !== id));
       } catch (error) {
         console.error("Error removing operation: ", error);
