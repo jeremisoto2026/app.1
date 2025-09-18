@@ -16,8 +16,8 @@ const Operations = ({ onOperationSaved }) => {
     operation_type: '',
     crypto: '',
     fiat: '',
-    crypto_amount: '', // Ahora se usa crypto_amount
-    fiat_amount: '',   // Y fiat_amount
+    crypto_amount: '',
+    fiat_amount: '',
     exchange_rate: '',
     fee: '0'
   });
@@ -47,7 +47,6 @@ const Operations = ({ onOperationSaved }) => {
       return;
     }
 
-    // Validación
     const requiredFields = ['exchange', 'operation_type', 'crypto', 'fiat', 'exchange_rate'];
     const amountField = formData.operation_type === 'Venta' ? 'crypto_amount' : 'fiat_amount';
     const missingFields = requiredFields.filter(field => !formData[field]);
@@ -72,11 +71,10 @@ const Operations = ({ onOperationSaved }) => {
     let cryptoAmount = 0;
     let fiatAmount = 0;
 
-    // ✅ Lógica de cálculo corregida
     if (formData.operation_type === 'Venta') {
       cryptoAmount = parseFloat(formData.crypto_amount);
       fiatAmount = (cryptoAmount * exchangeRate) - fee;
-    } else { // Compra
+    } else {
       fiatAmount = parseFloat(formData.fiat_amount);
       cryptoAmount = (fiatAmount / exchangeRate) - fee;
     }
@@ -90,11 +88,11 @@ const Operations = ({ onOperationSaved }) => {
         operation_type: formData.operation_type,
         crypto: formData.crypto,
         fiat: formData.fiat,
-        crypto_amount: cryptoAmount, // ✅ Valor calculado y correcto
-        fiat_amount: fiatAmount,     // ✅ Valor calculado y correcto
+        crypto_amount: cryptoAmount,
+        fiat_amount: fiatAmount,
         exchange_rate: exchangeRate,
         fee: fee,
-        profit: 0, // Se puede agregar lógica de profit si es necesario en el futuro
+        profit: 0,
         timestamp: new Date()
       };
 
@@ -102,7 +100,6 @@ const Operations = ({ onOperationSaved }) => {
       
       setSuccess('¡Operación guardada exitosamente!');
       
-      // Reset form
       setFormData({
         exchange: '',
         operation_type: '',
@@ -126,12 +123,15 @@ const Operations = ({ onOperationSaved }) => {
     }
   };
 
-  // ✅ Vista previa dinámica
-  let previewAmount = 0;
+  let previewAmountCrypto = 0;
+  let previewAmountFiat = 0;
+
   if (formData.operation_type === 'Venta') {
-    previewAmount = (parseFloat(formData.crypto_amount) * parseFloat(formData.exchange_rate)) - (parseFloat(formData.fee) || 0);
+    previewAmountCrypto = parseFloat(formData.crypto_amount) || 0;
+    previewAmountFiat = (previewAmountCrypto * parseFloat(formData.exchange_rate)) - (parseFloat(formData.fee) || 0);
   } else if (formData.operation_type === 'Compra') {
-    previewAmount = (parseFloat(formData.fiat_amount) / parseFloat(formData.exchange_rate)) - (parseFloat(formData.fee) || 0);
+    previewAmountFiat = parseFloat(formData.fiat_amount) || 0;
+    previewAmountCrypto = (previewAmountFiat / parseFloat(formData.exchange_rate)) - (parseFloat(formData.fee) || 0);
   }
 
   return (
@@ -238,7 +238,6 @@ const Operations = ({ onOperationSaved }) => {
                   </Select>
                 </div>
 
-                {/* ✅ Campos de cantidad dinámicos */}
                 <div className="space-y-2">
                   <Label htmlFor="crypto_amount" className="text-white">
                     Cantidad Cripto {formData.operation_type === 'Venta' ? '*' : ''}
@@ -310,13 +309,14 @@ const Operations = ({ onOperationSaved }) => {
                     <div>
                       <span className="text-gray-400">Cantidad {formData.crypto}:</span>
                       <span className="text-white ml-2">
-                        {formData.operation_type === 'Compra' ? previewAmount.toFixed(8) : parseFloat(formData.crypto_amount).toFixed(8)}
+                        {/* ✅ Ajuste para mostrar 3 decimales */}
+                        {previewAmountCrypto.toFixed(3)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">Cantidad {formData.fiat}:</span>
                       <span className="text-white ml-2">
-                        {formData.operation_type === 'Venta' ? previewAmount.toFixed(2) : parseFloat(formData.fiat_amount).toFixed(2)}
+                        {previewAmountFiat.toFixed(2)}
                       </span>
                     </div>
                     <div>
