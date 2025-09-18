@@ -66,7 +66,7 @@ const Dashboard = ({ refreshTrigger }) => {
     );
   }
 
-  const formatCurrency = (amount, currency = 'USD') => {
+    const formatCurrency = (amount, currency = 'USD') => {
     const formatter = new Intl.NumberFormat('es-ES', {
       style: 'currency',
       currency: currency,
@@ -258,36 +258,48 @@ const Dashboard = ({ refreshTrigger }) => {
           </Card>
         </div>
         {/* Quick Actions */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-yellow-400 flex items-center gap-2">
-              ⚡ Acciones Rápidas
-            </CardTitle>
-            <CardDescription className="text-gray-400">
-              Herramientas más utilizadas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button className="p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-                <div className="text-2xl mb-2">🤝</div>
-                <div className="text-white text-sm font-medium">P2P Simulator</div>
-              </button>
-              <button className="p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
-                <div className="text-2xl mb-2">⚡</div>
-                <div className="text-white text-sm font-medium">Arbitraje</div>
-              </button>
-              <button className="p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
-                <div className="text-2xl mb-2">📊</div>
-                <div className="text-white text-sm font-medium">Nueva Operación</div>
-              </button>
-              <button className="p-4 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors">
-                <div className="text-2xl mb-2">📜</div>
-                <div className="text-white text-sm font-medium">Historial</div>
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+<Card className="bg-gray-800 border-gray-700">
+  <CardHeader>
+    <CardTitle className="text-yellow-400 flex items-center gap-2">
+      ⚡ Acciones Rápidas
+    </CardTitle>
+    <CardDescription className="text-gray-400">
+      Herramientas más utilizadas
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <button 
+        className="p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+        onClick={() => navigation.navigate('P2P')}
+      >
+        <div className="text-2xl mb-2">🤝</div>
+        <div className="text-white text-sm font-medium">P2P Simulator</div>
+      </button>
+      <button 
+        className="p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+        onClick={() => navigation.navigate('Arbitrage')}
+      >
+        <div className="text-2xl mb-2">⚡</div>
+        <div className="text-white text-sm font-medium">Arbitraje</div>
+      </button>
+      <button 
+        className="p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+        onClick={() => navigation.navigate('Operations')}
+      >
+        <div className="text-2xl mb-2">📊</div>
+        <div className="text-white text-sm font-medium">Nueva Operación</div>
+      </button>
+      <button 
+        className="p-4 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors"
+        onClick={() => navigation.navigate('History')}
+      >
+        <div className="text-2xl mb-2">📜</div>
+        <div className="text-white text-sm font-medium">Historial</div>
+      </button>
+    </div>
+  </CardContent>
+</Card>
       </div>
     </div>
   );
