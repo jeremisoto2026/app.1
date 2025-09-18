@@ -39,7 +39,6 @@ const History = () => {
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
-  // Estados para el diálogo de confirmación
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [operationToDelete, setOperationToDelete] = useState(null);
 
@@ -258,7 +257,8 @@ const History = () => {
             <div>
               <strong>Cripto:</strong> {operation.crypto || "N/A"}
               <Badge variant="outline" className="ml-2 text-gray-400 border-gray-600">
-                {operation.crypto_amount?.toFixed(6) ?? "0.000000"}
+                {/* LÍNEA CORREGIDA */}
+                {operation.crypto_amount?.toFixed(3) ?? "0.000"}
               </Badge>
             </div>
             <div>
@@ -405,7 +405,6 @@ const History = () => {
         )}
       </div>
       
-      {/* Diálogo de Confirmación */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px] bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
