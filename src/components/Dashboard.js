@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getDashboardStats } from '../services/database';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Separator } from './ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'; // Se eliminó CardDescription
 import { Badge } from './ui/badge';
-
-// Importa el hook de navegación de React Router
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = ({ refreshTrigger }) => {
   const { user } = useAuth();
-  const navigate = useNavigate(); // Inicializa el hook de navegación
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -71,7 +68,6 @@ const Dashboard = ({ refreshTrigger }) => {
   }
 
   const formatCurrency = (amount, currency = 'USD') => {
-    // Formato para mostrar solo el signo de dólar ($)
     if (currency === 'USD') {
       return `$${amount.toFixed(2)}`;
     }
@@ -176,9 +172,8 @@ const Dashboard = ({ refreshTrigger }) => {
               <CardTitle className="text-yellow-400 flex items-center gap-2">
                 📈 Rendimiento Mensual
               </CardTitle>
-              <CardDescription className="text-gray-400">
-                Últimos 30 días
-              </CardDescription>
+              {/* <CardDescription> se eliminó porque no se usa en el código */}
+              <p className="text-gray-400 text-sm">Últimos 30 días</p>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white mb-2">
@@ -199,9 +194,8 @@ const Dashboard = ({ refreshTrigger }) => {
               <CardTitle className="text-yellow-400 flex items-center gap-2">
                 🎯 Mejores Operaciones
               </CardTitle>
-              <CardDescription className="text-gray-400">
-                Mejor y peor rendimiento
-              </CardDescription>
+              {/* <CardDescription> se eliminó porque no se usa en el código */}
+              <p className="text-gray-400 text-sm">Mejor y peor rendimiento</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {stats.best_operation && (
@@ -247,35 +241,34 @@ const Dashboard = ({ refreshTrigger }) => {
             <CardTitle className="text-yellow-400 flex items-center gap-2">
               ⚡ Acciones Rápidas
             </CardTitle>
-            <CardDescription className="text-gray-400">
-              Herramientas más utilizadas
-            </CardDescription>
+            {/* <CardDescription> se eliminó porque no se usa en el código */}
+            <p className="text-gray-400 text-sm">Herramientas más utilizadas</p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <button 
-                onClick={() => navigate('/p2p')} // Redirige a la ruta P2P
+                onClick={() => navigate('/p2p')}
                 className="p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
               >
                 <div className="text-2xl mb-2">🤝</div>
                 <div className="text-white text-sm font-medium">P2P Simulator</div>
               </button>
               <button 
-                onClick={() => navigate('/arbitrage')} // Redirige a la ruta de Arbitraje
+                onClick={() => navigate('/arbitrage')}
                 className="p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
               >
                 <div className="text-2xl mb-2">⚡</div>
                 <div className="text-white text-sm font-medium">Arbitraje</div>
               </button>
               <button 
-                onClick={() => navigate('/operations')} // Redirige a la ruta de Nueva Operación
+                onClick={() => navigate('/operations')}
                 className="p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
               >
                 <div className="text-2xl mb-2">📊</div>
                 <div className="text-white text-sm font-medium">Nueva Operación</div>
               </button>
               <button 
-                onClick={() => navigate('/history')} // Redirige a la ruta del Historial
+                onClick={() => navigate('/history')}
                 className="p-4 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors"
               >
                 <div className="text-2xl mb-2">📜</div>
