@@ -1,4 +1,4 @@
-// Database service using Firestore (replacing MongoDB)
+// Database service using Firestore
 import { 
   collection, 
   addDoc, 
@@ -14,30 +14,42 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
-// Operations CRUD
+// --- Operations CRUD ---
+
 export const saveOperation = async (userId, operationData) => {
   try {
-    const operation = {
+    // Save the operation to the user's specific subcollection
+    const userOperationsCollection = collection(db, "users", userId, "operations");
+    
+    const docRef = await addDoc(userOperationsCollection, {
       ...operationData,
-      user_id: userId,
-      order_id: String(Date.now()),
       timestamp: serverTimestamp(),
-      id: crypto.randomUUID()
-    };
-
-    const docRef = await addDoc(collection(db, "operations"), operation);
-    return { id: docRef.id, ...operation };
+    });
+    return { id: docRef.id, ...operationData };
   } catch (error) {
     console.error("Error saving operation:", error);
     throw error;
   }
 };
 
+export const deleteOperation = async (userId, operationId) => {
+  try {
+    // Get the document reference to the specific operation inside the user's subcollection
+    const operationRef = doc(db, "users", userId, "operations", operationId);
+    await deleteDoc(operationRef);
+    console.log("Operation successfully deleted!");
+  } catch (error) {
+    console.error("Error deleting operation:", error);
+    throw error;
+  }
+};
+
 export const getUserOperations = async (userId) => {
   try {
+    // Fetch operations from the user's specific subcollection
+    const userOperationsCollection = collection(db, "users", userId, "operations");
     const q = query(
-      collection(db, "operations"),
-      where("user_id", "==", userId),
+      userOperationsCollection,
       orderBy("timestamp", "desc")
     );
     
@@ -52,7 +64,8 @@ export const getUserOperations = async (userId) => {
   }
 };
 
-// Dashboard stats calculation
+// --- Dashboard stats calculation ---
+
 export const getDashboardStats = async (userId) => {
   try {
     const operations = await getUserOperations(userId);
@@ -123,7 +136,8 @@ export const getDashboardStats = async (userId) => {
   }
 };
 
-// P2P Simulation (client-side calculation)
+// --- P2P Simulation (client-side calculation) ---
+
 export const simulateP2P = (simulationData) => {
   try {
     const { operation_type, amount, exchange_rate, fee = 0 } = simulationData;
@@ -165,7 +179,8 @@ export const simulateP2P = (simulationData) => {
   }
 };
 
-// Arbitrage Calculation (client-side calculation)
+// --- Arbitrage Calculation (client-side calculation) ---
+
 export const simulateArbitrage = (arbitrageData) => {
   try {
     const { amount, buy_price, sell_price, buy_fee = 0, sell_fee = 0 } = arbitrageData;
@@ -197,7 +212,8 @@ export const simulateArbitrage = (arbitrageData) => {
   }
 };
 
-// User preferences and data
+// --- User preferences and data ---
+
 export const saveUserPreferences = async (userId, preferences) => {
   try {
     const userRef = doc(db, "users", userId);
