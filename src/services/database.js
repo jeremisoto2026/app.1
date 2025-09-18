@@ -3,7 +3,6 @@ import {
   collection, 
   addDoc, 
   query, 
-  where, 
   orderBy, 
   getDocs, 
   serverTimestamp,
@@ -18,7 +17,6 @@ import { db } from "../firebase";
 
 export const saveOperation = async (userId, operationData) => {
   try {
-    // Save the operation to the user's specific subcollection
     const userOperationsCollection = collection(db, "users", userId, "operations");
     
     const docRef = await addDoc(userOperationsCollection, {
@@ -34,7 +32,6 @@ export const saveOperation = async (userId, operationData) => {
 
 export const deleteOperation = async (userId, operationId) => {
   try {
-    // Get the document reference to the specific operation inside the user's subcollection
     const operationRef = doc(db, "users", userId, "operations", operationId);
     await deleteDoc(operationRef);
     console.log("Operation successfully deleted!");
@@ -46,7 +43,6 @@ export const deleteOperation = async (userId, operationId) => {
 
 export const getUserOperations = async (userId) => {
   try {
-    // Fetch operations from the user's specific subcollection
     const userOperationsCollection = collection(db, "users", userId, "operations");
     const q = query(
       userOperationsCollection,
@@ -83,7 +79,6 @@ export const getDashboardStats = async (userId) => {
       };
     }
 
-    // Calculate totals
     const totalProfitUsdt = operations
       .filter(op => op.crypto === "USDT")
       .reduce((sum, op) => sum + (op.fiat_amount || 0), 0);
@@ -96,7 +91,6 @@ export const getDashboardStats = async (userId) => {
       .filter(op => op.fiat === "USD")
       .reduce((sum, op) => sum + (op.fiat_amount || 0), 0);
 
-    // Find best and worst operations
     const bestOp = operations.reduce((max, op) => 
       (op.fiat_amount || 0) > (max.fiat_amount || 0) ? op : max
     );
@@ -105,7 +99,6 @@ export const getDashboardStats = async (userId) => {
       (op.fiat_amount || 0) < (min.fiat_amount || 0) ? op : min
     );
 
-    // Calculate monthly profit (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
@@ -116,7 +109,6 @@ export const getDashboardStats = async (userId) => {
     
     const monthlyProfit = monthlyOps.reduce((sum, op) => sum + (op.fiat_amount || 0), 0);
 
-    // Success rate calculation
     const successfulOps = operations.filter(op => (op.fiat_amount || 0) > 0).length;
     const successRate = operations.length > 0 ? (successfulOps / operations.length) * 100 : 0;
 
@@ -143,7 +135,6 @@ export const simulateP2P = (simulationData) => {
     const { operation_type, amount, exchange_rate, fee = 0 } = simulationData;
     
     if (operation_type === "Venta") {
-      // Selling crypto, receiving fiat
       const grossFiat = amount * exchange_rate;
       const netFiat = grossFiat - fee;
       
@@ -158,7 +149,6 @@ export const simulateP2P = (simulationData) => {
         exchange_rate
       };
     } else {
-      // Buying crypto with fiat
       const grossCrypto = amount / exchange_rate;
       const netCrypto = grossCrypto - fee;
       
@@ -185,13 +175,9 @@ export const simulateArbitrage = (arbitrageData) => {
   try {
     const { amount, buy_price, sell_price, buy_fee = 0, sell_fee = 0 } = arbitrageData;
     
-    // Calculate investment (buying)
     const investment = amount * buy_price + buy_fee;
-    
-    // Calculate revenue (selling)
     const revenue = amount * sell_price - sell_fee;
     
-    // Calculate profit
     const totalFees = buy_fee + sell_fee;
     const profit = revenue - investment;
     const profitPercentage = investment > 0 ? (profit / investment) * 100 : 0;
