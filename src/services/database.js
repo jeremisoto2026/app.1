@@ -70,7 +70,6 @@ export const getDashboardStats = async (userId) => {
       return {
         total_operations: 0,
         total_profit_usdt: 0.0,
-        total_profit_eur: 0.0,
         total_profit_usd: 0.0,
         best_operation: null,
         worst_operation: null,
@@ -80,7 +79,6 @@ export const getDashboardStats = async (userId) => {
     }
 
     let totalProfitUsdt = 0;
-    let totalProfitEur = 0;
     let bestOperation = null;
     let worstOperation = null;
     let monthlyProfit = 0;
@@ -88,7 +86,7 @@ export const getDashboardStats = async (userId) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Group operations by order ID
+    // Group operations by order ID to calculate profit for each cycle
     const groupedByOrderId = operations.reduce((acc, op) => {
       if (op.order_id) {
         if (!acc[op.order_id]) {
@@ -111,13 +109,10 @@ export const getDashboardStats = async (userId) => {
           
           if (isNaN(cryptoBought) || isNaN(cryptoSold)) continue;
 
-          // Calculate profit as the difference between the crypto amounts
           const profit = cryptoBought - cryptoSold;
           
           if (buyOp.crypto === 'USDT') {
             totalProfitUsdt += profit;
-          } else if (buyOp.fiat === 'EUR') {
-            totalProfitEur += profit;
           }
           
           if (!bestOperation || profit > bestOperation.profit) {
@@ -145,7 +140,6 @@ export const getDashboardStats = async (userId) => {
     return {
       total_operations: totalCalculatedOperations,
       total_profit_usdt: totalProfitUsdt,
-      total_profit_eur: totalProfitEur,
       total_profit_usd: totalProfitUsdt,
       best_operation: bestOperation,
       worst_operation: worstOperation,
