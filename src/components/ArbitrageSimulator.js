@@ -23,9 +23,8 @@ import { Bolt } from "lucide-react";
 
 const ArbitrageSimulator = () => {
   const [formData, setFormData] = useState({
-    buy_exchange: "",
-    sell_exchange: "",
     crypto: "",
+    fiat_currency: "", // Nuevo estado para la moneda Fiat
     amount: "",
     buy_price: "",
     sell_price: "",
@@ -36,8 +35,8 @@ const ArbitrageSimulator = () => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
-  const exchanges = ["Binance", "Bybit", "Bitget", "Coinbase", "Kraken"];
   const cryptos = ["USDT", "ETH", "BTC", "SOL", "BNB"];
+  const fiatCurrencies = ["USD", "EUR", "VES"];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,8 +50,8 @@ const ArbitrageSimulator = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const { amount, buy_price, sell_price } = formData;
-    if (!amount || !buy_price || !sell_price) {
+    const { amount, buy_price, sell_price, crypto } = formData;
+    if (!amount || !buy_price || !sell_price || !crypto) {
       setError("Por favor, completa todos los campos obligatorios.");
       setResult(null);
       return;
@@ -70,9 +69,8 @@ const ArbitrageSimulator = () => {
 
   const handleClear = () => {
     setFormData({
-      buy_exchange: "",
-      sell_exchange: "",
       crypto: "",
+      fiat_currency: "",
       amount: "",
       buy_price: "",
       sell_price: "",
@@ -115,50 +113,6 @@ const ArbitrageSimulator = () => {
           </CardHeader>
           <CardContent className="p-0">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="buy_exchange" className="flex items-center">
-                    Exchange de Compra <span className="text-red-500 ml-1">*</span>
-                  </Label>
-                  <Select
-                    name="buy_exchange"
-                    value={formData.buy_exchange}
-                    onValueChange={(value) => handleSelectChange("buy_exchange", value)}
-                  >
-                    <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white mt-1">
-                      <SelectValue placeholder="Comprar en" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                      {exchanges.map((ex) => (
-                        <SelectItem key={ex} value={ex}>
-                          {ex}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="sell_exchange" className="flex items-center">
-                    Exchange de Venta <span className="text-red-500 ml-1">*</span>
-                  </Label>
-                  <Select
-                    name="sell_exchange"
-                    value={formData.sell_exchange}
-                    onValueChange={(value) => handleSelectChange("sell_exchange", value)}
-                  >
-                    <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white mt-1">
-                      <SelectValue placeholder="Vender en" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                      {exchanges.map((ex) => (
-                        <SelectItem key={ex} value={ex}>
-                          {ex}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -231,6 +185,33 @@ const ArbitrageSimulator = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                  <Label htmlFor="fiat_currency" className="flex items-center">
+                    Moneda Fiat <span className="text-red-500 ml-1">*</span>
+                  </Label>
+                  <Select
+                    name="fiat_currency"
+                    value={formData.fiat_currency}
+                    onValueChange={(value) => handleSelectChange("fiat_currency", value)}
+                  >
+                    <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white mt-1">
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                      {fiatCurrencies.map((f) => (
+                        <SelectItem key={f} value={f}>
+                          {f}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  {/* Este div está vacío para mantener la alineación. */}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <Label htmlFor="buy_fee">Comisión Compra</Label>
                   <Input
                     type="number"
@@ -287,23 +268,23 @@ const ArbitrageSimulator = () => {
               <div>
                 <Label className="block text-sm text-gray-400">Inversión Total</Label>
                 <Badge className="text-lg font-bold bg-gray-700 text-white">
-                  {formatCurrency(result.investment, "USD")}
+                  {formatCurrency(result.investment, formData.fiat_currency || "USD")}
                 </Badge>
               </div>
               <div>
                 <Label className="block text-sm text-gray-400">Ingresos Totales</Label>
                 <Badge className="text-lg font-bold bg-gray-700 text-white">
-                  {formatCurrency(result.revenue, "USD")}
+                  {formatCurrency(result.revenue, formData.fiat_currency || "USD")}
                 </Badge>
               </div>
               <div>
-                <Label className="block text-sm text-gray-400">Ganancia</Label>
+                <Label className="block text-sm text-gray-400">Ganancia Fiat</Label>
                 <Badge
                   className={`text-lg font-bold ${
                     result.profit > 0 ? "bg-green-600" : "bg-red-600"
                   }`}
                 >
-                  {formatCurrency(result.profit, "USD")}
+                  {formatCurrency(result.profit, formData.fiat_currency || "USD")}
                 </Badge>
               </div>
               <div>
