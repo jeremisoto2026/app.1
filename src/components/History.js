@@ -35,28 +35,31 @@ const History = () => {
       return;
     }
 
-    // ✅ ¡Aquí están las nuevas columnas para los cálculos!
     const headers = [
       "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
-      "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Rentabilidad", 
-      "ROI (%)", "Diferencia", "Fecha"
+      "Ganancia_Perdida_Crypto", "Fiat", "Cantidad_Fiat", "Tasa_Cambio", 
+      "Comision", "Rentabilidad_Fiat", "ROI (%)", "Diferencia_Fiat", "Fecha"
     ];
 
-    const rows = data.map(op => [
-      op.order_id || 'N/A',
-      op.operation_type || 'N/A',
-      op.exchange || 'N/A',
-      op.crypto || 'N/A',
-      op.crypto_amount || 0,
-      op.fiat || 'N/A',
-      op.fiat_amount || 0,
-      op.exchange_rate || 0,
-      op.fee || 0,
-      op.profit || 0, // ✅ Valor de rentabilidad
-      op.profit_percentage || 0, // ✅ Valor de ROI
-      (op.revenue - op.investment) || 0, // ✅ Valor de diferencia
-      formatDateForCSV(op.timestamp)
-    ]);
+    const rows = data.map(op => {
+      const cryptoProfit = (op.operation_type === 'Compra') ? op.profit_crypto || 0 : 0; // Se agrega la ganancia en crypto solo para COMPRAS
+      return [
+        op.order_id || 'N/A',
+        op.operation_type || 'N/A', // Se agrega el tipo de operación
+        op.exchange || 'N/A',
+        op.crypto || 'N/A',
+        op.crypto_amount || 0,
+        cryptoProfit,
+        op.fiat || 'N/A',
+        op.fiat_amount || 0,
+        op.exchange_rate || 0,
+        op.fee || 0,
+        op.profit || 0,
+        op.profit_percentage || 0,
+        (op.revenue - op.investment) || 0,
+        formatDateForCSV(op.timestamp)
+      ];
+    });
 
     const csvContent = [
       headers.join(','),
@@ -111,8 +114,6 @@ const History = () => {
       return "N/A";
     }
   };
-
-  // --- El resto del código que ya tenías ---
 
   useEffect(() => {
     const fetchOperations = async () => {
