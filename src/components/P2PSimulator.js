@@ -333,26 +333,26 @@ const P2PSimulator = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Cantidad Enviada:</span>
                         <span className="text-white font-medium">
-                          {result.amount_sent.toFixed(8)} {result.operation_type === 'Venta' ? result.crypto : result.fiat}
+                          {result.amount_sent.toFixed(2)} {result.operation_type === 'Venta' ? result.crypto : result.fiat}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Cantidad Recibida (Bruta):</span>
                         <span className="text-white font-medium">
-                          {result.amount_received.toFixed(8)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
+                          {result.amount_received.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Comisión:</span>
                         <span className="text-red-400 font-medium">
-                          -{result.fee} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
+                          -{result.fee.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
                         </span>
                       </div>
                       <div className="border-t border-gray-600 pt-3">
                         <div className="flex justify-between items-center">
                           <span className="text-white font-medium">Cantidad Neta:</span>
                           <Badge className="bg-green-600 text-lg">
-                            {result.net_amount.toFixed(8)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
+                            {result.net_amount.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
                           </Badge>
                         </div>
                       </div>
