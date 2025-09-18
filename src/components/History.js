@@ -14,6 +14,7 @@ import {
 import { db } from "../firebase";
 import { Loader2 } from "lucide-react";
 import { format } from 'date-fns';
+import { Label } from "./ui/label";
 
 const History = () => {
   const [operations, setOperations] = useState([]);
@@ -28,7 +29,6 @@ const History = () => {
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
-  // Función de exportación a CSV
   const exportToCSV = (data) => {
     if (data.length === 0) {
       alert("No hay datos para exportar.");
@@ -229,7 +229,6 @@ const History = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Título de la sección */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-yellow-400 mb-2">
             Historial de Operaciones 📋
@@ -238,7 +237,6 @@ const History = () => {
             Revisa y gestiona tus transacciones de compra y venta.
           </p>
         </div>
-        {/* Contenido principal */}
         <Card className="p-4 bg-gray-800 border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select onValueChange={(value) => setFilters({ ...filters, crypto: value })}>
@@ -288,7 +286,6 @@ const History = () => {
           </div>
         </Card>
 
-        {/* Apartado de exportación */}
         <Card className="bg-gray-800 border-gray-700 p-4">
           <CardHeader className="p-0 mb-4">
             <CardTitle className="text-yellow-400 flex items-center gap-2">
@@ -323,14 +320,12 @@ const History = () => {
           </div>
         </Card>
 
-        {/* Historial */}
         {loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Sección de Compras */}
             <h2 className="text-2xl font-bold text-green-400 mt-8">
               Compras 🟢
             </h2>
@@ -340,7 +335,6 @@ const History = () => {
 
             <div className="w-full h-px bg-gray-700 my-8"></div>
 
-            {/* Sección de Ventas */}
             <h2 className="text-2xl font-bold text-red-400">
               Ventas 🔴
             </h2>
