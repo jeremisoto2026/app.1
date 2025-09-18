@@ -71,6 +71,7 @@ export const getDashboardStats = async (userId) => {
         total_operations: 0,
         total_profit_usdt: 0.0,
         total_profit_usd: 0.0,
+        total_profit_eur: 0.0,
         best_operation: null,
         worst_operation: null,
         monthly_profit: 0.0,
@@ -80,19 +81,31 @@ export const getDashboardStats = async (userId) => {
 
     let totalCryptoBought = 0;
     let totalCryptoSold = 0;
+    let totalFiatSpent = 0;
+    let totalFiatReceived = 0;
     
     operations.forEach(op => {
       const cryptoAmount = parseFloat(op.crypto_amount);
+      const fiatAmount = parseFloat(op.fiat_amount);
+      
       if (isNaN(cryptoAmount)) return;
 
       if (op.operation_type === 'Venta') {
         totalCryptoSold += cryptoAmount;
+        if (!isNaN(fiatAmount)) {
+          totalFiatReceived += fiatAmount;
+        }
       } else if (op.operation_type === 'Compra') {
         totalCryptoBought += cryptoAmount;
+        if (!isNaN(fiatAmount)) {
+          totalFiatSpent += fiatAmount;
+        }
       }
     });
 
-    const totalProfitUsdt = totalCryptoBought - totalCryptoSold;
+    const totalProfitUsdt = totalCryptoSold - totalCryptoBought;
+    const totalProfitEur = totalFiatReceived - totalFiatSpent;
+
     const totalOperations = operations.length;
     
     const successRate = totalProfitUsdt > 0 ? 100 : 0;
@@ -101,9 +114,10 @@ export const getDashboardStats = async (userId) => {
       total_operations: totalOperations,
       total_profit_usdt: totalProfitUsdt,
       total_profit_usd: totalProfitUsdt,
+      total_profit_eur: totalProfitEur,
       best_operation: null,
       worst_operation: null,
-      monthly_profit: totalProfitUsdt,
+      monthly_profit: 0,
       success_rate: successRate
     };
   } catch (error) {
