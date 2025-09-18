@@ -91,21 +91,28 @@ export const getDashboardStats = async (userId) => {
     operations.forEach(op => {
       let profit = 0;
       
-      const cantidadEnviada = parseFloat(op.amount_sent);
-      const cantidadRecibida = parseFloat(op.amount_received);
+      const cryptoAmount = parseFloat(op.crypto_amount);
+      const fiatAmount = parseFloat(op.fiat_amount);
+      const exchangeRate = parseFloat(op.exchange_rate);
 
-      if (!isNaN(cantidadEnviada) && !isNaN(cantidadRecibida)) {
-        profit = cantidadRecibida - cantidadEnviada;
+      if (isNaN(cryptoAmount) || isNaN(fiatAmount) || isNaN(exchangeRate)) {
+        return;
+      }
+
+      if (op.operation_type === 'Compra') {
+        // En una compra, ganancia es el crypto_amount - fiat_amount/exchange_rate
+        profit = cryptoAmount - (fiatAmount / exchangeRate);
+      } else if (op.operation_type === 'Venta') {
+        // En una venta, ganancia es el fiat_amount/exchange_rate - crypto_amount
+        profit = (fiatAmount / exchangeRate) - cryptoAmount;
       }
       
-      // Sumar ganancias por moneda
       if (op.fiat === 'USD') {
         totalProfitUsdt += profit;
       } else if (op.fiat === 'EUR') {
         totalProfitEur += profit;
       }
 
-      // Actualizar mejor y peor operación
       if (profit !== 0) {
         if (!bestOperation || profit > bestOperation.profit) {
           bestOperation = { ...op, profit: profit };
@@ -115,7 +122,6 @@ export const getDashboardStats = async (userId) => {
         }
       }
       
-      // Calcular ganancia mensual
       const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : new Date(op.timestamp);
       if (opDate >= thirtyDaysAgo) {
         monthlyProfit += profit;
