@@ -80,71 +80,30 @@ export const getDashboardStats = async (userId) => {
 
     let totalCryptoBought = 0;
     let totalCryptoSold = 0;
-    let successfulOperations = 0;
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    operations.forEach(op => {
+      const cryptoAmount = parseFloat(op.crypto_amount);
+      if (isNaN(cryptoAmount)) return;
 
-    // Group operations by order ID to calculate profit for each cycle
-    const groupedByOrderId = operations.reduce((acc, op) => {
-      if (op.order_id) {
-        if (!acc[op.order_id]) {
-          acc[op.order_id] = [];
-        }
-        acc[op.order_id].push(op);
+      if (op.operation_type === 'Venta') {
+        totalCryptoSold += cryptoAmount;
+      } else if (op.operation_type === 'Compra') {
+        totalCryptoBought += cryptoAmount;
       }
-      return acc;
-    }, {});
+    });
 
-    for (const orderId in groupedByOrderId) {
-      const cycleOps = groupedByOrderId[orderId];
-      if (cycleOps.length === 2) {
-        const buyOp = cycleOps.find(op => op.operation_type === 'Compra');
-        const sellOp = cycleOps.find(op => op.operation_type === 'Venta');
-
-        if (buyOp && sellOp) {
-          const cryptoBought = parseFloat(buyOp.crypto_amount);
-          const cryptoSold = parseFloat(sellOp.crypto_amount);
-          
-          if (isNaN(cryptoBought) || isNaN(cryptoSold)) continue;
-
-          // Ganancia Cripto = Cantidad de Cripto vendida - Cantidad de Cripto comprada
-          const profit = cryptoSold - cryptoBought;
-          
-          if (buyOp.crypto === 'USDT' || sellOp.crypto === 'USDT') {
-            totalCryptoSold += cryptoSold;
-            totalCryptoBought += cryptoBought;
-            totalProfitUsdt += profit;
-          }
-          
-          if (!bestOperation || profit > bestOperation.profit) {
-            bestOperation = { ...sellOp, profit: profit };
-          }
-          if (!worstOperation || profit < worstOperation.profit) {
-            worstOperation = { ...buyOp, profit: profit };
-          }
-
-          const opDate = buyOp.timestamp?.toDate ? buyOp.timestamp.toDate() : new Date(buyOp.timestamp);
-          if (opDate >= thirtyDaysAgo) {
-            monthlyProfit += profit;
-          }
-
-          if (profit > 0) {
-            successfulOperations++;
-          }
-        }
-      }
-    }
-
-    const totalCalculatedOperations = Object.keys(groupedByOrderId).length;
-    const successRate = totalCalculatedOperations > 0 ? (successfulOperations / totalCalculatedOperations) * 100 : 0;
+    const totalProfitUsdt = totalCryptoBought - totalCryptoSold;
+    const totalOperations = operations.length;
+    
+    const successRate = totalProfitUsdt > 0 ? 100 : 0;
     
     return {
-      total_operations: totalCalculatedOperations,
+      total_operations: totalOperations,
       total_profit_usdt: totalProfitUsdt,
       total_profit_usd: totalProfitUsdt,
-      best_operation: bestOperation,
-      worst_operation: worstOperation,
-      monthly_profit: monthlyProfit,
+      best_operation: null,
+      worst_operation: null,
+      monthly_profit: totalProfitUsdt,
       success_rate: successRate
     };
   } catch (error) {
