@@ -141,7 +141,7 @@ const Dashboard = ({ refreshTrigger }) => {
                 {formatCurrency(stats.total_profit_usdt, 'USD')}
               </div>
               <p className="text-gray-400 text-xs mt-1">
-                Total en USDT
+                Total en Criptomonedas
               </p>
             </CardContent>
           </Card>
