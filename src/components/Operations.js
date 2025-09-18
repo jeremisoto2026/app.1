@@ -323,7 +323,6 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
               </div>
 
-              {/* ✅ Sección de Previsión */}
               <Card className="bg-gray-900 border-gray-700">
                 <CardHeader>
                   <CardTitle className="text-yellow-400">Previsión de Operación</CardTitle>
@@ -344,7 +343,7 @@ const Operations = ({ onOperationSaved }) => {
                   <div className="flex items-center gap-2">
                     <Label>Comisión:</Label>
                     <Badge variant="outline" className="text-white border-gray-600">
-                      {previewFee.toFixed(2)} {formData.fiat}
+                      {previewFee.toFixed(2)} {formData.crypto}
                     </Badge>
                   </div>
                 </CardContent>
