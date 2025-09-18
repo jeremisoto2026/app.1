@@ -91,24 +91,21 @@ export const getDashboardStats = async (userId) => {
     operations.forEach(op => {
       let profit = 0;
       
-      const amountSent = parseFloat(op.amount_sent);
-      const amountReceived = parseFloat(op.amount_received);
+      const cantidadEnviada = parseFloat(op.amount_sent);
+      const cantidadRecibida = parseFloat(op.amount_received);
 
-      if (isNaN(amountSent) || isNaN(amountReceived)) {
-        return;
+      if (!isNaN(cantidadEnviada) && !isNaN(cantidadRecibida)) {
+        profit = cantidadRecibida - cantidadEnviada;
       }
       
-      // Calculate profit based on the amount received and sent
-      profit = amountReceived - amountSent;
-      
-      // Sum up total profits based on fiat type
+      // Sumar ganancias por moneda
       if (op.fiat === 'USD') {
         totalProfitUsdt += profit;
       } else if (op.fiat === 'EUR') {
         totalProfitEur += profit;
       }
 
-      // Update best and worst operations based on profit
+      // Actualizar mejor y peor operación
       if (profit !== 0) {
         if (!bestOperation || profit > bestOperation.profit) {
           bestOperation = { ...op, profit: profit };
@@ -118,7 +115,7 @@ export const getDashboardStats = async (userId) => {
         }
       }
       
-      // Calculate monthly profit
+      // Calcular ganancia mensual
       const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : new Date(op.timestamp);
       if (opDate >= thirtyDaysAgo) {
         monthlyProfit += profit;
