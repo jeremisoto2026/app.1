@@ -8,7 +8,6 @@ const DashboardScreen = () => {
   const [stats, setStats] = useState({
     total_operations: 0,
     total_profit_usdt: 0,
-    total_profit_eur: 0,
     best_operation: null,
     worst_operation: null,
     monthly_profit: 0,
@@ -57,13 +56,6 @@ const DashboardScreen = () => {
         <Text style={styles.cardSubtitle}>Total en Criptomonedas</Text>
       </View>
 
-      {/* Tarjeta de Ganancia EUR */}
-      <View style={[styles.card, styles.blueCard]}>
-        <Text style={styles.cardTitle}>Ganancia EUR</Text>
-        <Text style={styles.cardValue}>€{stats.total_profit_eur.toFixed(2)}</Text>
-        <Text style={styles.cardSubtitle}>Total en EUR</Text>
-      </View>
-
       {/* Tarjeta de Tasa de Éxito */}
       <View style={[styles.card, styles.purpleCard]}>
         <Text style={styles.cardTitle}>Tasa de Éxito</Text>
@@ -71,7 +63,6 @@ const DashboardScreen = () => {
         <Text style={styles.cardSubtitle}>Operaciones exitosas</Text>
       </View>
       
-      {/* Puedes agregar más tarjetas para best_operation, worst_operation, etc. */}
     </ScrollView>
   );
 };
@@ -117,11 +108,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2e3d36', // Un verde oscuro
     borderLeftWidth: 5,
     borderLeftColor: '#4CAF50',
-  },
-  blueCard: {
-    backgroundColor: '#2e363d', // Un azul oscuro
-    borderLeftWidth: 5,
-    borderLeftColor: '#2196F3',
   },
   purpleCard: {
     backgroundColor: '#352e3d', // Un púrpura oscuro
