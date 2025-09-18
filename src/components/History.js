@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, deleteDoc, doc, where } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -30,13 +30,17 @@ const History = () => {
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
-  // Función que obtiene las operaciones de la base de datos
+  // 🚨 Función que obtiene las operaciones del usuario actual
   const fetchOperations = async () => {
     try {
       setLoading(true);
-      // Solo obtenemos los datos si hay un usuario logueado
       if (user) {
-        const q = query(collection(db, "operations"), orderBy("timestamp", "desc"));
+        // ✅ FILTRAR POR EL ID DEL USUARIO
+        const q = query(
+          collection(db, "operations"), 
+          where("userId", "==", user.uid),
+          orderBy("timestamp", "desc")
+        );
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -51,24 +55,20 @@ const History = () => {
     }
   };
 
-  // 🚨 Usar useEffect para escuchar el estado de autenticación
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      console.log("Estado de autenticación cambiado. Usuario:", currentUser);
       if (currentUser) {
         fetchOperations();
       } else {
         setLoading(false);
-        setOperations([]); // Limpiamos las operaciones si el usuario se desloguea
+        setOperations([]);
       }
     });
 
-    // Limpiar el listener cuando el componente se desmonte
     return () => unsubscribe();
-  }, []);
+  }, [user]); // 🚨 Asegúrate de que este useEffect se dispare cuando el usuario cambie
 
-  // Función para eliminar una orden
   const handleDelete = async (id) => {
     if (!user) {
       alert("Debes iniciar sesión para eliminar operaciones.");
@@ -78,11 +78,9 @@ const History = () => {
     if (window.confirm("¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.")) {
       try {
         await deleteDoc(doc(db, "operations", id));
-        // Si la eliminación en la base de datos es exitosa, la eliminamos de la lista local
         setOperations(operations.filter((op) => op.id !== id));
         alert("Operación eliminada con éxito.");
       } catch (error) {
-        // En caso de error, mostramos el mensaje de Firebase
         console.error("Error al eliminar la operación en Firebase:", error);
         alert(`Error al eliminar: ${error.message}.`);
       }
