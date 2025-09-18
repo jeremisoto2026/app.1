@@ -11,8 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { db } from "../firebase"; // asegúrate de que la ruta es correcta
+import { db } from "../firebase";
 import { Loader2 } from "lucide-react";
+import { format, parseISO } from 'date-fns';
 
 const History = () => {
   const [operations, setOperations] = useState([]);
@@ -23,6 +24,92 @@ const History = () => {
     exchange: "",
     search: "",
   });
+
+  // Nuevo estado para la exportación por fecha
+  const [exportStartDate, setExportStartDate] = useState('');
+  const [exportEndDate, setExportEndDate] = useState('');
+
+  // Función de exportación a CSV
+  const exportToCSV = (data) => {
+    if (data.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    const headers = [
+      "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
+      "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Fecha"
+    ];
+
+    const rows = data.map(op => [
+      op.order_id || 'N/A',
+      op.operation_type || 'N/A',
+      op.exchange || 'N/A',
+      op.crypto || 'N/A',
+      op.crypto_amount || 0,
+      op.fiat || 'N/A',
+      op.fiat_amount || 0,
+      op.exchange_rate || 0,
+      op.fee || 0,
+      formatDateForCSV(op.timestamp)
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(e => e.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleExport = () => {
+    let dataToExport = [...operations];
+    
+    // Filtra por rango de fechas si están definidas
+    if (exportStartDate && exportEndDate) {
+      const start = new Date(exportStartDate);
+      const end = new Date(exportEndDate);
+      
+      dataToExport = dataToExport.filter(op => {
+        const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : (op.timestamp ? new Date(op.timestamp.seconds * 1000) : null);
+        if (!opDate) return false;
+        return opDate >= start && opDate <= end;
+      });
+    }
+
+    exportToCSV(dataToExport);
+  };
+  
+  const formatDateForCSV = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    try {
+      let date;
+      if (timestamp.toDate) {
+        date = timestamp.toDate();
+      } else if (timestamp instanceof Date) {
+        date = timestamp;
+      } else {
+        date = new Date(timestamp.seconds * 1000);
+      }
+      if (isNaN(date)) return 'N/A';
+      return format(date, 'yyyy-MM-dd HH:mm:ss');
+    } catch (e) {
+      console.error("Error formateando fecha para CSV:", e, timestamp);
+      return "N/A";
+    }
+  };
+
+  // --- El resto del código que ya tenías ---
 
   useEffect(() => {
     const fetchOperations = async () => {
@@ -147,6 +234,41 @@ const History = () => {
             placeholder="Buscar..."
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           />
+        </div>
+      </Card>
+
+      {/* Nuevo: Apartado de exportación */}
+      <Card className="bg-gray-800 border-gray-700 p-4">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="text-yellow-400 flex items-center gap-2">
+            📂 Exportar Historial
+          </CardTitle>
+        </CardHeader>
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="flex-1 w-full md:w-auto">
+            <label className="block text-gray-400 text-sm mb-1">Fecha de inicio</label>
+            <Input
+              type="date"
+              value={exportStartDate}
+              onChange={(e) => setExportStartDate(e.target.value)}
+              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+            />
+          </div>
+          <div className="flex-1 w-full md:w-auto">
+            <label className="block text-gray-400 text-sm mb-1">Fecha de fin</label>
+            <Input
+              type="date"
+              value={exportEndDate}
+              onChange={(e) => setExportEndDate(e.target.value)}
+              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+            />
+          </div>
+          <Button
+            onClick={handleExport}
+            className="mt-6 md:mt-auto bg-green-600 hover:bg-green-700 text-white"
+          >
+            Exportar CSV
+          </Button>
         </div>
       </Card>
 
