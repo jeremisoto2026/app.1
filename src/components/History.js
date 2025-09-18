@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, deleteDoc, doc, where } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -11,11 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { db, auth } from "../firebase";
-import { Loader2, Trash2 } from "lucide-react";
+import { db } from "../firebase";
+import { Loader2 } from "lucide-react";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
-import { onAuthStateChanged } from "firebase/auth";
 
 const History = () => {
   const [operations, setOperations] = useState([]);
@@ -26,66 +25,9 @@ const History = () => {
     exchange: "",
     search: "",
   });
-  const [user, setUser] = useState(null);
+
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
-
-  // 🚨 Función que obtiene las operaciones del usuario actual
-  const fetchOperations = async () => {
-    try {
-      setLoading(true);
-      if (user) {
-        // ✅ FILTRAR POR EL ID DEL USUARIO
-        const q = query(
-          collection(db, "operations"), 
-          where("userId", "==", user.uid),
-          orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setOperations(data);
-      }
-    } catch (error) {
-      console.error("Error fetching operations:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        fetchOperations();
-      } else {
-        setLoading(false);
-        setOperations([]);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [user]); // 🚨 Asegúrate de que este useEffect se dispare cuando el usuario cambie
-
-  const handleDelete = async (id) => {
-    if (!user) {
-      alert("Debes iniciar sesión para eliminar operaciones.");
-      return;
-    }
-
-    if (window.confirm("¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.")) {
-      try {
-        await deleteDoc(doc(db, "operations", id));
-        setOperations(operations.filter((op) => op.id !== id));
-        alert("Operación eliminada con éxito.");
-      } catch (error) {
-        console.error("Error al eliminar la operación en Firebase:", error);
-        alert(`Error al eliminar: ${error.message}.`);
-      }
-    }
-  };
 
   const exportToCSV = (data) => {
     if (data.length === 0) {
@@ -173,6 +115,26 @@ const History = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchOperations = async () => {
+      try {
+        const q = query(collection(db, "operations"), orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setOperations(data);
+      } catch (error) {
+        console.error("Error fetching operations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOperations();
+  }, []);
+
   const formatCurrency = (value, currency = "USD") => {
     try {
       return new Intl.NumberFormat("en-US", {
@@ -205,14 +167,12 @@ const History = () => {
     if (filters.exchange && op.exchange !== filters.exchange) filtered = false;
 
     if (filters.search) {
-      const searchLower = filters.search.toLowerCase().trim();
-      const orderIdToSearch = String(op.order_id || '').toLowerCase();
-      
+      const searchLower = filters.search.toLowerCase();
       filtered =
-        orderIdToSearch.includes(searchLower) ||
-        String(op.crypto)?.toLowerCase().includes(searchLower) ||
-        String(op.fiat)?.toLowerCase().includes(searchLower) ||
-        String(op.exchange)?.toLowerCase().includes(searchLower);
+        op.order_id?.toLowerCase().includes(searchLower) ||
+        op.crypto?.toLowerCase().includes(searchLower) ||
+        op.fiat?.toLowerCase().includes(searchLower) ||
+        op.exchange?.toLowerCase().includes(searchLower);
     }
 
     return filtered;
@@ -232,25 +192,11 @@ const History = () => {
         className="bg-gray-900 border border-gray-700"
       >
         <CardHeader>
-          <CardTitle className="flex justify-between items-center">
-            <div className="flex-1">
-              <span className="text-yellow-400">
-                Orden #{operation.order_id && operation.order_id.length > 0 ? operation.order_id : "N/A"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className={operation.operation_type === 'Compra' ? "bg-green-900/20 text-green-400 border border-green-600" : "bg-red-900/20 text-red-400 border border-red-600"}>
-                {operation.operation_type || "N/A"}
-              </Badge>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => handleDelete(operation.id)}
-                className="hover:bg-red-900/20 text-red-400"
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
+          <CardTitle className="flex justify-between">
+            <span>Orden #{operation.order_id || "N/A"}</span>
+            <Badge className={operation.operation_type === 'Compra' ? "bg-green-900/20 text-green-400 border border-green-600" : "bg-red-900/20 text-red-400 border border-red-600"}>
+              {operation.operation_type || "N/A"}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-gray-300">
@@ -270,13 +216,7 @@ const History = () => {
             <div>
               <strong>Exchange:</strong> {operation.exchange || "N/A"}
             </div>
-            <div className="md:col-span-1">
-              <strong>Tasa de cambio:</strong>
-              <Badge variant="outline" className="ml-2 text-gray-400 border-gray-600">
-                {operation.exchange_rate?.toFixed(2) ?? "0.00"}
-              </Badge>
-            </div>
-            <div className="md:col-span-2">
+            <div>
               <strong>Fecha:</strong>{" "}
               {operation.timestamp ? formatDate(operation.timestamp) : "N/A"}
             </div>
