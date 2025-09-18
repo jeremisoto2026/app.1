@@ -28,7 +28,6 @@ const History = () => {
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
 
-  // Función de exportación a CSV
   const exportToCSV = (data) => {
     if (data.length === 0) {
       alert("No hay datos para exportar.");
@@ -37,29 +36,21 @@ const History = () => {
 
     const headers = [
       "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
-      "Ganancia_Perdida_Crypto", "Fiat", "Cantidad_Fiat", "Tasa_Cambio", 
-      "Comision", "Rentabilidad_Fiat", "ROI (%)", "Diferencia_Fiat", "Fecha"
+      "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Fecha"
     ];
 
-    const rows = data.map(op => {
-      const cryptoProfit = (op.operation_type === 'Compra') ? op.profit_crypto || 0 : 0; // Se agrega la ganancia en crypto solo para COMPRAS
-      return [
-        op.order_id || 'N/A',
-        op.operation_type || 'N/A', // Se agrega el tipo de operación
-        op.exchange || 'N/A',
-        op.crypto || 'N/A',
-        op.crypto_amount || 0,
-        cryptoProfit,
-        op.fiat || 'N/A',
-        op.fiat_amount || 0,
-        op.exchange_rate || 0,
-        op.fee || 0,
-        op.profit || 0,
-        op.profit_percentage || 0,
-        (op.revenue - op.investment) || 0,
-        formatDateForCSV(op.timestamp)
-      ];
-    });
+    const rows = data.map(op => [
+      op.order_id || 'N/A',
+      op.operation_type || 'N/A',
+      op.exchange || 'N/A',
+      op.crypto || 'N/A',
+      op.crypto_amount || 0,
+      op.fiat || 'N/A',
+      op.fiat_amount || 0,
+      op.exchange_rate || 0,
+      op.fee || 0,
+      formatDateForCSV(op.timestamp)
+    ]);
 
     const csvContent = [
       headers.join(','),
@@ -155,18 +146,6 @@ const History = () => {
     }
   };
 
-  const getProfitabilityBadgeColor = (profit) => {
-    if (profit > 0) return "bg-green-900/20 text-green-400 border border-green-600";
-    if (profit < 0) return "bg-red-900/20 text-red-400 border border-red-600";
-    return "bg-gray-900/20 text-gray-400 border border-gray-600";
-  };
-
-  const getProfitabilityColor = (profit) => {
-    if (profit > 0) return "text-green-400";
-    if (profit < 0) return "text-red-400";
-    return "text-gray-400";
-  };
-
   const getUniqueValues = (field) => {
     return [...new Set(operations.map((op) => op[field]).filter(Boolean))];
   };
@@ -189,6 +168,54 @@ const History = () => {
 
     return filtered;
   });
+
+  const buyOperations = filteredOperations.filter(op => op.operation_type === 'Compra');
+  const sellOperations = filteredOperations.filter(op => op.operation_type === 'Venta');
+
+  const renderOperations = (ops) => {
+    if (ops.length === 0) {
+      return <p className="text-center text-gray-400">No hay operaciones de {ops[0]?.operation_type || 'este tipo'} registradas.</p>;
+    }
+    
+    return ops.map((operation, index) => (
+      <Card
+        key={operation.id || index}
+        className="bg-gray-900 border border-gray-700"
+      >
+        <CardHeader>
+          <CardTitle className="flex justify-between">
+            <span>Orden #{operation.order_id || "N/A"}</span>
+            <Badge className={operation.operation_type === 'Compra' ? "bg-green-900/20 text-green-400 border border-green-600" : "bg-red-900/20 text-red-400 border border-red-600"}>
+              {operation.operation_type || "N/A"}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-gray-300">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <strong>Cripto:</strong> {operation.crypto || "N/A"}
+              <Badge variant="outline" className="ml-2 text-gray-400 border-gray-600">
+                {operation.crypto_amount?.toFixed(6) ?? "0.000000"}
+              </Badge>
+            </div>
+            <div>
+              <strong>Fiat:</strong> {operation.fiat || "N/A"}
+              <Badge variant="outline" className="ml-2 text-gray-400 border-gray-600">
+                {formatCurrency(operation.fiat_amount, operation.fiat)}
+              </Badge>
+            </div>
+            <div>
+              <strong>Exchange:</strong> {operation.exchange || "N/A"}
+            </div>
+            <div>
+              <strong>Fecha:</strong>{" "}
+              {operation.timestamp ? formatDate(operation.timestamp) : "N/A"}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    ));
+  };
 
   return (
     <div className="space-y-6">
@@ -241,7 +268,7 @@ const History = () => {
         </div>
       </Card>
 
-      {/* Nuevo: Apartado de exportación */}
+      {/* Apartado de exportación */}
       <Card className="bg-gray-800 border-gray-700 p-4">
         <CardHeader className="p-0 mb-4">
           <CardTitle className="text-yellow-400 flex items-center gap-2">
@@ -250,7 +277,7 @@ const History = () => {
         </CardHeader>
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="flex-1 w-full md:w-auto">
-            <label className="block text-gray-400 text-sm mb-1">Fecha de inicio</label>
+            <Label className="block text-gray-400 text-sm mb-1">Fecha de inicio</Label>
             <Input
               type="date"
               value={exportStartDate}
@@ -259,7 +286,7 @@ const History = () => {
             />
           </div>
           <div className="flex-1 w-full md:w-auto">
-            <label className="block text-gray-400 text-sm mb-1">Fecha de fin</label>
+            <Label className="block text-gray-400 text-sm mb-1">Fecha de fin</Label>
             <Input
               type="date"
               value={exportEndDate}
@@ -282,81 +309,24 @@ const History = () => {
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
       ) : (
-        <div className="grid gap-4">
-          {filteredOperations.length > 0 ? (
-            filteredOperations.map((operation, index) => (
-              <Card
-                key={operation.id || index}
-                className="bg-gray-900 border border-gray-700"
-              >
-                <CardHeader>
-                  <CardTitle className="flex justify-between">
-                    <span>Orden #{operation.order_id || "N/A"}</span>
-                    <Badge className={getProfitabilityBadgeColor(operation.profit)}>
-                      {operation.profit?.toFixed(2) ?? "0.00"}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-gray-300">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <strong>Cripto:</strong> {operation.crypto || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Fiat:</strong> {operation.fiat || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Exchange:</strong> {operation.exchange || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Fecha:</strong>{" "}
-                      {operation.timestamp ? formatDate(operation.timestamp) : "N/A"}
-                    </div>
-                  </div>
+        <div className="space-y-6">
+          {/* Sección de Compras */}
+          <h2 className="text-2xl font-bold text-green-400 mt-8">
+            Compras 🟢
+          </h2>
+          <div className="grid gap-4">
+            {renderOperations(buyOperations)}
+          </div>
 
-                  {/* Detalles de rentabilidad */}
-                  <div className="grid grid-cols-2 gap-4 text-sm mt-3">
-                    <div>
-                      <span className="text-gray-400">ROI:</span>
-                      <span
-                        className={`ml-2 font-medium ${getProfitabilityColor(
-                          operation.profit
-                        )}`}
-                      >
-                        {operation.profit_percentage?.toFixed(2) ?? "0.00"}%
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Diferencia:</span>
-                      <span
-                        className={`ml-2 font-medium ${getProfitabilityColor(
-                          operation.profit
-                        )}`}
-                      >
-                        {(operation.revenue - operation.investment)?.toFixed(2) ??
-                          "0.00"}
-                      </span>
-                    </div>
-                  </div>
+          <div className="w-full h-px bg-gray-700 my-8"></div>
 
-                  {/* Monto fiat */}
-                  <div className="text-sm mt-2">
-                    <span className="text-gray-400">Monto Fiat:</span>
-                    <span className="text-white ml-2 font-medium">
-                      {formatCurrency(
-                        operation.fiat_amount || 0,
-                        operation.fiat && operation.fiat.length === 3
-                          ? operation.fiat
-                          : "USD"
-                      )}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <p className="text-center text-gray-400">No hay operaciones registradas</p>
-          )}
+          {/* Sección de Ventas */}
+          <h2 className="text-2xl font-bold text-red-400">
+            Ventas 🔴
+          </h2>
+          <div className="grid gap-4">
+            {renderOperations(sellOperations)}
+          </div>
         </div>
       )}
     </div>
