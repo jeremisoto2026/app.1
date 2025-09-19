@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 
-const OWNER_UID = "TU_UID_DE_FIREBASE"; // ⚡ Reemplaza con tu UID
+const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0"; // ⚡ Reemplaza con tu UID
 
 const Profile = () => {
   const { user } = useAuth();
