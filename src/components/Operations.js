@@ -28,7 +28,7 @@ const Operations = ({ onOperationSaved }) => {
 
   const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin'];
   const operationTypes = ['Venta', 'Compra'];
-  const cryptos = ['USDT', 'BTC', 'ETH', 'BNB'];
+  const cryptos = ['USDT', 'BTC', 'ETH', 'BNB', 'USDC'];
   const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
 
   const handleInputChange = (field, value) => {
