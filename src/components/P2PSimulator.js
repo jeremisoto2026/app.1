@@ -130,7 +130,7 @@ const P2PSimulator = () => {
                   {/* Crypto */}
                   <div className="space-y-2">
                     <Label htmlFor="crypto" className="text-white">
-                      Criptomoneda *
+                      Criptomoneda <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.crypto} onValueChange={(value) => handleInputChange('crypto', value)}>
                       <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
@@ -149,7 +149,7 @@ const P2PSimulator = () => {
                   {/* Fiat */}
                   <div className="space-y-2">
                     <Label htmlFor="fiat" className="text-white">
-                      Moneda Fiat *
+                      Moneda Fiat <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)}>
                       <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
@@ -170,7 +170,7 @@ const P2PSimulator = () => {
                   {/* Exchange */}
                   <div className="space-y-2">
                     <Label htmlFor="exchange" className="text-white">
-                      Exchange *
+                      Exchange <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.exchange} onValueChange={(value) => handleInputChange('exchange', value)}>
                       <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
@@ -189,7 +189,7 @@ const P2PSimulator = () => {
                   {/* Operation Type */}
                   <div className="space-y-2">
                     <Label htmlFor="operation_type" className="text-white">
-                      Tipo *
+                      Tipo <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)}>
                       <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
@@ -209,7 +209,7 @@ const P2PSimulator = () => {
                 {/* Amount */}
                 <div className="space-y-2">
                   <Label htmlFor="amount" className="text-white">
-                    Cantidad *
+                    Cantidad <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="amount"
@@ -225,7 +225,7 @@ const P2PSimulator = () => {
                 {/* Exchange Rate */}
                 <div className="space-y-2">
                   <Label htmlFor="exchange_rate" className="text-white">
-                    Tasa de Cambio *
+                    Tasa de Cambio <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="exchange_rate"
