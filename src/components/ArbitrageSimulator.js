@@ -70,7 +70,7 @@ const ArbitrageSimulator = () => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
-  const cryptos = ["USDT", "ETH", "BTC", "SOL", "BNB"];
+  const cryptos = ["USDT", "USDC", "ETH", "BTC", "SOL", "BNB"];
   const fiatCurrencies = ["USD", "EUR", "VES", "COP", "MXN", "CLP", "ARS", "BRL"];
 
   const handleChange = (e) => {
