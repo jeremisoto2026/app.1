@@ -2,9 +2,12 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [totalOperations, setTotalOperations] = useState(0);
   const [totalProfitUsdt, setTotalProfitUsdt] = useState(0);
   const [successRate, setSuccessRate] = useState(0);
@@ -37,7 +40,7 @@ const Dashboard = () => {
           let totalCryptoSold = 0;
           let monthlyCryptoBought = 0;
           let monthlyCryptoSold = 0;
-          
+
           const last30Days = new Date();
           last30Days.setDate(last30Days.getDate() - 30);
 
@@ -59,11 +62,8 @@ const Dashboard = () => {
             }
           });
 
-          // Lógica de cálculo corregida: Compra total - Venta total
           const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
           const monthlyPerformanceCalc = monthlyCryptoBought - monthlyCryptoSold;
-          
-          // La tasa de éxito es 100% si la ganancia total es positiva, de lo contrario 0%
           const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
 
           setTotalProfitUsdt(totalProfitUsdtCalc);
@@ -113,8 +113,17 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-4 text-white">
-      <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
+    <div className="p-4 text-white min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
+      {/* Header con botón de perfil */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Dashboard</h2>
+        <button
+          onClick={() => navigate("/profile")}
+          className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center hover:bg-yellow-600 transition"
+        >
+          👤
+        </button>
+      </div>
 
       {/* Total Operaciones */}
       <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
