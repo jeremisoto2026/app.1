@@ -8,6 +8,7 @@ import P2PSimulator from './components/P2PSimulator';
 import ArbitrageSimulator from './components/ArbitrageSimulator';
 import Operations from './components/Operations';
 import History from './components/History';
+import Profile from './components/Profile';   // 👈 nuevo
 import './App.css';
 
 const MainApp = () => {
@@ -30,7 +31,7 @@ const MainApp = () => {
 
   const handleOperationSaved = () => {
     setRefreshTrigger(prev => prev + 1);
-    setActiveTab('dashboard'); // Navigate to dashboard after saving
+    setActiveTab('dashboard'); // Navegar al dashboard después de guardar
   };
 
   const renderContent = () => {
@@ -76,7 +77,7 @@ const MainApp = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard refreshTrigger={refreshTrigger} />;
+        return <Dashboard refreshTrigger={refreshTrigger} onOpenProfile={() => setActiveTab('profile')} />; 
       case 'p2p':
         return <P2PSimulator />;
       case 'arbitrage':
@@ -85,6 +86,8 @@ const MainApp = () => {
         return <Operations onOperationSaved={handleOperationSaved} />;
       case 'history':
         return <History refreshTrigger={refreshTrigger} />;
+      case 'profile':                                   // 👈 nuevo tab
+        return <Profile />;
       default:
         return <Dashboard refreshTrigger={refreshTrigger} />;
     }
