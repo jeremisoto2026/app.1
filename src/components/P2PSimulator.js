@@ -22,7 +22,7 @@ const P2PSimulator = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const cryptos = ['USDT', 'BTC', 'ETH', 'BNB'];
+  const cryptos = ['USDT', 'BTC', 'ETH', 'BNB', 'USDC'];
   const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
   // const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin']; <--- Eliminado
   const operationTypes = ['Venta', 'Compra'];
