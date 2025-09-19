@@ -2,12 +2,9 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 
-const Dashboard = () => {
+const Dashboard = ({ onOpenProfile }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-
   const [totalOperations, setTotalOperations] = useState(0);
   const [totalProfitUsdt, setTotalProfitUsdt] = useState(0);
   const [successRate, setSuccessRate] = useState(0);
@@ -63,7 +60,9 @@ const Dashboard = () => {
           });
 
           const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
-          const monthlyPerformanceCalc = monthlyCryptoBought - monthlyCryptoSold;
+          const monthlyPerformanceCalc =
+            monthlyCryptoBought - monthlyCryptoSold;
+
           const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
 
           setTotalProfitUsdt(totalProfitUsdtCalc);
@@ -113,17 +112,28 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-4 text-white min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
-      {/* Header con botón de perfil */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Dashboard</h2>
+    <div className="p-4 text-white relative min-h-screen">
+      {/* Botón perfil arriba a la derecha */}
+      <div className="absolute top-4 right-4">
         <button
-          onClick={() => navigate("/profile")}
-          className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center hover:bg-yellow-600 transition"
+          onClick={onOpenProfile}
+          className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-400 hover:scale-105 transition"
         >
-          👤
+          {user?.photoURL ? (
+            <img
+              src={user.photoURL}
+              alt="Foto de perfil"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-700 flex items-center justify-center text-yellow-400 font-bold">
+              {user?.email ? user.email.charAt(0).toUpperCase() : "U"}
+            </div>
+          )}
         </button>
       </div>
+
+      <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
 
       {/* Total Operaciones */}
       <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
