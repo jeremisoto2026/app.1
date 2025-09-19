@@ -12,7 +12,7 @@ const P2PSimulator = () => {
   const [formData, setFormData] = useState({
     crypto: '',
     fiat: '',
-    exchange: '',
+    // exchange: '', <--- Eliminado
     operation_type: '',
     amount: '',
     exchange_rate: '',
@@ -24,7 +24,7 @@ const P2PSimulator = () => {
 
   const cryptos = ['USDT', 'BTC', 'ETH', 'BNB'];
   const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
-  const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin'];
+  // const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin']; <--- Eliminado
   const operationTypes = ['Venta', 'Compra'];
 
   const handleInputChange = (field, value) => {
@@ -41,7 +41,7 @@ const P2PSimulator = () => {
     e.preventDefault();
     
     // Validation
-    const requiredFields = ['crypto', 'fiat', 'exchange', 'operation_type', 'amount', 'exchange_rate'];
+    const requiredFields = ['crypto', 'fiat', 'operation_type', 'amount', 'exchange_rate'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
@@ -65,7 +65,7 @@ const P2PSimulator = () => {
       const simulationData = {
         crypto: formData.crypto,
         fiat: formData.fiat,
-        exchange: formData.exchange,
+        // exchange: formData.exchange, <--- Eliminado
         operation_type: formData.operation_type,
         amount: amount,
         exchange_rate: exchangeRate,
@@ -87,7 +87,7 @@ const P2PSimulator = () => {
     setFormData({
       crypto: '',
       fiat: '',
-      exchange: '',
+      // exchange: '', <--- Eliminado
       operation_type: '',
       amount: '',
       exchange_rate: '',
@@ -167,25 +167,6 @@ const P2PSimulator = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Exchange */}
-                  <div className="space-y-2">
-                    <Label htmlFor="exchange" className="text-white">
-                      Exchange <span className="text-red-500">*</span>
-                    </Label>
-                    <Select value={formData.exchange} onValueChange={(value) => handleInputChange('exchange', value)}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                        <SelectValue placeholder="Exchange" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        {exchanges.map(exchange => (
-                          <SelectItem key={exchange} value={exchange} className="text-white hover:bg-gray-600">
-                            {exchange}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   {/* Operation Type */}
                   <div className="space-y-2">
                     <Label htmlFor="operation_type" className="text-white">
