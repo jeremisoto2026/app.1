@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../services/Database";
+import { db } from "../services/database";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 
 const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0";
