@@ -1,4 +1,4 @@
-// AuthContext mejorado basado en JJXCAPITAL-main
+// AuthContext.js
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   GoogleAuthProvider,
@@ -11,8 +11,10 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebase";
 
+// Creamos el contexto
 const AuthContext = createContext();
 
+// Hook para usar el contexto
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -21,6 +23,7 @@ export const useAuth = () => {
   return context;
 };
 
+// Provider
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,4 +93,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-export { AuthContext, AuthProvider };
+
+// 👇 Exportamos por defecto
+export default AuthContext;
