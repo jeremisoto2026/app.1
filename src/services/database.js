@@ -1,92 +1,159 @@
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  doc, 
+// src/services/database.js
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  doc,
   getDoc,
-  addDoc,    // 👈 para guardar operaciones
-  serverTimestamp // 👈 para fecha de creación
+  setDoc,
+  serverTimestamp,
+  orderBy
 } from "firebase/firestore";
-import { db } from "../firebase"; // Asegúrate de que esta ruta es correcta
+import { db } from "../firebase";
 
-// Guardar una operación
-export const saveOperation = async (userId, operationData) => {
-  try {
-    await addDoc(collection(db, "operations"), {
-      ...operationData,
-      userId,
-      createdAt: serverTimestamp() // 👈 fecha automática
-    });
-  } catch (error) {
-    console.error("Error guardando la operación:", error);
-    throw error;
-  }
-};
+const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0";
 
-// Obtener datos del usuario actual
-export const getUserData = async () => {
+// --- Usuarios / Perfil ---
+
+/**
+ * Crea o asegura el documento de usuario en /users/{uid}
+ * userObj = { uid, email, displayName, photoURL }
+ */
+export const ensureUserDoc = async (userObj) => {
   try {
-    const userId = "user-123"; // 🔹 Reemplaza con el UID real de Firebase Auth
-    const userDoc = await getDoc(doc(db, "users", userId));
-    
-    if (userDoc.exists()) {
-      return { id: userDoc.id, ...userDoc.data() };
+    const userRef = doc(db, "users", userObj.uid);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      const nameParts = (userObj.displayName || "").trim().split(" ");
+      const nombre = nameParts[0] || "";
+      const apellido = nameParts.slice(1).join(" ") || "";
+
+      const plan = userObj.uid === OWNER_UID ? "exclusive" : "free";
+
+      const data = {
+        uid: userObj.uid,
+        email: userObj.email || "",
+        nombre,
+        apellido,
+        photoURL: userObj.photoURL || "",
+        plan,
+        createdAt: serverTimestamp(),
+        limiteOperaciones: plan === "free" ? 200 : null,
+        limiteExportaciones: plan === "free" ? 40 : null
+      };
+
+      await setDoc(userRef, data);
+      return data;
     } else {
-      throw new Error("Usuario no encontrado");
+      return snap.data();
     }
   } catch (error) {
-    console.error("Error obteniendo datos del usuario:", error);
+    console.error("ensureUserDoc error:", error);
     throw error;
   }
 };
 
-// Obtener operaciones del usuario
+export const getUserProfile = async (uid) => {
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    return snap.exists() ? { uid: snap.id, ...snap.data() } : null;
+  } catch (error) {
+    console.error("getUserProfile error:", error);
+    throw error;
+  }
+};
+
+// --- Operaciones ---
+
+/**
+ * Guarda operación en colección raíz "operations" con userId y createdAt.
+ * Verifica límite si el usuario es 'free' (200 ops) — owner y premium no limitan.
+ */
+export const saveOperation = async (userId, operationData) => {
+  try {
+    // Obtener plan del usuario
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+    const plan = userSnap.exists() ? (userSnap.data().plan || "free") : "free";
+
+    // Si es free y no es owner, contar operaciones y validar límite
+    if (plan === "free" && userId !== OWNER_UID) {
+      const qCount = query(
+        collection(db, "operations"),
+        where("userId", "==", userId)
+      );
+      const snapshot = await getDocs(qCount);
+      if (snapshot.size >= 200) {
+        const err = new Error("Límite alcanzado: plan Gratuito permite máximo 200 operaciones.");
+        err.code = "LIMIT_REACHED";
+        throw err;
+      }
+    }
+
+    const docRef = await addDoc(collection(db, "operations"), {
+      ...operationData,
+      userId,
+      createdAt: serverTimestamp()
+    });
+
+    return { id: docRef.id, ...operationData };
+  } catch (error) {
+    console.error("saveOperation error:", error);
+    throw error;
+  }
+};
+
 export const getUserOperations = async (userId) => {
   try {
     const q = query(
       collection(db, "operations"),
-      where("userId", "==", userId)
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
     );
-    
-    const querySnapshot = await getDocs(q);
-    const operations = [];
-    
-    querySnapshot.forEach((doc) => {
-      operations.push({ id: doc.id, ...doc.data() });
-    });
-    
-    return operations;
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (error) {
-    console.error("Error obteniendo operaciones:", error);
+    console.error("getUserOperations error:", error);
     throw error;
   }
 };
 
-// Simulación de operación P2P (no toca Firebase)
-export const simulateP2P = (data) => {
-  const { crypto, fiat, operation_type, amount, exchange_rate, fee } = data;
+export const getUserOperationsCount = async (userId) => {
+  try {
+    const q = query(collection(db, "operations"), where("userId", "==", userId));
+    const snap = await getDocs(q);
+    return snap.size;
+  } catch (error) {
+    console.error("getUserOperationsCount error:", error);
+    throw error;
+  }
+};
 
-  // Cantidad enviada depende del tipo de operación
-  const amountSent = amount;
+// --- Exports (contador de exportaciones) ---
 
-  // Cantidad recibida (bruta)
-  const amountReceived = operation_type === "Venta"
-    ? amount * exchange_rate
-    : amount / exchange_rate;
+export const saveExport = async (userId) => {
+  try {
+    await addDoc(collection(db, "exports"), {
+      userId,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("saveExport error:", error);
+    throw error;
+  }
+};
 
-  // Restar comisión
-  const netAmount = amountReceived - fee;
-
-  // Retornar resultado de simulación
-  return {
-    crypto,
-    fiat,
-    operation_type,
-    amount_sent: amountSent,
-    amount_received: amountReceived,
-    exchange_rate,
-    fee,
-    net_amount: netAmount
-  };
+export const getUserExportsCount = async (userId) => {
+  try {
+    const q = query(collection(db, "exports"), where("userId", "==", userId));
+    const snap = await getDocs(q);
+    return snap.size;
+  } catch (error) {
+    console.error("getUserExportsCount error:", error);
+    throw error;
+  }
 };
