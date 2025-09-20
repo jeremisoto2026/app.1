@@ -1,111 +1,92 @@
-import React, { useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { db } from "../services/database";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+// src/components/Profile.js
 
-const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0";
+import React, { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../contexts/AuthContext";
+import { db } from "../services/database"; // ✅ corregido en minúscula
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+
+const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0"; // UID del dueño
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { currentUser } = useContext(AuthContext);
   const [userData, setUserData] = useState(null);
   const [operationsCount, setOperationsCount] = useState(0);
-  const [exportsCount, setExportsCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [plan, setPlan] = useState("Cargando...");
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) return;
+    const fetchData = async () => {
+      if (!currentUser) return;
 
       try {
-        let plan = "free";
+        // 📌 Obtener datos del usuario en "users"
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
 
-        // 🔹 Si es el dueño → plan exclusivo
-        if (user.uid === OWNER_UID) {
-          plan = "exclusive";
-          setUserData({
-            name: "Jeremi",
-            lastName: "Soto",
-            email: user.email,
-            plan: "exclusive",
-          });
-        } else {
-          // 🔹 Datos normales del usuario desde Firestore
-          const userRef = doc(db, "users", user.uid);
-          const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserData(userSnap.data());
 
-          if (userSnap.exists()) {
-            const data = userSnap.data();
-            plan = data.plan || "free";
-            setUserData({ ...data, email: user.email, plan });
+          // 📌 Determinar el plan
+          if (currentUser.uid === OWNER_UID) {
+            setPlan("Exclusivo");
+          } else if (userSnap.data().plan === "premium") {
+            setPlan("Premium");
           } else {
-            setUserData({ plan: "free", email: user.email });
+            setPlan("Gratuito");
           }
         }
 
-        // 🔹 Contar operaciones (subcolección dentro del usuario)
-        const opsRef = collection(db, "users", user.uid, "operations");
-        const opsSnap = await getDocs(opsRef);
-        setOperationsCount(opsSnap.size);
-
-        // 🔹 Contar exportaciones (subcolección dentro del usuario)
-        const exportsRef = collection(db, "users", user.uid, "exports");
-        const exportsSnap = await getDocs(exportsRef);
-        setExportsCount(exportsSnap.size);
-
+        // 📌 Contar operaciones del usuario en "operations"
+        const q = query(
+          collection(db, "operations"),
+          where("userId", "==", currentUser.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        setOperationsCount(querySnapshot.size);
       } catch (error) {
-        console.error("Error cargando datos del usuario:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error al obtener datos del perfil:", error);
       }
     };
 
-    fetchUserData();
-  }, [user]);
+    fetchData();
+  }, [currentUser]);
 
-  if (loading) return <p>Cargando datos...</p>;
-  if (!userData) return <p>No se pudieron cargar los datos del usuario.</p>;
+  if (!currentUser) {
+    return <p>Debes iniciar sesión para ver tu perfil.</p>;
+  }
 
   return (
-    <div className="profile-container">
+    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
       <h2>Perfil del Usuario</h2>
-      <p><strong>Nombre:</strong> {userData.name || "No registrado"}</p>
-      <p><strong>Apellido:</strong> {userData.lastName || "No registrado"}</p>
-      <p><strong>Email:</strong> {userData.email}</p>
 
-      <div className="limits-card">
-        <h3>Plan Actual: {userData.plan === "free" ? "Gratuito" : userData.plan}</h3>
-
-        {userData.plan === "free" && (
-          <>
-            <p>Operaciones: {operationsCount} / 200</p>
-            <p>Exportaciones: {exportsCount} / 40</p>
-            <button>Actualizar tus Límites</button>
-          </>
-        )}
-
-        {userData.plan === "premium" && (
-          <p>✅ Operaciones y Exportaciones Ilimitadas</p>
-        )}
-
-        {userData.plan === "exclusive" && (
-          <p>👑 Plan Exclusivo — Sin límites (Dueño)</p>
-        )}
-      </div>
-
-      {userData.plan !== "exclusive" && (
-        <div className="premium-card">
-          <h3>Plan Premium</h3>
-          <p>Acceso ilimitado por solo <strong>13$/mes</strong></p>
-          <button>PayPal</button>
-          <button>Binance Pay</button>
-          <button>Blockchain Pay</button>
+      {/* Foto de perfil */}
+      {currentUser.photoURL ? (
+        <img
+          src={currentUser.photoURL}
+          alt="Foto de perfil"
+          style={{ width: "100px", height: "100px", borderRadius: "50%" }}
+        />
+      ) : (
+        <div
+          style={{
+            width: "100px",
+            height: "100px",
+            borderRadius: "50%",
+            background: "#ccc",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "40px",
+          }}
+        >
+          👤
         </div>
       )}
 
-      <div className="support-card">
-        <h3>Soporte</h3>
-        <button>Contactar Soporte</button>
-      </div>
+      {/* Datos básicos */}
+      <p><strong>Nombre:</strong> {currentUser.displayName || "Sin nombre"}</p>
+      <p><strong>Email:</strong> {currentUser.email}</p>
+      <p><strong>Plan:</strong> {plan}</p>
+      <p><strong>Operaciones realizadas:</strong> {operationsCount}</p>
     </div>
   );
 };
