@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { useAuth } from "../context/AuthContext";
 import { auth } from "../firebase"; // Asegúrate de que esta ruta es correcta
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
