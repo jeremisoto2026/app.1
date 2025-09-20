@@ -1,40 +1,27 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
-import { db } from "../firebase"; // Asegúrate de que la ruta es correcta
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
 import { Skeleton } from "../components/ui/skeleton";
 import { Progress } from "../components/ui/progress";
+import { getUserData, getUserOperations } from "../services/database"; // Importar desde services
 
 export default function Profile() {
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [operations, setOperations] = useState([]);
-  const [operationsCount, setOperationsCount] = useState(0);
-  const [exportsCount, setExportsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Simular datos de usuario (reemplaza con tu autenticación real)
   useEffect(() => {
-    const loadUserData = async () => {
+    const loadData = async () => {
       try {
-        // Simular datos de usuario - reemplaza con tu implementación real
-        const user = {
-          plan: "Free",
-          limiteOperaciones: 200,
-          limiteExportaciones: 40,
-          email: "usuario@ejemplo.com",
-          memberSince: "Enero 2024",
-          nombre: "Juan Pérez",
-          avatar: "JP",
-          uid: "user-123" // Reemplaza con el UID real del usuario
-        };
-        setUserData(user);
+        setLoading(true);
+        // Obtener datos del usuario
+        const userDataFromDB = await getUserData();
+        setUserData(userDataFromDB);
         
-        // Una vez que tenemos el UID del usuario, cargamos sus operaciones
-        if (user.uid) {
-          loadUserOperations(user.uid);
-        }
+        // Obtener operaciones del usuario
+        const userOperations = await getUserOperations(userDataFromDB.uid);
+        setOperations(userOperations);
       } catch (error) {
         console.error("Error cargando datos:", error);
       } finally {
@@ -42,44 +29,12 @@ export default function Profile() {
       }
     };
 
-    loadUserData();
+    loadData();
   }, []);
 
-  // Función para cargar las operaciones del usuario desde Firebase
-  const loadUserOperations = (userId) => {
-    try {
-      const q = query(
-        collection(db, "operations"),
-        where("userId", "==", userId),
-        orderBy("fecha", "desc")
-      );
-
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const operationsData = [];
-        let opsCount = 0;
-        let expsCount = 0;
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          operationsData.push({ id: doc.id, ...data });
-          
-          // Contar operaciones y exportaciones
-          opsCount++;
-          if (data.tipo === "exportacion") {
-            expsCount++;
-          }
-        });
-
-        setOperations(operationsData);
-        setOperationsCount(opsCount);
-        setExportsCount(expsCount);
-      });
-
-      return unsubscribe;
-    } catch (error) {
-      console.error("Error cargando operaciones:", error);
-    }
-  };
+  // Calcular contadores
+  const operationsCount = operations.length;
+  const exportsCount = operations.filter(op => op.tipo === "exportacion").length;
 
   if (loading) {
     return (
@@ -123,7 +78,7 @@ export default function Profile() {
         <div className="text-center mb-6">
           <div className="w-24 h-24 mx-auto mb-4 relative">
             <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
-              {userData.avatar}
+              {userData.avatar || userData.nombre.charAt(0)}
             </div>
             <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-blue-500 border-2 border-gray-900 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
@@ -152,7 +107,7 @@ export default function Profile() {
             {/* Limitaciones con barras de progreso */}
             <div>
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/ssvg" className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 Uso de tu cuenta
