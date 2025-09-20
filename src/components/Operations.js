@@ -1,7 +1,6 @@
-// src/components/Operations.js
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { saveOperation, getUserProfile, getUserOperations } from '../services/database';
+import { saveOperation } from '../services/database';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -43,7 +42,7 @@ const Operations = ({ onOperationSaved }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!user) {
       setError('Debes iniciar sesión para crear operaciones');
       return;
@@ -56,7 +55,7 @@ const Operations = ({ onOperationSaved }) => {
     if (!formData[amountField]) {
       missingFields.push(amountField);
     }
-
+    
     if (missingFields.length > 0) {
       setError(`Por favor completa todos los campos requeridos: ${missingFields.join(', ')}`);
       return;
@@ -64,7 +63,7 @@ const Operations = ({ onOperationSaved }) => {
 
     const exchangeRate = parseFloat(formData.exchange_rate);
     const fee = parseFloat(formData.fee) || 0;
-
+    
     if (exchangeRate <= 0 || parseFloat(formData[amountField]) <= 0) {
       setError('Los montos y tasas de cambio deben ser mayores a 0');
       return;
@@ -85,23 +84,6 @@ const Operations = ({ onOperationSaved }) => {
       setLoading(true);
       setError('');
 
-      // --- CHECK PLAN & LIMITS ---
-      // getUserData(user.uid) debe devolver un objeto con { plan: 'free'|'premium' , ... }
-      const userInfo = await getUserProfile(user.uid);
-      const userPlan = (userInfo && userInfo.plan) ? userInfo.plan : 'free';
-
-      if (userPlan === 'free') {
-        // contamos operaciones del usuario
-        const userOps = await getUserOperations(user.uid);
-        const opsCount = Array.isArray(userOps) ? userOps.length : 0;
-        if (opsCount >= 200) {
-          setError('Has alcanzado el límite de 200 operaciones en el plan Free. Actualiza a Premium para guardar operaciones ilimitadas.');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // --- PREPARAR DATOS Y GUARDAR ---
       const operationData = {
         order_id: formData.order_id.trim(),
         exchange: formData.exchange,
@@ -117,8 +99,9 @@ const Operations = ({ onOperationSaved }) => {
       };
 
       await saveOperation(user.uid, operationData);
-
+      
       setSuccess('¡Operación guardada exitosamente!');
+      
       setFormData({
         order_id: '',
         exchange: '',
@@ -131,7 +114,10 @@ const Operations = ({ onOperationSaved }) => {
         fee: '0'
       });
 
-      if (onOperationSaved) onOperationSaved();
+      if (onOperationSaved) {
+        onOperationSaved();
+      }
+
     } catch (err) {
       console.error('Error saving operation:', err);
       setError('Error al guardar la operación. Por favor intenta de nuevo.');
@@ -320,7 +306,7 @@ const Operations = ({ onOperationSaved }) => {
                     className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
                   />
                 </div>
-
+                
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="fee" className="text-gray-100">
                     Comisión
@@ -357,7 +343,7 @@ const Operations = ({ onOperationSaved }) => {
                   <div className="flex items-center gap-2">
                     <Label>Comisión:</Label>
                     <Badge variant="outline" className="text-gray-100 border-gray-600">
-                      {previewFee.toFixed(2)} {formData.fiat}
+                      {previewFee.toFixed(2)} {formData.fiat} {/* La comisión en fiat es más común, lo cambié */}
                     </Badge>
                   </div>
                 </CardContent>
