@@ -16,7 +16,7 @@ const Dashboard = ({ onOpenProfile }) => {
     const fetchData = async () => {
       if (!user) {
         setLoading(false);
-        setError("Usuario no autenticado.");
+        setError("User not authenticated.");
         return;
       }
 
@@ -42,27 +42,19 @@ const Dashboard = ({ onOpenProfile }) => {
           last30Days.setDate(last30Days.getDate() - 30);
 
           operations.forEach((op) => {
-            // Aseguramos que crypto_amount sea número válido
-            const cryptoAmount = op.crypto_amount
-              ? parseFloat(op.crypto_amount)
-              : 0;
+            const cryptoAmount = parseFloat(op.crypto_amount);
 
-            // Operaciones totales
             if (op.operation_type === "Venta") {
               totalCryptoSold += cryptoAmount;
             } else if (op.operation_type === "Compra") {
               totalCryptoBought += cryptoAmount;
             }
 
-            // Solo si existe timestamp válido
-            if (op.timestamp && op.timestamp.toDate) {
-              const opDate = op.timestamp.toDate();
-              if (opDate >= last30Days) {
-                if (op.operation_type === "Venta") {
-                  monthlyCryptoSold += cryptoAmount;
-                } else if (op.operation_type === "Compra") {
-                  monthlyCryptoBought += cryptoAmount;
-                }
+            if (op.timestamp && op.timestamp.toDate() >= last30Days) {
+              if (op.operation_type === "Venta") {
+                monthlyCryptoSold += cryptoAmount;
+              } else if (op.operation_type === "Compra") {
+                monthlyCryptoBought += cryptoAmount;
               }
             }
           });
