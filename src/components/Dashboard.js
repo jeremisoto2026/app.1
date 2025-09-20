@@ -22,6 +22,20 @@ const Dashboard = ({ onOpenProfile }) => {
 
       try {
         const operationsRef = collection(db, "users", user.uid, "operations");
+
+        // Verificamos si hay documentos antes de ordenar
+        const snapshot = await getDocs(operationsRef);
+
+        if (snapshot.empty) {
+          setTotalOperations(0);
+          setTotalProfitUsdt(0);
+          setSuccessRate(0);
+          setMonthlyPerformance(0);
+          setLoading(false);
+          return;
+        }
+
+        // Si sí hay docs, ahora sí los ordenamos por timestamp
         const q = query(operationsRef, orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
 
@@ -30,52 +44,44 @@ const Dashboard = ({ onOpenProfile }) => {
           operations.push({ id: doc.id, ...doc.data() });
         });
 
-        if (operations.length > 0) {
-          setTotalOperations(operations.length);
+        setTotalOperations(operations.length);
 
-          let totalCryptoBought = 0;
-          let totalCryptoSold = 0;
-          let monthlyCryptoBought = 0;
-          let monthlyCryptoSold = 0;
+        let totalCryptoBought = 0;
+        let totalCryptoSold = 0;
+        let monthlyCryptoBought = 0;
+        let monthlyCryptoSold = 0;
 
-          const last30Days = new Date();
-          last30Days.setDate(last30Days.getDate() - 30);
+        const last30Days = new Date();
+        last30Days.setDate(last30Days.getDate() - 30);
 
-          operations.forEach((op) => {
-            const cryptoAmount = parseFloat(op.crypto_amount ?? 0) || 0;
+        operations.forEach((op) => {
+          const cryptoAmount = parseFloat(op.crypto_amount);
 
+          if (op.operation_type === "Venta") {
+            totalCryptoSold += cryptoAmount;
+          } else if (op.operation_type === "Compra") {
+            totalCryptoBought += cryptoAmount;
+          }
+
+          if (op.timestamp && op.timestamp.toDate() >= last30Days) {
             if (op.operation_type === "Venta") {
-              totalCryptoSold += cryptoAmount;
+              monthlyCryptoSold += cryptoAmount;
             } else if (op.operation_type === "Compra") {
-              totalCryptoBought += cryptoAmount;
+              monthlyCryptoBought += cryptoAmount;
             }
+          }
+        });
 
-            if (op.timestamp && op.timestamp.toDate() >= last30Days) {
-              if (op.operation_type === "Venta") {
-                monthlyCryptoSold += cryptoAmount;
-              } else if (op.operation_type === "Compra") {
-                monthlyCryptoBought += cryptoAmount;
-              }
-            }
-          });
+        const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
+        const monthlyPerformanceCalc =
+          monthlyCryptoBought - monthlyCryptoSold;
 
-          const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
-          const monthlyPerformanceCalc =
-            monthlyCryptoBought - monthlyCryptoSold;
+        const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
 
-          const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
-
-          setTotalProfitUsdt(totalProfitUsdtCalc);
-          setSuccessRate(successRateCalc);
-          setMonthlyPerformance(monthlyPerformanceCalc);
-          setLoading(false);
-        } else {
-          setTotalOperations(0);
-          setTotalProfitUsdt(0);
-          setSuccessRate(0);
-          setMonthlyPerformance(0);
-          setLoading(false);
-        }
+        setTotalProfitUsdt(totalProfitUsdtCalc);
+        setSuccessRate(successRateCalc);
+        setMonthlyPerformance(monthlyPerformanceCalc);
+        setLoading(false);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError(
@@ -145,9 +151,7 @@ const Dashboard = ({ onOpenProfile }) => {
       {/* Ganancia USDT */}
       <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
         <h3 className="text-green-400 font-medium">Ganancia USDT</h3>
-        <p className="text-2xl font-bold">
-          ${(totalProfitUsdt || 0).toFixed(2)}
-        </p>
+        <p className="text-2xl font-bold">${totalProfitUsdt.toFixed(2)}</p>
         <p className="text-gray-400 text-sm">Total en USDT</p>
       </div>
 
@@ -163,9 +167,7 @@ const Dashboard = ({ onOpenProfile }) => {
         <h3 className="text-yellow-400 font-medium flex items-center">
           📈 Rendimiento Mensual
         </h3>
-        <p className="text-2xl font-bold">
-          ${(monthlyPerformance || 0).toFixed(2)}
-        </p>
+        <p className="text-2xl font-bold">${monthlyPerformance.toFixed(2)}</p>
         <p className="text-gray-400 text-sm">Últimos 30 días</p>
         <span
           className={`mt-2 inline-block px-3 py-1 rounded text-sm font-medium ${
