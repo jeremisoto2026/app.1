@@ -42,7 +42,7 @@ const Dashboard = ({ onOpenProfile }) => {
           last30Days.setDate(last30Days.getDate() - 30);
 
           operations.forEach((op) => {
-            const cryptoAmount = parseFloat(op.crypto_amount);
+            const cryptoAmount = parseFloat(op.crypto_amount ?? 0) || 0;
 
             if (op.operation_type === "Venta") {
               totalCryptoSold += cryptoAmount;
@@ -145,7 +145,9 @@ const Dashboard = ({ onOpenProfile }) => {
       {/* Ganancia USDT */}
       <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
         <h3 className="text-green-400 font-medium">Ganancia USDT</h3>
-        <p className="text-2xl font-bold">${totalProfitUsdt.toFixed(2)}</p>
+        <p className="text-2xl font-bold">
+          ${(totalProfitUsdt || 0).toFixed(2)}
+        </p>
         <p className="text-gray-400 text-sm">Total en USDT</p>
       </div>
 
@@ -161,7 +163,9 @@ const Dashboard = ({ onOpenProfile }) => {
         <h3 className="text-yellow-400 font-medium flex items-center">
           📈 Rendimiento Mensual
         </h3>
-        <p className="text-2xl font-bold">${monthlyPerformance.toFixed(2)}</p>
+        <p className="text-2xl font-bold">
+          ${(monthlyPerformance || 0).toFixed(2)}
+        </p>
         <p className="text-gray-400 text-sm">Últimos 30 días</p>
         <span
           className={`mt-2 inline-block px-3 py-1 rounded text-sm font-medium ${
