@@ -22,20 +22,6 @@ const Dashboard = ({ onOpenProfile }) => {
 
       try {
         const operationsRef = collection(db, "users", user.uid, "operations");
-
-        // Verificamos si hay documentos antes de ordenar
-        const snapshot = await getDocs(operationsRef);
-
-        if (snapshot.empty) {
-          setTotalOperations(0);
-          setTotalProfitUsdt(0);
-          setSuccessRate(0);
-          setMonthlyPerformance(0);
-          setLoading(false);
-          return;
-        }
-
-        // Si sí hay docs, ahora sí los ordenamos por timestamp
         const q = query(operationsRef, orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
 
@@ -44,44 +30,58 @@ const Dashboard = ({ onOpenProfile }) => {
           operations.push({ id: doc.id, ...doc.data() });
         });
 
-        setTotalOperations(operations.length);
+        if (operations.length > 0) {
+          setTotalOperations(operations.length);
 
-        let totalCryptoBought = 0;
-        let totalCryptoSold = 0;
-        let monthlyCryptoBought = 0;
-        let monthlyCryptoSold = 0;
+          let totalCryptoBought = 0;
+          let totalCryptoSold = 0;
+          let monthlyCryptoBought = 0;
+          let monthlyCryptoSold = 0;
 
-        const last30Days = new Date();
-        last30Days.setDate(last30Days.getDate() - 30);
+          const last30Days = new Date();
+          last30Days.setDate(last30Days.getDate() - 30);
 
-        operations.forEach((op) => {
-          const cryptoAmount = parseFloat(op.crypto_amount);
+          operations.forEach((op) => {
+            const cryptoAmount = parseFloat(op.crypto_amount || 0);
 
-          if (op.operation_type === "Venta") {
-            totalCryptoSold += cryptoAmount;
-          } else if (op.operation_type === "Compra") {
-            totalCryptoBought += cryptoAmount;
-          }
+            // 👇 Fallback: si no hay timestamp, se usa la fecha actual
+            const opDate =
+              op.timestamp && typeof op.timestamp.toDate === "function"
+                ? op.timestamp.toDate()
+                : new Date();
 
-          if (op.timestamp && op.timestamp.toDate() >= last30Days) {
             if (op.operation_type === "Venta") {
-              monthlyCryptoSold += cryptoAmount;
+              totalCryptoSold += cryptoAmount;
             } else if (op.operation_type === "Compra") {
-              monthlyCryptoBought += cryptoAmount;
+              totalCryptoBought += cryptoAmount;
             }
-          }
-        });
 
-        const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
-        const monthlyPerformanceCalc =
-          monthlyCryptoBought - monthlyCryptoSold;
+            if (opDate >= last30Days) {
+              if (op.operation_type === "Venta") {
+                monthlyCryptoSold += cryptoAmount;
+              } else if (op.operation_type === "Compra") {
+                monthlyCryptoBought += cryptoAmount;
+              }
+            }
+          });
 
-        const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
+          const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
+          const monthlyPerformanceCalc =
+            monthlyCryptoBought - monthlyCryptoSold;
 
-        setTotalProfitUsdt(totalProfitUsdtCalc);
-        setSuccessRate(successRateCalc);
-        setMonthlyPerformance(monthlyPerformanceCalc);
-        setLoading(false);
+          const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
+
+          setTotalProfitUsdt(totalProfitUsdtCalc);
+          setSuccessRate(successRateCalc);
+          setMonthlyPerformance(monthlyPerformanceCalc);
+          setLoading(false);
+        } else {
+          setTotalOperations(0);
+          setTotalProfitUsdt(0);
+          setSuccessRate(0);
+          setMonthlyPerformance(0);
+          setLoading(false);
+        }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError(
