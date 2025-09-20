@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@radix-ui/react-separator";
 import { getAuth } from "firebase/auth";
 import { getDoc, doc, collection, getDocs } from "firebase/firestore";
-import { db } from "@/services/database";
+import { db } from "../services/database";
 
 export default function Profile() {
   const [userData, setUserData] = useState({
