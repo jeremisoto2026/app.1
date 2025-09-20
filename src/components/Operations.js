@@ -1,7 +1,7 @@
 // src/components/Operations.js
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { saveOperation, getUserData, getUserOperations } from '../services/database';
+import { saveOperation, getUserProfile, getUserOperations } from '../services/database';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
