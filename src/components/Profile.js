@@ -34,8 +34,8 @@ export default function Profile() {
           userInfo = userSnap.data();
         }
 
-        // contar operaciones
-        const operationsRef = collection(db, "operations");
+        // ✅ Contar solo las operaciones del usuario logueado
+        const operationsRef = collection(db, "users", user.uid, "operations");
         const operationsSnap = await getDocs(operationsRef);
         const totalOps = operationsSnap.size;
 
@@ -132,9 +132,7 @@ export default function Profile() {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-gray-300">
-                      Operaciones
-                    </span>
+                    <span className="font-medium text-gray-300">Operaciones</span>
                     <span className="text-gray-400">
                       {userData.operaciones}/{userData.limiteOperaciones}
                     </span>
@@ -149,9 +147,7 @@ export default function Profile() {
 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-gray-300">
-                      Exportaciones
-                    </span>
+                    <span className="font-medium text-gray-300">Exportaciones</span>
                     <span className="text-gray-400">
                       {userData.exportaciones}/{userData.limiteExportaciones}
                     </span>
@@ -205,12 +201,8 @@ export default function Profile() {
               </div>
 
               <ul className="text-sm text-gray-300 mb-4 space-y-1">
-                <li className="flex items-center gap-2">
-                  ✅ Operaciones ilimitadas
-                </li>
-                <li className="flex items-center gap-2">
-                  ✅ Exportaciones ilimitadas
-                </li>
+                <li className="flex items-center gap-2">✅ Operaciones ilimitadas</li>
+                <li className="flex items-center gap-2">✅ Exportaciones ilimitadas</li>
                 <li className="flex items-center gap-2">✅ Soporte prioritario</li>
               </ul>
 
