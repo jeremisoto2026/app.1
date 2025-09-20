@@ -1,44 +1,31 @@
-// src/components/Profile.js
+// src/pages/Profile.js
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { db } from "../firebase";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
+import { getUserOperations, getUserPreferences } from "../services/database";
+import { useNavigate } from "react-router-dom";
 
-const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0";
-
-const Profile = () => {
+export default function Profile() {
   const { user, signOut } = useAuth();
-  const [operationsCount, setOperationsCount] = useState(0);
-  const [exportsCount, setExportsCount] = useState(0);
+  const [operationCount, setOperationCount] = useState(0);
+  const [exportCount, setExportCount] = useState(0);
   const [plan, setPlan] = useState("Gratuito");
+  const [limits, setLimits] = useState({ operations: 200, exports: 40 });
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchData = async () => {
-      if (!user) return;
-
       try {
-        // Si es el dueño
-        if (user.uid === OWNER_UID) {
-          setPlan("Exclusivo");
-          setOperationsCount("∞");
-          setExportsCount("∞");
-          return;
-        }
+        // Obtener operaciones
+        const operations = await getUserOperations(user.uid);
+        setOperationCount(operations.length);
 
-        // ✅ Contar operaciones directamente desde Firestore
-        const operationsRef = collection(db, "users", user.uid, "operations");
-        const operationsSnap = await getDocs(operationsRef);
-        setOperationsCount(operationsSnap.size);
-
-        // ✅ Obtener exportaciones y plan desde el doc del usuario
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          setExportsCount(data.exportsCount || 0);
-          setPlan(data.plan || "Gratuito");
-        }
+        // Obtener preferencias del usuario (plan y límites)
+        const prefs = await getUserPreferences(user.uid);
+        if (prefs?.plan) setPlan(prefs.plan);
+        if (prefs?.limits) setLimits(prefs.limits);
+        if (prefs?.exportsUsed) setExportCount(prefs.exportsUsed);
       } catch (error) {
         console.error("Error cargando perfil:", error);
       }
@@ -47,89 +34,92 @@ const Profile = () => {
     fetchData();
   }, [user]);
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
+
   if (!user) {
-    return <p>Cargando perfil...</p>;
+    return (
+      <div className="flex items-center justify-center h-screen text-white">
+        <p>Cargando perfil...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="profile-container" style={{ padding: "20px", color: "white" }}>
-      <h1 style={{ color: "#FFD700", textAlign: "center" }}>⚡ JJXCAPITAL ⚡</h1>
-      <p style={{ textAlign: "center" }}>Seguridad, velocidad y confianza</p>
+    <div className="min-h-screen bg-black text-white p-4">
+      {/* Botón volver */}
+      <button
+        onClick={() => navigate("/dashboard")}
+        className="bg-gray-700 text-white px-4 py-2 rounded-md mb-6 hover:bg-gray-600"
+      >
+        Volver al Dashboard
+      </button>
 
-      <div style={{ textAlign: "center", margin: "20px 0" }}>
-        <h2>
-          Hola, <span style={{ color: "#FFD700" }}>{user.displayName}</span> 👋
-        </h2>
-        <button
-          onClick={signOut}
-          style={{
-            background: "red",
-            color: "white",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "5px",
-            cursor: "pointer",
-            marginTop: "10px",
-          }}
-        >
-          Cerrar Sesión
+      {/* Avatar + nombre + email */}
+      <div className="flex flex-col items-center mb-6">
+        <img
+          src={user.photoURL || "https://i.pravatar.cc/150"}
+          alt="avatar"
+          className="w-24 h-24 rounded-full border-4 border-yellow-500 mb-3"
+        />
+        <h1 className="text-2xl font-bold">{user.displayName || "Usuario"}</h1>
+        <p className="text-gray-400">{user.email}</p>
+      </div>
+
+      {/* Plan actual */}
+      <div className="bg-gray-900 rounded-lg p-5 mb-6">
+        <h2 className="text-xl font-bold text-yellow-400 mb-3">Plan Actual</h2>
+        <p className="text-lg font-semibold mb-2">{plan}</p>
+
+        {/* Órdenes */}
+        <div className="bg-gray-800 p-4 rounded-md mb-3 text-center">
+          <p className="text-xl font-bold text-yellow-400">
+            {operationCount} / {limits.operations}
+          </p>
+          <p className="text-gray-400">Órdenes</p>
+        </div>
+
+        {/* Exportaciones */}
+        <div className="bg-gray-800 p-4 rounded-md text-center">
+          <p className="text-xl font-bold text-yellow-400">
+            {exportCount} / {limits.exports}
+          </p>
+          <p className="text-gray-400">Exportaciones</p>
+        </div>
+
+        {/* Botón actualizar límites */}
+        <button className="mt-4 w-full bg-yellow-500 text-black py-2 rounded-md font-bold hover:bg-yellow-400">
+          Actualizar tus límites
         </button>
       </div>
 
-      {/* Datos del perfil */}
-      <div style={{ marginTop: "20px" }}>
-        <h3>Perfil</h3>
-        <p><strong>Nombre:</strong> {user.displayName}</p>
-        <p><strong>Email:</strong> {user.email}</p>
-        <p><strong>Tipo de Plan:</strong> {plan}</p>
-
-        {plan !== "Exclusivo" && (
-          <>
-            <p><strong>Operaciones:</strong> {operationsCount}/200</p>
-            <p><strong>Exportaciones:</strong> {exportsCount}/40</p>
-            <small style={{ color: "#bbb" }}>Actualizar tus Límites</small>
-          </>
-        )}
-
-        {plan === "Exclusivo" && (
-          <>
-            <p><strong>Operaciones:</strong> {operationsCount}</p>
-            <p><strong>Exportaciones:</strong> {exportsCount}</p>
-          </>
-        )}
+      {/* Plan Premium */}
+      <div className="bg-gray-900 rounded-lg p-5 mb-6">
+        <h2 className="text-xl font-bold text-yellow-400 mb-3">Plan Premium</h2>
+        <p className="mb-2">Accede a operaciones y exportaciones ilimitadas.</p>
+        <p className="mb-4 text-gray-400">
+          Métodos de pago: Paypal | Binance Pay | Blockchain Pay
+        </p>
+        <button className="w-full bg-yellow-500 text-black py-2 rounded-md font-bold hover:bg-yellow-400">
+          Actualizar a Premium - $13/mes
+        </button>
       </div>
-
-      {/* Plan Premium solo si no es dueño */}
-      {plan !== "Exclusivo" && (
-        <div style={{ marginTop: "30px" }}>
-          <h3>Plan Premium - $13/mes</h3>
-          <p>Accede a operaciones y exportaciones ilimitadas.</p>
-          <p style={{ fontSize: "14px", color: "#bbb" }}>
-            Métodos de pago: Paypal | Binance Pay | Blockchain Pay
-          </p>
-          <button
-            style={{
-              background: "#FFD700",
-              color: "#000",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              marginTop: "10px",
-            }}
-          >
-            Actualizar a Premium
-          </button>
-        </div>
-      )}
 
       {/* Soporte */}
-      <div style={{ marginTop: "30px" }}>
-        <h3>Soporte</h3>
-        <p style={{ color: "#bbb" }}>Contactar Soporte</p>
+      <div className="bg-gray-900 rounded-lg p-5 mb-6 text-center">
+        <h2 className="text-xl font-bold text-yellow-400 mb-3">Soporte</h2>
+        <button className="text-blue-400 underline">Contactar Soporte</button>
       </div>
+
+      {/* Botón cerrar sesión */}
+      <button
+        onClick={handleLogout}
+        className="w-full bg-red-600 py-2 rounded-md font-bold hover:bg-red-500"
+      >
+        Cerrar Sesión
+      </button>
     </div>
   );
-};
-
-export default Profile;
+}
