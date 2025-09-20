@@ -1,38 +1,40 @@
 import React, { useState, useEffect } from "react";
+import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { db } from "../firebase"; // Asegúrate de que la ruta es correcta
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
 import { Skeleton } from "../components/ui/skeleton";
 import { Progress } from "../components/ui/progress";
 
-// Simulación de conexión a base de datos
-const fetchUserData = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        plan: "Free",
-        operaciones: 3,
-        limiteOperaciones: 200,
-        exportaciones: 2,
-        limiteExportaciones: 40,
-        email: "usuario@ejemplo.com",
-        memberSince: "Enero 2024",
-        nombre: "Juan Pérez",
-        avatar: "JP"
-      });
-    }, 1500);
-  });
-};
-
 export default function Profile() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [operations, setOperations] = useState([]);
+  const [operationsCount, setOperationsCount] = useState(0);
+  const [exportsCount, setExportsCount] = useState(0);
 
+  // Simular datos de usuario (reemplaza con tu autenticación real)
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const data = await fetchUserData();
-        setUserData(data);
+        // Simular datos de usuario - reemplaza con tu implementación real
+        const user = {
+          plan: "Free",
+          limiteOperaciones: 200,
+          limiteExportaciones: 40,
+          email: "usuario@ejemplo.com",
+          memberSince: "Enero 2024",
+          nombre: "Juan Pérez",
+          avatar: "JP",
+          uid: "user-123" // Reemplaza con el UID real del usuario
+        };
+        setUserData(user);
+        
+        // Una vez que tenemos el UID del usuario, cargamos sus operaciones
+        if (user.uid) {
+          loadUserOperations(user.uid);
+        }
       } catch (error) {
         console.error("Error cargando datos:", error);
       } finally {
@@ -42,6 +44,42 @@ export default function Profile() {
 
     loadUserData();
   }, []);
+
+  // Función para cargar las operaciones del usuario desde Firebase
+  const loadUserOperations = (userId) => {
+    try {
+      const q = query(
+        collection(db, "operations"),
+        where("userId", "==", userId),
+        orderBy("fecha", "desc")
+      );
+
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const operationsData = [];
+        let opsCount = 0;
+        let expsCount = 0;
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          operationsData.push({ id: doc.id, ...data });
+          
+          // Contar operaciones y exportaciones
+          opsCount++;
+          if (data.tipo === "exportacion") {
+            expsCount++;
+          }
+        });
+
+        setOperations(operationsData);
+        setOperationsCount(opsCount);
+        setExportsCount(expsCount);
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.error("Error cargando operaciones:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -74,8 +112,8 @@ export default function Profile() {
   }
 
   const progressPercentage = {
-    operaciones: (userData.operaciones / userData.limiteOperaciones) * 100,
-    exportaciones: (userData.exportaciones / userData.limiteExportaciones) * 100
+    operaciones: (operationsCount / userData.limiteOperaciones) * 100,
+    exportaciones: (exportsCount / userData.limiteExportaciones) * 100
   };
 
   return (
@@ -124,7 +162,7 @@ export default function Profile() {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="font-medium text-gray-300">Operaciones</span>
-                    <span className="text-gray-400">{userData.operaciones}/{userData.limiteOperaciones}</span>
+                    <span className="text-gray-400">{operationsCount}/{userData.limiteOperaciones}</span>
                   </div>
                   <Progress value={progressPercentage.operaciones} className="h-2 bg-gray-700" />
                 </div>
@@ -132,7 +170,7 @@ export default function Profile() {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="font-medium text-gray-300">Exportaciones</span>
-                    <span className="text-gray-400">{userData.exportaciones}/{userData.limiteExportaciones}</span>
+                    <span className="text-gray-400">{exportsCount}/{userData.limiteExportaciones}</span>
                   </div>
                   <Progress value={progressPercentage.exportaciones} className="h-2 bg-gray-700" />
                 </div>
@@ -203,6 +241,42 @@ export default function Profile() {
                   Blockchain Pay
                 </Button>
               </div>
+            </div>
+
+            <Separator className="my-4 bg-gray-700" />
+
+            {/* Lista de operaciones recientes */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2 text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Operaciones Recientes
+              </h3>
+              
+              {operations.length > 0 ? (
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {operations.slice(0, 5).map((op) => (
+                    <div key={op.id} className="bg-gray-800 p-3 rounded-lg flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-white">{op.nombre || "Operación"}</p>
+                        <p className="text-xs text-gray-400">
+                          {op.fecha?.toDate ? op.fecha.toDate().toLocaleDateString() : "Fecha no disponible"}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        op.tipo === "exportacion" 
+                          ? "bg-green-900 text-green-300" 
+                          : "bg-blue-900 text-blue-300"
+                      }`}>
+                        {op.tipo === "exportacion" ? "Exportación" : "Operación"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">No hay operaciones recientes</p>
+              )}
             </div>
 
             <Separator className="my-4 bg-gray-700" />
