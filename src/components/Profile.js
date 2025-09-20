@@ -1,125 +1,66 @@
-// src/pages/Profile.js
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { getUserOperations, getUserPreferences } from "../services/database";
-import { useNavigate } from "react-router-dom";
+import { db } from "../contexts/database";
+import { useAuth } from "../contexts/AuthContext";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 export default function Profile() {
-  const { user, signOut } = useAuth();
-  const [operationCount, setOperationCount] = useState(0);
-  const [exportCount, setExportCount] = useState(0);
-  const [plan, setPlan] = useState("Gratuito");
-  const [limits, setLimits] = useState({ operations: 200, exports: 40 });
-  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const [operationsCount, setOperationsCount] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
+    if (!currentUser) return;
 
-    const fetchData = async () => {
+    const fetchOperations = async () => {
       try {
-        // Obtener operaciones
-        const operations = await getUserOperations(user.uid);
-        setOperationCount(operations.length);
-
-        // Obtener preferencias del usuario (plan y límites)
-        const prefs = await getUserPreferences(user.uid);
-        if (prefs?.plan) setPlan(prefs.plan);
-        if (prefs?.limits) setLimits(prefs.limits);
-        if (prefs?.exportsUsed) setExportCount(prefs.exportsUsed);
+        const q = query(
+          collection(db, "operations"),
+          where("userId", "==", currentUser.uid)
+        );
+        const snapshot = await getDocs(q);
+        setOperationsCount(snapshot.size);
       } catch (error) {
-        console.error("Error cargando perfil:", error);
+        console.error("Error al obtener operaciones:", error);
       }
     };
 
-    fetchData();
-  }, [user]);
+    fetchOperations();
+  }, [currentUser]);
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/login");
-  };
-
-  if (!user) {
+  if (!currentUser) {
     return (
-      <div className="flex items-center justify-center h-screen text-white">
-        <p>Cargando perfil...</p>
+      <div className="flex justify-center items-center h-64 text-gray-600">
+        Cargando perfil...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      {/* Botón volver */}
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="bg-gray-700 text-white px-4 py-2 rounded-md mb-6 hover:bg-gray-600"
-      >
-        Volver al Dashboard
-      </button>
-
-      {/* Avatar + nombre + email */}
-      <div className="flex flex-col items-center mb-6">
-        <img
-          src={user.photoURL || "https://i.pravatar.cc/150"}
-          alt="avatar"
-          className="w-24 h-24 rounded-full border-4 border-yellow-500 mb-3"
-        />
-        <h1 className="text-2xl font-bold">{user.displayName || "Usuario"}</h1>
-        <p className="text-gray-400">{user.email}</p>
+    <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border border-gray-200">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
+          {currentUser.email?.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <h1 className="text-xl font-semibold text-gray-800">
+            {currentUser.email}
+          </h1>
+          <p className="text-sm text-gray-500">UID: {currentUser.uid}</p>
+        </div>
       </div>
 
-      {/* Plan actual */}
-      <div className="bg-gray-900 rounded-lg p-5 mb-6">
-        <h2 className="text-xl font-bold text-yellow-400 mb-3">Plan Actual</h2>
-        <p className="text-lg font-semibold mb-2">{plan}</p>
-
-        {/* Órdenes */}
-        <div className="bg-gray-800 p-4 rounded-md mb-3 text-center">
-          <p className="text-xl font-bold text-yellow-400">
-            {operationCount} / {limits.operations}
-          </p>
-          <p className="text-gray-400">Órdenes</p>
+      {/* Estadísticas */}
+      <div className="grid grid-cols-2 gap-4 text-center">
+        <div className="bg-gray-50 p-4 rounded-lg border">
+          <p className="text-2xl font-bold text-blue-600">{operationsCount}</p>
+          <p className="text-sm text-gray-500">Operaciones</p>
         </div>
 
-        {/* Exportaciones */}
-        <div className="bg-gray-800 p-4 rounded-md text-center">
-          <p className="text-xl font-bold text-yellow-400">
-            {exportCount} / {limits.exports}
-          </p>
-          <p className="text-gray-400">Exportaciones</p>
+        <div className="bg-gray-50 p-4 rounded-lg border">
+          <p className="text-2xl font-bold text-green-600">✔</p>
+          <p className="text-sm text-gray-500">Verificado</p>
         </div>
-
-        {/* Botón actualizar límites */}
-        <button className="mt-4 w-full bg-yellow-500 text-black py-2 rounded-md font-bold hover:bg-yellow-400">
-          Actualizar tus límites
-        </button>
       </div>
-
-      {/* Plan Premium */}
-      <div className="bg-gray-900 rounded-lg p-5 mb-6">
-        <h2 className="text-xl font-bold text-yellow-400 mb-3">Plan Premium</h2>
-        <p className="mb-2">Accede a operaciones y exportaciones ilimitadas.</p>
-        <p className="mb-4 text-gray-400">
-          Métodos de pago: Paypal | Binance Pay | Blockchain Pay
-        </p>
-        <button className="w-full bg-yellow-500 text-black py-2 rounded-md font-bold hover:bg-yellow-400">
-          Actualizar a Premium - $13/mes
-        </button>
-      </div>
-
-      {/* Soporte */}
-      <div className="bg-gray-900 rounded-lg p-5 mb-6 text-center">
-        <h2 className="text-xl font-bold text-yellow-400 mb-3">Soporte</h2>
-        <button className="text-blue-400 underline">Contactar Soporte</button>
-      </div>
-
-      {/* Botón cerrar sesión */}
-      <button
-        onClick={handleLogout}
-        className="w-full bg-red-600 py-2 rounded-md font-bold hover:bg-red-500"
-      >
-        Cerrar Sesión
-      </button>
     </div>
   );
 }
