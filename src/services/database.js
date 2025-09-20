@@ -1,4 +1,3 @@
-
 // Database service using Firestore
 import { 
   collection, 
@@ -19,12 +18,15 @@ import { db } from "../firebase";
 export const saveOperation = async (userId, operationData) => {
   try {
     const userOperationsCollection = collection(db, "users", userId, "operations");
-    
+
     const docRef = await addDoc(userOperationsCollection, {
       ...operationData,
       timestamp: serverTimestamp(),
     });
-    return { id: docRef.id, ...operationData };
+
+    // Leer el documento recién creado con los datos finales (incluido el timestamp real)
+    const newDoc = await getDoc(docRef);
+    return { id: docRef.id, ...newDoc.data() };
   } catch (error) {
     console.error("Error saving operation:", error);
     throw error;
