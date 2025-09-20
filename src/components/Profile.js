@@ -1,92 +1,120 @@
 // src/components/Profile.js
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  getUserOperations,
+  getUserPreferences,
+  saveUserPreferences,
+} from "../services/database";
 
-import React, { useContext, useEffect, useState } from "react";
-import AuthContext from "../contexts/AuthContext";
-import { db } from "../services/database"; // ✅ corregido en minúscula
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-
-const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0"; // UID del dueño
+const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0";
 
 const Profile = () => {
-  const { currentUser } = useContext(AuthContext);
-  const [userData, setUserData] = useState(null);
-  const [operationsCount, setOperationsCount] = useState(0);
-  const [plan, setPlan] = useState("Cargando...");
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    operationsCount: 0,
+    exportsCount: 0,
+  });
+  const [plan, setPlan] = useState("Gratuito");
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!currentUser) return;
+      if (!user) return;
 
       try {
-        // 📌 Obtener datos del usuario en "users"
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
+        // 🔹 Cargar operaciones
+        const operations = await getUserOperations(user.uid);
+        const operationsCount = operations.length;
 
-        if (userSnap.exists()) {
-          setUserData(userSnap.data());
+        // 🔹 Cargar preferencias (para contar exportaciones)
+        const preferences = await getUserPreferences(user.uid);
+        const exportsCount = preferences.exportsCount || 0;
 
-          // 📌 Determinar el plan
-          if (currentUser.uid === OWNER_UID) {
-            setPlan("Exclusivo");
-          } else if (userSnap.data().plan === "premium") {
-            setPlan("Premium");
-          } else {
-            setPlan("Gratuito");
-          }
+        // 🔹 Plan según UID
+        let userPlan = "Gratuito";
+        if (user.uid === OWNER_UID) {
+          userPlan = "Exclusivo";
+        } else if (preferences.plan === "Premium") {
+          userPlan = "Premium";
         }
 
-        // 📌 Contar operaciones del usuario en "operations"
-        const q = query(
-          collection(db, "operations"),
-          where("userId", "==", currentUser.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        setOperationsCount(querySnapshot.size);
+        setStats({
+          operationsCount,
+          exportsCount,
+        });
+        setPlan(userPlan);
       } catch (error) {
-        console.error("Error al obtener datos del perfil:", error);
+        console.error("Error loading profile data:", error);
       }
     };
 
     fetchData();
-  }, [currentUser]);
+  }, [user]);
 
-  if (!currentUser) {
-    return <p>Debes iniciar sesión para ver tu perfil.</p>;
+  if (!user) {
+    return <p>Cargando usuario...</p>;
   }
 
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
-      <h2>Perfil del Usuario</h2>
+    <div className="profile">
+      <h2>Perfil</h2>
 
-      {/* Foto de perfil */}
-      {currentUser.photoURL ? (
-        <img
-          src={currentUser.photoURL}
-          alt="Foto de perfil"
-          style={{ width: "100px", height: "100px", borderRadius: "50%" }}
-        />
-      ) : (
-        <div
-          style={{
-            width: "100px",
-            height: "100px",
-            borderRadius: "50%",
-            background: "#ccc",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "40px",
-          }}
-        >
-          👤
+      <div className="user-info">
+        <p>
+          <strong>Nombre:</strong> {user.displayName || "Sin nombre"}
+        </p>
+        <p>
+          <strong>Email:</strong> {user.email}
+        </p>
+      </div>
+
+      {/* 🔹 Plan y limitaciones */}
+      <div className="plan-info">
+        <h3>Tipo de Plan: {plan}</h3>
+
+        {plan === "Gratuito" && (
+          <div className="limitations">
+            <p>
+              <strong>Operaciones:</strong> {stats.operationsCount}/200
+            </p>
+            <p>
+              <strong>Exportaciones:</strong> {stats.exportsCount}/200
+            </p>
+            <button>Actualizar tus Límites</button>
+          </div>
+        )}
+
+        {plan === "Premium" && (
+          <div className="premium-info">
+            <p>✅ Operaciones y exportaciones ilimitadas.</p>
+          </div>
+        )}
+
+        {plan === "Exclusivo" && (
+          <div className="exclusive-info">
+            <p>👑 Plan exclusivo para el dueño.</p>
+          </div>
+        )}
+      </div>
+
+      {/* 🔹 Oferta de plan Premium */}
+      {plan === "Gratuito" && (
+        <div className="premium-offer">
+          <h3>Plan Premium - $13/mes</h3>
+          <p>Accede a operaciones y exportaciones ilimitadas.</p>
+          <div className="payment-methods">
+            <button>Paypal</button>
+            <button>Binance Pay</button>
+            <button>Blockchain Pay</button>
+          </div>
         </div>
       )}
 
-      {/* Datos básicos */}
-      <p><strong>Nombre:</strong> {currentUser.displayName || "Sin nombre"}</p>
-      <p><strong>Email:</strong> {currentUser.email}</p>
-      <p><strong>Plan:</strong> {plan}</p>
-      <p><strong>Operaciones realizadas:</strong> {operationsCount}</p>
+      {/* 🔹 Soporte */}
+      <div className="support">
+        <h3>Soporte</h3>
+        <button>Contactar Soporte</button>
+      </div>
     </div>
   );
 };
