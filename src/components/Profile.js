@@ -1,7 +1,7 @@
 // src/components/Profile.js
 
 import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../contexts/AuthContext";
+import AuthContext from "../contexts/AuthContext";
 import { db } from "../services/database"; // ✅ corregido en minúscula
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 
