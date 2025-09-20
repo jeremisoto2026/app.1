@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { getUserOperations } from "../contexts/database";
-
+import { getUserOperations } from "../services/database";
 const Profile = () => {
   const { user } = useAuth();
   const [operations, setOperations] = useState([]);
