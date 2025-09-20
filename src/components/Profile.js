@@ -1,49 +1,55 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { getUserPreferences } from "../services/database";
+import { db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 const Profile = () => {
   const { user } = useAuth();
-  const [profile, setProfile] = useState(null);
+  const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      try {
-        if (user?.uid) {
-          const data = await getUserPreferences(user.uid);
-          setProfile(data);
+      if (user) {
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            setProfileData(docSnap.data());
+          } else {
+            console.log("No se encontraron datos del perfil.");
+          }
+        } catch (error) {
+          console.error("Error al obtener perfil:", error);
         }
-      } catch (error) {
-        console.error("Error loading profile:", error);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     fetchProfile();
   }, [user]);
 
-  if (loading) {
-    return <p>Cargando perfil...</p>;
-  }
-
-  if (!profile) {
-    return <p>No se encontraron datos del perfil.</p>;
-  }
+  if (loading) return <p>Cargando perfil...</p>;
+  if (!profileData) return <p>No se encontraron datos del perfil.</p>;
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "20px", color: "white" }}>
       <h2>Perfil</h2>
-      <img
-        src={profile.photoURL || "https://via.placeholder.com/100"}
-        alt="Avatar"
-        style={{ borderRadius: "50%", width: "100px" }}
-      />
-      <p><strong>Nombre:</strong> {profile.nombre || "No definido"}</p>
-      <p><strong>Apellido:</strong> {profile.apellido || "No definido"}</p>
-      <p><strong>Email:</strong> {user?.email}</p>
-      <p><strong>Plan:</strong> {profile.plan || "free"}</p>
+      <p><strong>UID:</strong> {profileData.uid}</p>
+      <p><strong>Email:</strong> {profileData.email}</p>
+      <p><strong>Nombre:</strong> {profileData.nombre}</p>
+      <p><strong>Apellido:</strong> {profileData.apellido}</p>
+      <p><strong>Plan:</strong> {profileData.plan}</p>
+      <p><strong>Creado:</strong> {profileData.createdAt?.toDate().toLocaleString()}</p>
+
+      {profileData.photoURL && (
+        <img 
+          src={profileData.photoURL} 
+          alt="Foto de perfil" 
+          style={{ width: "100px", borderRadius: "50%", marginTop: "10px" }}
+        />
+      )}
     </div>
   );
 };
