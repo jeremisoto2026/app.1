@@ -6,7 +6,7 @@ import {
   doc, 
   getDoc 
 } from "firebase/firestore";
-import { db } from "./firebase"; // Asegúrate de que esta ruta es correcta
+import { db } from "../firebase"; // Asegúrate de que esta ruta es correcta
 
 // Obtener datos del usuario actual
 export const getUserData = async () => {
