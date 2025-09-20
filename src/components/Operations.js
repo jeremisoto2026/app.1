@@ -87,7 +87,7 @@ const Operations = ({ onOperationSaved }) => {
 
       // --- CHECK PLAN & LIMITS ---
       // getUserData(user.uid) debe devolver un objeto con { plan: 'free'|'premium' , ... }
-      const userInfo = await getUserData(user.uid);
+      const userInfo = await getUserProfile(user.uid);
       const userPlan = (userInfo && userInfo.plan) ? userInfo.plan : 'free';
 
       if (userPlan === 'free') {
