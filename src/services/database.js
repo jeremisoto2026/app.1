@@ -9,7 +9,8 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
-  orderBy
+  orderBy,
+  updateDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -67,6 +68,23 @@ export const getUserProfile = async (uid) => {
   }
 };
 
+/**
+ * Actualiza el plan de un usuario (por ejemplo, de free → premium)
+ */
+export const updateUserPlan = async (uid, plan = "premium") => {
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      plan,
+      limiteOperaciones: plan === "free" ? 200 : null,
+      limiteExportaciones: plan === "free" ? 40 : null
+    });
+  } catch (error) {
+    console.error("updateUserPlan error:", error);
+    throw error;
+  }
+};
+
 // --- Operaciones ---
 
 /**
@@ -78,7 +96,8 @@ export const saveOperation = async (userId, operationData) => {
     // Obtener plan del usuario
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
-    const plan = userSnap.exists() ? (userSnap.data().plan || "free") : "free";
+    const userData = userSnap.exists() ? userSnap.data() : null;
+    const plan = userData?.plan || "free";
 
     // Si es free y no es owner, contar operaciones y validar límite
     if (plan === "free" && userId !== OWNER_UID) {
@@ -137,6 +156,22 @@ export const getUserOperationsCount = async (userId) => {
 
 export const saveExport = async (userId) => {
   try {
+    // Obtener plan del usuario
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+    const userData = userSnap.exists() ? userSnap.data() : null;
+    const plan = userData?.plan || "free";
+
+    // Validar límite para Free
+    if (plan === "free" && userId !== OWNER_UID) {
+      const exportsCount = await getUserExportsCount(userId);
+      if (exportsCount >= 40) {
+        const err = new Error("Límite alcanzado: plan Gratuito permite máximo 40 exportaciones.");
+        err.code = "LIMIT_REACHED";
+        throw err;
+      }
+    }
+
     await addDoc(collection(db, "exports"), {
       userId,
       createdAt: serverTimestamp()
