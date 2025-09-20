@@ -9,7 +9,8 @@ import {
   signOut as firebaseSignOut,
   updateProfile
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -36,10 +37,25 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, firstName, lastName) => {
     try {
+      // 1️⃣ Crear usuario en Auth
       const result = await createUserWithEmailAndPassword(auth, email, password);
+
+      // 2️⃣ Actualizar nombre en el perfil de Auth
       await updateProfile(result.user, {
         displayName: `${firstName} ${lastName}`
       });
+
+      // 3️⃣ Guardar en Firestore
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        email: result.user.email,
+        nombre: firstName,
+        apellido: lastName,
+        photoURL: result.user.photoURL || "",
+        plan: "free",
+        createdAt: serverTimestamp()
+      });
+
       return result;
     } catch (error) {
       console.error("Error creating account:", error);
@@ -59,7 +75,24 @@ export const AuthProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      return await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+
+      // ✅ Si el usuario entra con Google, también lo guardamos en la base
+      await setDoc(
+        doc(db, "users", result.user.uid),
+        {
+          uid: result.user.uid,
+          email: result.user.email,
+          nombre: result.user.displayName?.split(" ")[0] || "",
+          apellido: result.user.displayName?.split(" ")[1] || "",
+          photoURL: result.user.photoURL || "",
+          plan: "free",
+          createdAt: serverTimestamp()
+        },
+        { merge: true } // para no sobrescribir si ya existe
+      );
+
+      return result;
     } catch (error) {
       console.error("Error signing in with Google:", error);
       throw error;
