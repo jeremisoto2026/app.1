@@ -1,194 +1,212 @@
-// src/services/database.js
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  getDocs,
+
+// Database service using Firestore
+import { 
+  collection, 
+  addDoc, 
+  query, 
+  orderBy, 
+  getDocs, 
+  serverTimestamp,
   doc,
   getDoc,
-  setDoc,
-  serverTimestamp,
-  orderBy,
-  updateDoc
+  updateDoc,
+  deleteDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
 
-const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0";
+// --- Operations CRUD ---
 
-// --- Usuarios / Perfil ---
-
-/**
- * Crea o asegura el documento de usuario en /users/{uid}
- * userObj = { uid, email, displayName, photoURL }
- */
-export const ensureUserDoc = async (userObj) => {
-  try {
-    const userRef = doc(db, "users", userObj.uid);
-    const snap = await getDoc(userRef);
-
-    if (!snap.exists()) {
-      const nameParts = (userObj.displayName || "").trim().split(" ");
-      const nombre = nameParts[0] || "";
-      const apellido = nameParts.slice(1).join(" ") || "";
-
-      const plan = userObj.uid === OWNER_UID ? "exclusive" : "free";
-
-      const data = {
-        uid: userObj.uid,
-        email: userObj.email || "",
-        nombre,
-        apellido,
-        photoURL: userObj.photoURL || "",
-        plan,
-        createdAt: serverTimestamp(),
-        limiteOperaciones: plan === "free" ? 200 : null,
-        limiteExportaciones: plan === "free" ? 40 : null
-      };
-
-      await setDoc(userRef, data);
-      return data;
-    } else {
-      return snap.data();
-    }
-  } catch (error) {
-    console.error("ensureUserDoc error:", error);
-    throw error;
-  }
-};
-
-export const getUserProfile = async (uid) => {
-  try {
-    const userRef = doc(db, "users", uid);
-    const snap = await getDoc(userRef);
-    return snap.exists() ? { uid: snap.id, ...snap.data() } : null;
-  } catch (error) {
-    console.error("getUserProfile error:", error);
-    throw error;
-  }
-};
-
-/**
- * Actualiza el plan de un usuario (por ejemplo, de free → premium)
- */
-export const updateUserPlan = async (uid, plan = "premium") => {
-  try {
-    const userRef = doc(db, "users", uid);
-    await updateDoc(userRef, {
-      plan,
-      limiteOperaciones: plan === "free" ? 200 : null,
-      limiteExportaciones: plan === "free" ? 40 : null
-    });
-  } catch (error) {
-    console.error("updateUserPlan error:", error);
-    throw error;
-  }
-};
-
-// --- Operaciones ---
-
-/**
- * Guarda operación en colección raíz "operations" con userId y createdAt.
- * Verifica límite si el usuario es 'free' (200 ops) — owner y premium no limitan.
- */
 export const saveOperation = async (userId, operationData) => {
   try {
-    // Obtener plan del usuario
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
-    const userData = userSnap.exists() ? userSnap.data() : null;
-    const plan = userData?.plan || "free";
-
-    // Si es free y no es owner, contar operaciones y validar límite
-    if (plan === "free" && userId !== OWNER_UID) {
-      const qCount = query(
-        collection(db, "operations"),
-        where("userId", "==", userId)
-      );
-      const snapshot = await getDocs(qCount);
-      if (snapshot.size >= 200) {
-        const err = new Error("Límite alcanzado: plan Gratuito permite máximo 200 operaciones.");
-        err.code = "LIMIT_REACHED";
-        throw err;
-      }
-    }
-
-    const docRef = await addDoc(collection(db, "operations"), {
+    const userOperationsCollection = collection(db, "users", userId, "operations");
+    
+    const docRef = await addDoc(userOperationsCollection, {
       ...operationData,
-      userId,
-      createdAt: serverTimestamp()
+      timestamp: serverTimestamp(),
     });
-
     return { id: docRef.id, ...operationData };
   } catch (error) {
-    console.error("saveOperation error:", error);
+    console.error("Error saving operation:", error);
+    throw error;
+  }
+};
+
+export const deleteOperation = async (userId, operationId) => {
+  try {
+    const operationRef = doc(db, "users", userId, "operations", operationId);
+    await deleteDoc(operationRef);
+    console.log("Operation successfully deleted!");
+  } catch (error) {
+    console.error("Error deleting operation:", error);
     throw error;
   }
 };
 
 export const getUserOperations = async (userId) => {
   try {
+    const userOperationsCollection = collection(db, "users", userId, "operations");
     const q = query(
-      collection(db, "operations"),
-      where("userId", "==", userId),
-      orderBy("createdAt", "desc")
+      userOperationsCollection,
+      orderBy("timestamp", "desc")
     );
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
   } catch (error) {
-    console.error("getUserOperations error:", error);
+    console.error("Error getting user operations:", error);
     throw error;
   }
 };
 
-export const getUserOperationsCount = async (userId) => {
+// --- Dashboard stats calculation ---
+
+export const getDashboardStats = async (userId) => {
   try {
-    const q = query(collection(db, "operations"), where("userId", "==", userId));
-    const snap = await getDocs(q);
-    return snap.size;
-  } catch (error) {
-    console.error("getUserOperationsCount error:", error);
-    throw error;
-  }
-};
-
-// --- Exports (contador de exportaciones) ---
-
-export const saveExport = async (userId) => {
-  try {
-    // Obtener plan del usuario
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
-    const userData = userSnap.exists() ? userSnap.data() : null;
-    const plan = userData?.plan || "free";
-
-    // Validar límite para Free
-    if (plan === "free" && userId !== OWNER_UID) {
-      const exportsCount = await getUserExportsCount(userId);
-      if (exportsCount >= 40) {
-        const err = new Error("Límite alcanzado: plan Gratuito permite máximo 40 exportaciones.");
-        err.code = "LIMIT_REACHED";
-        throw err;
-      }
+    const operations = await getUserOperations(userId);
+    
+    if (!operations.length) {
+      return {
+        total_operations: 0,
+        total_profit_usdt: 0.0,
+        total_profit_usd: 0.0,
+        best_operation: null,
+        worst_operation: null,
+        monthly_profit: 0.0,
+        success_rate: 0.0
+      };
     }
 
-    await addDoc(collection(db, "exports"), {
-      userId,
-      createdAt: serverTimestamp()
+    let totalCryptoBought = 0;
+    let totalCryptoSold = 0;
+    
+    operations.forEach(op => {
+      const cryptoAmount = parseFloat(op.crypto_amount);
+      if (isNaN(cryptoAmount)) return;
+
+      if (op.operation_type === 'Venta') {
+        totalCryptoSold += cryptoAmount;
+      } else if (op.operation_type === 'Compra') {
+        totalCryptoBought += cryptoAmount;
+      }
     });
+
+    const totalProfitUsdt = totalCryptoBought - totalCryptoSold;
+    const totalOperations = operations.length;
+    
+    const successRate = totalProfitUsdt > 0 ? 100 : 0;
+    
+    return {
+      total_operations: totalOperations,
+      total_profit_usdt: totalProfitUsdt,
+      total_profit_usd: totalProfitUsdt,
+      best_operation: null,
+      worst_operation: null,
+      monthly_profit: totalProfitUsdt,
+      success_rate: successRate
+    };
   } catch (error) {
-    console.error("saveExport error:", error);
+    console.error("Error getting dashboard stats:", error);
     throw error;
   }
 };
 
-export const getUserExportsCount = async (userId) => {
+// --- P2P Simulation (client-side calculation) ---
+
+export const simulateP2P = (simulationData) => {
   try {
-    const q = query(collection(db, "exports"), where("userId", "==", userId));
-    const snap = await getDocs(q);
-    return snap.size;
+    const { operation_type, amount, exchange_rate, fee = 0 } = simulationData;
+    
+    if (operation_type === "Venta") {
+      const grossFiat = amount * exchange_rate;
+      const netFiat = grossFiat - fee;
+      
+      return {
+        operation_type,
+        crypto: simulationData.crypto,
+        fiat: simulationData.fiat,
+        amount_sent: amount,
+        amount_received: grossFiat,
+        fee: fee,
+        net_amount: netFiat,
+        exchange_rate
+      };
+    } else {
+      const grossCrypto = amount / exchange_rate;
+      const netCrypto = grossCrypto - fee;
+      
+      return {
+        operation_type,
+        crypto: simulationData.crypto,
+        fiat: simulationData.fiat,
+        amount_sent: amount,
+        amount_received: grossCrypto,
+        fee: fee,
+        net_amount: netCrypto,
+        exchange_rate
+      };
+    }
   } catch (error) {
-    console.error("getUserExportsCount error:", error);
+    console.error("Error in P2P simulation:", error);
+    throw error;
+  }
+};
+
+// --- Arbitrage Calculation (client-side calculation) ---
+
+export const simulateArbitrage = (arbitrageData) => {
+  try {
+    const { amount, buy_price, sell_price, buy_fee = 0, sell_fee = 0 } = arbitrageData;
+    
+    const investment = amount * buy_price + buy_fee;
+    const revenue = amount * sell_price - sell_fee;
+    
+    const totalFees = buy_fee + sell_fee;
+    const profit = revenue - investment;
+    const profitPercentage = investment > 0 ? (profit / investment) * 100 : 0;
+    
+    return {
+      buy_exchange: arbitrageData.buy_exchange,
+      sell_exchange: arbitrageData.sell_exchange,
+      crypto: arbitrageData.crypto,
+      investment,
+      revenue,
+      total_fees: totalFees,
+      profit,
+      profit_percentage: profitPercentage
+    };
+  } catch (error) {
+    console.error("Error in arbitrage simulation:", error);
+    throw error;
+  }
+};
+
+// --- User preferences and data ---
+
+export const saveUserPreferences = async (userId, preferences) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, preferences);
+  } catch (error) {
+    console.error("Error saving user preferences:", error);
+    throw error;
+  }
+};
+
+export const getUserPreferences = async (userId) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+      return userSnap.data();
+    } else {
+      return {};
+    }
+  } catch (error) {
+    console.error("Error getting user preferences:", error);
     throw error;
   }
 };
