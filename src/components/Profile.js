@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../services/Database";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 
 const OWNER_UID = "WYNmwLw2vwUfUaA2eRmsH3Biw0";
 
@@ -19,7 +19,7 @@ const Profile = () => {
       try {
         let plan = "free";
 
-        // 🔹 Si es el dueño → asignar plan exclusivo
+        // 🔹 Si es el dueño → plan exclusivo
         if (user.uid === OWNER_UID) {
           plan = "exclusive";
           setUserData({
@@ -29,7 +29,7 @@ const Profile = () => {
             plan: "exclusive",
           });
         } else {
-          // 🔹 Datos del usuario normal desde Firestore
+          // 🔹 Datos normales del usuario desde Firestore
           const userRef = doc(db, "users", user.uid);
           const userSnap = await getDoc(userRef);
 
@@ -42,20 +42,14 @@ const Profile = () => {
           }
         }
 
-        // 🔹 Contar operaciones (colección "operations")
-        const qOps = query(
-          collection(db, "operations"),
-          where("userId", "==", user.uid)
-        );
-        const opsSnap = await getDocs(qOps);
+        // 🔹 Contar operaciones (subcolección dentro del usuario)
+        const opsRef = collection(db, "users", user.uid, "operations");
+        const opsSnap = await getDocs(opsRef);
         setOperationsCount(opsSnap.size);
 
-        // 🔹 Contar exportaciones (colección "exports")
-        const qExports = query(
-          collection(db, "exports"),
-          where("userId", "==", user.uid)
-        );
-        const exportsSnap = await getDocs(qExports);
+        // 🔹 Contar exportaciones (subcolección dentro del usuario)
+        const exportsRef = collection(db, "users", user.uid, "exports");
+        const exportsSnap = await getDocs(exportsRef);
         setExportsCount(exportsSnap.size);
 
       } catch (error) {
@@ -80,6 +74,7 @@ const Profile = () => {
 
       <div className="limits-card">
         <h3>Plan Actual: {userData.plan === "free" ? "Gratuito" : userData.plan}</h3>
+
         {userData.plan === "free" && (
           <>
             <p>Operaciones: {operationsCount} / 200</p>
@@ -87,9 +82,11 @@ const Profile = () => {
             <button>Actualizar tus Límites</button>
           </>
         )}
+
         {userData.plan === "premium" && (
           <p>✅ Operaciones y Exportaciones Ilimitadas</p>
         )}
+
         {userData.plan === "exclusive" && (
           <p>👑 Plan Exclusivo — Sin límites (Dueño)</p>
         )}
