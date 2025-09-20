@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { simulateP2P } from '../services/database';
+import { simulateP2P } from '../utils/simulations';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
