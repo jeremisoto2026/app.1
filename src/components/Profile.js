@@ -34,19 +34,19 @@ export default function Profile() {
           userInfo = userSnap.data();
         }
 
-        // ✅ Contar solo las operaciones del usuario logueado
+        // contar operaciones solo del usuario
         const operationsRef = collection(db, "users", user.uid, "operations");
         const operationsSnap = await getDocs(operationsRef);
         const totalOps = operationsSnap.size;
 
         setUserData((prev) => ({
           ...prev,
-          email: user.email || "",
+          email: user.email || userInfo.email || "",
           nombre: userInfo.nombre || "",
           apellido: userInfo.apellido || "",
           memberSince: userInfo.memberSince || "",
           plan: userInfo.plan || "Free",
-          photoURL: user.photoURL || "",
+          photoURL: userInfo.photoURL || user.photoURL || "",
           operaciones: totalOps,
         }));
       }
@@ -74,7 +74,11 @@ export default function Profile() {
               />
             ) : (
               <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
-                {userData.email ? userData.email.charAt(0).toUpperCase() : "U"}
+                {userData.nombre
+                  ? userData.nombre.charAt(0).toUpperCase()
+                  : userData.email
+                  ? userData.email.charAt(0).toUpperCase()
+                  : "U"}
               </div>
             )}
           </div>
@@ -87,6 +91,7 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Card con la info */}
         <Card className="shadow-xl border-0 rounded-2xl overflow-hidden bg-gray-900">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-500 text-white pb-6">
             <CardTitle className="text-xl font-bold flex items-center justify-center gap-2">
@@ -132,7 +137,9 @@ export default function Profile() {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-gray-300">Operaciones</span>
+                    <span className="font-medium text-gray-300">
+                      Operaciones
+                    </span>
                     <span className="text-gray-400">
                       {userData.operaciones}/{userData.limiteOperaciones}
                     </span>
@@ -147,7 +154,9 @@ export default function Profile() {
 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-gray-300">Exportaciones</span>
+                    <span className="font-medium text-gray-300">
+                      Exportaciones
+                    </span>
                     <span className="text-gray-400">
                       {userData.exportaciones}/{userData.limiteExportaciones}
                     </span>
@@ -201,8 +210,12 @@ export default function Profile() {
               </div>
 
               <ul className="text-sm text-gray-300 mb-4 space-y-1">
-                <li className="flex items-center gap-2">✅ Operaciones ilimitadas</li>
-                <li className="flex items-center gap-2">✅ Exportaciones ilimitadas</li>
+                <li className="flex items-center gap-2">
+                  ✅ Operaciones ilimitadas
+                </li>
+                <li className="flex items-center gap-2">
+                  ✅ Exportaciones ilimitadas
+                </li>
                 <li className="flex items-center gap-2">✅ Soporte prioritario</li>
               </ul>
 
