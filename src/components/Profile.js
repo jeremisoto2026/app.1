@@ -303,6 +303,7 @@ export default function Profile() {
                   </div>
                 </div>
               </div>
+              </div>
 
 
             {/* ---- Historial / espacio extra si quieres más contenido ---- */}
