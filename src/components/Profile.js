@@ -1,11 +1,11 @@
 // Profile.js
-import React, { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../contexts/AuthContext";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 
 export default function Profile() {
-  const { user, signOut } = useContext(AuthContext);
+  const { user, signOut } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [operationCount, setOperationCount] = useState(0);
@@ -49,6 +49,7 @@ export default function Profile() {
             plan: "free",
             usage: defaultUsage,
             createdAt: null,
+            displayName: user.displayName || null,
           };
           setProfileData(data);
           setPlan("free");
@@ -60,17 +61,18 @@ export default function Profile() {
         const opsCount = opsSnap.size || 0;
         setOperationCount(opsCount);
 
-        // Si el doc tiene usage, dejamos sus valores, si no actualizamos "usadas" de operaciones con el conteo real
+        // Si el doc tiene usage, respetamos total, pero actualizamos "usadas" con ops reales si no existe
         if (data?.usage) {
-          // Si Firestore ya tenía usage, respeta valores (pero si "operaciones.usadas" está a 0 lo actualizamos para reflejar ops reales)
           if (!data.usage.operaciones || data.usage.operaciones.usadas === undefined) {
             data.usage = {
               ...(data.usage || {}),
               operaciones: { usadas: opsCount, total: data.usage?.operaciones?.total || defaultUsage.operaciones.total },
             };
+          } else {
+            // si hay uso guardado, actualizamos operaciones.usadas por seguridad
+            data.usage.operaciones.usadas = opsCount;
           }
         } else {
-          // Si no hay campo usage, construimos uno
           data.usage = {
             operaciones: { usadas: opsCount, total: defaultUsage.operaciones.total },
             exportaciones: defaultUsage.exportaciones,
@@ -87,15 +89,14 @@ export default function Profile() {
     fetchProfileAndUsage();
   }, [user]);
 
-  // Helper: obtener URL de la foto (prioriza Firestore -> auth -> placeholder)
+  // Helper: obtener URL de la foto (prioriza Firestore -> auth -> fallback)
   const getPhotoURL = () => {
     if (profileData?.photoURL) return profileData.photoURL;
     if (user?.photoURL) return user.photoURL;
-    // fallback: avatar por inicial
     return null;
   };
 
-  // Iconos SVG simples para no depender de @heroicons (evita errores en build)
+  // Iconos SVG (sin dependencia externa)
   const IconRocket = ({ className = "h-5 w-5 mr-2 text-purple-400" }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 2c2.21 0 4 1.79 4 4v3l3 3-3 3v3c0 2.21-1.79 4-4 4s-4-1.79-4-4v-3L5 15l3-3V6c0-2.21 1.79-4 4-4z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -147,7 +148,6 @@ export default function Profile() {
 
   // Uso (operaciones / exportaciones)
   const usage = profileData.usage || defaultUsage;
-  // Preferir operaciones reales contadas en el subcollection si existe operationCount
   const operacionesUsadas = operationCount ?? (usage.operaciones?.usadas || 0);
   const operacionesTotal = usage.operaciones?.total || defaultUsage.operaciones.total;
   const exportacionesUsadas = usage.exportaciones?.usadas || defaultUsage.exportaciones.usadas;
@@ -169,14 +169,14 @@ export default function Profile() {
                 />
               ) : (
                 <div className="w-28 h-28 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-3xl font-bold text-white border-4 border-white/20 shadow-lg">
-                  {(profileData.nombre || user?.email || "U").charAt(0).toUpperCase()}
+                  {(profileData.nombre || profileData.displayName || user?.email || "U").charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
 
             <div className="flex-1 text-center md:text-left">
               <h2 className="text-3xl font-bold text-white mb-1">
-                {profileData.nombre ? `${profileData.nombre} ${profileData.apellido || ""}`.trim() : (user?.displayName || "Usuario")}
+                {profileData.nombre ? `${profileData.nombre} ${profileData.apellido || ""}`.trim() : (profileData.displayName || user?.displayName || "Usuario")}
               </h2>
               <p className="text-indigo-200">{profileData.email || user?.email}</p>
               <p className="text-sm text-indigo-100 mt-2">
@@ -188,11 +188,9 @@ export default function Profile() {
                     : "Fecha no disponible"}
               </p>
 
-              {/* Botones (ajustes / verificar / etc) */}
+              {/* Botones */}
               <div className="mt-4 flex items-center justify-center md:justify-start gap-3">
-                <button className="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600 transition">
-                  Ajustes de cuenta
-                </button>
+                {/* AJUSTES QUITADO según petición */}
                 <button
                   onClick={() => signOut && signOut()}
                   className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600 transition flex items-center"
@@ -215,7 +213,7 @@ export default function Profile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Nombre</p>
-                  <div className="p-3 bg-gray-800 rounded-md">{profileData.nombre || "-"}</div>
+                  <div className="p-3 bg-gray-800 rounded-md">{profileData.nombre || profileData.displayName || "-"}</div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Apellido</p>
@@ -300,9 +298,24 @@ export default function Profile() {
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-300 mb-2">Métodos de pago</h4>
                 <div className="grid grid-cols-3 gap-3">
-                  <button className="bg-gray-800 hover:bg-gray-700 text-white py-2 px-3 rounded-md">PayPal</button>
-                  <button className="bg-gray-800 hover:bg-gray-700 text-white py-2 px-3 rounded-md">Binance Pay</button>
-                  <button className="bg-gray-800 hover:bg-gray-700 text-white py-2 px-3 rounded-md">Blockchain Pay</button>
+                  <button
+                    className="py-2 px-3 rounded-md text-white font-medium"
+                    style={{ backgroundColor: "#003087" }} // PayPal azul
+                  >
+                    PayPal
+                  </button>
+                  <button
+                    className="py-2 px-3 rounded-md font-semibold"
+                    style={{ backgroundColor: "#F3BA2F", color: "#111" }} // Binance amarillo (texto oscuro)
+                  >
+                    Binance Pay
+                  </button>
+                  <button
+                    className="py-2 px-3 rounded-md text-white font-medium"
+                    style={{ backgroundColor: "#0F6FFF" }} // Blockchain azul/celeste
+                  >
+                    Blockchain Pay
+                  </button>
                 </div>
               </div>
 
@@ -326,7 +339,7 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Espacio final (mantener estilo) */}
+        {/* Espacio final */}
         <div className="h-10" />
       </div>
     </div>
