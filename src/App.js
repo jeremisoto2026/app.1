@@ -9,6 +9,7 @@ import ArbitrageSimulator from './components/ArbitrageSimulator';
 import Operations from './components/Operations';
 import History from './components/History';
 import Profile from './components/Profile';
+import { FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 import './App.css';
 
 const MainApp = () => {
@@ -78,6 +79,23 @@ const MainApp = () => {
               </p>
             </div>
 
+            {/* Botones de autenticación - AÑADIDOS AQUÍ */}
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+              <button 
+                onClick={() => handleShowAuth('login')}
+                className="px-10 py-4 bg-gray-800/50 hover:bg-gray-700/50 text-white font-bold rounded-xl transition-all duration-300 border border-purple-500/30 hover:border-purple-500/50 backdrop-blur-sm transform hover:scale-105 flex items-center gap-2"
+              >
+                <FaSignInAlt /> Iniciar Sesión
+              </button>
+              <button 
+                onClick={() => handleShowAuth('register')}
+                className="px-10 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold rounded-xl transition-all duration-300 shadow-2xl shadow-purple-500/30 hover:shadow-purple-500/50 transform hover:scale-105 group relative overflow-hidden flex items-center gap-2"
+              >
+                <FaUserPlus /> Regístrate
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
+            </div>
+
             {/* Características con animación escalonada */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
               {[
@@ -118,21 +136,6 @@ const MainApp = () => {
               <p className="text-gray-400 mb-8 max-w-2xl mx-auto text-lg">
                 Únete a la élite de traders que ya están maximizando sus ganancias con nuestras herramientas avanzadas.
               </p>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <button 
-                  onClick={() => handleShowAuth('register')}
-                  className="px-10 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold rounded-xl transition-all duration-300 shadow-2xl shadow-purple-500/30 hover:shadow-purple-500/50 transform hover:scale-105 group relative overflow-hidden"
-                >
-                  <span className="relative z-10">Crear Cuenta Premium</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </button>
-                <button 
-                  onClick={() => handleShowAuth('login')}
-                  className="px-10 py-4 bg-gray-800/50 hover:bg-gray-700/50 text-white font-bold rounded-xl transition-all duration-300 border border-purple-500/30 hover:border-purple-500/50 backdrop-blur-sm transform hover:scale-105"
-                >
-                  Acceso Traders
-                </button>
-              </div>
             </div>
 
             {/* Estadísticas destacadas */}
@@ -189,7 +192,7 @@ const MainApp = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white overflow-x-hidden">
-      <Header onShowAuth={handleShowAuth} />
+      <Header />
       
       <main className={`${user ? 'pb-20' : ''}`}>
         {renderContent()}
