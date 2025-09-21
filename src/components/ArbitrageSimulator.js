@@ -17,9 +17,9 @@ import {
 } from "./ui/select";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
-import { CalculatorIcon, ArrowPathIcon, TrashIcon, ChartBarIcon, LightningBoltIcon } from "@heroicons/react/24/outline";
+import { CalculatorIcon, ArrowPathIcon, TrashIcon, ChartBarIcon, BoltIcon } from "@heroicons/react/24/outline";
 
-// Nueva función de cálculo para la ganancia en criptomonedas
+// Función de cálculo para la ganancia en criptomonedas
 const calculateCryptoArbitrage = (data) => {
   const { amount, buy_price, sell_price, buy_fee, sell_fee } = data;
   
@@ -129,7 +129,7 @@ const ArbitrageSimulator = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl mb-4">
-            <LightningBoltIcon className="h-8 w-8 text-white" />
+            <BoltIcon className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
             Simulador de Arbitraje
@@ -161,7 +161,7 @@ const ArbitrageSimulator = () => {
                     onValueChange={(value) => handleSelectChange("crypto", value)}
                     disabled={loading}
                   >
-                    <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl mt-1">
+                    <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Seleccionar crypto" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -184,7 +184,7 @@ const ArbitrageSimulator = () => {
                     value={formData.amount}
                     onChange={handleChange}
                     placeholder="0.00000000"
-                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl mt-1"
+                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
                     disabled={loading}
                   />
                 </div>
@@ -202,7 +202,7 @@ const ArbitrageSimulator = () => {
                     value={formData.buy_price}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl mt-1"
+                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
                     disabled={loading}
                   />
                 </div>
@@ -217,7 +217,7 @@ const ArbitrageSimulator = () => {
                     value={formData.sell_price}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl mt-1"
+                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
                     disabled={loading}
                   />
                 </div>
@@ -234,7 +234,7 @@ const ArbitrageSimulator = () => {
                     onValueChange={(value) => handleSelectChange("fiat_currency", value)}
                     disabled={loading}
                   >
-                    <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl mt-1">
+                    <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -258,7 +258,7 @@ const ArbitrageSimulator = () => {
                     value={formData.buy_fee}
                     onChange={handleChange}
                     placeholder="0"
-                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl mt-1"
+                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
                     disabled={loading}
                   />
                 </div>
@@ -271,7 +271,7 @@ const ArbitrageSimulator = () => {
                     value={formData.sell_fee}
                     onChange={handleChange}
                     placeholder="0"
-                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl mt-1"
+                    className="w-full bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
                     disabled={loading}
                   />
                 </div>
