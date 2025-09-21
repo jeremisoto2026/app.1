@@ -181,33 +181,75 @@ const Dashboard = ({ onOpenProfile }) => {
         🚀 Planes Premium
       </h2>
 
-      {/* Plan Mensual */}
-      <div
-        onClick={onOpenProfile}
-        className="bg-gray-900 rounded-lg p-6 mb-6 shadow cursor-pointer hover:bg-gray-800 transition"
-      >
-        <h3 className="text-white text-xl font-semibold">Premium Mensual</h3>
-        <p className="text-gray-400 mt-1">Acceso ilimitado mes a mes.</p>
-        <div className="flex items-center mt-3">
-          <span className="text-yellow-400 text-2xl font-bold">$13</span>
-          <span className="text-gray-500 line-through ml-2">$20</span>
-        </div>
-      </div>
-
-      {/* Plan Anual */}
-      <div
-        onClick={onOpenProfile}
-        className="bg-gray-900 rounded-lg p-6 shadow cursor-pointer hover:bg-gray-800 transition"
-      >
-        <h3 className="text-white text-xl font-semibold">Premium Anual</h3>
-        <p className="text-gray-400 mt-1">20% de descuento pagando anual.</p>
-        <div className="flex items-center mt-3">
-          <span className="text-yellow-400 text-2xl font-bold">$125</span>
-          <span className="text-gray-500 line-through ml-2">$160</span>
-        </div>
-      </div>
+      {/* ---------- Card: Plan Premium Mensual ---------- */}
+<div
+  onClick={() => console.log("Ir a perfil / upgrade mensual")}
+  className="bg-gray-900 rounded-xl p-6 shadow-lg cursor-pointer hover:scale-[1.02] transition"
+>
+  <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center">
+      <RocketLaunchIcon className="h-5 w-5 mr-2 text-purple-400" />
+      <h3 className="text-lg font-semibold">Plan Premium</h3>
     </div>
-  );
-};
+    <div className="text-right">
+      <p className="text-lg font-bold text-white">
+        $13 <span className="text-sm text-gray-400">/mes</span>
+      </p>
+    </div>
+  </div>
+
+  <div className="mb-4 text-sm text-gray-300">
+    <ul className="space-y-2">
+      <li className="flex items-center">
+        <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+        Operaciones ilimitadas
+      </li>
+      <li className="flex items-center">
+        <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+        Exportaciones ilimitadas
+      </li>
+      <li className="flex items-center">
+        <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+        Soporte prioritario
+      </li>
+    </ul>
+  </div>
+</div>
+
+{/* ---------- Card: Plan Premium Anual ---------- */}
+<div
+  onClick={() => console.log("Ir a perfil / upgrade anual")}
+  className="bg-gray-900 rounded-xl p-6 shadow-lg cursor-pointer hover:scale-[1.02] transition"
+>
+  <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center">
+      <RocketLaunchIcon className="h-5 w-5 mr-2 text-purple-400" />
+      <h3 className="text-lg font-semibold">Plan Premium Anual</h3>
+    </div>
+    <div className="text-right">
+      <p className="text-lg font-bold text-white">
+        $125 <span className="text-sm text-gray-400">/año</span>
+      </p>
+      <p className="text-xs text-green-400 font-semibold">Ahorra ~20%</p>
+    </div>
+  </div>
+
+  <div className="mb-4 text-sm text-gray-300">
+    <ul className="space-y-2">
+      <li className="flex items-center">
+        <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+        Operaciones ilimitadas
+      </li>
+      <li className="flex items-center">
+        <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+        Exportaciones ilimitadas
+      </li>
+      <li className="flex items-center">
+        <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+        Soporte prioritario
+      </li>
+    </ul>
+  </div>
+</div>
 
 export default Dashboard;
