@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getCountFromServer } from "firebase/firestore";
 import {
   UserIcon,
   ArrowLeftOnRectangleIcon,
@@ -13,7 +13,8 @@ import {
   RocketLaunchIcon,
   CreditCardIcon,
   ArrowsRightLeftIcon,
-  DocumentChartBarIcon
+  DocumentChartBarIcon,
+  ChatBubbleLeftRightIcon
 } from "@heroicons/react/24/outline";
 
 const AccountPage = () => {
@@ -22,23 +23,34 @@ const AccountPage = () => {
   const [usageData, setUsageData] = useState(null);
   const [plan, setPlan] = useState("free");
   const [selectedPlan, setSelectedPlan] = useState("monthly");
+  const [operationCount, setOperationCount] = useState(0);
+  const [exportCount, setExportCount] = useState(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user) return;
 
       try {
+        // Obtener datos del usuario
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
           const data = snap.data();
           setPlan(data.plan || "free");
           setUsageData(
             data.usage || {
-              operaciones: { usadas: 0, total: 30 },
-              exportaciones: { usadas: 0, total: 10 },
+              operaciones: { usadas: 0, total: 200 },
+              exportaciones: { usadas: 0, total: 40 },
             }
           );
         }
+
+        // Obtener conteo de operaciones
+        const operacionesSnapshot = await getCountFromServer(collection(db, "operaciones"));
+        setOperationCount(operacionesSnapshot.data().count);
+
+        // Obtener conteo de exportaciones
+        const exportacionesSnapshot = await getCountFromServer(collection(db, "exportaciones"));
+        setExportCount(exportacionesSnapshot.data().count);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -57,95 +69,106 @@ const AccountPage = () => {
       case "perfil":
         return (
           <div className="space-y-8">
-            {/* Header de perfil */}
-            <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 p-6 bg-white rounded-xl shadow-md">
-              <div className="relative">
-                <img
-                  src={
-                    user?.photoURL ||
-                    `https://ui-avatars.com/api/?name=${user?.displayName || "U"}&background=4f46e5&color=fff`
-                  }
-                  alt="Avatar"
-                  className="w-24 h-24 rounded-full border-4 border-indigo-100 shadow-lg"
-                />
-                <div className="absolute -bottom-2 -right-2 bg-indigo-600 text-white p-1.5 rounded-full">
-                  <UserIcon className="h-5 w-5" />
-                </div>
-              </div>
+            {/* Información del usuario */}
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <UserIcon className="h-5 w-5 mr-2 text-indigo-600" />
+                Información Personal
+              </h3>
               
-              <div className="text-center md:text-left">
-                <h2 className="text-2xl font-bold text-gray-900">{user?.displayName || "Usuario"}</h2>
-                <p className="text-gray-600 mt-1">{user?.email}</p>
-                
-                <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
-                  <ShieldCheckIcon className="h-4 w-4 mr-1" />
-                  Plan: {plan === "free" ? "Gratuito" : "Premium"}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                  <div className="p-2 bg-gray-50 rounded-md">{user?.displayName?.split(' ')[0] || "No especificado"}</div>
                 </div>
                 
-                <p className="text-sm text-gray-500 mt-3">
-                  Miembro desde {new Date(user?.metadata.creationTime).toLocaleDateString()}
-                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                  <div className="p-2 bg-gray-50 rounded-md">{user?.displayName?.split(' ')[1] || "No especificado"}</div>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
+                  <div className="p-2 bg-gray-50 rounded-md">{user?.email || "No especificado"}</div>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Plan</label>
+                  <div className="flex items-center">
+                    <div className={`p-2 px-4 rounded-full text-sm font-medium ${
+                      plan === "free" 
+                        ? "bg-indigo-100 text-indigo-800" 
+                        : "bg-purple-100 text-purple-800"
+                    }`}>
+                      {plan === "free" ? "Free" : "Premium"}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Estadísticas de uso */}
-            {usageData && (
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <ChartBarIcon className="h-5 w-5 mr-2 text-indigo-600" />
-                  Estadísticas de uso
-                </h3>
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <ChartBarIcon className="h-5 w-5 mr-2 text-indigo-600" />
+                Estadísticas de Uso
+              </h3>
 
-                <div className="space-y-6">
-                  {/* Operaciones */}
-                  <div>
-                    <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
-                      <span>Operaciones este mes</span>
-                      <span>
-                        {usageData.operaciones.usadas}/{usageData.operaciones.total}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${
-                            (usageData.operaciones.usadas /
-                              usageData.operaciones.total) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </div>
+              <div className="space-y-6">
+                {/* Operaciones */}
+                <div>
+                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>Total de Operaciones</span>
+                    <span>
+                      {operationCount}/{usageData?.operaciones.total || 200}
+                    </span>
                   </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(
+                          (operationCount / (usageData?.operaciones.total || 200)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
 
-                  {/* Exportaciones */}
-                  <div>
-                    <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
-                      <span>Exportaciones este mes</span>
-                      <span>
-                        {usageData.exportaciones.usadas}/
-                        {usageData.exportaciones.total}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className="bg-green-500 h-2.5 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${
-                            (usageData.exportaciones.usadas /
-                              usageData.exportaciones.total) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </div>
+                {/* Exportaciones */}
+                <div>
+                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>Total de Exportaciones</span>
+                    <span>
+                      {exportCount}/{usageData?.exportaciones.total || 40}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      className="bg-green-500 h-2.5 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(
+                          (exportCount / (usageData?.exportaciones.total || 40)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Acciones */}
+            {/* Botón de contacto con soporte */}
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">¿Necesitas ayuda?</h3>
+              <button className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-colors duration-200">
+                <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                <span>Contactar a Soporte</span>
+              </button>
+            </div>
+
+            {/* Acciones de cuenta */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Acciones de cuenta</h3>
               <button
@@ -171,8 +194,15 @@ const AccountPage = () => {
               <p className="mt-2 opacity-90">Desbloquea todo el potencial de nuestra plataforma con el plan Premium</p>
             </div>
 
-            {/* Selector de plan */}
+            {/* Plan Premium */}
             <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Plan Premium</h3>
+              <p className="text-gray-600 mb-6">
+                Accede a todas las funciones sin límites: operaciones ilimitadas, exportaciones ilimitadas, 
+                soporte prioritario y mucho más.
+              </p>
+
+              {/* Selector de plan */}
               <div className="flex justify-center mb-6">
                 <div className="inline-flex rounded-md p-1 bg-gray-100">
                   <button
@@ -203,7 +233,7 @@ const AccountPage = () => {
                 <div className={`border rounded-xl p-6 ${selectedPlan === "monthly" ? "border-indigo-500 ring-2 ring-indigo-500 ring-opacity-20" : "border-gray-200"}`}>
                   <h3 className="font-bold text-lg text-gray-900">Plan Mensual</h3>
                   <div className="my-4">
-                    <span className="text-4xl font-bold text-gray-900">9,99 €</span>
+                    <span className="text-4xl font-bold text-gray-900">$13</span>
                     <span className="text-gray-600">/mes</span>
                   </div>
                   <ul className="space-y-3 mb-6">
@@ -243,10 +273,10 @@ const AccountPage = () => {
                   )}
                   <h3 className="font-bold text-lg text-gray-900">Plan Anual</h3>
                   <div className="my-4">
-                    <span className="text-4xl font-bold text-gray-900">99,99 €</span>
+                    <span className="text-4xl font-bold text-gray-900">$125</span>
                     <span className="text-gray-600">/año</span>
                   </div>
-                  <div className="text-sm text-green-600 font-medium mb-2">Ahorras 20% compared to monthly</div>
+                  <div className="text-sm text-green-600 font-medium mb-2">Ahorras 20% comparado con el plan mensual</div>
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-center">
                       <CheckBadgeIcon className="h-5 w-5 text-green-500 mr-2" />
@@ -303,6 +333,15 @@ const AccountPage = () => {
                   <span className="text-sm font-medium">Blockchain Pay</span>
                 </button>
               </div>
+            </div>
+
+            {/* Contactar a soporte */}
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">¿Necesitas ayuda con tu plan?</h3>
+              <button className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-colors duration-200">
+                <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                <span>Contactar a Soporte</span>
+              </button>
             </div>
           </div>
         );
@@ -414,7 +453,7 @@ const AccountPage = () => {
               }`}
               onClick={() => setActiveTab("premium")}
             >
-              <ChartBarIcon className="h-5 w-5 mr-2" />
+              <StarIcon className="h-5 w-5 mr-2" />
               Plan Premium
             </button>
 
