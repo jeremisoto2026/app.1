@@ -15,7 +15,7 @@ import {
 
 /**
  * Profile component
- * - No se "simplifica": mantiene estructura, estilos y bloques.
+ * - Mantiene estructura, estilos y bloques.
  * - Conecta con Firestore para traer doc usuario y contar subcolección operations.
  * - No muestra UID ni navegación.
  * - Botón Contactar abre mailto:soportejjxcapital@gmail.com
@@ -71,6 +71,7 @@ export default function Profile() {
         }
 
         // 2) Contamos las operaciones guardadas en la subcolección
+        //    Colección: users/{uid}/operations
         const opsColRef = collection(db, "users", user.uid, "operations");
         const opsSnap = await getDocs(opsColRef);
         const opsCount = opsSnap.size || 0;
@@ -83,6 +84,7 @@ export default function Profile() {
             exportaciones: defaultUsage.exportaciones,
           };
         } else {
+          // si existe pero no trae operaciones.usadas, actualizamos para mostrar algo real
           if (!data.usage.operaciones || data.usage.operaciones.usadas === undefined) {
             data.usage = {
               ...(data.usage || {}),
@@ -112,6 +114,7 @@ export default function Profile() {
 
   // ---------- Helpers ----------
   const getPhotoURL = () => {
+    // Prioriza la foto guardada en Firestore -> foto del auth -> null
     if (profileData?.photoURL) return profileData.photoURL;
     if (user?.photoURL) return user.photoURL;
     return null;
@@ -121,12 +124,16 @@ export default function Profile() {
     if (profileData?.createdAt?.toDate) {
       try {
         return profileData.createdAt.toDate().toLocaleDateString();
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
     if (user?.metadata?.creationTime) {
       try {
         return new Date(user.metadata.creationTime).toLocaleDateString();
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
     return "Fecha no disponible";
   };
@@ -140,7 +147,7 @@ export default function Profile() {
     );
   }
 
-  // si no hay profileData
+  // si no hay profileData (caso raro)
   if (!profileData) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -164,13 +171,13 @@ export default function Profile() {
   let exportacionesUsadas = usage.exportaciones?.usadas || defaultUsage.exportaciones.usadas;
   let exportacionesTotal = usage.exportaciones?.total || defaultUsage.exportaciones.total;
 
-  // ⚡️ Ajuste: si es Premium → ilimitado
+  // ⚡️ Ajuste: si es Premium → ilimitado (Infinity)
   if (profileData.plan?.toLowerCase() === "premium") {
     operacionesTotal = Infinity;
     exportacionesTotal = Infinity;
   }
 
-  // ---------- Render ----------
+  // ---------- Render (diseño completo, sin UID, sin navegación, tarjetas separadas) ----------
   return (
     <div className="min-h-screen bg-black text-white py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -194,14 +201,14 @@ export default function Profile() {
 
             <div className="flex-1 text-center md:text-left">
               <h2 className="text-3xl font-bold text-white mb-1">
-                {profileData.nombre
-                  ? `${profileData.nombre} ${profileData.apellido || ""}`.trim()
-                  : user?.displayName || "Usuario"}
+                {profileData.nombre ? `${profileData.nombre} ${profileData.apellido || ""}`.trim() : (user?.displayName || "Usuario")}
               </h2>
               <p className="text-indigo-200">{profileData.email || user?.email}</p>
-              <p className="text-sm text-indigo-100 mt-2">Miembro desde: {formatMemberSince()}</p>
+              <p className="text-sm text-indigo-100 mt-2">
+                Miembro desde: {formatMemberSince()}
+              </p>
 
-              {/* Botón cerrar sesión */}
+              {/* Botón cerrar sesión (se mantiene) */}
               <div className="mt-4 flex items-center justify-center md:justify-start gap-3">
                 <button
                   onClick={() => signOut && signOut()}
@@ -216,11 +223,11 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ================= Contenido principal ================= */}
+        {/* ================= Contenido principal: Info + Uso + Planes ================= */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ---------- Columna izquierda (información + uso) ---------- */}
+          {/* ---------- Columna izquierda (información + uso) ocupa 2 columnas ---------- */}
           <div className="lg:col-span-2 space-y-8">
-            {/* ---- Tarjeta Información ---- */}
+            {/* ---- Tarjeta Información del Perfil ---- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <h3 className="text-xl font-semibold mb-4">Información del Perfil</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -248,7 +255,7 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* ---- Tarjeta Uso ---- */}
+            {/* ---- Tarjeta Uso de tu cuenta ---- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <h3 className="text-xl font-semibold mb-4 flex items-center">
                 <ChartBarIcon className="h-5 w-5 mr-2 text-indigo-400" />
@@ -301,11 +308,14 @@ export default function Profile() {
                 Actualizar tus Límites
               </button>
             </div>
+
+            {/* ---- Historial / espacio extra si quieres más contenido ---- */}
+            {/* Si más adelante quieres mostrar listados de operaciones, aquí va la tabla pequeña */}
           </div>
 
-          {/* ---------- Columna derecha (Planes + Soporte) ---------- */}
+          {/* ---------- Columna derecha (Plan Premium + Métodos + Soporte) ---------- */}
           <div className="space-y-8">
-            {/* Plan Premium Mensual */}
+            {/* ---------- Card: Plan Premium Mensual ---------- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -313,31 +323,31 @@ export default function Profile() {
                   <h3 className="text-lg font-semibold">Plan Premium</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-white">
-                    $13 <span className="text-sm text-gray-400">/mes</span>
-                  </p>
+                  <p className="text-lg font-bold text-white">$13 <span className="text-sm text-gray-400">/mes</span></p>
                 </div>
               </div>
 
               <div className="mb-4 text-sm text-gray-300">
                 <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                    Operaciones ilimitadas
-                  </li>
-                  <li className="flex items-center">
-                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                    Exportaciones ilimitadas
-                  </li>
-                  <li className="flex items-center">
-                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                    Soporte prioritario
-                  </li>
+                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Operaciones ilimitadas</li>
+                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Exportaciones ilimitadas</li>
+                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Soporte prioritario</li>
                 </ul>
               </div>
+
+              {/* Métodos de pago (RESTORADOS) */}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Métodos de pago</h4>
+                <div className="grid grid-cols-3 gap-3">
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-md">PayPal</button>
+                  <button className="bg-yellow-400 hover:brightness-95 text-black py-2 px-3 rounded-md">Binance Pay</button>
+                  <button className="bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-3 rounded-md">Blockchain Pay</button>
+                </div>
+              </div>
+
             </div>
 
-            {/* Plan Premium Anual */}
+            {/* ---------- Card: Plan Premium Anual (separada) ---------- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -345,32 +355,31 @@ export default function Profile() {
                   <h3 className="text-lg font-semibold">Plan Premium Anual</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-white">
-                    $125 <span className="text-sm text-gray-400">/año</span>
-                  </p>
+                  <p className="text-lg font-bold text-white">$125 <span className="text-sm text-gray-400">/año</span></p>
                   <p className="text-xs text-green-400 font-semibold">Ahorra ~20%</p>
                 </div>
               </div>
 
               <div className="mb-4 text-sm text-gray-300">
                 <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                    Operaciones ilimitadas
-                  </li>
-                  <li className="flex items-center">
-                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                    Exportaciones ilimitadas
-                  </li>
-                  <li className="flex items-center">
-                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                    Soporte prioritario
-                  </li>
+                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Operaciones ilimitadas</li>
+                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Exportaciones ilimitadas</li>
+                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Soporte prioritario</li>
                 </ul>
+              </div>
+
+              {/* Métodos de pago (RESTORADOS) */}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Métodos de pago</h4>
+                <div className="grid grid-cols-3 gap-3">
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-md">PayPal</button>
+                  <button className="bg-yellow-400 hover:brightness-95 text-black py-2 px-3 rounded-md">Binance Pay</button>
+                  <button className="bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-3 rounded-md">Blockchain Pay</button>
+                </div>
               </div>
             </div>
 
-            {/* Contacto */}
+            {/* ---------- Card: Contactar Soporte ---------- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg text-center">
               <a
                 href="mailto:soportejjxcapital@gmail.com"
@@ -382,6 +391,7 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* ---------- Footer spacing ---------- */}
         <div className="h-10" />
       </div>
     </div>
