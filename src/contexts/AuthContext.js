@@ -16,11 +16,11 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
+  const contexts = useContext(AuthContext);
+  if (!contexts) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context;
+  return contexts;
 };
 
 export const AuthProvider = ({ children }) => {
