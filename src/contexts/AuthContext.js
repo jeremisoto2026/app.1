@@ -1,4 +1,3 @@
-
 // AuthContext mejorado basado en JJXCAPITAL-main
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
@@ -16,11 +15,11 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  const contexts = useContext(AuthContext);
-  if (!contexts) {
+  const context = useContext(AuthContext);
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  return contexts;
+  return context;
 };
 
 export const AuthProvider = ({ children }) => {
@@ -28,14 +27,15 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
+  // 🔹 Registro con email y contraseña
   const signUp = async (email, password, firstName, lastName) => {
     try {
       // 1️⃣ Crear usuario en Auth
@@ -64,6 +64,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 🔹 Inicio de sesión con email y contraseña
   const signIn = async (email, password) => {
     try {
       return await signInWithEmailAndPassword(auth, email, password);
@@ -73,12 +74,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 🔹 Inicio de sesión con Google
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      // ✅ Si el usuario entra con Google, también lo guardamos en la base
+      // ✅ Guardar o actualizar en Firestore
       await setDoc(
         doc(db, "users", result.user.uid),
         {
@@ -100,6 +102,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 🔹 Cerrar sesión
   const signOut = async () => {
     try {
       return await firebaseSignOut(auth);
@@ -124,3 +127,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// ✅ Exportar también el contexto para evitar errores de importación
+export { AuthContext };
