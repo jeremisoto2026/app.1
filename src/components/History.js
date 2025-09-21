@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
-import { Loader2, Trash2 } from "lucide-react";
+import { TrashIcon, DocumentArrowDownIcon, MagnifyingGlassIcon, FunnelIcon, CalendarIcon } from "@heroicons/react/24/outline";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
 import { useAuth } from "../contexts/AuthContext";
@@ -224,61 +224,73 @@ const History = () => {
 
   const renderOperations = (ops) => {
     if (ops.length === 0) {
-      return <p className="text-center text-gray-400">No hay operaciones registradas.</p>;
+      return (
+        <div className="text-center py-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-500/10 rounded-2xl mb-4">
+            <DocumentArrowDownIcon className="h-8 w-8 text-purple-400" />
+          </div>
+          <h3 className="text-xl text-gray-300 mb-2">No hay operaciones registradas</h3>
+          <p className="text-gray-500">Tus operaciones aparecerán aquí una vez que las registres</p>
+        </div>
+      );
     }
     
     return ops.map((operation, index) => (
       <Card
         key={operation.id || index}
-        className="bg-gray-900 border border-gray-700"
+        className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-lg hover:shadow-xl transition-all duration-300"
       >
-        <CardHeader>
-          <CardTitle className="flex justify-between items-center">
+        <CardHeader className="border-b border-purple-500/10 pb-4">
+          <div className="flex justify-between items-center">
             <div className="flex-1">
-              <span className="text-yellow-400">Orden #{operation.order_id || "N/A"}</span>
+              <span className="text-purple-400 font-semibold">Orden #{operation.order_id || "N/A"}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className={operation.operation_type === 'Compra' ? "bg-green-900/20 text-green-400 border border-green-600" : "bg-red-900/20 text-red-400 border border-red-600"}>
+              <Badge className={operation.operation_type === 'Compra' 
+                ? "bg-green-500/20 text-green-400 border-green-500/30" 
+                : "bg-red-500/20 text-red-400 border-red-500/30"}>
                 {operation.operation_type || "N/A"}
               </Badge>
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => confirmDelete(operation.id)}
-                className="hover:bg-red-900/20 text-red-400"
+                className="hover:bg-red-500/10 text-red-400 rounded-xl"
               >
-                <Trash2 size={16} />
+                <TrashIcon className="h-4 w-4" />
               </Button>
             </div>
-          </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-gray-300">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <strong>Cripto:</strong> {operation.crypto || "N/A"}
-              <Badge variant="outline" className="ml-2 text-gray-400 border-gray-600">
-                {/* LÍNEA CORREGIDA */}
-                {operation.crypto_amount?.toFixed(3) ?? "0.000"}
+        <CardContent className="pt-4 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center">
+              <span className="text-gray-400 w-20">Cripto:</span>
+              <Badge className="ml-2 bg-purple-500/10 text-purple-400 border-purple-500/30">
+                {operation.crypto_amount?.toFixed(8) ?? "0.00000000"} {operation.crypto || "N/A"}
               </Badge>
             </div>
-            <div>
-              <strong>Fiat:</strong> {operation.fiat || "N/A"}
-              <Badge variant="outline" className="ml-2 text-gray-400 border-gray-600">
+            <div className="flex items-center">
+              <span className="text-gray-400 w-20">Fiat:</span>
+              <Badge className="ml-2 bg-blue-500/10 text-blue-400 border-blue-500/30">
                 {formatCurrency(operation.fiat_amount, operation.fiat)}
               </Badge>
             </div>
-            <div>
-              <strong>Exchange:</strong> {operation.exchange || "N/A"}
+            <div className="flex items-center">
+              <span className="text-gray-400 w-20">Exchange:</span>
+              <span className="text-white ml-2">{operation.exchange || "N/A"}</span>
             </div>
-            <div className="md:col-span-1">
-              <strong>Tasa de cambio:</strong>
-              <Badge variant="outline" className="ml-2 text-gray-400 border-gray-600">
+            <div className="flex items-center">
+              <span className="text-gray-400 w-20">Tasa:</span>
+              <Badge className="ml-2 bg-gray-700 text-gray-300 border-gray-600">
                 {operation.exchange_rate?.toFixed(2) ?? "0.00"}
               </Badge>
             </div>
-            <div className="md:col-span-2">
-              <strong>Fecha:</strong>{" "}
-              {operation.timestamp ? formatDate(operation.timestamp) : "N/A"}
+            <div className="md:col-span-2 flex items-center">
+              <span className="text-gray-400 w-20">Fecha:</span>
+              <span className="text-white ml-2">
+                {operation.timestamp ? formatDate(operation.timestamp) : "N/A"}
+              </span>
             </div>
           </div>
         </CardContent>
@@ -287,144 +299,199 @@ const History = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-yellow-400 mb-2">
-            Historial de Operaciones 📋
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black p-4 md:p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl mb-4">
+            <DocumentArrowDownIcon className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
+            Historial de Operaciones
           </h1>
-          <p className="text-gray-300">
-            Revisa y gestiona tus transacciones de compra y venta.
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Revisa y gestiona todas tus transacciones de compra y venta en un solo lugar
           </p>
         </div>
-        <Card className="p-4 bg-gray-800 border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Select onValueChange={(value) => setFilters({ ...filters, crypto: value })}>
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                <SelectValue placeholder="Filtrar por Cripto" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
-                {getUniqueValues("crypto").map((crypto) => (
-                  <SelectItem key={crypto} value={crypto}>
-                    {crypto}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
 
-            <Select onValueChange={(value) => setFilters({ ...filters, fiat: value })}>
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                <SelectValue placeholder="Filtrar por Fiat" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
-                {getUniqueValues("fiat").map((fiat) => (
-                  <SelectItem key={fiat} value={fiat}>
-                    {fiat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select onValueChange={(value) => setFilters({ ...filters, exchange: value })}>
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                <SelectValue placeholder="Filtrar por Exchange" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
-                {getUniqueValues("exchange").map((exchange) => (
-                  <SelectItem key={exchange} value={exchange}>
-                    {exchange}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              placeholder="Buscar..."
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-            />
-          </div>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <CardHeader className="p-0 mb-4">
-            <CardTitle className="text-yellow-400 flex items-center gap-2">
-              📂 Exportar Historial
+        {/* Filtros */}
+        <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
+          <CardHeader className="p-0 mb-6 border-b border-purple-500/10 pb-4">
+            <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 bg-purple-500/10 rounded-lg">
+                <FunnelIcon className="h-5 w-5 text-purple-400" />
+              </div>
+              Filtros y Búsqueda
             </CardTitle>
           </CardHeader>
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="flex-1 w-full md:w-auto">
-              <Label className="block text-gray-400 text-sm mb-1">Fecha de inicio</Label>
-              <Input
-                type="date"
-                value={exportStartDate}
-                onChange={(e) => setExportStartDate(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-              />
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium">Criptomoneda</Label>
+                <Select onValueChange={(value) => setFilters({ ...filters, crypto: value })}>
+                  <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectValue placeholder="Todas las cryptos" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    {getUniqueValues("crypto").map((crypto) => (
+                      <SelectItem key={crypto} value={crypto} className="rounded-lg focus:bg-purple-500/10">
+                        {crypto}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium">Moneda Fiat</Label>
+                <Select onValueChange={(value) => setFilters({ ...filters, fiat: value })}>
+                  <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectValue placeholder="Todas las fiats" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    {getUniqueValues("fiat").map((fiat) => (
+                      <SelectItem key={fiat} value={fiat} className="rounded-lg focus:bg-purple-500/10">
+                        {fiat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium">Exchange</Label>
+                <Select onValueChange={(value) => setFilters({ ...filters, exchange: value })}>
+                  <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectValue placeholder="Todos los exchanges" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    {getUniqueValues("exchange").map((exchange) => (
+                      <SelectItem key={exchange} value={exchange} className="rounded-lg focus:bg-purple-500/10">
+                        {exchange}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium">Búsqueda</Label>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="Buscar..."
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl pl-10"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex-1 w-full md:w-auto">
-              <Label className="block text-gray-400 text-sm mb-1">Fecha de fin</Label>
-              <Input
-                type="date"
-                value={exportEndDate}
-                onChange={(e) => setExportEndDate(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-              />
+          </CardContent>
+        </Card>
+
+        {/* Exportar */}
+        <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
+          <CardHeader className="p-0 mb-6 border-b border-purple-500/10 pb-4">
+            <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <DocumentArrowDownIcon className="h-5 w-5 text-blue-400" />
+              </div>
+              Exportar Historial
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                <div className="space-y-2">
+                  <Label className="text-gray-300 font-medium">Fecha de inicio</Label>
+                  <div className="relative">
+                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="date"
+                      value={exportStartDate}
+                      onChange={(e) => setExportStartDate(e.target.value)}
+                      className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-300 font-medium">Fecha de fin</Label>
+                  <div className="relative">
+                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="date"
+                      value={exportEndDate}
+                      onChange={(e) => setExportEndDate(e.target.value)}
+                      className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+              <Button
+                onClick={handleExport}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-11 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20"
+              >
+                <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+                Exportar CSV
+              </Button>
             </div>
-            <Button
-              onClick={handleExport}
-              className="mt-6 md:mt-auto bg-green-600 hover:bg-green-700 text-white"
-            >
-              Exportar CSV
-            </Button>
-          </div>
+          </CardContent>
         </Card>
 
         {loading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <div className="flex justify-center py-16">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-500/10 rounded-2xl mb-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+              </div>
+              <h3 className="text-xl text-gray-300 mb-2">Cargando operaciones</h3>
+              <p className="text-gray-500">Estamos recuperando tu historial...</p>
+            </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-green-400 mt-8">
-              Compras 🟢
-            </h2>
-            <div className="grid gap-4">
-              {renderOperations(buyOperations)}
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold text-green-400 mb-4 flex items-center">
+                <div className="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
+                Compras
+              </h2>
+              <div className="grid gap-4">
+                {renderOperations(buyOperations)}
+              </div>
             </div>
 
-            <div className="w-full h-px bg-gray-700 my-8"></div>
-
-            <h2 className="text-2xl font-bold text-red-400">
-              Ventas 🔴
-            </h2>
-            <div className="grid gap-4">
-              {renderOperations(sellOperations)}
+            <div className="border-t border-purple-500/20 pt-8">
+              <h2 className="text-2xl font-bold text-red-400 mb-4 flex items-center">
+                <div className="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
+                Ventas
+              </h2>
+              <div className="grid gap-4">
+                {renderOperations(sellOperations)}
+              </div>
             </div>
           </div>
         )}
       </div>
       
+      {/* Diálogo de confirmación de eliminación */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-gray-800 border-gray-700 text-white">
+        <DialogContent className="sm:max-w-[425px] bg-gradient-to-br from-gray-900 to-gray-800 border border-purple-500/20 rounded-2xl text-white">
           <DialogHeader>
-            <DialogTitle className="text-yellow-400">Confirmar Eliminación</DialogTitle>
-            <DialogDescription className="text-gray-300">
+            <DialogTitle className="text-xl font-bold text-white">Confirmar Eliminación</DialogTitle>
+            <DialogDescription className="text-gray-400">
               ¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex gap-3">
             <Button 
               variant="outline" 
               onClick={() => setIsDeleteDialogOpen(false)}
-              className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+              className="bg-gray-800 border-purple-500/30 text-gray-300 hover:bg-gray-700/50 flex-1 rounded-xl"
             >
               Cancelar
             </Button>
             <Button 
-              variant="destructive" 
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white flex-1 rounded-xl"
             >
               Eliminar
             </Button>
