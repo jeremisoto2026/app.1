@@ -6,20 +6,15 @@ import {
   UserIcon,
   ArrowLeftOnRectangleIcon,
   ChartBarIcon,
-  ClockIcon,
   StarIcon,
   CheckBadgeIcon,
-  ShieldCheckIcon,
   RocketLaunchIcon,
   CreditCardIcon,
   ArrowsRightLeftIcon,
-  DocumentChartBarIcon,
-  ChatBubbleLeftRightIcon
 } from "@heroicons/react/24/outline";
 
 const AccountPage = () => {
   const { user, signOut } = useContext(AuthContext);
-  const [activeTab, setActiveTab] = useState("perfil");
   const [usageData, setUsageData] = useState(null);
   const [plan, setPlan] = useState("free");
   const [selectedPlan, setSelectedPlan] = useState("monthly");
@@ -64,43 +59,81 @@ const AccountPage = () => {
     alert(`Actualizando al plan ${planType === "monthly" ? "mensual" : "anual"}`);
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "perfil":
-        return (
-          <div className="space-y-8">
-            {/* Información del usuario */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <UserIcon className="h-5 w-5 mr-2 text-indigo-600" />
-                Información Personal
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  // Dividir el nombre completo en nombre y apellido
+  const userName = user?.displayName || "Usuario";
+  const nameParts = userName.split(" ");
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ") || "";
+
+  return (
+    <div className="min-h-screen bg-black text-white py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Encabezado */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Tu Perfil</h1>
+          <button
+            onClick={signOut}
+            className="flex items-center space-x-2 text-red-400 hover:text-red-300"
+          >
+            <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Columna izquierda - Información del usuario */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Tarjeta de información básica */}
+            <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center text-2xl font-bold">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                  <div className="p-2 bg-gray-50 rounded-md">{user?.displayName?.split(' ')[0] || "No especificado"}</div>
+                  <h2 className="text-xl font-semibold">{userName}</h2>
+                  <p className="text-gray-400">{user?.email}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Miembro desde {new Date(user?.metadata.creationTime).toLocaleDateString()}
+                  </p>
                 </div>
+              </div>
+
+              <div className="border-t border-gray-800 pt-6">
+                <h3 className="text-lg font-semibold mb-4">Información del Perfil</h3>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-                  <div className="p-2 bg-gray-50 rounded-md">{user?.displayName?.split(' ')[1] || "No especificado"}</div>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
-                  <div className="p-2 bg-gray-50 rounded-md">{user?.email || "No especificado"}</div>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Plan</label>
-                  <div className="flex items-center">
-                    <div className={`p-2 px-4 rounded-full text-sm font-medium ${
-                      plan === "free" 
-                        ? "bg-indigo-100 text-indigo-800" 
-                        : "bg-purple-100 text-purple-800"
-                    }`}>
-                      {plan === "free" ? "Free" : "Premium"}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1">Nombre</label>
+                    <div className="p-2 bg-gray-800 rounded-md">{firstName}</div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1">Apellido</label>
+                    <div className="p-2 bg-gray-800 rounded-md">{lastName}</div>
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-gray-500 mb-1">Email</label>
+                    <div className="p-2 bg-gray-800 rounded-md">{user?.email}</div>
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-gray-500 mb-1">UID</label>
+                    <div className="p-2 bg-gray-800 rounded-md text-sm font-mono">{user?.uid}</div>
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-gray-500 mb-1">Plan actual</label>
+                    <div className="flex items-center">
+                      <div className={`p-2 px-4 rounded-full text-sm font-medium ${
+                        plan === "free" 
+                          ? "bg-indigo-900 text-indigo-300" 
+                          : "bg-purple-900 text-purple-300"
+                      }`}>
+                        {plan === "free" ? "Free" : "Premium"}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -108,22 +141,22 @@ const AccountPage = () => {
             </div>
 
             {/* Estadísticas de uso */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <ChartBarIcon className="h-5 w-5 mr-2 text-indigo-600" />
-                Estadísticas de Uso
+            <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <ChartBarIcon className="h-5 w-5 mr-2 text-indigo-400" />
+                Uso de tu cuenta
               </h3>
 
               <div className="space-y-6">
                 {/* Operaciones */}
                 <div>
-                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
-                    <span>Total de Operaciones</span>
+                  <div className="flex justify-between text-sm font-medium mb-2">
+                    <span>Operaciones</span>
                     <span>
                       {operationCount}/{usageData?.operaciones.total || 200}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className="w-full bg-gray-800 rounded-full h-2.5">
                     <div
                       className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500"
                       style={{
@@ -138,15 +171,15 @@ const AccountPage = () => {
 
                 {/* Exportaciones */}
                 <div>
-                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
-                    <span>Total de Exportaciones</span>
+                  <div className="flex justify-between text-sm font-medium mb-2">
+                    <span>Exportaciones</span>
                     <span>
                       {exportCount}/{usageData?.exportaciones.total || 40}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className="w-full bg-gray-800 rounded-full h-2.5">
                     <div
-                      className="bg-green-500 h-2.5 rounded-full transition-all duration-500"
+                      className="bg-green-600 h-2.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${Math.min(
                           (exportCount / (usageData?.exportaciones.total || 40)) * 100,
@@ -157,322 +190,126 @@ const AccountPage = () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Botón de contacto con soporte */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">¿Necesitas ayuda?</h3>
-              <button className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-colors duration-200">
-                <ChatBubbleLeftRightIcon className="h-5 w-5" />
-                <span>Contactar a Soporte</span>
-              </button>
-            </div>
-
-            {/* Acciones de cuenta */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Acciones de cuenta</h3>
-              <button
-                onClick={signOut}
-                className="w-full flex items-center justify-center space-x-2 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg transition-colors duration-200"
-              >
-                <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-                <span>Cerrar sesión</span>
+              
+              <button className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors duration-200">
+                Actualizar tus Límites
               </button>
             </div>
           </div>
-        );
 
-      case "premium":
-        return (
+          {/* Columna derecha - Plan Premium */}
           <div className="space-y-8">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl p-6 shadow-lg">
-              <div className="flex items-center">
-                <RocketLaunchIcon className="h-8 w-8 mr-3" />
-                <h2 className="text-2xl font-bold">Potencia tu experiencia</h2>
-              </div>
-              <p className="mt-2 opacity-90">Desbloquea todo el potencial de nuestra plataforma con el plan Premium</p>
-            </div>
-
-            {/* Plan Premium */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Plan Premium</h3>
-              <p className="text-gray-600 mb-6">
-                Accede a todas las funciones sin límites: operaciones ilimitadas, exportaciones ilimitadas, 
-                soporte prioritario y mucho más.
+            <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <RocketLaunchIcon className="h-5 w-5 mr-2 text-purple-400" />
+                Plan Premium
+              </h3>
+              
+              <p className="text-gray-400 mb-6">
+                Obtén todo ilimitado por solo
               </p>
 
-              {/* Selector de plan */}
-              <div className="flex justify-center mb-6">
-                <div className="inline-flex rounded-md p-1 bg-gray-100">
+              <div className="mb-6">
+                <div className="inline-flex rounded-md p-1 bg-gray-800 w-full">
                   <button
                     onClick={() => setSelectedPlan("monthly")}
-                    className={`px-4 py-2 text-sm font-medium rounded-md ${
+                    className={`px-4 py-2 text-sm font-medium rounded-md flex-1 ${
                       selectedPlan === "monthly"
                         ? "bg-indigo-600 text-white shadow"
-                        : "text-gray-700 hover:text-indigo-600"
+                        : "text-gray-400 hover:text-white"
                     }`}
                   >
-                    Pago mensual
+                    Mensual
                   </button>
                   <button
                     onClick={() => setSelectedPlan("yearly")}
-                    className={`px-4 py-2 text-sm font-medium rounded-md ${
+                    className={`px-4 py-2 text-sm font-medium rounded-md flex-1 ${
                       selectedPlan === "yearly"
                         ? "bg-indigo-600 text-white shadow"
-                        : "text-gray-700 hover:text-indigo-600"
+                        : "text-gray-400 hover:text-white"
                     }`}
                   >
-                    Pago anual
+                    Anual
                   </button>
                 </div>
               </div>
 
-              {/* Tarjetas de planes */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`border rounded-xl p-6 ${selectedPlan === "monthly" ? "border-indigo-500 ring-2 ring-indigo-500 ring-opacity-20" : "border-gray-200"}`}>
-                  <h3 className="font-bold text-lg text-gray-900">Plan Mensual</h3>
-                  <div className="my-4">
-                    <span className="text-4xl font-bold text-gray-900">$13</span>
-                    <span className="text-gray-600">/mes</span>
-                  </div>
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="text-gray-700">Operaciones ilimitadas</span>
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="text-gray-700">Exportaciones ilimitadas</span>
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="text-gray-700">Soporte prioritario</span>
-                    </li>
-                  </ul>
-                  <button 
-                    onClick={() => handleUpgradePlan("monthly")}
-                    className={`w-full py-3 rounded-lg font-medium ${
-                      selectedPlan === "monthly" 
-                        ? "bg-indigo-600 hover:bg-indigo-700 text-white" 
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                    } transition-colors`}
-                  >
-                    {selectedPlan === "monthly" ? "Seleccionar" : "Elegir mensual"}
-                  </button>
-                </div>
-
-                <div className={`border rounded-xl p-6 ${selectedPlan === "yearly" ? "border-indigo-500 ring-2 ring-indigo-500 ring-opacity-20" : "border-gray-200"} relative`}>
+              <div className="mb-6 p-4 bg-gray-800 rounded-lg">
+                <h4 className="font-bold text-lg text-white mb-2">
+                  {selectedPlan === "monthly" ? "$13" : "$125"}
+                  <span className="text-sm text-gray-400 ml-1">
+                    /{selectedPlan === "monthly" ? "mes" : "año"}
+                  </span>
+                </h4>
+                
+                <ul className="space-y-2 mt-4">
+                  <li className="flex items-center text-sm">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-500 mr-2" />
+                    <span>Operaciones ilimitadas</span>
+                  </li>
+                  <li className="flex items-center text-sm">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-500 mr-2" />
+                    <span>Exportaciones ilimitadas</span>
+                  </li>
+                  <li className="flex items-center text-sm">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-500 mr-2" />
+                    <span>Soporte prioritario</span>
+                  </li>
                   {selectedPlan === "yearly" && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center">
-                        <StarIcon className="h-4 w-4 mr-1" />
-                        Más popular
-                      </span>
-                    </div>
+                    <li className="flex items-center text-sm">
+                      <CheckBadgeIcon className="h-4 w-4 text-green-500 mr-2" />
+                      <span>Ahorras 20% comparado con mensual</span>
+                    </li>
                   )}
-                  <h3 className="font-bold text-lg text-gray-900">Plan Anual</h3>
-                  <div className="my-4">
-                    <span className="text-4xl font-bold text-gray-900">$125</span>
-                    <span className="text-gray-600">/año</span>
-                  </div>
-                  <div className="text-sm text-green-600 font-medium mb-2">Ahorras 20% comparado con el plan mensual</div>
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="text-gray-700">Todo lo del plan mensual</span>
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="text-gray-700">Acceso a funciones beta</span>
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="text-gray-700">Informes avanzados</span>
-                    </li>
-                  </ul>
-                  <button 
-                    onClick={() => handleUpgradePlan("yearly")}
-                    className={`w-full py-3 rounded-lg font-medium ${
-                      selectedPlan === "yearly" 
-                        ? "bg-indigo-600 hover:bg-indigo-700 text-white" 
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                    } transition-colors`}
-                  >
-                    {selectedPlan === "yearly" ? "Seleccionar" : "Elegir anual"}
+                </ul>
+              </div>
+
+              <button 
+                onClick={() => handleUpgradePlan(selectedPlan)}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 rounded-lg font-medium transition-colors"
+              >
+                Actualizar a Premium
+              </button>
+
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-gray-400 mb-3">Métodos de pago</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  <button className="flex flex-col items-center justify-center p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+                    <div className="bg-blue-500 text-white p-1 rounded-sm mb-1 text-xs">
+                      <span className="font-bold">Pay</span>
+                    </div>
+                    <span className="text-xs">PayPal</span>
+                  </button>
+                  
+                  <button className="flex flex-col items-center justify-center p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+                    <div className="bg-yellow-500 text-white p-1 rounded-sm mb-1 text-xs">
+                      <span className="font-bold text-xs">BINANCE</span>
+                    </div>
+                    <span className="text-xs">Binance Pay</span>
+                  </button>
+                  
+                  <button className="flex flex-col items-center justify-center p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+                    <div className="bg-gray-700 text-white p-1 rounded-sm mb-1">
+                      <ArrowsRightLeftIcon className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs">Blockchain</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Métodos de pago */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <CreditCardIcon className="h-5 w-5 mr-2 text-indigo-600" />
-                Métodos de pago
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-indigo-400 hover:shadow-md transition-all">
-                  <div className="bg-blue-500 text-white p-2 rounded-md mb-2">
-                    <span className="font-bold">Pay</span>
-                  </div>
-                  <span className="text-sm font-medium">PayPal</span>
-                </button>
-                
-                <button className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-indigo-400 hover:shadow-md transition-all">
-                  <div className="bg-yellow-500 text-white p-2 rounded-md mb-2">
-                    <span className="font-bold">BINANCE</span>
-                  </div>
-                  <span className="text-sm font-medium">Binance Pay</span>
-                </button>
-                
-                <button className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-indigo-400 hover:shadow-md transition-all">
-                  <div className="bg-gray-800 text-white p-2 rounded-md mb-2">
-                    <ArrowsRightLeftIcon className="h-5 w-5" />
-                  </div>
-                  <span className="text-sm font-medium">Blockchain Pay</span>
-                </button>
+            {/* Navegación de la app */}
+            <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
+              <h3 className="text-lg font-semibold mb-4">Navegación</h3>
+              <div className="space-y-2">
+                <a href="#" className="block py-2 px-3 rounded-lg hover:bg-gray-800 transition-colors">Dashboard</a>
+                <a href="#" className="block py-2 px-3 rounded-lg hover:bg-gray-800 transition-colors">P2P</a>
+                <a href="#" className="block py-2 px-3 rounded-lg hover:bg-gray-800 transition-colors">Arbitraje</a>
+                <a href="#" className="block py-2 px-3 rounded-lg hover:bg-gray-800 transition-colors">Operaciones</a>
               </div>
-            </div>
-
-            {/* Contactar a soporte */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">¿Necesitas ayuda con tu plan?</h3>
-              <button className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-colors duration-200">
-                <ChatBubbleLeftRightIcon className="h-5 w-5" />
-                <span>Contactar a Soporte</span>
-              </button>
             </div>
           </div>
-        );
-
-      case "historial":
-        return (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              <ClockIcon className="h-5 w-5 mr-2 text-indigo-600" />
-              Historial de operaciones
-            </h2>
-            
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="grid grid-cols-4 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700">
-                <div>Fecha</div>
-                <div>Operación</div>
-                <div>Tipo</div>
-                <div>Estado</div>
-              </div>
-              
-              <div className="divide-y divide-gray-200">
-                <div className="grid grid-cols-4 px-4 py-3 text-sm">
-                  <div className="text-gray-900">20 Sep 2023</div>
-                  <div className="text-gray-900">Análisis de mercado</div>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Análisis
-                    </span>
-                  </div>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Completado
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-4 px-4 py-3 text-sm">
-                  <div className="text-gray-900">19 Sep 2023</div>
-                  <div className="text-gray-900">Exportación de datos</div>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                      Exportación
-                    </span>
-                  </div>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Completado
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-4 px-4 py-3 text-sm">
-                  <div className="text-gray-900">18 Sep 2023</div>
-                  <div className="text-gray-900">Simulación P2P</div>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      Simulación
-                    </span>
-                  </div>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Completado
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-6 flex justify-center">
-              <button className="flex items-center text-indigo-600 hover:text-indigo-800 font-medium">
-                <DocumentChartBarIcon className="h-5 w-5 mr-1" />
-                Ver reporte completo
-              </button>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Mi Cuenta</h1>
-        <p className="text-gray-600 mb-8">Gestiona tu perfil y configuración de cuenta</p>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-8">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-                activeTab === "perfil"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-              onClick={() => setActiveTab("perfil")}
-            >
-              <UserIcon className="h-5 w-5 mr-2" />
-              Perfil
-            </button>
-
-            <button
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-                activeTab === "premium"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-              onClick={() => setActiveTab("premium")}
-            >
-              <StarIcon className="h-5 w-5 mr-2" />
-              Plan Premium
-            </button>
-
-            <button
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-                activeTab === "historial"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-              onClick={() => setActiveTab("historial")}
-            >
-              <ClockIcon className="h-5 w-5 mr-2" />
-              Historial
-            </button>
-          </nav>
         </div>
-
-        {/* Contenido dinámico */}
-        <div>{renderContent()}</div>
       </div>
     </div>
   );
