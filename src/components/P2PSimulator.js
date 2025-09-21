@@ -38,6 +38,7 @@ const P2PSimulator = () => {
   const handleSimulate = async (e) => {
     e.preventDefault();
     
+    // Validación de campos requeridos
     const requiredFields = ['crypto', 'fiat', 'operation_type', 'amount', 'exchange_rate'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
@@ -68,6 +69,9 @@ const P2PSimulator = () => {
         fee: fee
       };
 
+      // Simular pequeña demora para mostrar estado de carga
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const simulationResult = simulateP2P(simulationData);
       setResult(simulationResult);
 
@@ -133,8 +137,12 @@ const P2PSimulator = () => {
                     <Label htmlFor="crypto" className="text-gray-300 font-medium">
                       Criptomoneda <span className="text-red-400">*</span>
                     </Label>
-                    <Select value={formData.crypto} onValueChange={(value) => handleInputChange('crypto', value)}>
-                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <Select 
+                      value={formData.crypto} 
+                      onValueChange={(value) => handleInputChange('crypto', value)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
                         <SelectValue placeholder="Seleccionar crypto" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -152,8 +160,12 @@ const P2PSimulator = () => {
                     <Label htmlFor="fiat" className="text-gray-300 font-medium">
                       Moneda Fiat <span className="text-red-400">*</span>
                     </Label>
-                    <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)}>
-                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <Select 
+                      value={formData.fiat} 
+                      onValueChange={(value) => handleInputChange('fiat', value)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
                         <SelectValue placeholder="Seleccionar fiat" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -172,8 +184,12 @@ const P2PSimulator = () => {
                   <Label htmlFor="operation_type" className="text-gray-300 font-medium">
                     Tipo de Operación <span className="text-red-400">*</span>
                   </Label>
-                  <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                  <Select 
+                    value={formData.operation_type} 
+                    onValueChange={(value) => handleInputChange('operation_type', value)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -200,7 +216,8 @@ const P2PSimulator = () => {
                       placeholder="0.00000000"
                       value={formData.amount}
                       onChange={(e) => handleInputChange('amount', e.target.value)}
-                      className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
+                      className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl disabled:opacity-50"
+                      disabled={loading}
                     />
                   </div>
 
@@ -216,7 +233,8 @@ const P2PSimulator = () => {
                       placeholder="0.00"
                       value={formData.exchange_rate}
                       onChange={(e) => handleInputChange('exchange_rate', e.target.value)}
-                      className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
+                      className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl disabled:opacity-50"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -233,7 +251,8 @@ const P2PSimulator = () => {
                     placeholder="0.00"
                     value={formData.fee}
                     onChange={(e) => handleInputChange('fee', e.target.value)}
-                    className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
+                    className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl disabled:opacity-50"
+                    disabled={loading}
                   />
                 </div>
 
@@ -242,7 +261,7 @@ const P2PSimulator = () => {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium h-11 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium h-11 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20 disabled:opacity-50"
                   >
                     {loading ? (
                       <div className="flex items-center gap-2">
@@ -260,7 +279,8 @@ const P2PSimulator = () => {
                     type="button"
                     onClick={resetForm}
                     variant="outline"
-                    className="border-purple-500/30 text-gray-300 hover:bg-gray-700/50 h-11 rounded-xl"
+                    className="border-purple-500/30 text-gray-300 hover:bg-gray-700/50 h-11 rounded-xl disabled:opacity-50"
+                    disabled={loading}
                   >
                     <TrashIcon className="h-4 w-4" />
                   </Button>
@@ -280,7 +300,17 @@ const P2PSimulator = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              {!result ? (
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-500/10 rounded-2xl mb-4 animate-pulse">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+                  </div>
+                  <h3 className="text-xl text-gray-300 mb-2">Procesando simulación</h3>
+                  <p className="text-gray-500">
+                    Calculando resultados...
+                  </p>
+                </div>
+              ) : !result ? (
                 <div className="text-center py-12">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-500/10 rounded-2xl mb-4">
                     <CalculatorIcon className="h-8 w-8 text-purple-400" />
@@ -336,7 +366,7 @@ const P2PSimulator = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Comisión:</span>
                         <span className="text-red-400 font-medium">
-                          -{result.fee_amount.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
+                          -{result.fee_amount?.toFixed(2) || result.fee} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
                         </span>
                       </div>
                       <div className="border-t border-purple-500/20 pt-4">
