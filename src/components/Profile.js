@@ -71,7 +71,6 @@ export default function Profile() {
         }
 
         // 2) Contamos las operaciones guardadas en la subcolección
-        //    Colección: users/{uid}/operations
         const opsColRef = collection(db, "users", user.uid, "operations");
         const opsSnap = await getDocs(opsColRef);
         const opsCount = opsSnap.size || 0;
@@ -84,7 +83,6 @@ export default function Profile() {
             exportaciones: defaultUsage.exportaciones,
           };
         } else {
-          // si existe pero no trae operaciones.usadas, actualizamos para mostrar algo real
           if (!data.usage.operaciones || data.usage.operaciones.usadas === undefined) {
             data.usage = {
               ...(data.usage || {}),
@@ -114,7 +112,6 @@ export default function Profile() {
 
   // ---------- Helpers ----------
   const getPhotoURL = () => {
-    // Prioriza la foto guardada en Firestore -> foto del auth -> null
     if (profileData?.photoURL) return profileData.photoURL;
     if (user?.photoURL) return user.photoURL;
     return null;
@@ -124,16 +121,12 @@ export default function Profile() {
     if (profileData?.createdAt?.toDate) {
       try {
         return profileData.createdAt.toDate().toLocaleDateString();
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
     if (user?.metadata?.creationTime) {
       try {
         return new Date(user.metadata.creationTime).toLocaleDateString();
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
     return "Fecha no disponible";
   };
@@ -147,7 +140,7 @@ export default function Profile() {
     );
   }
 
-  // si no hay profileData (caso raro)
+  // si no hay profileData
   if (!profileData) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -167,11 +160,17 @@ export default function Profile() {
   // Uso (operaciones / exportaciones) - prioriza operationCount real
   const usage = profileData.usage || defaultUsage;
   const operacionesUsadas = operationCount ?? (usage.operaciones?.usadas || 0);
-  const operacionesTotal = usage.operaciones?.total || defaultUsage.operaciones.total;
-  const exportacionesUsadas = usage.exportaciones?.usadas || defaultUsage.exportaciones.usadas;
-  const exportacionesTotal = usage.exportaciones?.total || defaultUsage.exportaciones.total;
+  let operacionesTotal = usage.operaciones?.total || defaultUsage.operaciones.total;
+  let exportacionesUsadas = usage.exportaciones?.usadas || defaultUsage.exportaciones.usadas;
+  let exportacionesTotal = usage.exportaciones?.total || defaultUsage.exportaciones.total;
 
-  // ---------- Render (diseño completo, sin UID, sin navegación, tarjetas separadas) ----------
+  // ⚡️ Ajuste: si es Premium → ilimitado
+  if (profileData.plan?.toLowerCase() === "premium") {
+    operacionesTotal = Infinity;
+    exportacionesTotal = Infinity;
+  }
+
+  // ---------- Render ----------
   return (
     <div className="min-h-screen bg-black text-white py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -195,14 +194,15 @@ export default function Profile() {
 
             <div className="flex-1 text-center md:text-left">
               <h2 className="text-3xl font-bold text-white mb-1">
-                {profileData.nombre ? `${profileData.nombre} ${profileData.apellido || ""}`.trim() : (user?.displayName || "Usuario")}
+                {profileData.nombre
+                  ? `${profileData.nombre} ${profileData.apellido || ""}`.trim()
+                  : user?.displayName || "Usuario"}
               </h2>
               <p className="text-indigo-200">{profileData.email || user?.email}</p>
               <p className="text-sm text-indigo-100 mt-2">Miembro desde: {formatMemberSince()}</p>
 
-              {/* Botón cerrar sesión (se mantiene) */}
+              {/* Botón cerrar sesión */}
               <div className="mt-4 flex items-center justify-center md:justify-start gap-3">
-                {/* Ajustes removido (según tu petición) */}
                 <button
                   onClick={() => signOut && signOut()}
                   title="Cerrar sesión"
@@ -216,11 +216,11 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ================= Contenido principal: Info + Uso + Planes ================= */}
+        {/* ================= Contenido principal ================= */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ---------- Columna izquierda (información + uso) ocupa 2 columnas ---------- */}
+          {/* ---------- Columna izquierda (información + uso) ---------- */}
           <div className="lg:col-span-2 space-y-8">
-            {/* ---- Tarjeta Información del Perfil ---- */}
+            {/* ---- Tarjeta Información ---- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <h3 className="text-xl font-semibold mb-4">Información del Perfil</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -248,7 +248,7 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* ---- Tarjeta Uso de tu cuenta ---- */}
+            {/* ---- Tarjeta Uso ---- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <h3 className="text-xl font-semibold mb-4 flex items-center">
                 <ChartBarIcon className="h-5 w-5 mr-2 text-indigo-400" />
@@ -260,12 +260,18 @@ export default function Profile() {
                 <div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-300">Operaciones</span>
-                    <span className="text-gray-400">{operacionesUsadas}/{operacionesTotal}</span>
+                    <span className="text-gray-400">
+                      {operacionesUsadas}/{operacionesTotal === Infinity ? "∞" : operacionesTotal}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-800 rounded-full h-2.5">
                     <div
                       className="bg-indigo-600 h-2.5 rounded-full transition-all"
-                      style={{ width: `${Math.min((operacionesUsadas / operacionesTotal) * 100, 100)}%` }}
+                      style={{
+                        width: operacionesTotal === Infinity
+                          ? "100%"
+                          : `${Math.min((operacionesUsadas / operacionesTotal) * 100, 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -274,12 +280,18 @@ export default function Profile() {
                 <div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-300">Exportaciones</span>
-                    <span className="text-gray-400">{exportacionesUsadas}/{exportacionesTotal}</span>
+                    <span className="text-gray-400">
+                      {exportacionesUsadas}/{exportacionesTotal === Infinity ? "∞" : exportacionesTotal}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-800 rounded-full h-2.5">
                     <div
                       className="bg-green-600 h-2.5 rounded-full transition-all"
-                      style={{ width: `${Math.min((exportacionesUsadas / exportacionesTotal) * 100, 100)}%` }}
+                      style={{
+                        width: exportacionesTotal === Infinity
+                          ? "100%"
+                          : `${Math.min((exportacionesUsadas / exportacionesTotal) * 100, 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -289,14 +301,11 @@ export default function Profile() {
                 Actualizar tus Límites
               </button>
             </div>
-
-            {/* ---- Historial / espacio extra si quieres más contenido ---- */}
-            {/* Si más adelante quieres mostrar listados de operaciones, aquí va la tabla pequeña */}
           </div>
 
-          {/* ---------- Columna derecha (Plan Premium + Métodos + Soporte) ---------- */}
+          {/* ---------- Columna derecha (Planes + Soporte) ---------- */}
           <div className="space-y-8">
-            {/* ---------- Card: Plan Premium Mensual ---------- */}
+            {/* Plan Premium Mensual */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -304,29 +313,31 @@ export default function Profile() {
                   <h3 className="text-lg font-semibold">Plan Premium</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-white">$13 <span className="text-sm text-gray-400">/mes</span></p>
+                  <p className="text-lg font-bold text-white">
+                    $13 <span className="text-sm text-gray-400">/mes</span>
+                  </p>
                 </div>
               </div>
 
               <div className="mb-4 text-sm text-gray-300">
                 <ul className="space-y-2">
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Operaciones ilimitadas</li>
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Exportaciones ilimitadas</li>
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Soporte prioritario</li>
+                  <li className="flex items-center">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                    Operaciones ilimitadas
+                  </li>
+                  <li className="flex items-center">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                    Exportaciones ilimitadas
+                  </li>
+                  <li className="flex items-center">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                    Soporte prioritario
+                  </li>
                 </ul>
               </div>
-              </div>
+            </div>
 
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-300 mb-2">Métodos de pago</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-md">PayPal</button>
-                  <button className="bg-yellow-400 hover:brightness-95 text-black py-2 px-3 rounded-md">Binance Pay</button>
-                  <button className="bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-3 rounded-md">Blockchain Pay</button>
-                </div>
-              </div>
-
-            {/* ---------- Card: Plan Premium Anual (separada) ---------- */}
+            {/* Plan Premium Anual */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -334,30 +345,32 @@ export default function Profile() {
                   <h3 className="text-lg font-semibold">Plan Premium Anual</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-white">$125 <span className="text-sm text-gray-400">/año</span></p>
+                  <p className="text-lg font-bold text-white">
+                    $125 <span className="text-sm text-gray-400">/año</span>
+                  </p>
                   <p className="text-xs text-green-400 font-semibold">Ahorra ~20%</p>
                 </div>
               </div>
 
               <div className="mb-4 text-sm text-gray-300">
                 <ul className="space-y-2">
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Operaciones ilimitadas</li>
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Exportaciones ilimitadas</li>
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Soporte prioritario</li>
+                  <li className="flex items-center">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                    Operaciones ilimitadas
+                  </li>
+                  <li className="flex items-center">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                    Exportaciones ilimitadas
+                  </li>
+                  <li className="flex items-center">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                    Soporte prioritario
+                  </li>
                 </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-300 mb-2">Métodos de pago</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-md">PayPal</button>
-                  <button className="bg-yellow-400 hover:brightness-95 text-black py-2 px-3 rounded-md">Binance Pay</button>
-                  <button className="bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-3 rounded-md">Blockchain Pay</button>
-                </div>
               </div>
             </div>
 
-            {/* ---------- Card: Contactar Soporte ---------- */}
+            {/* Contacto */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg text-center">
               <a
                 href="mailto:soportejjxcapital@gmail.com"
@@ -369,7 +382,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ---------- Footer spacing ---------- */}
         <div className="h-10" />
       </div>
     </div>
