@@ -16,14 +16,6 @@ const Header = ({ onShowAuth }) => {
   return (
     <header className="header-container">
       <div className="header-content">
-        <div className="logo-section">
-          <div className="logo-icon">⚡</div>
-          <div className="logo-text">
-            <h1 className="logo-main">JUXCAPITAL</h1>
-            <p className="logo-sub">PREMIUM TRADING</p>
-          </div>
-        </div>
-
         {user ? (
           <div className="user-section">
             <div className="user-info">
