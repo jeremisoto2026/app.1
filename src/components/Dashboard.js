@@ -192,7 +192,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <RocketLaunchIcon className="w-8 h-8 text-yellow-400 mr-2" />
             <h3 className="text-xl font-bold text-white">Premium Mensual</h3>
           </div>
-          <p className="text-gray-400">Acceso ilimitado mes a mes.</p>
+          <p className="text-gray-400">Acceso ilimitado a todas las funciones por un mes.</p>
           <div className="flex items-center mt-3">
             <span className="text-yellow-400 text-2xl font-bold">$13</span>
             <span className="text-gray-500 line-through ml-2">$20</span>
@@ -208,7 +208,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <RocketLaunchIcon className="w-8 h-8 text-yellow-400 mr-2" />
             <h3 className="text-xl font-bold text-white">Premium Anual</h3>
           </div>
-          <p className="text-gray-400">20% de descuento pagando anual.</p>
+          <p className="text-gray-400">Obtén un 20% de descuento pagando el año completo.</p>
           <div className="flex items-center mt-3">
             <span className="text-yellow-400 text-2xl font-bold">$125</span>
             <span className="text-gray-500 line-through ml-2">$160</span>
