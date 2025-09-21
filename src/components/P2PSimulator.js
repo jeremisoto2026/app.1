@@ -7,12 +7,12 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
+import { CalculatorIcon, ArrowPathIcon, TrashIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 
 const P2PSimulator = () => {
   const [formData, setFormData] = useState({
     crypto: '',
     fiat: '',
-    // exchange: '', <--- Eliminado
     operation_type: '',
     amount: '',
     exchange_rate: '',
@@ -24,7 +24,6 @@ const P2PSimulator = () => {
 
   const cryptos = ['USDT', 'BTC', 'ETH', 'BNB', 'USDC'];
   const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
-  // const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin']; <--- Eliminado
   const operationTypes = ['Venta', 'Compra'];
 
   const handleInputChange = (field, value) => {
@@ -32,7 +31,6 @@ const P2PSimulator = () => {
       ...prev,
       [field]: value
     }));
-    // Clear result and error when input changes
     if (result) setResult(null);
     if (error) setError('');
   };
@@ -40,7 +38,6 @@ const P2PSimulator = () => {
   const handleSimulate = async (e) => {
     e.preventDefault();
     
-    // Validation
     const requiredFields = ['crypto', 'fiat', 'operation_type', 'amount', 'exchange_rate'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
@@ -65,7 +62,6 @@ const P2PSimulator = () => {
       const simulationData = {
         crypto: formData.crypto,
         fiat: formData.fiat,
-        // exchange: formData.exchange, <--- Eliminado
         operation_type: formData.operation_type,
         amount: amount,
         exchange_rate: exchangeRate,
@@ -87,7 +83,6 @@ const P2PSimulator = () => {
     setFormData({
       crypto: '',
       fiat: '',
-      // exchange: '', <--- Eliminado
       operation_type: '',
       amount: '',
       exchange_rate: '',
@@ -98,47 +93,53 @@ const P2PSimulator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-yellow-400 mb-2">
-            Simulador P2P 🤝
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl mb-4">
+            <CalculatorIcon className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
+            Simulador P2P
           </h1>
-          <p className="text-gray-300">
-            Simula operaciones peer-to-peer y calcula ganancias/pérdidas en tiempo real
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Simula operaciones peer-to-peer y calcula ganancias/pérdidas en tiempo real con nuestra tecnología avanzada
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
           {/* Simulation Form */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-yellow-400 flex items-center gap-2">
-                ⚙️ Configuración de Simulación
+          <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl">
+            <CardHeader className="border-b border-purple-500/10">
+              <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <ChartBarIcon className="h-5 w-5 text-purple-400" />
+                </div>
+                Configuración de Simulación
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSimulate} className="space-y-4">
+            <CardContent className="pt-6">
+              <form onSubmit={handleSimulate} className="space-y-5">
                 {error && (
-                  <Alert className="border-red-600 bg-red-900/20 text-red-400">
+                  <Alert className="border-red-500/30 bg-red-900/20 text-red-400 rounded-xl">
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Crypto */}
                   <div className="space-y-2">
-                    <Label htmlFor="crypto" className="text-white">
-                      Criptomoneda <span className="text-red-500">*</span>
+                    <Label htmlFor="crypto" className="text-gray-300 font-medium">
+                      Criptomoneda <span className="text-red-400">*</span>
                     </Label>
                     <Select value={formData.crypto} onValueChange={(value) => handleInputChange('crypto', value)}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                        <SelectValue placeholder="Crypto" />
+                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                        <SelectValue placeholder="Seleccionar crypto" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                         {cryptos.map(crypto => (
-                          <SelectItem key={crypto} value={crypto} className="text-white hover:bg-gray-600">
+                          <SelectItem key={crypto} value={crypto} className="rounded-lg focus:bg-purple-500/10">
                             {crypto}
                           </SelectItem>
                         ))}
@@ -148,16 +149,16 @@ const P2PSimulator = () => {
 
                   {/* Fiat */}
                   <div className="space-y-2">
-                    <Label htmlFor="fiat" className="text-white">
-                      Moneda Fiat <span className="text-red-500">*</span>
+                    <Label htmlFor="fiat" className="text-gray-300 font-medium">
+                      Moneda Fiat <span className="text-red-400">*</span>
                     </Label>
                     <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                        <SelectValue placeholder="Fiat" />
+                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                        <SelectValue placeholder="Seleccionar fiat" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                         {fiats.map(fiat => (
-                          <SelectItem key={fiat} value={fiat} className="text-white hover:bg-gray-600">
+                          <SelectItem key={fiat} value={fiat} className="rounded-lg focus:bg-purple-500/10">
                             {fiat}
                           </SelectItem>
                         ))}
@@ -166,63 +167,64 @@ const P2PSimulator = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Operation Type */}
+                {/* Operation Type */}
+                <div className="space-y-2">
+                  <Label htmlFor="operation_type" className="text-gray-300 font-medium">
+                    Tipo de Operación <span className="text-red-400">*</span>
+                  </Label>
+                  <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)}>
+                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                      {operationTypes.map(type => (
+                        <SelectItem key={type} value={type} className="rounded-lg focus:bg-purple-500/10">
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Amount and Exchange Rate */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Amount */}
                   <div className="space-y-2">
-                    <Label htmlFor="operation_type" className="text-white">
-                      Tipo <span className="text-red-500">*</span>
+                    <Label htmlFor="amount" className="text-gray-300 font-medium">
+                      Cantidad <span className="text-red-400">*</span>
                     </Label>
-                    <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                        <SelectValue placeholder="Operación" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        {operationTypes.map(type => (
-                          <SelectItem key={type} value={type} className="text-white hover:bg-gray-600">
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.00000001"
+                      placeholder="0.00000000"
+                      value={formData.amount}
+                      onChange={(e) => handleInputChange('amount', e.target.value)}
+                      className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
+                    />
                   </div>
-                </div>
 
-                {/* Amount */}
-                <div className="space-y-2">
-                  <Label htmlFor="amount" className="text-white">
-                    Cantidad <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.00000001"
-                    placeholder="0.00000000"
-                    value={formData.amount}
-                    onChange={(e) => handleInputChange('amount', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                  />
-                </div>
-
-                {/* Exchange Rate */}
-                <div className="space-y-2">
-                  <Label htmlFor="exchange_rate" className="text-white">
-                    Tasa de Cambio <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="exchange_rate"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.exchange_rate}
-                    onChange={(e) => handleInputChange('exchange_rate', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                  />
+                  {/* Exchange Rate */}
+                  <div className="space-y-2">
+                    <Label htmlFor="exchange_rate" className="text-gray-300 font-medium">
+                      Tasa de Cambio <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="exchange_rate"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.exchange_rate}
+                      onChange={(e) => handleInputChange('exchange_rate', e.target.value)}
+                      className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
+                    />
+                  </div>
                 </div>
 
                 {/* Fee */}
                 <div className="space-y-2">
-                  <Label htmlFor="fee" className="text-white">
-                    Comisión
+                  <Label htmlFor="fee" className="text-gray-300 font-medium">
+                    Comisión (%)
                   </Label>
                   <Input
                     id="fee"
@@ -231,33 +233,36 @@ const P2PSimulator = () => {
                     placeholder="0.00"
                     value={formData.fee}
                     onChange={(e) => handleInputChange('fee', e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
                   />
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-2">
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium h-11 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20"
                   >
                     {loading ? (
                       <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         Simulando...
                       </div>
                     ) : (
-                      '🔄 Simular'
+                      <div className="flex items-center gap-2">
+                        <ArrowPathIcon className="h-4 w-4" />
+                        Simular Operación
+                      </div>
                     )}
                   </Button>
                   <Button
                     type="button"
                     onClick={resetForm}
                     variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    className="border-purple-500/30 text-gray-300 hover:bg-gray-700/50 h-11 rounded-xl"
                   >
-                    🗑️ Limpiar
+                    <TrashIcon className="h-4 w-4" />
                   </Button>
                 </div>
               </form>
@@ -265,56 +270,61 @@ const P2PSimulator = () => {
           </Card>
 
           {/* Results */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-yellow-400 flex items-center gap-2">
-                📊 Resultados de Simulación
+          <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl">
+            <CardHeader className="border-b border-purple-500/10">
+              <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <ChartBarIcon className="h-5 w-5 text-blue-400" />
+                </div>
+                Resultados de Simulación
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {!result ? (
                 <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🤝</div>
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-500/10 rounded-2xl mb-4">
+                    <CalculatorIcon className="h-8 w-8 text-purple-400" />
+                  </div>
                   <h3 className="text-xl text-gray-300 mb-2">Simula una operación P2P</h3>
-                  <p className="text-gray-400">
+                  <p className="text-gray-500">
                     Completa los campos del formulario y haz clic en "Simular" para ver los resultados
                   </p>
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* Operation Summary */}
-                  <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                    <h4 className="text-white font-medium mb-3">Resumen de Operación</h4>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
+                  <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
+                    <h4 className="text-white font-medium mb-4 text-lg">Resumen de Operación</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center">
                         <span className="text-gray-400">Tipo:</span>
-                        <Badge className="ml-2 bg-blue-600">
+                        <Badge className="ml-2 bg-blue-500/20 text-blue-400 border-blue-500/30">
                           {result.operation_type}
                         </Badge>
                       </div>
-                      <div>
+                      <div className="flex items-center">
                         <span className="text-gray-400">Par:</span>
-                        <span className="text-white ml-2">{result.crypto}/{result.fiat}</span>
+                        <span className="text-white ml-2 font-medium">{result.crypto}/{result.fiat}</span>
                       </div>
-                      <div>
+                      <div className="flex items-center">
                         <span className="text-gray-400">Tasa:</span>
-                        <span className="text-white ml-2">{result.exchange_rate}</span>
+                        <span className="text-white ml-2 font-medium">{result.exchange_rate}</span>
                       </div>
-                      <div>
+                      <div className="flex items-center">
                         <span className="text-gray-400">Comisión:</span>
-                        <span className="text-white ml-2">{result.fee}</span>
+                        <span className="text-white ml-2 font-medium">{result.fee}%</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Calculation Details */}
-                  <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                    <h4 className="text-white font-medium mb-3">Detalles del Cálculo</h4>
-                    <div className="space-y-3">
+                  <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
+                    <h4 className="text-white font-medium mb-4 text-lg">Detalles del Cálculo</h4>
+                    <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Cantidad Enviada:</span>
                         <span className="text-white font-medium">
-                          {result.amount_sent.toFixed(2)} {result.operation_type === 'Venta' ? result.crypto : result.fiat}
+                          {result.amount_sent.toFixed(8)} {result.operation_type === 'Venta' ? result.crypto : result.fiat}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
@@ -326,13 +336,13 @@ const P2PSimulator = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Comisión:</span>
                         <span className="text-red-400 font-medium">
-                          -{result.fee.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
+                          -{result.fee_amount.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
                         </span>
                       </div>
-                      <div className="border-t border-gray-600 pt-3">
+                      <div className="border-t border-purple-500/20 pt-4">
                         <div className="flex justify-between items-center">
                           <span className="text-white font-medium">Cantidad Neta:</span>
-                          <Badge className="bg-green-600 text-lg">
+                          <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-lg px-3 py-1 rounded-lg">
                             {result.net_amount.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
                           </Badge>
                         </div>
@@ -341,14 +351,16 @@ const P2PSimulator = () => {
                   </div>
 
                   {/* Profitability Indicator */}
-                  <div className={`rounded-lg p-4 border ${result.net_amount > result.amount_sent ? 'bg-green-900/20 border-green-600' : 'bg-red-900/20 border-red-600'}`}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">
-                        {result.net_amount > result.amount_sent ? '📈' : '📉'}
-                      </span>
+                  <div className={`rounded-xl p-5 border ${result.net_amount > 0 ? 'bg-green-900/20 border-green-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${result.net_amount > 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                        <span className={`text-2xl ${result.net_amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {result.net_amount > 0 ? '📈' : '📉'}
+                        </span>
+                      </div>
                       <div>
-                        <h4 className={`font-medium ${result.net_amount > result.amount_sent ? 'text-green-400' : 'text-red-400'}`}>
-                          {result.net_amount > result.amount_sent ? 'Operación Favorable' : 'Operación con Pérdida'}
+                        <h4 className={`font-medium text-lg ${result.net_amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {result.net_amount > 0 ? 'Operación Rentable' : 'Operación con Pérdida'}
                         </h4>
                         <p className="text-gray-400 text-sm">
                           {result.operation_type === 'Venta' 
