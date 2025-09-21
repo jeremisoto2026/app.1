@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Header from './components/Header';
 import AuthForms from './components/AuthForms';
 import NavigationBar from './components/NavigationBar';
 import Dashboard from './components/Dashboard';
@@ -79,7 +78,7 @@ const MainApp = () => {
               </p>
             </div>
 
-            {/* Botones de autenticación - AÑADIDOS AQUÍ */}
+            {/* Botones de autenticación */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
               <button 
                 onClick={() => handleShowAuth('login')}
@@ -192,7 +191,7 @@ const MainApp = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white overflow-x-hidden">
-      <Header />
+      {/* Header eliminado */}
       
       <main className={`${user ? 'pb-20' : ''}`}>
         {renderContent()}
