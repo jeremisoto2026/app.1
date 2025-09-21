@@ -11,6 +11,7 @@ const Dashboard = ({ onOpenProfile }) => {
   const [monthlyPerformance, setMonthlyPerformance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -163,7 +164,7 @@ const Dashboard = ({ onOpenProfile }) => {
       </div>
 
       {/* Rendimiento Mensual */}
-      <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
+      <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow mb-8">
         <h3 className="text-yellow-400 font-medium flex items-center">
           📈 Rendimiento Mensual
         </h3>
@@ -176,6 +177,64 @@ const Dashboard = ({ onOpenProfile }) => {
         >
           {monthlyPerformance >= 0 ? "✅ Positivo" : "❌ Negativo"}
         </span>
+      </div>
+
+      {/* 📌 Planes Premium */}
+      <h2 className="text-2xl font-bold mb-6 text-yellow-400">Planes Premium</h2>
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Plan Mensual */}
+        <div
+          className={`p-6 rounded-lg shadow-lg border ${
+            selectedPlan === "monthly"
+              ? "border-yellow-400 bg-gray-800"
+              : "border-gray-700 bg-gray-900"
+          } transition cursor-pointer`}
+          onClick={() => setSelectedPlan("monthly")}
+        >
+          <h3 className="text-xl font-bold text-white mb-2">Premium Mensual</h3>
+          <p className="text-gray-400 mb-4">Acceso ilimitado mes a mes.</p>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl font-bold text-yellow-400">$15</span>
+            <span className="text-gray-500 line-through">$20</span>
+          </div>
+          <button
+            className={`w-full py-2 rounded font-semibold ${
+              selectedPlan === "monthly"
+                ? "bg-yellow-400 text-black"
+                : "bg-gray-700 text-white hover:bg-yellow-500 hover:text-black"
+            }`}
+          >
+            {selectedPlan === "monthly" ? "✔ Plan Seleccionado" : "Seleccionar Plan"}
+          </button>
+        </div>
+
+        {/* Plan Anual */}
+        <div
+          className={`p-6 rounded-lg shadow-lg border ${
+            selectedPlan === "yearly"
+              ? "border-yellow-400 bg-gray-800"
+              : "border-gray-700 bg-gray-900"
+          } transition cursor-pointer`}
+          onClick={() => setSelectedPlan("yearly")}
+        >
+          <h3 className="text-xl font-bold text-white mb-2">Premium Anual</h3>
+          <p className="text-gray-400 mb-4">
+            20% de descuento pagando anual.
+          </p>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl font-bold text-yellow-400">$125</span>
+            <span className="text-gray-500 line-through">$160</span>
+          </div>
+          <button
+            className={`w-full py-2 rounded font-semibold ${
+              selectedPlan === "yearly"
+                ? "bg-yellow-400 text-black"
+                : "bg-gray-700 text-white hover:bg-yellow-500 hover:text-black"
+            }`}
+          >
+            {selectedPlan === "yearly" ? "✔ Plan Seleccionado" : "Seleccionar Plan"}
+          </button>
+        </div>
       </div>
     </div>
   );
