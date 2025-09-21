@@ -315,6 +315,7 @@ export default function Profile() {
                   <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Soporte prioritario</li>
                 </ul>
               </div>
+              </div>
 
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-300 mb-2">Métodos de pago</h4>
