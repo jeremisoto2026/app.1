@@ -177,42 +177,34 @@ const Dashboard = ({ onOpenProfile }) => {
       </div>
 
       {/* Planes Premium */}
-      <h2 className="text-2xl font-bold text-yellow-400 mt-8 mb-4">
-        Planes Premium
+      <h2 className="text-2xl font-bold text-yellow-400 mt-8 mb-4 flex items-center">
+        🚀 Planes Premium
       </h2>
 
       {/* Plan Mensual */}
-      <div className="bg-gray-900 rounded-lg p-6 mb-6 shadow">
+      <div
+        onClick={onOpenProfile}
+        className="bg-gray-900 rounded-lg p-6 mb-6 shadow cursor-pointer hover:bg-gray-800 transition"
+      >
         <h3 className="text-white text-xl font-semibold">Premium Mensual</h3>
         <p className="text-gray-400 mt-1">Acceso ilimitado mes a mes.</p>
         <div className="flex items-center mt-3">
           <span className="text-yellow-400 text-2xl font-bold">$13</span>
           <span className="text-gray-500 line-through ml-2">$20</span>
         </div>
-        <button
-          onClick={onOpenProfile}
-          className="mt-4 w-full bg-yellow-400 text-black font-semibold py-2 rounded hover:bg-yellow-500 transition"
-        >
-          Seleccionar Plan
-        </button>
       </div>
 
       {/* Plan Anual */}
-      <div className="bg-gray-900 rounded-lg p-6 shadow">
+      <div
+        onClick={onOpenProfile}
+        className="bg-gray-900 rounded-lg p-6 shadow cursor-pointer hover:bg-gray-800 transition"
+      >
         <h3 className="text-white text-xl font-semibold">Premium Anual</h3>
-        <p className="text-gray-400 mt-1">
-          20% de descuento pagando anual.
-        </p>
+        <p className="text-gray-400 mt-1">20% de descuento pagando anual.</p>
         <div className="flex items-center mt-3">
           <span className="text-yellow-400 text-2xl font-bold">$125</span>
           <span className="text-gray-500 line-through ml-2">$160</span>
         </div>
-        <button
-          onClick={onOpenProfile}
-          className="mt-4 w-full bg-yellow-400 text-black font-semibold py-2 rounded hover:bg-yellow-500 transition"
-        >
-          Seleccionar Plan
-        </button>
       </div>
     </div>
   );
