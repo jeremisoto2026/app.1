@@ -1,8 +1,8 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt } from 'react-icons/fa';
 
-const Header = ({ onShowAuth }) => {
+const Header = () => {
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
@@ -13,43 +13,30 @@ const Header = ({ onShowAuth }) => {
     }
   };
 
+  if (!user) {
+    return null; // No mostrar header si no hay usuario autenticado
+  }
+
   return (
     <header className="header-container">
       <div className="header-content">
-        {user ? (
-          <div className="user-section">
-            <div className="user-info">
-              <div className="user-avatar">
-                <FaUser />
-              </div>
-              <div className="user-details">
-                <span className="user-greeting">Hola,</span>
-                <span className="user-name">{user.displayName || user.email}</span>
-              </div>
+        <div className="user-section">
+          <div className="user-info">
+            <div className="user-avatar">
+              <FaUser />
             </div>
-            <button
-              onClick={handleSignOut}
-              className="btn-logout"
-            >
-              <FaSignOutAlt /> Cerrar Sesión
-            </button>
+            <div className="user-details">
+              <span className="user-greeting">Hola,</span>
+              <span className="user-name">{user.displayName || user.email}</span>
+            </div>
           </div>
-        ) : (
-          <div className="auth-buttons">
-            <button
-              onClick={() => onShowAuth('login')}
-              className="btn-login"
-            >
-              <FaSignInAlt /> Iniciar Sesión
-            </button>
-            <button
-              onClick={() => onShowAuth('register')}
-              className="btn-register"
-            >
-              <FaUserPlus /> Regístrate
-            </button>
-          </div>
-        )}
+          <button
+            onClick={handleSignOut}
+            className="btn-logout"
+          >
+            <FaSignOutAlt /> Cerrar Sesión
+          </button>
+        </div>
       </div>
     </header>
   );
