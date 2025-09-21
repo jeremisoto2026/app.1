@@ -325,17 +325,6 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Botón individual por card (si quieres "elegir" plan) */}
-              <div className="mt-2">
-                <button
-                  onClick={() => alert("Seleccionaste Plan Mensual (demo)")}
-                  className="w-full py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors"
-                >
-                  Seleccionar Mensual
-                </button>
-              </div>
-            </div>
-
             {/* ---------- Card: Plan Premium Anual (separada) ---------- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
@@ -364,15 +353,6 @@ export default function Profile() {
                   <button className="bg-yellow-400 hover:brightness-95 text-black py-2 px-3 rounded-md">Binance Pay</button>
                   <button className="bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-3 rounded-md">Blockchain Pay</button>
                 </div>
-              </div>
-
-              <div className="mt-2">
-                <button
-                  onClick={() => alert("Seleccionaste Plan Anual (demo)")}
-                  className="w-full py-2 rounded-lg bg-white text-indigo-700 font-semibold hover:bg-gray-100 transition-colors"
-                >
-                  Seleccionar Anual
-                </button>
               </div>
             </div>
 
