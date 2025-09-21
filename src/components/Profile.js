@@ -30,6 +30,16 @@ const Profile = () => {
     fetchProfile();
   }, [user]);
 
+  // Datos de ejemplo para límites (deberías obtener estos datos de tu base de datos)
+  const usageData = {
+    operaciones: { usadas: 3, limite: 200 },
+    exportaciones: { usadas: 2, limite: 40 }
+  };
+
+  const handleContactSupport = () => {
+    window.location.href = "mailto:soportejjxcapital@gmail.com";
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -85,7 +95,7 @@ const Profile = () => {
         </div>
 
         {/* Tarjeta de información del perfil */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl mb-6">
           <div className="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-6">
             <h2 className="text-xl font-bold flex items-center justify-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,21 +145,120 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Tarjeta de acciones */}
-        <div className="mt-6 bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Acciones</h3>
-          <div className="space-y-3">
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-              Editar Perfil
-            </button>
-            <button className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-              Cambiar Contraseña
-            </button>
-            <button className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-              Ver Historial
-            </button>
+        {/* Sección de Límites */}
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl mb-6">
+          <div className="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-6">
+            <h2 className="text-xl font-bold flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Límites de Uso
+            </h2>
+          </div>
+
+          <div className="p-6 space-y-6">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium text-gray-300">Operaciones</span>
+                <span className="text-gray-400">{usageData.operaciones.usadas}/{usageData.operaciones.limite}</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full" 
+                  style={{width: `${(usageData.operaciones.usadas / usageData.operaciones.limite) * 100}%`}}
+                ></div>
+              </div>
+            </div>
+            
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium text-gray-300">Exportaciones</span>
+                <span className="text-gray-400">{usageData.exportaciones.usadas}/{usageData.exportaciones.limite}</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className="bg-green-500 h-2.5 rounded-full" 
+                  style={{width: `${(usageData.exportaciones.usadas / usageData.exportaciones.limite) * 100}%`}}
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Sección de Plan Premium */}
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl mb-6">
+          <div className="bg-gradient-to-r from-purple-700 to-purple-600 text-white p-6">
+            <h2 className="text-xl font-bold flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Plan Premium
+            </h2>
+          </div>
+
+          <div className="p-6">
+            <p className="text-sm text-gray-300 mb-4 text-center">
+              Obtén <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">todo ilimitado</span> por solo
+            </p>
+            
+            <div className="flex items-baseline justify-center mb-4">
+              <span className="text-3xl font-bold text-white">$13</span>
+              <span className="text-gray-400">/mes</span>
+            </div>
+            
+            <ul className="text-sm text-gray-400 mb-6 space-y-2">
+              <li className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Operaciones ilimitadas
+              </li>
+              <li className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Exportaciones ilimitadas
+              </li>
+              <li className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Soporte prioritario
+              </li>
+            </ul>
+            
+            <div className="flex flex-col gap-3">
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM8 8a2 2 0 114 0 2 2 0 01-4 0zm2 6a6 极速赛车开奖直播历史记录
+                </svg>
+                Pagar con PayPal
+              </button>
+              <button className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-极速赛车开奖直播历史记录
+                </svg>
+                Binance Pay
+              </button>
+              <button className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 极速赛车开奖直播历史记录
+                </svg>
+                Blockchain Pay
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Botón de Contactar a Soporte */}
+        <button 
+          onClick={handleContactSupport}
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin极速赛车开奖直播历史记录
+          </svg>
+          Contactar a Soporte
+        </button>
       </div>
     </div>
   );
