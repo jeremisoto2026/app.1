@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
-import { RocketLaunchIcon } from "@heroicons/react/24/solid";
+import { RocketLaunchIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 
 const Dashboard = ({ onOpenProfile }) => {
   const { user } = useAuth();
@@ -83,9 +83,7 @@ const Dashboard = ({ onOpenProfile }) => {
         }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
-        setError(
-          "Error al cargar los datos del dashboard. Por favor, revisa la consola para más detalles."
-        );
+        setError("Error al cargar los datos del dashboard.");
         setLoading(false);
       }
     };
@@ -140,32 +138,27 @@ const Dashboard = ({ onOpenProfile }) => {
 
       <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
 
-      {/* Total Operaciones */}
+      {/* Métricas */}
       <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
         <h3 className="text-yellow-400 font-medium">Total Operaciones</h3>
         <p className="text-2xl font-bold">{totalOperations}</p>
         <p className="text-gray-400 text-sm">Operaciones realizadas</p>
       </div>
 
-      {/* Ganancia USDT */}
       <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
         <h3 className="text-green-400 font-medium">Ganancia USDT</h3>
         <p className="text-2xl font-bold">${totalProfitUsdt.toFixed(2)}</p>
         <p className="text-gray-400 text-sm">Total en USDT</p>
       </div>
 
-      {/* Tasa de Éxito */}
       <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
         <h3 className="text-purple-400 font-medium">Tasa de Éxito</h3>
         <p className="text-2xl font-bold">{successRate}%</p>
         <p className="text-gray-400 text-sm">Operaciones exitosas</p>
       </div>
 
-      {/* Rendimiento Mensual */}
       <div className="bg-gray-900 rounded-lg p-4 mb-4 shadow">
-        <h3 className="text-yellow-400 font-medium flex items-center">
-          📈 Rendimiento Mensual
-        </h3>
+        <h3 className="text-yellow-400 font-medium">📈 Rendimiento Mensual</h3>
         <p className="text-2xl font-bold">${monthlyPerformance.toFixed(2)}</p>
         <p className="text-gray-400 text-sm">Últimos 30 días</p>
         <span
@@ -177,41 +170,80 @@ const Dashboard = ({ onOpenProfile }) => {
         </span>
       </div>
 
-      {/* Planes Premium */}
+      {/* Planes Premium - estilo igual a Profile.js */}
       <h2 className="text-2xl font-bold text-yellow-400 mt-8 mb-4">
         Planes Premium
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Card Plan Mensual */}
+      <div className="space-y-6">
+        {/* Card: Plan Premium Mensual */}
         <div
           onClick={onOpenProfile}
-          className="bg-gray-900 rounded-xl shadow-md p-6 hover:scale-[1.02] transition cursor-pointer"
+          className="bg-gray-900 rounded-xl p-6 shadow-lg hover:scale-[1.02] transition cursor-pointer"
         >
-          <div className="flex items-center mb-4">
-            <RocketLaunchIcon className="w-8 h-8 text-yellow-400 mr-2" />
-            <h3 className="text-xl font-bold text-white">Premium Mensual</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <RocketLaunchIcon className="h-5 w-5 mr-2 text-purple-400" />
+              <h3 className="text-lg font-semibold">Plan Premium</h3>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-bold text-white">
+                $13 <span className="text-sm text-gray-400">/mes</span>
+              </p>
+            </div>
           </div>
-          <p className="text-gray-400">Acceso ilimitado a todas las funciones por un mes.</p>
-          <div className="flex items-center mt-3">
-            <span className="text-yellow-400 text-2xl font-bold">$13</span>
-            <span className="text-gray-500 line-through ml-2">$20</span>
+
+          <div className="mb-4 text-sm text-gray-300">
+            <ul className="space-y-2">
+              <li className="flex items-center">
+                <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                Operaciones ilimitadas
+              </li>
+              <li className="flex items-center">
+                <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                Exportaciones ilimitadas
+              </li>
+              <li className="flex items-center">
+                <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                Soporte prioritario
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* Card Plan Anual */}
+        {/* Card: Plan Premium Anual */}
         <div
           onClick={onOpenProfile}
-          className="bg-gray-900 rounded-xl shadow-md p-6 hover:scale-[1.02] transition cursor-pointer"
+          className="bg-gray-900 rounded-xl p-6 shadow-lg hover:scale-[1.02] transition cursor-pointer"
         >
-          <div className="flex items-center mb-4">
-            <RocketLaunchIcon className="w-8 h-8 text-yellow-400 mr-2" />
-            <h3 className="text-xl font-bold text-white">Premium Anual</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <RocketLaunchIcon className="h-5 w-5 mr-2 text-purple-400" />
+              <h3 className="text-lg font-semibold">Plan Premium Anual</h3>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-bold text-white">
+                $125 <span className="text-sm text-gray-400">/año</span>
+              </p>
+              <p className="text-xs text-green-400 font-semibold">Ahorra ~20%</p>
+            </div>
           </div>
-          <p className="text-gray-400">Obtén un 20% de descuento pagando el año completo.</p>
-          <div className="flex items-center mt-3">
-            <span className="text-yellow-400 text-2xl font-bold">$125</span>
-            <span className="text-gray-500 line-through ml-2">$160</span>
+
+          <div className="mb-4 text-sm text-gray-300">
+            <ul className="space-y-2">
+              <li className="flex items-center">
+                <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                Operaciones ilimitadas
+              </li>
+              <li className="flex items-center">
+                <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                Exportaciones ilimitadas
+              </li>
+              <li className="flex items-center">
+                <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                Soporte prioritario
+              </li>
+            </ul>
           </div>
         </div>
       </div>
