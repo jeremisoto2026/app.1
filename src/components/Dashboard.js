@@ -10,7 +10,8 @@ import {
   ChartBarIcon,
   UserIcon,
   ArrowsRightLeftIcon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  BoltIcon
 } from "@heroicons/react/24/outline";
 
 const Dashboard = ({ onOpenProfile }) => {
@@ -111,11 +112,16 @@ const Dashboard = ({ onOpenProfile }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-          <p className="text-gray-400 text-lg">Cargando dashboard...</p>
-          <p className="text-gray-600 text-sm mt-2">Estamos preparando tus análisis</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <div className="flex justify-center mb-2">
+            <div className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+              JJXCAPITAL<span className="text-yellow-400">⚡</span>
+            </div>
+          </div>
+          <p className="text-gray-400 text-lg">Cargando dashboard premium...</p>
+          <p className="text-gray-600 text-sm mt-2">Preparando tu análisis de inversión</p>
         </div>
       </div>
     );
@@ -123,8 +129,13 @@ const Dashboard = ({ onOpenProfile }) => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 to-black flex items-center justify-center p-4">
-        <div className="text-center p-8 bg-gray-900 rounded-2xl border border-gray-800 max-w-md w-full shadow-2xl">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black flex items-center justify-center p-4">
+        <div className="text-center p-8 bg-gray-900/70 backdrop-blur-lg rounded-2xl border border-purple-500/30 max-w-md w-full shadow-2xl">
+          <div className="flex justify-center mb-4">
+            <div className="text-xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+              JJXCAPITAL<span className="text-yellow-400">⚡</span>
+            </div>
+          </div>
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-900/20 rounded-full mb-4">
             <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -135,7 +146,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <div className="flex gap-3 justify-center">
             <button 
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors"
+              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 shadow-lg shadow-purple-500/20"
             >
               Reintentar
             </button>
@@ -152,35 +163,35 @@ const Dashboard = ({ onOpenProfile }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white">
       {/* Header con navegación */}
-      <header className="border-b border-gray-800 bg-black/30 backdrop-blur-lg sticky top-0 z-10">
+      <header className="border-b border-purple-500/20 bg-black/30 backdrop-blur-xl sticky top-0 z-10">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
-            <div className="bg-gradient-to-r from-cyan-500 to-blue-600 p-2 rounded-lg mr-3">
-              <ArrowsRightLeftIcon className="h-6 w-6 text-white" />
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg mr-3 shadow-lg shadow-purple-500/30">
+              <BoltIcon className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Crypto Trading Analytics
-            </h1>
+            <div className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              JJXCAPITAL<span className="text-yellow-400">⚡</span>
+            </div>
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex space-x-1 bg-gray-900 p-1 rounded-lg">
+            <div className="hidden md:flex space-x-1 bg-gray-900/50 p-1 rounded-lg border border-purple-500/10">
               <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'overview' ? 'bg-cyan-700 text-white' : 'text-gray-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'overview' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
                 onClick={() => setActiveTab('overview')}
               >
                 Resumen
               </button>
               <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'performance' ? 'bg-cyan-700 text-white' : 'text-gray-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'performance' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
                 onClick={() => setActiveTab('performance')}
               >
                 Rendimiento
               </button>
               <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'reports' ? 'bg-cyan-700 text-white' : 'text-gray-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'reports' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
                 onClick={() => setActiveTab('reports')}
               >
                 Reportes
@@ -189,7 +200,7 @@ const Dashboard = ({ onOpenProfile }) => {
             
             <button
               onClick={onOpenProfile}
-              className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-500/50 hover:border-cyan-400 transition-all duration-300 group"
+              className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500/50 hover:border-purple-400 transition-all duration-300 group"
             >
               {user?.photoURL ? (
                 <img
@@ -198,11 +209,11 @@ const Dashboard = ({ onOpenProfile }) => {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-800 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-950 transition-colors duration-300">
+                <div className="w-full h-full bg-gray-800 flex items-center justify-center text-purple-400 group-hover:bg-purple-950 transition-colors duration-300">
                   <UserIcon className="w-5 h-5" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-cyan-500/0 group-hover:bg-cyan-500/10 transition-all duration-300"></div>
+              <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 transition-all duration-300"></div>
             </button>
           </div>
         </div>
@@ -212,15 +223,16 @@ const Dashboard = ({ onOpenProfile }) => {
         {/* Encabezado con bienvenida */}
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">
-            Hola, {user?.displayName || user?.email?.split('@')[0] || 'Trader'}
+            Bienvenido, <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">{user?.displayName || user?.email?.split('@')[0] || 'Inversor'}</span>
           </h2>
-          <p className="text-gray-400">Aquí está tu resumen de rendimiento</p>
+          <p className="text-gray-400">Tu dashboard premium de JJXCAPITAL⚡</p>
         </div>
 
         {/* Grid de Métricas principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           {/* Tarjeta: Total Operaciones */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-gray-800 hover:border-cyan-500/30 transition-all duration-300 group">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Total Operaciones</h3>
               <div className="p-2 bg-blue-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
@@ -235,7 +247,8 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
 
           {/* Tarjeta: Ganancia USDT */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-gray-800 hover:border-green-500/30 transition-all duration-300 group">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Ganancia USDT</h3>
               <div className="p-2 bg-green-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
@@ -252,7 +265,8 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
 
           {/* Tarjeta: Tasa de Éxito */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-gray-800 hover:border-purple-500/30 transition-all duration-300 group">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Tasa de Éxito</h3>
               <div className="p-2 bg-purple-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
@@ -262,7 +276,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <div className="flex items-end">
               <p className="text-2xl md:text-3xl font-bold mb-1">{successRate}%</p>
               <div className="ml-3 text-xs px-2 py-1 rounded-full bg-purple-900/50 text-purple-300">
-                {successRate >= 50 ? "Alto" : "Bajo"}
+                {successRate >= 50 ? "Excelente" : "En progreso"}
               </div>
             </div>
             <div className="flex items-center text-sm text-gray-500">
@@ -272,7 +286,8 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
 
           {/* Tarjeta: Rendimiento Mensual */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-gray-800 hover:border-amber-500/30 transition-all duration-300 group">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Rendimiento Mensual</h3>
               <div className="p-2 bg-amber-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
@@ -302,10 +317,11 @@ const Dashboard = ({ onOpenProfile }) => {
 
         {/* Sección de gráficos y análisis */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-800">
+          <div className="lg:col-span-2 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold">Rendimiento mensual</h2>
-              <button className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center">
+              <button className="text-sm text-purple-400 hover:text-purple-300 flex items-center">
                 <CalendarDaysIcon className="h-4 w-4 mr-1" />
                 Seleccionar período
               </button>
@@ -340,20 +356,21 @@ const Dashboard = ({ onOpenProfile }) => {
               </div>
               
               {/* Puntos de datos */}
-              <div className="absolute left-10 bottom-8 w-3 h-3 rounded-full bg-cyan-500"></div>
-              <div className="absolute left-1/3 bottom-12 w-3 h-3 rounded-full bg-cyan-500"></div>
-              <div className="absolute left-2/3 bottom-14 w-3 h-3 rounded-full bg-cyan-500"></div>
-              <div className="absolute right-10 bottom-16 w-3 h-3 rounded-full bg-cyan-500"></div>
+              <div className="absolute left-10 bottom-8 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
+              <div className="absolute left-1/3 bottom-12 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
+              <div className="absolute left-2/3 bottom-14 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
+              <div className="absolute right-10 bottom-16 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-800">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <h2 className="text-lg font-semibold mb-6">Distribución de operaciones</h2>
             
             {/* Gráfico de donut simulado */}
             <div className="relative h-48 flex items-center justify-center mb-4">
-              <div className="absolute w-36 h-36 rounded-full border-8 border-cyan-500/30"></div>
-              <div className="absolute w-36 h-36 rounded-full border-8 border-cyan-500 border-t-8 border-t-cyan-500" style={{transform: 'rotate(calc(0.7 * 360deg))'}}></div>
+              <div className="absolute w-36 h-36 rounded-full border-8 border-purple-500/20"></div>
+              <div className="absolute w-36 h-36 rounded-full border-8 border-purple-500 border-t-8 border-t-purple-500" style={{transform: 'rotate(calc(0.7 * 360deg))'}}></div>
               <div className="absolute w-36 h-36 rounded-full border-8 border-blue-500 border-r-8 border-r-blue-500" style={{transform: 'rotate(calc(0.5 * 360deg))'}}></div>
               
               <div className="text-center">
@@ -365,7 +382,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-cyan-500 mr-2"></div>
+                  <div className="w-3 h-3 rounded-full bg-purple-500 mr-2"></div>
                   <span className="text-sm">Operaciones exitosas</span>
                 </div>
                 <span className="text-sm font-medium">70%</span>
@@ -391,28 +408,29 @@ const Dashboard = ({ onOpenProfile }) => {
         </div>
 
         {/* Sección: Planes Premium */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-800 mb-8">
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Planes Premium</h2>
-              <p className="text-gray-400">Mejora tu experiencia de trading con nuestros planes</p>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Planes Premium JJXCAPITAL⚡</h2>
+              <p className="text-gray-400">Potencia tu estrategia de trading con nuestros planes exclusivos</p>
             </div>
-            <RocketLaunchIcon className="h-8 w-8 text-cyan-500" />
+            <RocketLaunchIcon className="h-8 w-8 text-purple-500" />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Card: Plan Premium Mensual */}
             <div
               onClick={onOpenProfile}
-              className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 hover:border-cyan-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden"
+              className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/30 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden"
             >
-              <div className="absolute -top-10 -right-10 w-28 h-28 bg-cyan-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
-              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-cyan-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+              <div className="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
               
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold group-hover:text-cyan-300 transition-colors">
+                    <h3 className="text-lg font-semibold group-hover:text-purple-300 transition-colors">
                       Plan Premium
                     </h3>
                     <p className="text-sm text-gray-400">Ideal para traders activos</p>
@@ -441,7 +459,7 @@ const Dashboard = ({ onOpenProfile }) => {
                   </ul>
                 </div>
                 
-                <button className="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-cyan-500/20">
+                <button className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/20">
                   Seleccionar plan
                 </button>
               </div>
@@ -450,19 +468,19 @@ const Dashboard = ({ onOpenProfile }) => {
             {/* Card: Plan Premium Anual */}
             <div
               onClick={onOpenProfile}
-              className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-cyan-500/30 hover:border-cyan-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden"
+              className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/50 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 bg-cyan-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">
                 MÁS POPULAR
               </div>
               
-              <div className="absolute -top-10 -right-10 w-28 h-28 bg-cyan-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
-              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-cyan-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+              <div className="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
               
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold group-hover:text-cyan-300 transition-colors">
+                    <h3 className="text-lg font-semibold group-hover:text-purple-300 transition-colors">
                       Plan Premium Anual
                     </h3>
                     <p className="text-sm text-gray-400">Para traders serios</p>
@@ -496,7 +514,7 @@ const Dashboard = ({ onOpenProfile }) => {
                   </ul>
                 </div>
                 
-                <button className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-cyan-500/30">
+                <button className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/30">
                   Seleccionar plan
                 </button>
               </div>
@@ -506,7 +524,12 @@ const Dashboard = ({ onOpenProfile }) => {
 
         {/* Footer o información adicional */}
         <div className="text-center text-gray-500 text-sm pb-6">
-          <p>© {new Date().getFullYear()} Crypto Trading Analytics • Todos los derechos reservados</p>
+          <div className="flex justify-center items-center mb-2">
+            <div className="text-lg font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+              JJXCAPITAL<span className="text-yellow-400">⚡</span>
+            </div>
+          </div>
+          <p>© {new Date().getFullYear()} JJXCAPITAL⚡ • Plataforma premium de trading</p>
         </div>
       </main>
     </div>
