@@ -304,10 +304,6 @@ export default function Profile() {
                 </div>
               </div>
 
-              <button className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                Actualizar tus Límites
-              </button>
-            </div>
 
             {/* ---- Historial / espacio extra si quieres más contenido ---- */}
             {/* Si más adelante quieres mostrar listados de operaciones, aquí va la tabla pequeña */}
