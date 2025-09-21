@@ -92,6 +92,10 @@ export const AuthProvider = ({ children }) => {
     signInWithMicrosoft,
     signInWithApple,
     signOut,
+    // 🔑 Aliases para que tu UI no rompa
+    signup: signUp,
+    login: signIn,
+    logout: signOut,
     loading
   };
 
