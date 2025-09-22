@@ -40,6 +40,33 @@ const MainApp = () => {
     setActiveTab('dashboard');
   };
 
+  // Mapeo de colores para las tarjetas de características
+  const colorMap = {
+    purple: {
+      border: 'border-purple-500/20',
+      borderHover: 'hover:border-purple-500/50',
+      text: 'text-purple-400',
+      gradientFrom: 'from-purple-600',
+      gradientTo: 'to-purple-400'
+    },
+    blue: {
+      border: 'border-blue-500/20',
+      borderHover: 'hover:border-blue-500/50',
+      text: 'text-blue-400',
+      gradientFrom: 'from-blue-600',
+      gradientTo: 'to-blue-400'
+    },
+    cyan: {
+      border: 'border-cyan-500/20',
+      borderHover: 'hover:border-cyan-500/50',
+      text: 'text-cyan-400',
+      gradientFrom: 'from-cyan-600',
+      gradientTo: 'to-cyan-400'
+    }
+  };
+
+  const delayClasses = ['delay-0', 'delay-100', 'delay-200'];
+
   const renderContent = () => {
     if (!user) {
       return (
@@ -95,7 +122,7 @@ const MainApp = () => {
               </button>
             </div>
 
-            {/* Características con animación escalonada */}
+            {/* Características con animación escalonada - CORREGIDO */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
               {[
                 {
@@ -116,17 +143,20 @@ const MainApp = () => {
                   description: 'Dashboard profesional con métricas en tiempo real y alertas inteligentes',
                   color: 'cyan'
                 }
-              ].map((feature, index) => (
-                <div 
-                  key={index}
-                  className={`bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 border border-${feature.color}-500/20 hover:border-${feature.color}-500/50 transition-all duration-500 group relative overflow-hidden transform hover:-translate-y-2 delay-${index * 100}`}
-                >
-                  <div className={`absolute -inset-1 bg-gradient-to-r from-${feature.color}-600 to-${feature.color}-400 opacity-0 group-hover:opacity-10 blur transition-all duration-500`}></div>
-                  <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-500">{feature.icon}</div>
-                  <h3 className={`text-2xl font-bold text-${feature.color}-400 mb-4`}>{feature.title}</h3>
-                  <p className="text-gray-300 text-md leading-relaxed">{feature.description}</p>
-                </div>
-              ))}
+              ].map((feature, index) => {
+                const color = colorMap[feature.color];
+                return (
+                  <div 
+                    key={index}
+                    className={`bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 border transition-all duration-500 group relative overflow-hidden transform hover:-translate-y-2 ${delayClasses[index]} ${color.border} ${color.borderHover}`}
+                  >
+                    <div className={`absolute -inset-1 bg-gradient-to-r ${color.gradientFrom} ${color.gradientTo} opacity-0 group-hover:opacity-10 blur transition-all duration-500`}></div>
+                    <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-500">{feature.icon}</div>
+                    <h3 className={`text-2xl font-bold ${color.text} mb-4`}>{feature.title}</h3>
+                    <p className="text-gray-300 text-md leading-relaxed">{feature.description}</p>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Llamada a la acción */}
