@@ -11,6 +11,9 @@ import Profile from './components/Profile';
 import { FaSignInAlt, FaUserPlus, FaRocket, FaChartLine, FaSync, FaDownload, FaGoogle, FaExchangeAlt, FaLock, FaAward, FaCheck, FaCrown, FaFileExcel, FaFilePdf, FaCalculator, FaMoneyBillWave, FaArrowRight } from 'react-icons/fa';
 import './App.css';
 
+// <- Añadido para FCM (no se tocó nada más)
+import { requestNotificationPermission, onMessageListener } from "./firebase";
+
 const MainApp = () => {
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(null);
@@ -28,6 +31,39 @@ const MainApp = () => {
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // <- Nuevo efecto para FCM: pedir permiso y escuchar notificaciones en foreground
+  useEffect(() => {
+    // Pedimos permiso y obtenemos token (se registrará en consola o donde quieras guardarlo)
+    requestNotificationPermission()
+      .then((token) => {
+        if (token) {
+          console.log("FCM token obtenido en App.js:", token);
+          // Si quieres guardarlo en Firestore, haces la llamada aquí (no la añadí porque pediste no tocar más cosas)
+        }
+      })
+      .catch((err) => {
+        console.warn("Error al solicitar permiso FCM:", err);
+      });
+
+    // Escucha notificaciones en primer plano
+    onMessageListener()
+      .then((payload) => {
+        console.log("📩 Notificación recibida (foreground):", payload);
+        try {
+          const title = payload?.notification?.title || 'Notificación';
+          const body = payload?.notification?.body || '';
+          // Mostramos alerta simple; puedes reemplazar por un toast si usas librería
+          alert(`${title}\n\n${body}`);
+        } catch (e) {
+          console.log("Error mostrando notificación:", e);
+        }
+      })
+      .catch((err) => {
+        // onMessageListener devuelve un Promise que se rechaza si no hay permisos o si hay error
+        console.error("onMessageListener error:", err);
+      });
   }, []);
 
   const handleShowAuth = (mode) => {
