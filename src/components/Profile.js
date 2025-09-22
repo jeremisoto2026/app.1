@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext"; // <- usa el hook exportado por tu AuthContext
 import { db } from "../firebase";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
 
 // Iconos (usa @heroicons/react/24/outline)
 import {
@@ -25,6 +25,9 @@ export default function Profile() {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [operationCount, setOperationCount] = useState(0);
+
+  // Estado adicional: contador de exportaciones en tiempo real (no toca UI/lógica existente)
+  const [exportCount, setExportCount] = useState(null);
 
   // Límites por defecto (si el documento no tiene usage)
   const defaultUsage = {
@@ -112,6 +115,42 @@ export default function Profile() {
     };
   }, [user]);
 
+  // ---------- Listener en tiempo real para exportaciones ----------
+  // Solo añadí este efecto: escucha el documento users/{uid} y actualiza exportCount cuando cambie.
+  useEffect(() => {
+    if (!user) return;
+
+    const userDocRef = doc(db, "users", user.uid);
+
+    const unsubscribe = onSnapshot(
+      userDocRef,
+      (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+
+        // Buscamos el contador en varios lugares por compatibilidad:
+        // - usage.exportaciones.usadas (estructura que venías usando)
+        // - exportsUsed (ejemplo JSON que compartiste antes)
+        // - usage.exportsUsed (por si alguien guardó ese path)
+        // - usage.exportaciones.exportsUsed (por compatibilidad extra)
+        const used =
+          data?.usage?.exportaciones?.usadas ??
+          data?.exportsUsed ??
+          data?.usage?.exportsUsed ??
+          data?.usage?.exportaciones?.exportsUsed;
+
+        if (used !== undefined && used !== null) {
+          setExportCount(used);
+        }
+      },
+      (error) => {
+        console.error("onSnapshot error (profile exports):", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
   // ---------- Helpers ----------
   const getPhotoURL = () => {
     // Prioriza la foto guardada en Firestore -> foto del auth -> null
@@ -168,7 +207,12 @@ export default function Profile() {
   const usage = profileData.usage || defaultUsage;
   const operacionesUsadas = operationCount ?? (usage.operaciones?.usadas || 0);
   let operacionesTotal = usage.operaciones?.total || defaultUsage.operaciones.total;
-  let exportacionesUsadas = usage.exportaciones?.usadas || defaultUsage.exportaciones.usadas;
+
+  // Aquí priorizamos el valor en tiempo real (exportCount) si existe, si no usamos lo ya presente en profileData
+  let exportacionesUsadas = (exportCount !== null && exportCount !== undefined)
+    ? exportCount
+    : (usage.exportaciones?.usadas || defaultUsage.exportaciones.usadas);
+
   let exportacionesTotal = usage.exportaciones?.total || defaultUsage.exportaciones.total;
 
   // ⚡️ Ajuste: si es Premium → ilimitado (Infinity)
