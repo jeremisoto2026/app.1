@@ -53,9 +53,8 @@ export const AuthProvider = ({ children }) => {
         nombre: firstName,
         apellido: lastName,
         photoURL: result.user.photoURL || "",
-        plan: "free",
-        role: "free",         // 👈 añadido
-        exportsUsed: 0,       // 👈 añadido
+        plan: "free",          // 👈 solo plan, sin role
+        exportsUsed: 0,        // 👈 contador inicial
         createdAt: serverTimestamp()
       });
 
@@ -91,9 +90,8 @@ export const AuthProvider = ({ children }) => {
           nombre: result.user.displayName?.split(" ")[0] || "",
           apellido: result.user.displayName?.split(" ")[1] || "",
           photoURL: result.user.photoURL || "",
-          plan: "free",
-          role: "free",        // 👈 añadido
-          exportsUsed: 0,      // 👈 añadido
+          plan: "free",         // 👈 solo plan
+          exportsUsed: 0,       // 👈 contador inicial
           createdAt: serverTimestamp()
         },
         { merge: true } // para no sobrescribir si ya existe
