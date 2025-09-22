@@ -98,6 +98,11 @@ const History = () => {
     if (user) {
       fetchOperations();
       fetchUserDoc(); // también traemos usuario
+    } else {
+      // si no hay user, reseteamos estados
+      setOperations([]);
+      setExportsUsed(0);
+      setUserRole('free');
     }
   }, [user]);
 
@@ -120,64 +125,76 @@ const History = () => {
     }
   };
 
+  /**
+   * exportToCSV:
+   * - genera y descarga el CSV
+   * - devuelve true si la descarga fue iniciada (para que el caller actualice el contador)
+   * - devuelve false si no hubo datos o hubo un error
+   */
   const exportToCSV = (data) => {
-    if (data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       alert("No hay datos para exportar.");
-      return;
+      return false;
     }
 
-    const headers = [
-      "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
-      "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Fecha"
-    ];
-
-    const buyOperations = data.filter(op => op.operation_type === 'Compra');
-    const sellOperations = data.filter(op => op.operation_type === 'Venta');
-    const sortedData = [...buyOperations, ...sellOperations];
-
-    const rows = sortedData.map(op => {
-      const formattedCryptoAmount = op.crypto_amount ? parseFloat(op.crypto_amount).toFixed(3) : "0.000";
-
-      return [
-        op.order_id || 'N/A',
-        op.operation_type || 'N/A',
-        op.exchange || 'N/A',
-        op.crypto || 'N/A',
-        formattedCryptoAmount,
-        op.fiat || 'N/A',
-        op.fiat_amount || 0,
-        op.exchange_rate || 0,
-        op.fee || 0,
-        formatDateForCSV(op.timestamp)
+    try {
+      const headers = [
+        "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
+        "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Fecha"
       ];
-    });
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(e => e.join(','))
-    ].join('\n');
+      const buyOperations = data.filter(op => op.operation_type === 'Compra');
+      const sellOperations = data.filter(op => op.operation_type === 'Venta');
+      const sortedData = [...buyOperations, ...sellOperations];
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const rows = sortedData.map(op => {
+        const formattedCryptoAmount = op.crypto_amount ? parseFloat(op.crypto_amount).toFixed(3) : "0.000";
+
+        return [
+          op.order_id || 'N/A',
+          op.operation_type || 'N/A',
+          op.exchange || 'N/A',
+          op.crypto || 'N/A',
+          formattedCryptoAmount,
+          op.fiat || 'N/A',
+          op.fiat_amount || 0,
+          op.exchange_rate || 0,
+          op.fee || 0,
+          formatDateForCSV(op.timestamp)
+        ];
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(e => e.join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return true;
+      } else {
+        // navegador no soporta descarga por link
+        alert("Tu navegador no permite descargar archivos desde esta página.");
+        return false;
+      }
+    } catch (err) {
+      console.error("Error generando CSV:", err);
+      alert("Ocurrió un error al generar el CSV.");
+      return false;
     }
   };
 
-  // ---------- MODIFICADO: handleExport ahora verifica límite y actualiza contador ----------
+  // ---------- MODIFICADO: handleExport ahora filtra primero, verifica si hay datos y luego verifica el límite -->
   const handleExport = async () => {
-    // comprobación del límite antes de generar CSV
-    if (userRole && String(userRole).toLowerCase() === 'free' && exportsUsed >= EXPORT_LIMIT_FREE) {
-      alert(`Has alcanzado el límite de exportaciones (${EXPORT_LIMIT_FREE}) para el plan Free. Actualiza a Premium para exportaciones ilimitadas.`);
-      return;
-    }
-
+    // 1) Preparamos datos y aplicamos filtro por fechas (si las hay)
     let dataToExport = [...operations];
     
     if (exportStartDate && exportEndDate) {
@@ -187,14 +204,31 @@ const History = () => {
       dataToExport = dataToExport.filter(op => {
         const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : (op.timestamp ? new Date(op.timestamp.seconds * 1000) : null);
         if (!opDate) return false;
+        // consideramos inclusive
         return opDate >= start && opDate <= end;
       });
     }
 
-    // ejecuta la exportación
-    exportToCSV(dataToExport);
+    // 2) Si no hay datos en el rango => no exportar, no incrementar contador
+    if (!dataToExport || dataToExport.length === 0) {
+      alert("No hay datos disponibles en el rango seleccionado para exportar.");
+      return;
+    }
 
-    // luego registramos la exportación en Firestore (incrementa exportsUsed)
+    // 3) Verificar límite según plan (solo si ya sabemos que hay datos)
+    if (userRole && String(userRole).toLowerCase() === 'free' && exportsUsed >= EXPORT_LIMIT_FREE) {
+      alert(`Has alcanzado el límite de exportaciones (${EXPORT_LIMIT_FREE}) para el plan Free. Actualiza a Premium para exportaciones ilimitadas.`);
+      return;
+    }
+
+    // 4) Ejecutar exportación y solo si fue exitosa actualizar contador en Firestore
+    const exported = exportToCSV(dataToExport);
+
+    if (!exported) {
+      // si no pudo exportar (error o navegador no soporta), no incrementamos
+      return;
+    }
+
     if (user) {
       try {
         const userRef = doc(db, "users", user.uid);
@@ -206,6 +240,7 @@ const History = () => {
         setExportsUsed(prev => (typeof prev === 'number' ? prev + 1 : 1));
       } catch (error) {
         console.error("Error actualizando contador de exportaciones:", error);
+        // no hacemos nada visual extra si falla la escritura; el usuario igual descargó
       }
     }
   };
