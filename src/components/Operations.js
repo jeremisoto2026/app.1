@@ -358,7 +358,7 @@ const Operations = ({ onOperationSaved }) => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Comisión:</span>
                     <Badge className="bg-gray-700 text-gray-300 border-gray-600">
-                      {previewFee.toFixed(8)} {formData.cripto || "Cripto"}
+                      {previewFee.toFixed(8)} {formData.crypto || "Cripto"}
                     </Badge>
                   </div>
                 </CardContent>
