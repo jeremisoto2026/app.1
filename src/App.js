@@ -237,7 +237,8 @@ const MainApp = () => {
       {showAuth && (
         <AuthForms 
           mode={showAuth} 
-          onClose={handleCloseAuth} 
+          onClose={handleCloseAuth}
+          onSwitchMode={(newMode) => setShowAuth(newMode)}
         />
       )}
     </div>
