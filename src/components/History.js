@@ -12,7 +12,15 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
-import { TrashIcon, DocumentArrowDownIcon, MagnifyingGlassIcon, FunnelIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { 
+  TrashIcon, 
+  DocumentArrowDownIcon, 
+  MagnifyingGlassIcon, 
+  FunnelIcon, 
+  CalendarIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon
+} from "@heroicons/react/24/outline";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
 import { useAuth } from "../contexts/AuthContext";
@@ -43,9 +51,18 @@ const History = () => {
   const [operationToDelete, setOperationToDelete] = useState(null);
 
   // ---------- NUEVO: estados para control de exportaciones ----------
-  const [userRole, setUserRole] = useState('free'); // puede venir como plan o role en Firestore
+  const [userRole, setUserRole] = useState('free');
   const [exportsUsed, setExportsUsed] = useState(0);
-  const EXPORT_LIMIT_FREE = 40; // límite para usuarios Free
+  const EXPORT_LIMIT_FREE = 40;
+
+  // ---------- NUEVO: estados para diálogos personalizados ----------
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportDialogConfig, setExportDialogConfig] = useState({
+    type: 'info', // 'info', 'warning', 'error'
+    title: '',
+    message: '',
+    icon: null
+  });
 
   const fetchOperations = async () => {
     if (!user) {
@@ -70,7 +87,6 @@ const History = () => {
     }
   };
 
-  // ---------- NUEVO: obtener role/plan y exportsUsed del documento de usuario ----------
   const fetchUserDoc = async () => {
     if (!user) {
       setUserRole('free');
@@ -82,7 +98,6 @@ const History = () => {
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
         const data = userSnap.data();
-        // tu proyecto usa 'plan' en varios sitios; aceptamos 'role' o 'plan'
         setUserRole(data.role || data.plan || 'free');
         setExportsUsed(typeof data.exportsUsed === 'number' ? data.exportsUsed : (data.exportsUsed ? Number(data.exportsUsed) : 0));
       } else {
@@ -97,14 +112,24 @@ const History = () => {
   useEffect(() => {
     if (user) {
       fetchOperations();
-      fetchUserDoc(); // también traemos usuario
+      fetchUserDoc();
     } else {
-      // si no hay user, reseteamos estados
       setOperations([]);
       setExportsUsed(0);
       setUserRole('free');
     }
   }, [user]);
+
+  // ---------- NUEVA FUNCIÓN: Mostrar diálogo personalizado ----------
+  const showExportDialog = (type, title, message) => {
+    setExportDialogConfig({
+      type,
+      title,
+      message,
+      icon: type === 'warning' ? ExclamationTriangleIcon : InformationCircleIcon
+    });
+    setIsExportDialogOpen(true);
+  };
 
   const confirmDelete = (operationId) => {
     setOperationToDelete(operationId);
@@ -121,19 +146,12 @@ const History = () => {
       setOperationToDelete(null);
     } catch (error) {
       console.error("Error removing operation: ", error);
-      alert("Error al eliminar la operación. Por favor, inténtalo de nuevo.");
+      showExportDialog('error', 'Error', 'Error al eliminar la operación. Por favor, inténtalo de nuevo.');
     }
   };
 
-  /**
-   * exportToCSV:
-   * - genera y descarga el CSV
-   * - devuelve true si la descarga fue iniciada (para que el caller actualice el contador)
-   * - devuelve false si no hubo datos o hubo un error
-   */
   const exportToCSV = (data) => {
     if (!Array.isArray(data) || data.length === 0) {
-      alert("No hay datos para exportar.");
       return false;
     }
 
@@ -181,20 +199,17 @@ const History = () => {
         document.body.removeChild(link);
         return true;
       } else {
-        // navegador no soporta descarga por link
-        alert("Tu navegador no permite descargar archivos desde esta página.");
+        showExportDialog('error', 'Error de Navegador', 'Tu navegador no permite descargar archivos desde esta página.');
         return false;
       }
     } catch (err) {
       console.error("Error generando CSV:", err);
-      alert("Ocurrió un error al generar el CSV.");
+      showExportDialog('error', 'Error', 'Ocurrió un error al generar el CSV.');
       return false;
     }
   };
 
-  // ---------- MODIFICADO: handleExport ahora filtra primero, verifica si hay datos y luego verifica el límite -->
   const handleExport = async () => {
-    // 1) Preparamos datos y aplicamos filtro por fechas (si las hay)
     let dataToExport = [...operations];
     
     if (exportStartDate && exportEndDate) {
@@ -204,43 +219,43 @@ const History = () => {
       dataToExport = dataToExport.filter(op => {
         const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : (op.timestamp ? new Date(op.timestamp.seconds * 1000) : null);
         if (!opDate) return false;
-        // consideramos inclusive
         return opDate >= start && opDate <= end;
       });
     }
 
-    // 2) Si no hay datos en el rango => no exportar, no incrementar contador
     if (!dataToExport || dataToExport.length === 0) {
-      alert("No hay datos disponibles en el rango seleccionado para exportar.");
+      showExportDialog(
+        'warning', 
+        'Sin Datos para Exportar', 
+        'No hay datos disponibles en el rango seleccionado para exportar.'
+      );
       return;
     }
 
-    // 3) Verificar límite según plan (solo si ya sabemos que hay datos)
     if (userRole && String(userRole).toLowerCase() === 'free' && exportsUsed >= EXPORT_LIMIT_FREE) {
-      alert(`Has alcanzado el límite de exportaciones (${EXPORT_LIMIT_FREE}) para el plan Free. Actualiza a Premium para exportaciones ilimitadas.`);
+      showExportDialog(
+        'warning',
+        'Límite de Exportaciones Alcanzado',
+        `Has alcanzado el límite de exportaciones (${EXPORT_LIMIT_FREE}) para el plan Free. Actualiza a Premium para exportaciones ilimitadas.`
+      );
       return;
     }
 
-    // 4) Ejecutar exportación y solo si fue exitosa actualizar contador en Firestore
     const exported = exportToCSV(dataToExport);
 
     if (!exported) {
-      // si no pudo exportar (error o navegador no soporta), no incrementamos
       return;
     }
 
     if (user) {
       try {
         const userRef = doc(db, "users", user.uid);
-        // increment crea el campo si no existe y suma 1
         await updateDoc(userRef, {
           exportsUsed: increment(1)
         });
-        // actualizamos el estado local para reflejar el cambio inmediato en UI/comprobaciones
         setExportsUsed(prev => (typeof prev === 'number' ? prev + 1 : 1));
       } catch (error) {
         console.error("Error actualizando contador de exportaciones:", error);
-        // no hacemos nada visual extra si falla la escritura; el usuario igual descargó
       }
     }
   };
@@ -384,6 +399,31 @@ const History = () => {
         </CardContent>
       </Card>
     ));
+  };
+
+  // ---------- NUEVO: Función para obtener estilos según el tipo de diálogo ----------
+  const getDialogStyles = (type) => {
+    const baseStyles = "sm:max-w-[425px] bg-gradient-to-br from-gray-900 to-gray-800 border rounded-2xl text-white";
+    
+    switch (type) {
+      case 'warning':
+        return `${baseStyles} border-yellow-500/30`;
+      case 'error':
+        return `${baseStyles} border-red-500/30`;
+      default:
+        return `${baseStyles} border-purple-500/30`;
+    }
+  };
+
+  const getIconStyles = (type) => {
+    switch (type) {
+      case 'warning':
+        return "text-yellow-400 bg-yellow-500/10";
+      case 'error':
+        return "text-red-400 bg-red-500/10";
+      default:
+        return "text-purple-400 bg-purple-500/10";
+    }
   };
 
   return (
@@ -582,6 +622,44 @@ const History = () => {
               className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white flex-1 rounded-xl"
             >
               Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---------- NUEVO: Diálogo personalizado para exportaciones ---------- */}
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className={getDialogStyles(exportDialogConfig.type)}>
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`p-3 rounded-xl ${getIconStyles(exportDialogConfig.type)}`}>
+                {exportDialogConfig.icon && (
+                  <exportDialogConfig.icon className="h-6 w-6" />
+                )}
+              </div>
+              <DialogTitle className={`text-xl font-bold ${
+                exportDialogConfig.type === 'warning' ? 'text-yellow-400' : 
+                exportDialogConfig.type === 'error' ? 'text-red-400' : 'text-purple-400'
+              }`}>
+                {exportDialogConfig.title}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-gray-300 text-base">
+              {exportDialogConfig.message}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6">
+            <Button 
+              onClick={() => setIsExportDialogOpen(false)}
+              className={`w-full rounded-xl ${
+                exportDialogConfig.type === 'warning' ? 
+                  'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800' :
+                exportDialogConfig.type === 'error' ? 
+                  'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' :
+                  'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
+              } text-white`}
+            >
+              Entendido
             </Button>
           </DialogFooter>
         </DialogContent>
