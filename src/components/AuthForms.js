@@ -14,7 +14,7 @@ import {
   FaRocket
 } from 'react-icons/fa';
 
-const AuthForms = ({ mode, onClose }) => {
+const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   const { signUp, signIn, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -68,6 +68,12 @@ const AuthForms = ({ mode, onClose }) => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleSwitchMode = () => {
+    setError('');
+    // Cambiar al modo opuesto
+    onSwitchMode(mode === 'register' ? 'login' : 'register');
   };
 
   return (
@@ -230,7 +236,7 @@ const AuthForms = ({ mode, onClose }) => {
               ? '¿Ya eres miembro de la élite? ' 
               : '¿Listo para unirte a la élite? '}
             <button 
-              onClick={() => setError('')}
+              onClick={handleSwitchMode}
               className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 hover:from-purple-300 hover:to-blue-300 font-medium transition-all duration-300"
             >
               {mode === 'register' ? 'Acceder' : 'Crear cuenta'}
