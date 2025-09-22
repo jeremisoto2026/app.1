@@ -54,6 +54,8 @@ export const AuthProvider = ({ children }) => {
         apellido: lastName,
         photoURL: result.user.photoURL || "",
         plan: "free",
+        role: "free",         // 👈 añadido
+        exportsUsed: 0,       // 👈 añadido
         createdAt: serverTimestamp()
       });
 
@@ -90,6 +92,8 @@ export const AuthProvider = ({ children }) => {
           apellido: result.user.displayName?.split(" ")[1] || "",
           photoURL: result.user.photoURL || "",
           plan: "free",
+          role: "free",        // 👈 añadido
+          exportsUsed: 0,      // 👈 añadido
           createdAt: serverTimestamp()
         },
         { merge: true } // para no sobrescribir si ya existe
