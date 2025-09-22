@@ -11,7 +11,8 @@ import {
   UserIcon,
   ArrowsRightLeftIcon,
   CalendarDaysIcon,
-  BoltIcon
+  BoltIcon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 
 const Dashboard = ({ onOpenProfile }) => {
@@ -23,6 +24,8 @@ const Dashboard = ({ onOpenProfile }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,6 +111,98 @@ const Dashboard = ({ onOpenProfile }) => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(num);
+  };
+
+  // Función para manejar la selección de plan
+  const handleSelectPlan = (planType) => {
+    setSelectedPlan(planType);
+    setShowPaymentModal(true);
+  };
+
+  // Componente del Modal de Pagos
+  const PaymentModal = () => {
+    if (!showPaymentModal) return null;
+
+    const planDetails = {
+      monthly: {
+        name: "Plan Premium Mensual",
+        price: "$13",
+        period: "/mes",
+        features: ["Operaciones ilimitadas", "Exportaciones ilimitadas", "Soporte prioritario"]
+      },
+      annual: {
+        name: "Plan Premium Anual",
+        price: "$125", 
+        period: "/año",
+        features: ["Operaciones ilimitadas", "Exportaciones ilimitadas", "Soporte prioritario", "Alertas personalizadas"],
+        savings: "Ahorra ~20%"
+      }
+    };
+
+    const plan = planDetails[selectedPlan];
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-6 border-2 border-purple-500/30 max-w-md w-full relative">
+          {/* Botón de cerrar */}
+          <button 
+            onClick={() => setShowPaymentModal(false)}
+            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+
+          {/* Header del modal */}
+          <div className="text-center mb-6">
+            <RocketLaunchIcon className="h-12 w-12 text-purple-500 mx-auto mb-3" />
+            <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <span className="text-3xl font-bold text-white">{plan.price}</span>
+              <span className="text-gray-400">{plan.period}</span>
+            </div>
+            {plan.savings && (
+              <span className="text-green-400 text-sm font-semibold mt-1 block">
+                {plan.savings}
+              </span>
+            )}
+          </div>
+
+          {/* Características del plan */}
+          <div className="mb-6">
+            <h4 className="text-sm font-medium text-gray-300 mb-3">Características incluidas:</h4>
+            <ul className="space-y-2">
+              {plan.features.map((feature, index) => (
+                <li key={index} className="flex items-center text-sm text-gray-300">
+                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Métodos de pago */}
+          <div className="mb-6">
+            <h4 className="text-sm font-medium text-gray-300 mb-3">Métodos de pago</h4>
+            <div className="grid grid-cols-1 gap-3">
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium">
+                PayPal
+              </button>
+              <button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black py-3 px-4 rounded-lg transition-colors font-medium">
+                Binance Pay
+              </button>
+              <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 px-4 rounded-lg transition-colors font-medium">
+                Blockchain Pay
+              </button>
+            </div>
+          </div>
+
+          {/* Información adicional */}
+          <div className="text-center text-xs text-gray-400">
+            <p>Pago seguro • Cancelación en cualquier momento</p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -407,7 +502,7 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
         </div>
 
-        {/* Sección: Planes Premium */}
+        {/* Sección: Planes Premium - MODIFICADA */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
           <div className="flex items-center justify-between mb-8">
@@ -420,10 +515,7 @@ const Dashboard = ({ onOpenProfile }) => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Card: Plan Premium Mensual */}
-            <div
-              onClick={onOpenProfile}
-              className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/30 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden"
-            >
+            <div className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/30 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden">
               <div className="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
               <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
               
@@ -459,17 +551,17 @@ const Dashboard = ({ onOpenProfile }) => {
                   </ul>
                 </div>
                 
-                <button className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/20">
+                <button 
+                  onClick={() => handleSelectPlan('monthly')}
+                  className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/20"
+                >
                   Seleccionar plan
                 </button>
               </div>
             </div>
 
             {/* Card: Plan Premium Anual */}
-            <div
-              onClick={onOpenProfile}
-              className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/50 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden"
-            >
+            <div className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/50 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">
                 MÁS POPULAR
               </div>
@@ -514,7 +606,10 @@ const Dashboard = ({ onOpenProfile }) => {
                   </ul>
                 </div>
                 
-                <button className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/30">
+                <button 
+                  onClick={() => handleSelectPlan('annual')}
+                  className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/30"
+                >
                   Seleccionar plan
                 </button>
               </div>
@@ -532,6 +627,9 @@ const Dashboard = ({ onOpenProfile }) => {
           <p>© {new Date().getFullYear()} JJXCAPITAL⚡ • Plataforma premium de trading</p>
         </div>
       </main>
+
+      {/* Modal de Pagos */}
+      <PaymentModal />
     </div>
   );
 };
