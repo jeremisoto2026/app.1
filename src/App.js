@@ -8,7 +8,7 @@ import ArbitrageSimulator from './components/ArbitrageSimulator';
 import Operations from './components/Operations';
 import History from './components/History';
 import Profile from './components/Profile';
-import { FaSignInAlt, FaUserPlus, FaRocket, FaShield, FaChartLine, FaSync, FaDownload, FaGoogle, FaExchangeAlt, FaLock, FaAward, FaGlobe, FaCheck, FaCrown, FaGem } from 'react-icons/fa';
+import { FaSignInAlt, FaUserPlus, FaRocket, FaChartLine, FaSync, FaDownload, FaGoogle, FaExchangeAlt, FaLock, FaAward, FaCheck, FaCrown } from 'react-icons/fa';
 import './App.css';
 
 const MainApp = () => {
@@ -48,25 +48,25 @@ const MainApp = () => {
 
   const premiumFeatures = [
     {
-      icon: <FaShield className="text-3xl text-yellow-400" />,
+      icon: "🛡️",
       title: "Compensación Profesional",
       description: "Evita cierre de cuentas por falta de comprensión. Tus operaciones quedan documentadas profesionalmente.",
       benefits: ["Documentación bancaria", "Compliance automático", "Reportes certificados"]
     },
     {
-      icon: <FaGoogle className="text-3xl text-red-400" />,
+      icon: "⚡",
       title: "Inicio Rápido con Google",
       description: "Acceso instantáneo con tu cuenta de Google en segundos. Sin contraseñas complicadas.",
       benefits: ["Acceso inmediato", "Autenticación segura", "Sincronización instantánea"]
     },
     {
-      icon: <FaChartLine className="text-3xl text-green-400" />,
+      icon: "📊",
       title: "Simulador Avanzado",
       description: "El simulador más completo del mercado, 100% gratis sin limitaciones. Toma decisiones inteligentes.",
       benefits: ["Análisis en tiempo real", "Múltiples escenarios", "Optimización automática"]
     },
     {
-      icon: <FaExchangeAlt className="text-3xl text-blue-400" />,
+      icon: "🔗",
       title: "Vinculación Exchange",
       description: "Conexión directa con los principales exchanges. Opera con total tranquilidad y seguridad.",
       benefits: ["Sincronización automática", "Multi-exchange", "Seguridad institucional"]
@@ -85,9 +85,9 @@ const MainApp = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0">
-          <div className="absolute top-10% left-10% w-80 h-80 bg-yellow-400/5 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-60% right-10% w-96 h-96 bg-amber-600/3 rounded-full blur-3xl animate-pulse delay-2000"></div>
-          <div className="absolute bottom-10% left-20% w-64 h-64 bg-yellow-600/4 rounded-full blur-3xl animate-pulse delay-4000"></div>
+          <div className="absolute top-10 left-10 w-80 h-80 bg-yellow-400/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-60 right-10 w-96 h-96 bg-amber-600/3 rounded-full blur-3xl animate-pulse delay-2000"></div>
+          <div className="absolute bottom-10 left-20 w-64 h-64 bg-yellow-600/4 rounded-full blur-3xl animate-pulse delay-4000"></div>
           
           {/* Grid Pattern */}
           <div 
@@ -104,7 +104,7 @@ const MainApp = () => {
           <div className="max-w-6xl mx-auto w-full">
             
             {/* Hero Section */}
-            <div className="text-center mb-16 animate-slide-in-up">
+            <div className="text-center mb-16">
               <div className="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-3xl mb-6 shadow-2xl shadow-yellow-500/30">
                 <span className="text-5xl">⚡</span>
               </div>
@@ -142,7 +142,7 @@ const MainApp = () => {
                   
                   <div className="relative z-10">
                     <div className="flex items-start gap-6 mb-4">
-                      <div className="p-4 bg-yellow-400/10 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                      <div className="p-4 bg-yellow-400/10 rounded-2xl group-hover:scale-110 transition-transform duration-300 text-3xl">
                         {feature.icon}
                       </div>
                       <div>
@@ -165,7 +165,7 @@ const MainApp = () => {
             </div>
 
             {/* CTA Section */}
-            <div className="text-center animate-slide-in-up">
+            <div className="text-center">
               <div className="bg-gradient-to-r from-yellow-500/10 to-amber-600/10 rounded-3xl p-8 border-2 border-yellow-500/30 mb-8">
                 <h2 className="text-3xl font-bold text-white mb-4">
                   Comienza Tu Journey Profesional
@@ -209,7 +209,7 @@ const MainApp = () => {
                   <span>Certificación SSL</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FaGem className="text-yellow-400" />
+                  <FaCrown className="text-yellow-400" />
                   <span>Nivel Institucional</span>
                 </div>
               </div>
