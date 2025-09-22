@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, deleteDoc, doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -42,6 +42,11 @@ const History = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [operationToDelete, setOperationToDelete] = useState(null);
 
+  // ---------- NUEVO: estados para control de exportaciones ----------
+  const [userRole, setUserRole] = useState('free'); // puede venir como plan o role en Firestore
+  const [exportsUsed, setExportsUsed] = useState(0);
+  const EXPORT_LIMIT_FREE = 40; // límite para usuarios Free
+
   const fetchOperations = async () => {
     if (!user) {
       setOperations([]);
@@ -65,9 +70,34 @@ const History = () => {
     }
   };
 
+  // ---------- NUEVO: obtener role/plan y exportsUsed del documento de usuario ----------
+  const fetchUserDoc = async () => {
+    if (!user) {
+      setUserRole('free');
+      setExportsUsed(0);
+      return;
+    }
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        // tu proyecto usa 'plan' en varios sitios; aceptamos 'role' o 'plan'
+        setUserRole(data.role || data.plan || 'free');
+        setExportsUsed(typeof data.exportsUsed === 'number' ? data.exportsUsed : (data.exportsUsed ? Number(data.exportsUsed) : 0));
+      } else {
+        setUserRole('free');
+        setExportsUsed(0);
+      }
+    } catch (err) {
+      console.error("Error fetching user doc:", err);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchOperations();
+      fetchUserDoc(); // también traemos usuario
     }
   }, [user]);
 
@@ -140,7 +170,14 @@ const History = () => {
     }
   };
 
-  const handleExport = () => {
+  // ---------- MODIFICADO: handleExport ahora verifica límite y actualiza contador ----------
+  const handleExport = async () => {
+    // comprobación del límite antes de generar CSV
+    if (userRole && String(userRole).toLowerCase() === 'free' && exportsUsed >= EXPORT_LIMIT_FREE) {
+      alert(`Has alcanzado el límite de exportaciones (${EXPORT_LIMIT_FREE}) para el plan Free. Actualiza a Premium para exportaciones ilimitadas.`);
+      return;
+    }
+
     let dataToExport = [...operations];
     
     if (exportStartDate && exportEndDate) {
@@ -154,7 +191,23 @@ const History = () => {
       });
     }
 
+    // ejecuta la exportación
     exportToCSV(dataToExport);
+
+    // luego registramos la exportación en Firestore (incrementa exportsUsed)
+    if (user) {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        // increment crea el campo si no existe y suma 1
+        await updateDoc(userRef, {
+          exportsUsed: increment(1)
+        });
+        // actualizamos el estado local para reflejar el cambio inmediato en UI/comprobaciones
+        setExportsUsed(prev => (typeof prev === 'number' ? prev + 1 : 1));
+      } catch (error) {
+        console.error("Error actualizando contador de exportaciones:", error);
+      }
+    }
   };
   
   const formatDateForCSV = (timestamp) => {
