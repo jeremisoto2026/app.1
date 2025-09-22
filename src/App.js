@@ -8,7 +8,7 @@ import ArbitrageSimulator from './components/ArbitrageSimulator';
 import Operations from './components/Operations';
 import History from './components/History';
 import Profile from './components/Profile';
-import { FaSignInAlt, FaUserPlus, FaRocket, FaChartLine, FaSync, FaDownload, FaGoogle, FaExchangeAlt, FaLock, FaAward, FaCheck, FaCrown, FaStar, FaGem, FaShield } from 'react-icons/fa';
+import { FaSignInAlt, FaUserPlus, FaRocket, FaChartLine, FaSync, FaDownload, FaGoogle, FaExchangeAlt, FaLock, FaAward, FaCheck, FaCrown, FaStar } from 'react-icons/fa';
 import './App.css';
 
 const MainApp = () => {
@@ -49,7 +49,7 @@ const MainApp = () => {
 
   const premiumFeatures = [
     {
-      icon: <FaShield className="text-4xl" />,
+      icon: "🛡️",
       title: "Compensación Profesional",
       description: "Evita cierre de cuentas por falta de comprensión. Tus operaciones quedan documentadas profesionalmente con estándares bancarios.",
       benefits: ["Documentación certificada", "Compliance automático", "Reportes auditables", "Backup en la nube"],
@@ -57,7 +57,7 @@ const MainApp = () => {
       stats: ["100%", "Compatible", "Bancos"]
     },
     {
-      icon: <FaGoogle className="text-4xl" />,
+      icon: "⚡",
       title: "Inicio Rápido con Google",
       description: "Acceso instantáneo con autenticación enterprise. Máxima seguridad sin complicaciones.",
       benefits: ["Acceso inmediato", "2FA integrado", "Sincronización cloud", "Recuperación fácil"],
@@ -65,7 +65,7 @@ const MainApp = () => {
       stats: ["<3s", "Login", "Instantáneo"]
     },
     {
-      icon: <FaChartLine className="text-4xl" />,
+      icon: "📊",
       title: "Simulador Avanzado",
       description: "Tecnología institucional para análisis predictivo. Toma decisiones basadas en datos en tiempo real.",
       benefits: ["AI integrada", "Múltiples escenarios", "Optimización automática", "Alertas inteligentes"],
@@ -73,7 +73,7 @@ const MainApp = () => {
       stats: ["99.9%", "Precisión", "Garantizada"]
     },
     {
-      icon: <FaExchangeAlt className="text-4xl" />,
+      icon: "🔗",
       title: "Vinculación Exchange",
       description: "Conexión enterprise con los principales exchanges. API seguras y monitorización 24/7.",
       benefits: ["Multi-exchange", "API seguras", "Monitorización", "Backup automático"],
@@ -242,7 +242,7 @@ const MainApp = () => {
                   {/* Content */}
                   <div className="relative z-10">
                     <div className="flex items-start gap-6 mb-6">
-                      <div className="p-4 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                      <div className="p-4 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-2xl group-hover:scale-110 transition-transform duration-300 text-4xl">
                         {feature.icon}
                       </div>
                       <div className="flex-1">
@@ -305,7 +305,7 @@ const MainApp = () => {
                   <span>Certificación Enterprise SSL</span>
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-cyan-500/20">
-                  <FaGem className="text-cyan-400 text-2xl" />
+                  <FaCrown className="text-cyan-400 text-2xl" />
                   <span>Soporte Priority 24/7</span>
                 </div>
               </div>
