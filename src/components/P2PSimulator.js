@@ -49,7 +49,7 @@ const P2PSimulator = () => {
 
     const amount = parseFloat(formData.amount);
     const exchangeRate = parseFloat(formData.exchange_rate);
-    const fee = parseFloat(formData.fee) || 0;
+    const feePercent = parseFloat(formData.fee) || 0;
 
     if (amount <= 0 || exchangeRate <= 0) {
       setError('Los montos y tasas de cambio deben ser mayores a 0');
@@ -60,21 +60,71 @@ const P2PSimulator = () => {
       setLoading(true);
       setError('');
 
-      const simulationData = {
-        crypto: formData.crypto,
-        fiat: formData.fiat,
-        operation_type: formData.operation_type,
-        amount: amount,
-        exchange_rate: exchangeRate,
-        fee: fee
-      };
+      // --- Nueva lógica: la comisión SIEMPRE será cobrada en la cripto seleccionada ---
+      // Mantendremos las mismas etiquetas del UI:
+      // - "Cantidad Enviada": lo que el usuario entrega (crypto si Venta, fiat si Compra)
+      // - "Cantidad Recibida (Bruta)": valor bruto antes de aplicar comisión (fiat para Venta, crypto para Compra)
+      // - "Comisión": se muestra y calcula siempre en la criptomoneda seleccionada
+      // - "Cantidad Neta": cantidad final (en la unidad que la UI ya mostraba: fiat para Venta, crypto para Compra)
+      let amount_sent, amount_received, fee_amount, net_amount;
 
-      // Simular pequeña demora para mostrar estado de carga
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const simulationResult = simulateP2P(simulationData);
-      setResult(simulationResult);
+      if (formData.operation_type === 'Venta') {
+        // Usuario vende cripto → entrega 'amount' en CRIPTO y recibe fiat
+        amount_sent = amount; // en cripto
+        // bruto fiat (antes de comisión)
+        amount_received = amount * exchangeRate; // en fiat
 
+        // comisión en cripto (porcentaje sobre la cantidad enviada en cripto)
+        fee_amount = (amount * feePercent) / 100; // en cripto
+
+        // cantidad neta en cripto (cripto - comisión en cripto)
+        const net_crypto = amount - fee_amount; // en cripto
+
+        // cantidad neta en fiat (lo que realmente recibe el usuario en fiat después de cobrar comisión en cripto)
+        net_amount = net_crypto * exchangeRate; // en fiat (UI espera net en fiat para 'Venta')
+        
+        // guardamos también valores auxiliares si los quieres usar en UI (por compatibilidad)
+        setResult({
+          crypto: formData.crypto,
+          fiat: formData.fiat,
+          operation_type: formData.operation_type,
+          exchange_rate: exchangeRate,
+          fee: feePercent,
+          amount, // amount original (cripto)
+          amount_sent, // crypto
+          amount_received, // bruto fiat
+          fee_amount, // crypto
+          net_amount, // fiat (para mostrar en UI donde net se muestra en fiat para Venta)
+          // Proporcionamos también net_crypto por si quieres usarlo en otro lugar
+          net_crypto
+        });
+      } else {
+        // Compra: usuario entrega fiat (amount) y recibe cripto
+        amount_sent = amount; // en fiat
+        // bruto crypto antes de comisión
+        amount_received = amount / exchangeRate; // en crypto
+
+        // comisión en cripto (porcentaje sobre la cantidad bruta recibida en cripto)
+        fee_amount = (amount_received * feePercent) / 100; // en cripto
+
+        // cantidad neta en cripto (cripto bruto - comisión en cripto)
+        net_amount = amount_received - fee_amount; // en crypto (UI espera net en crypto para 'Compra')
+
+        setResult({
+          crypto: formData.crypto,
+          fiat: formData.fiat,
+          operation_type: formData.operation_type,
+          exchange_rate: exchangeRate,
+          fee: feePercent,
+          amount, // amount original (fiat)
+          amount_sent, // fiat
+          amount_received, // bruto crypto
+          fee_amount, // crypto
+          net_amount // crypto
+        });
+      }
+
+      // Nota: no eliminé la importación de simulateP2P en caso de que la uses en otro flujo.
     } catch (err) {
       console.error('Error in P2P simulation:', err);
       setError('Error al realizar la simulación. Por favor intenta de nuevo.');
@@ -342,7 +392,7 @@ const P2PSimulator = () => {
                       </div>
                       <div className="flex items-center">
                         <span className="text-gray-400">Comisión:</span>
-                        <span className="text-white ml-2 font-medium">{result.fee}%</span>
+                        <span className="text-white ml-2 font-medium">{result.fee}% en {result.crypto}</span>
                       </div>
                     </div>
                   </div>
@@ -354,26 +404,40 @@ const P2PSimulator = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Cantidad Enviada:</span>
                         <span className="text-white font-medium">
-                          {result.amount_sent.toFixed(8)} {result.operation_type === 'Venta' ? result.crypto : result.fiat}
+                          {result.amount_sent !== undefined
+                            ? (result.operation_type === 'Venta'
+                                ? Number(result.amount_sent).toFixed(8) + ' ' + result.crypto
+                                : Number(result.amount_sent).toFixed(2) + ' ' + result.fiat)
+                            : 'N/A'}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Cantidad Recibida (Bruta):</span>
                         <span className="text-white font-medium">
-                          {result.amount_received.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
+                          {result.amount_received !== undefined
+                            ? (result.operation_type === 'Venta'
+                                ? Number(result.amount_received).toFixed(2) + ' ' + result.fiat
+                                : Number(result.amount_received).toFixed(8) + ' ' + result.crypto)
+                            : 'N/A'}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Comisión:</span>
                         <span className="text-red-400 font-medium">
-                          -{result.fee_amount?.toFixed(2) || result.fee} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
+                          {result.fee_amount !== undefined
+                            ? ('-' + Number(result.fee_amount).toFixed(8) + ' ' + result.crypto)
+                            : ('-' + result.fee + ' ' + result.crypto)}
                         </span>
                       </div>
                       <div className="border-t border-purple-500/20 pt-4">
                         <div className="flex justify-between items-center">
                           <span className="text-white font-medium">Cantidad Neta:</span>
                           <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-lg px-3 py-1 rounded-lg">
-                            {result.net_amount.toFixed(2)} {result.operation_type === 'Venta' ? result.fiat : result.crypto}
+                            {result.net_amount !== undefined
+                              ? (result.operation_type === 'Venta'
+                                  ? Number(result.net_amount).toFixed(2) + ' ' + result.fiat
+                                  : Number(result.net_amount).toFixed(8) + ' ' + result.crypto)
+                              : 'N/A'}
                           </Badge>
                         </div>
                       </div>
@@ -381,16 +445,16 @@ const P2PSimulator = () => {
                   </div>
 
                   {/* Profitability Indicator */}
-                  <div className={`rounded-xl p-5 border ${result.net_amount > 0 ? 'bg-green-900/20 border-green-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                  <div className={`rounded-xl p-5 border ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'bg-green-900/20 border-green-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${result.net_amount > 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                        <span className={`text-2xl ${result.net_amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {result.net_amount > 0 ? '📈' : '📉'}
+                      <div className={`p-2 rounded-lg ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                        <span className={`text-2xl ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {(typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? '📈' : '📉'}
                         </span>
                       </div>
                       <div>
-                        <h4 className={`font-medium text-lg ${result.net_amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {result.net_amount > 0 ? 'Operación Rentable' : 'Operación con Pérdida'}
+                        <h4 className={`font-medium text-lg ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {(typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'Operación Rentable' : 'Operación con Pérdida'}
                         </h4>
                         <p className="text-gray-400 text-sm">
                           {result.operation_type === 'Venta' 
