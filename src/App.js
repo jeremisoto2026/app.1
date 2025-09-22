@@ -8,7 +8,7 @@ import ArbitrageSimulator from './components/ArbitrageSimulator';
 import Operations from './components/Operations';
 import History from './components/History';
 import Profile from './components/Profile';
-import { FaSignInAlt, FaUserPlus, FaRocket, FaShield, FaChartLine, FaSync, FaDownload, FaGoogle, FaBinance } from 'react-icons/fa';
+import { FaSignInAlt, FaUserPlus, FaRocket, FaShield, FaChartLine, FaSync, FaDownload, FaGoogle, FaExchangeAlt } from 'react-icons/fa';
 import './App.css';
 
 const MainApp = () => {
@@ -106,8 +106,8 @@ const MainApp = () => {
       color: "bg-blue-500/20"
     },
     {
-      icon: <FaBinance className="text-3xl" />,
-      title: "Vinculación Binance",
+      icon: <FaExchangeAlt className="text-3xl" />, // Cambiado de FaBinance a FaExchangeAlt
+      title: "Vinculación Exchange",
       description: "Registro automático de tus operaciones P2P en tiempo real",
       color: "bg-yellow-500/20"
     },
@@ -119,6 +119,7 @@ const MainApp = () => {
     }
   ];
 
+  // Render para usuarios no autenticados
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black relative overflow-hidden">
@@ -278,23 +279,32 @@ const MainApp = () => {
     );
   }
 
-  // Resto del código para usuarios logueados...
-  switch (activeTab) {
-    case 'dashboard':
-      return <Dashboard refreshTrigger={refreshTrigger} onOpenProfile={() => setActiveTab('profile')} />;
-    case 'p2p':
-      return <P2PSimulator />;
-    case 'arbitrage':
-      return <ArbitrageSimulator />;
-    case 'operations':
-      return <Operations onOperationSaved={handleOperationSaved} />;
-    case 'history':
-      return <History refreshTrigger={refreshTrigger} />;
-    case 'profile':
-      return <Profile />;
-    default:
-      return <Dashboard refreshTrigger={refreshTrigger} />;
-  }
+  // Render para usuarios autenticados
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white overflow-x-hidden">
+      <main className="pb-20">
+        {activeTab === 'dashboard' && <Dashboard refreshTrigger={refreshTrigger} onOpenProfile={() => setActiveTab('profile')} />}
+        {activeTab === 'p2p' && <P2PSimulator />}
+        {activeTab === 'arbitrage' && <ArbitrageSimulator />}
+        {activeTab === 'operations' && <Operations onOperationSaved={handleOperationSaved} />}
+        {activeTab === 'history' && <History refreshTrigger={refreshTrigger} />}
+        {activeTab === 'profile' && <Profile />}
+      </main>
+
+      <NavigationBar 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange} 
+      />
+
+      {showAuth && (
+        <AuthForms 
+          mode={showAuth} 
+          onClose={handleCloseAuth}
+          onSwitchMode={(newMode) => setShowAuth(newMode)}
+        />
+      )}
+    </div>
+  );
 };
 
 function App() {
