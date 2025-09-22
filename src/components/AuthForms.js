@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   FaGoogle, 
-  FaMicrosoft, 
-  FaApple, 
   FaTimes, 
   FaEye, 
   FaEyeSlash, 
@@ -13,12 +11,11 @@ import {
   FaSignInAlt, 
   FaUserPlus,
   FaShieldAlt,
-  FaRocket,
-  FaCrown
+  FaRocket
 } from 'react-icons/fa';
 
 const AuthForms = ({ mode, onClose }) => {
-  const { signUp, signIn, signInWithGoogle, signInWithMicrosoft, signInWithApple } = useAuth();
+  const { signUp, signIn, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -55,24 +52,12 @@ const AuthForms = ({ mode, onClose }) => {
     }
   };
 
-  const handleSocialLogin = async (provider) => {
+  const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
 
     try {
-      switch (provider) {
-        case 'google':
-          await signInWithGoogle();
-          break;
-        case 'microsoft':
-          await signInWithMicrosoft();
-          break;
-        case 'apple':
-          await signInWithApple();
-          break;
-        default:
-          break;
-      }
+      await signInWithGoogle();
       onClose();
     } catch (error) {
       setError(error.message);
@@ -223,31 +208,18 @@ const AuthForms = ({ mode, onClose }) => {
               <div className="w-full border-t border-purple-500/20"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-gradient-to-br from-gray-900 via-purple-900/20 to-black text-purple-400/70">Acceso rápido</span>
+              <span className="px-3 bg-gradient-to-br from-gray-900 via-purple-900/20 to-black text-purple-400/70">O continúa con</span>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-4">
+          <div className="mt-6 flex justify-center">
             <button
-              onClick={() => handleSocialLogin('google')}
+              onClick={handleGoogleLogin}
               disabled={loading}
               className="flex items-center justify-center p-4 bg-gray-900/60 hover:bg-gray-800/60 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 disabled:opacity-50 group backdrop-blur-sm"
             >
               <FaGoogle className="text-red-400 group-hover:text-red-300 text-xl transition-colors duration-300" />
-            </button>
-            <button
-              onClick={() => handleSocialLogin('microsoft')}
-              disabled={loading}
-              className="flex items-center justify-center p-4 bg-gray-900/60 hover:bg-gray-800/60 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 disabled:opacity-50 group backdrop-blur-sm"
-            >
-              <FaMicrosoft className="text-blue-400 group-hover:text-blue-300 text-xl transition-colors duration-300" />
-            </button>
-            <button
-              onClick={() => handleSocialLogin('apple')}
-              disabled={loading}
-              className="flex items-center justify-center p-4 bg-gray-900/60 hover:bg-gray-800/60 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 disabled:opacity-50 group backdrop-blur-sm"
-            >
-              <FaApple className="text-gray-300 group-hover:text-white text-xl transition-colors duration-300" />
+              <span className="ml-2">Google</span>
             </button>
           </div>
         </div>
