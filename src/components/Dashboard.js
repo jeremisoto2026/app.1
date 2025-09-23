@@ -1,3 +1,4 @@
+// Dashboard.js
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
@@ -119,6 +120,68 @@ const Dashboard = ({ onOpenProfile }) => {
     setShowPaymentModal(true);
   };
 
+  /**
+   * FUNCION ADICIONAL (solo agregada para conectar Binance Pay)
+   * handleBinancePayment -> Llama a /api/create-payment (serverless function),
+   * envía userId y amount (13 o 125 según plan). La respuesta puede tener la URL
+   * de checkout en varias claves; tratamos de extraerla y redirigir.
+   *
+   * Nota: no cambié nada más en tu Dashboard, solo añadí esta función y el onClick
+   * en el botón Binance Pay dentro del modal.
+   */
+  const handleBinancePayment = async () => {
+    try {
+      if (!user || !user.uid) {
+        alert("Usuario no autenticado. Inicia sesión antes de pagar.");
+        return;
+      }
+      if (!selectedPlan) {
+        alert("Selecciona un plan primero.");
+        return;
+      }
+
+      // Monto según plan
+      const amount = selectedPlan === "monthly" ? 13 : 125;
+
+      // Llamada a tu API create-payment (archivo en /api/create-payment.js)
+      const res = await fetch("/api/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.uid,
+          amount,          // monto en USDT (según tu create-payment lo espera)
+          plan: selectedPlan
+        }),
+      });
+
+      const data = await res.json();
+      console.log("create-payment response:", data);
+
+      // Buscamos la URL de checkout en varias claves posibles según respuesta de Binance
+      const checkoutUrl =
+        data?.checkoutUrl ||
+        data?.data?.checkoutUrl ||
+        data?.payUrl ||
+        data?.data?.payUrl ||
+        data?.data?.url ||
+        data?.data?.checkout_url ||
+        data?.data?.payUrl;
+
+      if (checkoutUrl) {
+        // redirigimos al checkout externo
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      // si no hay URL, mostramos la respuesta en consola y mensaje al usuario
+      console.warn("Respuesta completa create-payment:", data);
+      alert("No se pudo obtener la URL de pago desde Binance. Revisa la consola para más detalles.");
+    } catch (error) {
+      console.error("Error en Binance Pay:", error);
+      alert("Ocurrió un error al procesar el pago. Revisa la consola.");
+    }
+  };
+
   // Componente del Modal de Pagos
   const PaymentModal = () => {
     if (!showPaymentModal) return null;
@@ -187,9 +250,15 @@ const Dashboard = ({ onOpenProfile }) => {
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium">
                 PayPal
               </button>
-              <button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black py-3 px-4 rounded-lg transition-colors font-medium">
+
+              {/* ✅ BINANCE PAY: botón ya conectado */}
+              <button
+                onClick={handleBinancePayment}
+                className="w-full bg-yellow-400 hover:bg-yellow-500 text-black py-3 px-4 rounded-lg transition-colors font-medium"
+              >
                 Binance Pay
               </button>
+
               <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 px-4 rounded-lg transition-colors font-medium">
                 Blockchain Pay
               </button>
