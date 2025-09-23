@@ -51,14 +51,14 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // 👇 Log para ver en Vercel exactamente qué dice Binance
-    console.log("Respuesta Binance:", data);
+    // 👀 Log en los logs de Vercel
+    console.log("🔎 Respuesta Binance:", JSON.stringify(data, null, 2));
 
-    // Devuelve el mismo status que Binance
-    return res.status(response.ok ? 200 : 500).json(data);
+    // Devuelve SIEMPRE la respuesta completa de Binance al frontend
+    return res.status(200).json(data);
 
   } catch (error) {
-    console.error("Error en create-payment:", error);
+    console.error("❌ Error en create-payment:", error);
     return res.status(500).json({ error: "Error creando el pago", details: error.message });
   }
 }
