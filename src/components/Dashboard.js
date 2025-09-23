@@ -122,12 +122,11 @@ const Dashboard = ({ onOpenProfile }) => {
 
   /**
    * FUNCION ADICIONAL (solo agregada para conectar Binance Pay)
-   * handleBinancePayment -> Llama a /api/create-payment (serverless function),
+   * handleBinancePayment -> Llama a /api/create-payment en tu backend Vercel
    * envía userId y amount (13 o 125 según plan). La respuesta puede tener la URL
    * de checkout en varias claves; tratamos de extraerla y redirigir.
    *
-   * Nota: no cambié nada más en tu Dashboard, solo añadí esta función y el onClick
-   * en el botón Binance Pay dentro del modal.
+   * ÚNICO CAMBIO: esta función y la conexión del botón Binance Pay.
    */
   const handleBinancePayment = async () => {
     try {
@@ -143,17 +142,18 @@ const Dashboard = ({ onOpenProfile }) => {
       // Monto según plan
       const amount = selectedPlan === "monthly" ? 13 : 125;
 
-      // Llamada a tu API create-payment (archivo en /api/create-payment.js)
-      const res = await fetch("/api/create-payment", {
+      // Llamada a tu API create-payment en tu backend Vercel
+      const res = await fetch("https://backend-jjxcapital-orig.vercel.app/api/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.uid,
-          amount,          // monto en USDT (según tu create-payment lo espera)
+          amount,
           plan: selectedPlan
         }),
       });
 
+      // Si la petición no fue ok, aún intentamos parsear la respuesta para ver el error
       const data = await res.json();
       console.log("create-payment response:", data);
 
@@ -165,7 +165,8 @@ const Dashboard = ({ onOpenProfile }) => {
         data?.data?.payUrl ||
         data?.data?.url ||
         data?.data?.checkout_url ||
-        data?.data?.payUrl;
+        data?.data?.paymentUrl ||
+        data?.data?.webUrl; // cubrimos algunas variantes
 
       if (checkoutUrl) {
         // redirigimos al checkout externo
@@ -174,7 +175,7 @@ const Dashboard = ({ onOpenProfile }) => {
       }
 
       // si no hay URL, mostramos la respuesta en consola y mensaje al usuario
-      console.warn("Respuesta completa create-payment:", data);
+      console.warn("Respuesta completa create-payment (sin checkout url):", data);
       alert("No se pudo obtener la URL de pago desde Binance. Revisa la consola para más detalles.");
     } catch (error) {
       console.error("Error en Binance Pay:", error);
@@ -250,15 +251,12 @@ const Dashboard = ({ onOpenProfile }) => {
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium">
                 PayPal
               </button>
-
-              {/* ✅ BINANCE PAY: botón ya conectado */}
               <button
                 onClick={handleBinancePayment}
                 className="w-full bg-yellow-400 hover:bg-yellow-500 text-black py-3 px-4 rounded-lg transition-colors font-medium"
               >
                 Binance Pay
               </button>
-
               <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 px-4 rounded-lg transition-colors font-medium">
                 Blockchain Pay
               </button>
