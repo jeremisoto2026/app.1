@@ -167,9 +167,9 @@ const checkoutUrl =
   data?.data?.payUrl ||
   data?.data?.url ||
   data?.data?.checkout_url ||
-  data?.data?.qrLink ||     // 🔥 agrego este que a veces devuelve Binance
-  data?.data?.paymentUrl;   // 🔥 y este también
-        data?.data?.webUrl; // cubrimos algunas variantes
+  data?.data?.qrLink ||     
+  data?.data?.paymentUrl ||   
+  data?.data?.webUrl;   // 🔥 ahora sí dentro del OR
 
       if (checkoutUrl) {
         // redirigimos al checkout externo
