@@ -126,7 +126,7 @@ const Dashboard = ({ onOpenProfile }) => {
    * envía userId y amount (13 o 125 según plan). La respuesta puede tener la URL
    * de checkout en varias claves; tratamos de extraerla y redirigir.
    *
-   * ÚNICO CAMBIO: esta función y la conexión del botón Binance Pay.
+   * Versión con logs y alert para depurar desde móvil.
    */
   const handleBinancePayment = async () => {
     try {
@@ -142,46 +142,63 @@ const Dashboard = ({ onOpenProfile }) => {
       // Monto según plan
       const amount = selectedPlan === "monthly" ? 13 : 125;
 
-      // Llamada a tu API create-payment en tu backend Vercel
+      // 📦 Body que vamos a mandar
+      const bodyData = {
+        userId: user.uid,
+        amount,
+        plan: selectedPlan,
+      };
+
+      // 👀 Log en frontend (ver en consola del navegador)
+      console.log("🔥 Enviando a backend /api/create-payment:", bodyData);
+
       const res = await fetch("https://backend-jjxcapital-orig.vercel.app/api/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.uid,
-          amount,
-          plan: selectedPlan
-        }),
+        body: JSON.stringify(bodyData),
       });
 
-      // Si la petición no fue ok, aún intentamos parsear la respuesta para ver el error
-      const data = await res.json();
-      console.log("Respuesta completa create-payment:", data);
+      // Status HTTP
+      console.log("📡 Status respuesta backend:", res.status, res.statusText);
 
-// 👀 Mostrar en pantalla el JSON (para verlo desde el móvil)
-alert("Respuesta completa del backend:\n" + JSON.stringify(data, null, 2));
+      // Parseamos JSON (aunque sea un error para ver el detalle)
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        console.error("Error parseando JSON del backend:", e);
+        data = null;
+      }
 
-const checkoutUrl =
-  data?.checkoutUrl ||
-  data?.data?.checkoutUrl ||
-  data?.payUrl ||
-  data?.data?.payUrl ||
-  data?.data?.url ||
-  data?.data?.checkout_url ||
-  data?.data?.qrLink ||     
-  data?.data?.paymentUrl ||   
-  data?.data?.webUrl;   // 🔥 ahora sí dentro del OR
+      console.log("📤 Respuesta completa backend:", data);
+
+      // Muestra en pantalla para quien prueba desde el móvil
+      alert("Respuesta completa del backend:\n" + JSON.stringify(data, null, 2));
+
+      // Intentamos distintas claves donde Binance podría devolver la URL
+      const checkoutUrl =
+        data?.checkoutUrl ||
+        data?.data?.checkoutUrl ||
+        data?.payUrl ||
+        data?.data?.payUrl ||
+        data?.data?.url ||
+        data?.data?.checkout_url ||
+        data?.data?.qrLink ||
+        data?.data?.paymentUrl ||
+        data?.data?.webUrl ||
+        null;
 
       if (checkoutUrl) {
-        // redirigimos al checkout externo
+        console.log("✅ Redirigiendo a:", checkoutUrl);
         window.location.href = checkoutUrl;
         return;
       }
 
-      // si no hay URL, mostramos la respuesta en consola y mensaje al usuario
-      console.warn("Respuesta completa create-payment (sin checkout url):", data);
+      // Si no encontramos URL, mostramos advertencia y la respuesta completa
+      console.warn("⚠️ No se encontró checkoutUrl en la respuesta:", data);
       alert("No se pudo obtener la URL de pago desde Binance. Revisa la consola para más detalles.");
     } catch (error) {
-      console.error("Error en Binance Pay:", error);
+      console.error("💥 Error en Binance Pay (frontend):", error);
       alert("Ocurrió un error al procesar el pago. Revisa la consola.");
     }
   };
@@ -222,12 +239,12 @@ const checkoutUrl =
           {/* Header del modal */}
           <div className="text-center mb-6">
             <RocketLaunchIcon className="h-12 w-12 text-purple-500 mx-auto mb-3" />
-            <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+            <h3 className="text-xl font-bold text-white">{plan?.name}</h3>
             <div className="flex items-center justify-center gap-2 mt-2">
-              <span className="text-3xl font-bold text-white">{plan.price}</span>
-              <span className="text-gray-400">{plan.period}</span>
+              <span className="text-3xl font-bold text-white">{plan?.price}</span>
+              <span className="text-gray-400">{plan?.period}</span>
             </div>
-            {plan.savings && (
+            {plan?.savings && (
               <span className="text-green-400 text-sm font-semibold mt-1 block">
                 {plan.savings}
               </span>
@@ -238,7 +255,7 @@ const checkoutUrl =
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-300 mb-3">Características incluidas:</h4>
             <ul className="space-y-2">
-              {plan.features.map((feature, index) => (
+              {plan?.features?.map((feature, index) => (
                 <li key={index} className="flex items-center text-sm text-gray-300">
                   <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
                   {feature}
@@ -254,12 +271,15 @@ const checkoutUrl =
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium">
                 PayPal
               </button>
+
+              {/* ✅ BINANCE PAY: botón conectado */}
               <button
                 onClick={handleBinancePayment}
                 className="w-full bg-yellow-400 hover:bg-yellow-500 text-black py-3 px-4 rounded-lg transition-colors font-medium"
               >
                 Binance Pay
               </button>
+
               <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 px-4 rounded-lg transition-colors font-medium">
                 Blockchain Pay
               </button>
