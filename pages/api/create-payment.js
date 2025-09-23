@@ -9,7 +9,6 @@ export default async function handler(req, res) {
   try {
     const { userId, amount, plan } = req.body;
 
-    // Si no mandan amount, lo inferimos por plan
     let totalAmount = amount;
     if (!totalAmount) {
       if (plan === "monthly") totalAmount = 13;
@@ -20,15 +19,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Faltan parámetros: userId o amount/plan" });
     }
 
-    // Payload para Binance Pay
     const payload = {
-      merchantTradeNo: `${userId}-${Date.now()}`, // trade id único
-      totalFee: totalAmount.toString(), // 👈 Binance espera string
+      merchantTradeNo: `${userId}-${Date.now()}`,
+      totalFee: totalAmount.toString(),
       currency: "USDT",
-      productType: "CASH", // 👈 usa "Subscription" solo si tu cuenta lo soporta
+      productType: "CASH",
       productName: plan === "annual" ? "Plan Premium Anual" : "Plan Premium Mensual",
-      // returnUrl: "https://tuapp.com/pago-completado",
-      // notifyUrl: "https://tuapi.com/api/webhook"
     };
 
     const jsonPayload = JSON.stringify(payload);
@@ -55,22 +51,14 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
+    // 👇 Log para ver en Vercel exactamente qué dice Binance
     console.log("Respuesta Binance:", data);
 
-    // Devuelve según éxito o fallo
-    if (data.status !== "SUCCESS") {
-      return res.status(400).json({
-        error: "Binance rechazó la orden",
-        details: data,
-      });
-    }
+    // Devuelve el mismo status que Binance
+    return res.status(response.ok ? 200 : 500).json(data);
 
-    return res.status(200).json(data);
   } catch (error) {
     console.error("Error en create-payment:", error);
-    return res.status(500).json({
-      error: "Error creando el pago",
-      details: error.message,
-    });
+    return res.status(500).json({ error: "Error creando el pago", details: error.message });
   }
 }
