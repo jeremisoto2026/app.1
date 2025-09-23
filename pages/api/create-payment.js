@@ -1,3 +1,4 @@
+// /api/create-payment.js
 import crypto from "crypto";
 
 export default async function handler(req, res) {
@@ -6,22 +7,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, amount } = req.body;
+    const { userId, amount, plan } = req.body;
 
-    if (!userId || !amount) {
-      return res.status(400).json({ error: "Faltan parámetros userId o amount" });
+    // Si no mandan amount, lo inferimos por plan
+    let totalAmount = amount;
+    if (!totalAmount) {
+      if (plan === "monthly") totalAmount = 13;
+      else if (plan === "annual") totalAmount = 125;
     }
 
+    if (!userId || !totalAmount) {
+      return res.status(400).json({ error: "Faltan parámetros: userId o amount/plan" });
+    }
+
+    // Payload para Binance Pay
     const payload = {
-      merchantTradeNo: userId, // 👈 Aquí mandamos el ID del usuario
-      totalFee: amount,
+      merchantTradeNo: `${userId}-${Date.now()}`, // trade id único
+      totalFee: totalAmount.toString(), // 👈 siempre string
       currency: "USDT",
-      productType: "Subscription",
-      productName: "Plan Premium",
+      productType: "CASH", // 👈 cámbialo a Subscription solo si tu cuenta soporta suscripciones
+      productName: plan === "annual" ? "Plan Premium Anual" : "Plan Premium Mensual",
+      // returnUrl: "https://tuapp.com/pago-completado",
+      // notifyUrl: "https://tuapi.com/api/webhook"
     };
 
     const jsonPayload = JSON.stringify(payload);
-
     const timestamp = Date.now().toString();
     const nonce = crypto.randomBytes(16).toString("hex");
 
@@ -44,9 +54,11 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+
+    // Devuelve la respuesta de Binance tal cual
     return res.status(200).json(data);
   } catch (error) {
     console.error("Error en create-payment:", error);
-    return res.status(500).json({ error: "Error creando el pago" });
+    return res.status(500).json({ error: "Error creando el pago", details: error.message });
   }
 }
