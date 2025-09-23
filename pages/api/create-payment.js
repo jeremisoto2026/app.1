@@ -23,9 +23,9 @@ export default async function handler(req, res) {
     // Payload para Binance Pay
     const payload = {
       merchantTradeNo: `${userId}-${Date.now()}`, // trade id único
-      totalFee: totalAmount.toString(), // 👈 siempre string
+      totalFee: totalAmount.toString(), // 👈 Binance espera string
       currency: "USDT",
-      productType: "CASH", // 👈 cámbialo a Subscription solo si tu cuenta soporta suscripciones
+      productType: "CASH", // 👈 usa "Subscription" solo si tu cuenta lo soporta
       productName: plan === "annual" ? "Plan Premium Anual" : "Plan Premium Mensual",
       // returnUrl: "https://tuapp.com/pago-completado",
       // notifyUrl: "https://tuapi.com/api/webhook"
@@ -55,10 +55,22 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Devuelve la respuesta de Binance tal cual
+    console.log("Respuesta Binance:", data);
+
+    // Devuelve según éxito o fallo
+    if (data.status !== "SUCCESS") {
+      return res.status(400).json({
+        error: "Binance rechazó la orden",
+        details: data,
+      });
+    }
+
     return res.status(200).json(data);
   } catch (error) {
     console.error("Error en create-payment:", error);
-    return res.status(500).json({ error: "Error creando el pago", details: error.message });
+    return res.status(500).json({
+      error: "Error creando el pago",
+      details: error.message,
+    });
   }
 }
