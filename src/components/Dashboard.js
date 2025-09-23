@@ -155,17 +155,20 @@ const Dashboard = ({ onOpenProfile }) => {
 
       // Si la petición no fue ok, aún intentamos parsear la respuesta para ver el error
       const data = await res.json();
-      console.log("create-payment response:", data);
+      console.log("Respuesta completa create-payment:", data);
 
-      // Buscamos la URL de checkout en varias claves posibles según respuesta de Binance
-      const checkoutUrl =
-        data?.checkoutUrl ||
-        data?.data?.checkoutUrl ||
-        data?.payUrl ||
-        data?.data?.payUrl ||
-        data?.data?.url ||
-        data?.data?.checkout_url ||
-        data?.data?.paymentUrl ||
+// 👀 Mostrar en pantalla el JSON (para verlo desde el móvil)
+alert("Respuesta completa del backend:\n" + JSON.stringify(data, null, 2));
+
+const checkoutUrl =
+  data?.checkoutUrl ||
+  data?.data?.checkoutUrl ||
+  data?.payUrl ||
+  data?.data?.payUrl ||
+  data?.data?.url ||
+  data?.data?.checkout_url ||
+  data?.data?.qrLink ||     // 🔥 agrego este que a veces devuelve Binance
+  data?.data?.paymentUrl;   // 🔥 y este también
         data?.data?.webUrl; // cubrimos algunas variantes
 
       if (checkoutUrl) {
