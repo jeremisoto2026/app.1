@@ -1,6 +1,6 @@
 // Dashboard.js
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -27,6 +27,13 @@ const Dashboard = ({ onOpenProfile }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+
+  // ===== Nuevos estados para Binance Keys & Sync =====
+  const [binanceApiKey, setBinanceApiKey] = useState("");
+  const [binanceApiSecret, setBinanceApiSecret] = useState("");
+  const [keysSaving, setKeysSaving] = useState(false);
+  const [keysLoaded, setKeysLoaded] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,6 +113,27 @@ const Dashboard = ({ onOpenProfile }) => {
     fetchData();
   }, [user]);
 
+  // ===== Effect para cargar claves Binance guardadas (si existen) =====
+  useEffect(() => {
+    const loadKeys = async () => {
+      if (!user) return;
+      try {
+        const kdoc = await getDoc(doc(db, "binanceKeys", user.uid));
+        if (kdoc.exists()) {
+          const kd = kdoc.data();
+          // CUIDADO: mostrar secret en cliente es riesgoso; lo cargamos porque pediste funcionalidad rápida.
+          if (kd.apiKey) setBinanceApiKey(kd.apiKey);
+          if (kd.apiSecret) setBinanceApiSecret(kd.apiSecret);
+        }
+      } catch (err) {
+        console.error("Error cargando claves Binance:", err);
+      } finally {
+        setKeysLoaded(true);
+      }
+    };
+    loadKeys();
+  }, [user]);
+
   // Función para formatear números con separadores de miles
   const formatNumber = (num) => {
     return new Intl.NumberFormat('en-US', {
@@ -118,6 +146,72 @@ const Dashboard = ({ onOpenProfile }) => {
   const handleSelectPlan = (planType) => {
     setSelectedPlan(planType);
     setShowPaymentModal(true);
+  };
+
+  // ===== Guardar las claves (desde cliente) =====
+  const saveBinanceKeys = async () => {
+    if (!user || !user.uid) {
+      alert("Debes iniciar sesión para guardar tus claves.");
+      return;
+    }
+    if (!binanceApiKey || !binanceApiSecret) {
+      alert("Por favor completa API Key y API Secret.");
+      return;
+    }
+
+    // ADVERTENCIA EN CÓDIGO: guardar secrets en Firestore desde cliente no es seguro.
+    // Lo correcto: enviar a backend para almacenarlas de forma segura.
+    setKeysSaving(true);
+    try {
+      await setDoc(doc(db, "binanceKeys", user.uid), {
+        apiKey: binanceApiKey.trim(),
+        apiSecret: binanceApiSecret.trim(),
+        updatedAt: serverTimestamp()
+      });
+      alert("Claves guardadas correctamente.");
+    } catch (err) {
+      console.error("Error guardando claves Binance:", err);
+      alert("Error guardando las claves. Revisa la consola.");
+    } finally {
+      setKeysSaving(false);
+    }
+  };
+
+  // ===== Sincronizar operaciones P2P mediante endpoint backend =====
+  const handleSyncBinanceP2P = async () => {
+    if (!user || !user.uid) {
+      alert("Debes iniciar sesión primero.");
+      return;
+    }
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/sync-binance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.uid }),
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        console.error("Error parseando JSON de sync:", e);
+        data = null;
+      }
+
+      console.log("📤 Resultado sync P2P:", data);
+      if (res.ok) {
+        const opsCount = (data?.deposits?.length || 0) + (data?.withdrawals?.length || 0) + (data?.operations || 0);
+        alert(`✅ Sincronización completada. ${opsCount} registros procesados (ver consola para detalle).`);
+      } else {
+        alert(`❌ Error sincronizando: ${data?.error || res.statusText}. Revisa la consola.`);
+      }
+    } catch (err) {
+      console.error("Error sincronizando P2P:", err);
+      alert("❌ Error sincronizando operaciones P2P. Revisa la consola.");
+    } finally {
+      setSyncing(false);
+    }
   };
 
   /**
@@ -271,15 +365,12 @@ const Dashboard = ({ onOpenProfile }) => {
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium">
                 PayPal
               </button>
-
-              {/* ✅ BINANCE PAY: botón conectado */}
               <button
                 onClick={handleBinancePayment}
                 className="w-full bg-yellow-400 hover:bg-yellow-500 text-black py-3 px-4 rounded-lg transition-colors font-medium"
               >
                 Binance Pay
               </button>
-
               <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 px-4 rounded-lg transition-colors font-medium">
                 Blockchain Pay
               </button>
@@ -347,6 +438,7 @@ const Dashboard = ({ onOpenProfile }) => {
     );
   }
 
+  // ===== Render principal: mantuve todo tu diseño, agregué la sección Binance con formulario =====
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white">
       {/* Header con navegación */}
@@ -705,6 +797,75 @@ const Dashboard = ({ onOpenProfile }) => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ======= NUEVA SECCIÓN: Conectar Binance P2P (form + sync) ======= */}
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-yellow-500/30 mb-8">
+          <h2 className="text-lg font-semibold mb-4 text-yellow-400 flex items-center gap-2">
+            <ArrowsRightLeftIcon className="h-6 w-6" /> Conectar Binance P2P
+          </h2>
+          <p className="text-gray-400 text-sm mb-4">
+            Pega aquí tu API Key y API Secret de Binance para que podamos sincronizar tus operaciones P2P automáticamente.
+          </p>
+
+          {/* ADVERTENCIA VISIBLE */}
+          <div className="mb-4 text-xs text-yellow-200/90 bg-yellow-900/10 p-3 rounded">
+            <strong>Importante:</strong> Guardar el <em>API Secret</em> desde el cliente es potencialmente inseguro. Se recomienda mover el guardado al backend cuando sea posible.
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label className="text-sm text-gray-300 mb-1 block">API Key</label>
+              <input
+                value={binanceApiKey}
+                onChange={(e) => setBinanceApiKey(e.target.value)}
+                placeholder="Ej: AbCdEfG..."
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-300 mb-1 block">API Secret</label>
+              <input
+                value={binanceApiSecret}
+                onChange={(e) => setBinanceApiSecret(e.target.value)}
+                placeholder="Tu API Secret"
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={saveBinanceKeys}
+              disabled={keysSaving}
+              className="py-2 px-4 bg-green-600 hover:bg-green-700 rounded text-white font-medium disabled:opacity-50"
+            >
+              {keysSaving ? "Guardando..." : "Guardar claves"}
+            </button>
+
+            <button
+              onClick={handleSyncBinanceP2P}
+              disabled={syncing}
+              className="py-2 px-4 bg-yellow-400 hover:bg-yellow-500 rounded text-black font-medium disabled:opacity-50"
+            >
+              {syncing ? "Sincronizando..." : "Sync P2P"}
+            </button>
+
+            <button
+              onClick={() => {
+                setBinanceApiKey("");
+                setBinanceApiSecret("");
+                alert("Campos limpiados. Si quieres borrar la clave del servidor, elimina el documento en Firestore /binanceKeys/{userId}");
+              }}
+              className="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded text-white font-medium"
+            >
+              Limpiar
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-500 mt-3">
+            Consejo: crea una API Key con permisos mínimos necesarios. Lo ideal es que el backend maneje las claves y firmes las peticiones en servidor.
+          </p>
         </div>
 
         {/* Footer o información adicional */}
