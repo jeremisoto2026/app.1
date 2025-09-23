@@ -148,34 +148,43 @@ const Dashboard = ({ onOpenProfile }) => {
     setShowPaymentModal(true);
   };
 
-  // ===== Guardar las claves (desde cliente) =====
-  const saveBinanceKeys = async () => {
-    if (!user || !user.uid) {
-      alert("Debes iniciar sesión para guardar tus claves.");
-      return;
-    }
-    if (!binanceApiKey || !binanceApiSecret) {
-      alert("Por favor completa API Key y API Secret.");
-      return;
-    }
+  // ===== Guardar las claves (ahora vía backend seguro) =====
+const saveBinanceKeys = async () => {
+  if (!user || !user.uid) {
+    alert("Debes iniciar sesión para guardar tus claves.");
+    return;
+  }
+  if (!binanceApiKey || !binanceApiSecret) {
+    alert("Por favor completa API Key y API Secret.");
+    return;
+  }
 
-    // ADVERTENCIA EN CÓDIGO: guardar secrets en Firestore desde cliente no es seguro.
-    // Lo correcto: enviar a backend para almacenarlas de forma segura.
-    setKeysSaving(true);
-    try {
-      await setDoc(doc(db, "binanceKeys", user.uid), {
+  setKeysSaving(true);
+  try {
+    const res = await fetch("/api/save-binance-keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: user.uid,
         apiKey: binanceApiKey.trim(),
         apiSecret: binanceApiSecret.trim(),
-        updatedAt: serverTimestamp()
-      });
-      alert("Claves guardadas correctamente.");
-    } catch (err) {
-      console.error("Error guardando claves Binance:", err);
-      alert("Error guardando las claves. Revisa la consola.");
-    } finally {
-      setKeysSaving(false);
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("✅ Claves guardadas correctamente en el backend.");
+    } else {
+      console.error("Error guardando claves:", data);
+      alert("❌ Error guardando las claves. Revisa la consola.");
     }
-  };
+  } catch (err) {
+    console.error("Error fetch save-binance-keys:", err);
+    alert("Error de red al guardar claves.");
+  } finally {
+    setKeysSaving(false);
+  }
+};
 
   // ===== Sincronizar operaciones P2P mediante endpoint backend =====
   const handleSyncBinanceP2P = async () => {
