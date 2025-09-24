@@ -13,7 +13,8 @@ import {
   ArrowsRightLeftIcon,
   CalendarDaysIcon,
   BoltIcon,
-  XMarkIcon
+  XMarkIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
 
 const Dashboard = ({ onOpenProfile }) => {
@@ -28,17 +29,22 @@ const Dashboard = ({ onOpenProfile }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  // ===== Nuevos estados para Binance Keys & Sync =====
+  // ===== Estados para Binance Keys & Sync =====
   const [binanceApiKey, setBinanceApiKey] = useState("");
   const [binanceApiSecret, setBinanceApiSecret] = useState("");
   const [keysSaving, setKeysSaving] = useState(false);
   const [keysLoaded, setKeysLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // Ajusta aquí si tu backend cambia de dominio
+  // ===== CONFIGURACIÓN BACKEND =====
   const BACKEND_URL = "https://backend-jjxcapital-orig.vercel.app";
-  // Si tu endpoint de sincronización se llama distinto, cámbialo aquí:
-  const SYNC_ENDPOINT = `${BACKEND_URL}/api/sync-binance`;
+  const ENDPOINTS = {
+    SAVE_KEYS: `${BACKEND_URL}/api/save-binance-keys`,
+    VERIFY_KEYS: `${BACKEND_URL}/api/verify-binance-keys`,
+    SYNC_P2P: `${BACKEND_URL}/api/sync-binance-p2p`,
+    CREATE_PAYMENT: `${BACKEND_URL}/api/create-payment`
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -118,34 +124,28 @@ const Dashboard = ({ onOpenProfile }) => {
     fetchData();
   }, [user]);
 
-  // ===== Effect para cargar claves Binance guardadas (si existen) =====
+  // ===== Effect para verificar estado de conexión Binance =====
   useEffect(() => {
-    const loadKeys = async () => {
+    const checkBinanceConnection = async () => {
       if (!user) return;
       try {
+        // Verificar si hay claves guardadas en el backend
         const kdoc = await getDoc(doc(db, "binanceKeys", user.uid));
         if (kdoc.exists()) {
           const kd = kdoc.data();
-          // Nota: para proteger secrets no los mostramos. Si ya están guardados
-          // mostramos el estado conectado (✔) para ocultarlos.
           if (kd.apiKey && kd.apiSecret) {
+            setIsConnected(true);
             setBinanceApiKey("✔");
             setBinanceApiSecret("✔");
-          } else {
-            setBinanceApiKey("");
-            setBinanceApiSecret("");
           }
-        } else {
-          setBinanceApiKey("");
-          setBinanceApiSecret("");
         }
       } catch (err) {
-        console.error("Error cargando claves Binance:", err);
+        console.error("Error checking Binance connection:", err);
       } finally {
         setKeysLoaded(true);
       }
     };
-    loadKeys();
+    checkBinanceConnection();
   }, [user]);
 
   // Función para formatear números con separadores de miles
@@ -162,11 +162,10 @@ const Dashboard = ({ onOpenProfile }) => {
     setShowPaymentModal(true);
   };
 
-  // ===== Guardar las claves (ahora vía backend seguro) =====
-  // (Mantengo esta función por compatibilidad aunque ya no mostramos "Guardar claves" en UI)
-  const saveBinanceKeys = async () => {
+  // ===== CONEXIÓN Y VERIFICACIÓN CON BINANCE =====
+  const handleConnectBinance = async () => {
     if (!user || !user.uid) {
-      alert("Debes iniciar sesión para guardar tus claves.");
+      alert("Debes iniciar sesión primero.");
       return;
     }
     if (!binanceApiKey || !binanceApiSecret) {
@@ -176,7 +175,27 @@ const Dashboard = ({ onOpenProfile }) => {
 
     setKeysSaving(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/save-binance-keys`, {
+      console.log("🔐 Verificando claves con backend...");
+
+      // 1. Verificar claves con el backend
+      const verifyResponse = await fetch(ENDPOINTS.VERIFY_KEYS, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey: binanceApiKey.trim(),
+          apiSecret: binanceApiSecret.trim(),
+        }),
+      });
+
+      const verifyData = await verifyResponse.json();
+      console.log("✅ Respuesta verificación:", verifyData);
+
+      if (!verifyResponse.ok || !verifyData.ok) {
+        throw new Error(verifyData.error || "Error verificando las claves");
+      }
+
+      // 2. Guardar claves en el backend
+      const saveResponse = await fetch(ENDPOINTS.SAVE_KEYS, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -186,68 +205,116 @@ const Dashboard = ({ onOpenProfile }) => {
         }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert("✅ Claves guardadas correctamente en el backend.");
-      } else {
-        console.error("Error guardando claves:", data);
-        alert("❌ Error guardando las claves. Revisa la consola.");
+      const saveData = await saveResponse.json();
+      console.log("💾 Respuesta guardado:", saveData);
+
+      if (!saveResponse.ok) {
+        throw new Error(saveData.error || "Error guardando las claves");
       }
-    } catch (err) {
-      console.error("Error fetch save-binance-keys:", err);
-      alert("Error de red al guardar claves.");
+
+      // 3. Actualizar estado local
+      setIsConnected(true);
+      setBinanceApiKey("✔");
+      setBinanceApiSecret("✔");
+      
+      alert("✅ ¡Conexión exitosa! Claves guardadas de forma segura en el backend.");
+
+      // 4. Sincronización automática inicial
+      handleSyncBinanceP2P();
+
+    } catch (error) {
+      console.error("❌ Error conectando con Binance:", error);
+      alert(`❌ Error: ${error.message}`);
     } finally {
       setKeysSaving(false);
     }
   };
 
-  // ===== Sincronizar operaciones P2P mediante endpoint backend =====
+  // ===== SINCRONIZACIÓN CON BINANCE P2P =====
   const handleSyncBinanceP2P = async () => {
     if (!user || !user.uid) {
       alert("Debes iniciar sesión primero.");
       return;
     }
+    
     setSyncing(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/sync-binance-p2p`, {
+      console.log("🔄 Iniciando sincronización con backend...");
+
+      const response = await fetch(ENDPOINTS.SYNC_P2P, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid }),
+        headers: { 
+          "Content-Type": "application/json",
+          "User-Agent": "JJXCapital-Frontend/1.0"
+        },
+        body: JSON.stringify({ 
+          userId: user.uid,
+          syncType: "p2p"
+        }),
       });
 
+      console.log("📡 Status respuesta:", response.status);
+      
       let data;
       try {
-        data = await res.json();
+        data = await response.json();
+        console.log("📊 Datos respuesta:", data);
       } catch (e) {
-        console.error("Error parseando JSON de sync:", e);
-        data = null;
+        console.error("❌ Error parseando JSON:", e);
+        throw new Error("Respuesta inválida del servidor");
       }
 
-      console.log("📤 Resultado sync P2P:", data);
-      if (res.ok) {
-        const opsCount = data?.operations || 0;
+      if (response.ok) {
+        const opsCount = data.operationsSaved || data.operations || 0;
         alert(`✅ Sincronización completada. ${opsCount} operaciones P2P sincronizadas.`);
+        
+        // Recargar datos del dashboard
+        window.location.reload();
       } else {
-        const msg = data?.error || data?.details || res.statusText;
-        console.error("Error sincronizando P2P:", res.status, data);
-        alert(`❌ Error sincronizando: ${msg}. Revisa la consola.`);
+        const errorMsg = data.error || data.details || data.message || "Error desconocido";
+        console.error("❌ Error del backend:", data);
+        alert(`❌ Error sincronizando: ${errorMsg}`);
       }
-    } catch (err) {
-      console.error("Error sincronizando P2P:", err);
-      alert("❌ Error sincronizando operaciones P2P. Revisa la consola.");
+    } catch (error) {
+      console.error("💥 Error de red:", error);
+      alert("❌ Error de conexión con el backend. Verifica que esté funcionando.");
     } finally {
       setSyncing(false);
     }
   };
 
-  /**
-   * FUNCION ADICIONAL (solo agregada para conectar Binance Pay)
-   * handleBinancePayment -> Llama a /api/create-payment en tu backend Vercel
-   * envía userId y amount (13 o 125 según plan). La respuesta puede tener la URL
-   * de checkout en varias claves; tratamos de extraerla y redirigir.
-   *
-   * Versión con logs y alert para depurar desde móvil.
-   */
+  // ===== DESCONEXIÓN DE BINANCE =====
+  const handleDisconnectBinance = async () => {
+    if (!user || !user.uid) return;
+
+    if (confirm("¿Estás seguro de que quieres desconectar Binance? Las órdenes ya sincronizadas permanecerán.")) {
+      try {
+        // Eliminar claves de Firestore
+        await setDoc(
+          doc(db, "binanceKeys", user.uid),
+          {
+            apiKey: null,
+            apiSecret: null,
+            connectedAt: null,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        // Limpiar estado local
+        setIsConnected(false);
+        setBinanceApiKey("");
+        setBinanceApiSecret("");
+        
+        alert("✅ Binance desconectado correctamente.");
+      } catch (err) {
+        console.error("❌ Error desconectando:", err);
+        alert("❌ Error al desconectar Binance.");
+      }
+    }
+  };
+
+  // ===== PAGO CON BINANCE PAY =====
   const handleBinancePayment = async () => {
     try {
       if (!user || !user.uid) {
@@ -259,66 +326,41 @@ const Dashboard = ({ onOpenProfile }) => {
         return;
       }
 
-      // Monto según plan
       const amount = selectedPlan === "monthly" ? 13 : 125;
 
-      // 📦 Body que vamos a mandar
-      const bodyData = {
-        userId: user.uid,
-        amount,
-        plan: selectedPlan,
-      };
+      console.log("💰 Enviando solicitud de pago a:", ENDPOINTS.CREATE_PAYMENT);
 
-      // 👀 Log en frontend (ver en consola del navegador)
-      console.log("🔥 Enviando a backend /api/create-payment:", bodyData);
-
-      const res = await fetch("https://backend-jjxcapital-orig.vercel.app/api/create-payment", {
+      const response = await fetch(ENDPOINTS.CREATE_PAYMENT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyData),
+        body: JSON.stringify({
+          userId: user.uid,
+          amount: amount,
+          plan: selectedPlan,
+        }),
       });
 
-      // Status HTTP
-      console.log("📡 Status respuesta backend:", res.status, res.statusText);
+      console.log("📡 Status respuesta:", response.status);
+      
+      const data = await response.json();
+      console.log("📦 Respuesta completa:", data);
 
-      // Parseamos JSON (aunque sea un error para ver el detalle)
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        console.error("Error parseando JSON del backend:", e);
-        data = null;
-      }
-
-      console.log("📤 Respuesta completa backend:", data);
-
-      // Muestra en pantalla para quien prueba desde el móvil
-      alert("Respuesta completa del backend:\n" + JSON.stringify(data, null, 2));
-
-      // Intentamos distintas claves donde Binance podría devolver la URL
-      const checkoutUrl =
-        data?.checkoutUrl ||
-        data?.data?.checkoutUrl ||
-        data?.payUrl ||
-        data?.data?.payUrl ||
-        data?.data?.url ||
-        data?.data?.checkout_url ||
-        data?.data?.qrLink ||
-        data?.data?.paymentUrl ||
-        data?.data?.webUrl ||
-        null;
+      // Buscar URL de checkout en diferentes formatos de respuesta
+      const checkoutUrl = data?.checkoutUrl || 
+                         data?.data?.checkoutUrl || 
+                         data?.payUrl || 
+                         data?.data?.payUrl ||
+                         data?.data?.url;
 
       if (checkoutUrl) {
-        console.log("✅ Redirigiendo a:", checkoutUrl);
+        console.log("🔗 Redirigiendo a:", checkoutUrl);
         window.location.href = checkoutUrl;
-        return;
+      } else {
+        console.warn("⚠️ No se encontró URL de checkout:", data);
+        alert("No se pudo obtener la URL de pago. Revisa la consola para más detalles.");
       }
-
-      // Si no encontramos URL, mostramos advertencia y la respuesta completa
-      console.warn("⚠️ No se encontró checkoutUrl en la respuesta:", data);
-      alert("No se pudo obtener la URL de pago desde Binance. Revisa la consola para más detalles.");
     } catch (error) {
-      console.error("💥 Error en Binance Pay (frontend):", error);
+      console.error("💥 Error en Binance Pay:", error);
       alert("Ocurrió un error al procesar el pago. Revisa la consola.");
     }
   };
@@ -464,7 +506,6 @@ const Dashboard = ({ onOpenProfile }) => {
     );
   }
 
-  // ===== Render principal: mantuve todo tu diseño, agregué la sección Binance con formulario =====
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white">
       {/* Header con navegación */}
@@ -710,7 +751,7 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
         </div>
 
-        {/* Sección: Planes Premium - MODIFICADA */}
+        {/* Sección: Planes Premium */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
           <div className="flex items-center justify-between mb-8">
@@ -825,172 +866,103 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
         </div>
 
-        {/* ======= NUEVA SECCIÓN: Conectar Binance P2P (form + sync) ======= */}
+        {/* ======= SECCIÓN BINANCE P2P ACTUALIZADA ======= */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-yellow-500/30 mb-8">
           <h2 className="text-lg font-semibold mb-4 text-yellow-400 flex items-center gap-2">
             <ArrowsRightLeftIcon className="h-6 w-6" /> Conectar Binance P2P
           </h2>
 
-          {/* ADVERTENCIA VISIBLE */}
-          <div className="mb-4 text-xs text-yellow-200/90 bg-yellow-900/10 p-3 rounded">
-            <strong>Importante:</strong> Guardar el <em>API Secret</em> desde el cliente es potencialmente inseguro. Se recomienda mover el guardado al backend cuando sea posible.
-          </div>
-
           {!keysLoaded ? (
-            <p className="text-gray-400 text-sm">Cargando...</p>
-          ) : binanceApiKey === "✔" && binanceApiSecret === "✔" ? (
-            <div className="flex flex-col gap-3">
-              <div className="text-green-400 font-semibold flex items-center gap-2">
-                ✅ Conexión Exitosa
+            <p className="text-gray-400 text-sm">Cargando configuración Binance...</p>
+          ) : isConnected ? (
+            // ===== ESTADO: CONECTADO =====
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-green-900/20 rounded-lg">
+                <CheckBadgeIcon className="h-6 w-6 text-green-400" />
+                <div>
+                  <p className="text-green-400 font-semibold">✅ Binance Conectado</p>
+                  <p className="text-gray-400 text-sm">Sincronización a través del backend seguro</p>
+                </div>
               </div>
-              <button
-                onClick={async () => {
-                  try {
-                    // Solo borramos las claves y connectedAt (las operaciones quedan)
-                    await setDoc(
-                      doc(db, "binanceKeys", user.uid),
-                      {
-                        apiKey: null,
-                        apiSecret: null,
-                        connectedAt: null,
-                        updatedAt: serverTimestamp(),
-                      },
-                      { merge: true }
-                    );
-                    setBinanceApiKey("");
-                    setBinanceApiSecret("");
-                    alert("🔌 Conexión eliminada. Ingresa nuevas claves si lo deseas.");
-                  } catch (err) {
-                    console.error("Error desconectando:", err);
-                    alert("❌ No se pudo eliminar la conexión.");
-                  }
-                }}
-                className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded text-white font-medium"
-              >
-                Desconectar
-              </button>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={handleSyncBinanceP2P}
+                  disabled={syncing}
+                  className="flex items-center justify-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium disabled:bg-gray-600"
+                >
+                  <ArrowPathIcon className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Sincronizando...' : 'Sincronizar Ahora'}
+                </button>
+
+                <button
+                  onClick={handleDisconnectBinance}
+                  className="flex items-center justify-center gap-2 py-2 px-4 bg-red-600 hover:bg-red-700 rounded text-white font-medium"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                  Desconectar Binance
+                </button>
+              </div>
+
+              <div className="text-xs text-gray-500 mt-2">
+                <p>💡 La sincronización se realiza de forma segura a través del backend</p>
+                <p>🔒 Las API Keys se almacenan de forma segura en el backend</p>
+              </div>
             </div>
           ) : (
-            <>
-              <p className="text-gray-400 text-sm mb-4">
-                Ingresa tu API Key y API Secret para verificar la conexión.
-              </p>
+            // ===== ESTADO: NO CONECTADO =====
+            <div className="space-y-4">
+              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+                <p className="text-yellow-400 text-sm font-medium">🔒 Conexión Segura</p>
+                <p className="text-gray-300 text-sm mt-1">
+                  Tus claves de Binance se almacenan de forma segura en el backend, no en el navegador.
+                </p>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm text-gray-300 mb-1 block">API Key</label>
+                  <label className="text-sm text-gray-300 mb-2 block">API Key</label>
                   <input
                     value={binanceApiKey}
                     onChange={(e) => setBinanceApiKey(e.target.value)}
-                    placeholder="Ej: AbCdEfG..."
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                    placeholder="Ej: AbCdEfG123..."
+                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-yellow-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-300 mb-1 block">API Secret</label>
+                  <label className="text-sm text-gray-300 mb-2 block">API Secret</label>
                   <input
                     type="password"
                     value={binanceApiSecret}
                     onChange={(e) => setBinanceApiSecret(e.target.value)}
-                    placeholder="Tu API Secret"
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                    placeholder="Tu clave secreta de Binance"
+                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-yellow-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="flex gap-3">
                 <button
-                  onClick={async () => {
-                    if (!binanceApiKey || !binanceApiSecret) {
-                      alert("❌ Debes ingresar ambas claves.");
-                      return;
-                    }
-
-                    try {
-                      // 1. Verificar contra backend
-                      const res = await fetch(`${BACKEND_URL}/api/verify-binance-keys`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          userId: user.uid,
-                          apiKey: binanceApiKey.trim(),
-                          apiSecret: binanceApiSecret.trim(),
-                        }),
-                      });
-
-                      const data = await res.json();
-
-                      if (res.ok && data.ok) {
-                        // 2. Guardar en Firestore (connectedAt servirá para filtrar sincronización)
-                        await setDoc(doc(db, "binanceKeys", user.uid), {
-                          apiKey: binanceApiKey.trim(),
-                          apiSecret: binanceApiSecret.trim(),
-                          connectedAt: serverTimestamp(),
-                          updatedAt: serverTimestamp(),
-                        });
-
-                        // 3. Mostrar ✅ y ocultar inputs
-                        setBinanceApiKey("✔");
-                        setBinanceApiSecret("✔");
-                        alert("✅ Conexión Exitosa con Binance (claves guardadas en Firestore)");
-
-                        // 4. Intentar sincronizar automáticamente solo las órdenes posteriores a connectedAt
-                        try {
-                          const syncRes = await fetch(SYNC_ENDPOINT, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ userId: user.uid }),
-                          });
-
-                          let syncData = null;
-                          try {
-                            syncData = await syncRes.json();
-                          } catch (e) {
-                            // no-op
-                          }
-
-                          if (syncRes.ok) {
-                            const saved = syncData?.operationsSaved ?? syncData?.operations ?? 0;
-                            alert(`🔁 Sincronización automática ejecutada. ${saved} operaciones nuevas guardadas (revisa consola para detalles).`);
-                          } else {
-                            console.warn("Sincronización automática falló:", syncRes.status, syncData);
-                            // no mostramos error crítico, solo aviso
-                            alert("⚠️ La verificación fue exitosa pero la sincronización automática falló. Revisa la consola.");
-                          }
-                        } catch (syncErr) {
-                          console.error("Error en sincronización automática después de verificar:", syncErr);
-                          // no interrumpimos el flujo principal
-                        }
-                      } else {
-                        alert("❌ Error verificando conexión: " + (data.error || "Revisa tus claves"));
-                      }
-                    } catch (err) {
-                      console.error("Error verificando:", err);
-                      alert("❌ Error de red al verificar conexión");
-                    }
-                  }}
-                  className="py-2 px-4 bg-green-600 hover:bg-green-700 rounded text-white font-medium"
+                  onClick={handleConnectBinance}
+                  disabled={keysSaving}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded font-medium disabled:bg-gray-600"
                 >
-                  Verificar
+                  {keysSaving ? 'Conectando...' : '🔗 Conectar Binance'}
                 </button>
 
                 <button
-                  onClick={() =>
-                    window.open(
-                      "https://www.binance.com/es-MX/support/faq/detail/538e05e2fd394c489b4cf89e92c55f70",
-                      "_blank"
-                    )
-                  }
-                  className="py-2 px-4 bg-yellow-400 hover:bg-yellow-500 rounded text-black font-medium"
+                  onClick={() => window.open("https://www.binance.com/es-MX/support/faq/detail/538e05e2fd394c489b4cf89e92c55f70", "_blank")}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded font-medium"
                 >
-                  ¿Crear una API?
+                  ¿Cómo crear API?
                 </button>
               </div>
-            </>
+
+              <div className="text-xs text-gray-500 mt-2">
+                <p>📋 Crea una API Key en Binance con permisos de <strong>solo lectura</strong> para mayor seguridad.</p>
+              </div>
+            </div>
           )}
-          <p className="text-xs text-gray-500 mt-3">
-            Consejo: crea una API Key con permisos mínimos necesarios. Lo ideal es que el backend maneje las claves y firme las peticiones en servidor.
-          </p>
         </div>
 
         {/* Footer o información adicional */}
