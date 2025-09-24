@@ -35,6 +35,9 @@ const Dashboard = ({ onOpenProfile }) => {
   const [keysLoaded, setKeysLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
+  // Ajusta aquí si tu backend cambia de dominio
+  const BACKEND_URL = "https://backend-jjxcapital-orig.vercel.app";
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user) {
@@ -149,42 +152,51 @@ const Dashboard = ({ onOpenProfile }) => {
   };
 
   // ===== Guardar las claves (ahora vía backend seguro) =====
-const saveBinanceKeys = async () => {
-  if (!user || !user.uid) {
-    alert("Debes iniciar sesión para guardar tus claves.");
-    return;
-  }
-  if (!binanceApiKey || !binanceApiSecret) {
-    alert("Por favor completa API Key y API Secret.");
-    return;
-  }
-
-  setKeysSaving(true);
-  try {
-    const res = await fetch("/api/save-binance-keys", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: user.uid,
-        apiKey: binanceApiKey.trim(),
-        apiSecret: binanceApiSecret.trim(),
-      }),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      alert("✅ Claves guardadas correctamente en el backend.");
-    } else {
-      console.error("Error guardando claves:", data);
-      alert("❌ Error guardando las claves. Revisa la consola.");
+  const saveBinanceKeys = async () => {
+    if (!user || !user.uid) {
+      alert("Debes iniciar sesión para guardar tus claves.");
+      return;
     }
-  } catch (err) {
-    console.error("Error fetch save-binance-keys:", err);
-    alert("Error de red al guardar claves.");
-  } finally {
-    setKeysSaving(false);
-  }
-};
+    if (!binanceApiKey || !binanceApiSecret) {
+      alert("Por favor completa API Key y API Secret.");
+      return;
+    }
+
+    setKeysSaving(true);
+    try {
+      // Usamos la URL absoluta del backend para evitar problemas de CORS / rutas
+      const res = await fetch(`${BACKEND_URL}/api/save-binance-keys`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.uid,
+          apiKey: binanceApiKey.trim(),
+          apiSecret: binanceApiSecret.trim(),
+        }),
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = null;
+      }
+
+      if (res.ok) {
+        alert("✅ Claves guardadas correctamente en el backend.");
+      } else {
+        console.error("Error guardando claves (backend):", res.status, data);
+        // Mostramos mensaje útil
+        const msg = data?.error || data?.message || `Código ${res.status}`;
+        alert(`❌ Error guardando las claves: ${msg}. Revisa la consola para más detalles.`);
+      }
+    } catch (err) {
+      console.error("Error fetch save-binance-keys:", err);
+      alert("Error de red al guardar claves. Asegúrate de que tu backend esté desplegado y la URL BACKEND_URL sea correcta.");
+    } finally {
+      setKeysSaving(false);
+    }
+  };
 
   // ===== Sincronizar operaciones P2P mediante endpoint backend =====
   const handleSyncBinanceP2P = async () => {
@@ -194,7 +206,8 @@ const saveBinanceKeys = async () => {
     }
     setSyncing(true);
     try {
-      const res = await fetch("/api/sync-binance", {
+      // Llamamos al endpoint del backend (URL absoluta)
+      const res = await fetch(`${BACKEND_URL}/api/sync-binance-p2p`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.uid }),
@@ -210,10 +223,12 @@ const saveBinanceKeys = async () => {
 
       console.log("📤 Resultado sync P2P:", data);
       if (res.ok) {
-        const opsCount = (data?.deposits?.length || 0) + (data?.withdrawals?.length || 0) + (data?.operations || 0);
-        alert(`✅ Sincronización completada. ${opsCount} registros procesados (ver consola para detalle).`);
+        const opsCount = data?.operations || 0;
+        alert(`✅ Sincronización completada. ${opsCount} operaciones P2P sincronizadas.`);
       } else {
-        alert(`❌ Error sincronizando: ${data?.error || res.statusText}. Revisa la consola.`);
+        const msg = data?.error || data?.details || res.statusText;
+        console.error("Error sincronizando P2P:", res.status, data);
+        alert(`❌ Error sincronizando: ${msg}. Revisa la consola.`);
       }
     } catch (err) {
       console.error("Error sincronizando P2P:", err);
