@@ -1,4 +1,3 @@
-
 // Dashboard.js
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
@@ -41,9 +40,9 @@ const Dashboard = ({ onOpenProfile }) => {
   // ===== CONFIGURACIÓN BACKEND =====
   const BACKEND_URL = "https://backend-jjxcapital-orig.vercel.app";
   const ENDPOINTS = {
-    SAVE_KEYS: `${BACKEND_URL}/api/save-binance-keys`,
-    VERIFY_KEYS: `${BACKEND_URL}/api/verify-binance-keys`,
-    SYNC_P2P: `${BACKEND_URL}/api/sync-binance-p2p`,
+    SAVE_KEYS: `${BACKEND_URL}/controllers/saveBinanceKeys`,
+    VERIFY_KEYS: `${BACKEND_URL}/controllers/verifyBinanceKeys`,
+    SYNC_P2P: `${BACKEND_URL}/controllers/syncBinance`,
     CREATE_PAYMENT: `${BACKEND_URL}/api/create-payment`
   };
 
