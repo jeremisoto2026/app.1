@@ -1,21 +1,19 @@
-// Dashboard.js - VERSIÓN CORREGIDA CON ENDPOINTS EXACTOS
+// Dashboard.js - VERSIÓN FINAL CON ENDPOINTS EXACTOS
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 
-// Importación de iconos (puedes usar emojis como fallback)
-const RocketLaunchIcon = ({ className }) => <span className={className}>🚀</span>;
+// Iconos simplificados
 const CheckBadgeIcon = ({ className }) => <span className={className}>✅</span>;
-const ArrowTrendingUpIcon = ({ className }) => <span className={className}>📈</span>;
-const CurrencyDollarIcon = ({ className }) => <span className={className}>💵</span>;
-const ChartBarIcon = ({ className }) => <span className={className}>📊</span>;
-const UserIcon = ({ className }) => <span className={className}>👤</span>;
 const ArrowsRightLeftIcon = ({ className }) => <span className={className}>🔄</span>;
-const CalendarDaysIcon = ({ className }) => <span className={className}>📅</span>;
+const ArrowPathIcon = ({ className }) => <span className={className}>🔄</span>;
+const UserIcon = ({ className }) => <span className={className}>👤</span>;
+const ChartBarIcon = ({ className }) => <span className={className}>📊</span>;
+const CurrencyDollarIcon = ({ className }) => <span className={className}>💵</span>;
+const ArrowTrendingUpIcon = ({ className }) => <span className={className}>📈</span>;
 const BoltIcon = ({ className }) => <span className={className}>⚡</span>;
 const XMarkIcon = ({ className }) => <span className={className}>❌</span>;
-const ArrowPathIcon = ({ className }) => <span className={className}>🔄</span>;
 
 const Dashboard = ({ onOpenProfile }) => {
   const { user } = useAuth();
@@ -35,14 +33,12 @@ const Dashboard = ({ onOpenProfile }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [showKeyForm, setShowKeyForm] = useState(false);
 
-  // CONFIGURACIÓN EXACTA DE ENDPOINTS BASADA EN TUS RUTAS
+  // ENDPOINTS EXACTOS según tu configuración
   const BACKEND_URL = "https://backend-jjxcapital-orig.vercel.app";
-  
-  // ENDPOINTS EXACTOS según tu archivo binanceRoutes.js
   const ENDPOINTS = {
-    VERIFY_KEYS: `${BACKEND_URL}/verify-binance-keys`,
-    SAVE_KEYS: `${BACKEND_URL}/save-binance-keys`, 
-    SYNC_P2P: `${BACKEND_URL}/sync-binance-p2p`
+    VERIFY_KEYS: `${BACKEND_URL}/api/verify-binance-keys`,
+    SAVE_KEYS: `${BACKEND_URL}/api/save-binance-keys`,
+    SYNC_P2P: `${BACKEND_URL}/api/sync-binance-p2p`
   };
 
   // Cargar datos del dashboard
@@ -103,12 +99,11 @@ const Dashboard = ({ onOpenProfile }) => {
     const checkConnection = async () => {
       if (!user) return;
       try {
-        // Verificar en Firestore
+        // Verificar en la colección binanceKeys (donde se guarda la máscara)
         const kdoc = await getDoc(doc(db, "binanceKeys", user.uid));
-        if (kdoc.exists() && kdoc.data().apiKey) {
+        if (kdoc.exists() && kdoc.data().apiKeyMasked) {
           setIsConnected(true);
-          const apiKey = kdoc.data().apiKey;
-          setBinanceApiKey("••••••••" + apiKey.slice(-4));
+          setBinanceApiKey(kdoc.data().apiKeyMasked); // Mostrar máscara
           setBinanceApiSecret("••••••••••••••••");
         }
       } catch (err) {
@@ -136,7 +131,7 @@ const Dashboard = ({ onOpenProfile }) => {
     try {
       console.log("🔐 Verificando claves con Binance...");
 
-      // 1. Verificar claves (endpoint exacto: /verify-binance-keys)
+      // 1. Verificar claves (según verifyBinanceKeys.js)
       const verifyResponse = await fetch(ENDPOINTS.VERIFY_KEYS, {
         method: "POST",
         headers: { 
@@ -149,22 +144,14 @@ const Dashboard = ({ onOpenProfile }) => {
         }),
       });
 
-      console.log("📡 Status verificación:", verifyResponse.status);
-      
-      let verifyData;
-      try {
-        verifyData = await verifyResponse.json();
-        console.log("✅ Respuesta verificación:", verifyData);
-      } catch (e) {
-        console.error("❌ Error parseando respuesta de verificación:", e);
-        throw new Error("Respuesta inválida del servidor");
+      const verifyData = await verifyResponse.json();
+      console.log("✅ Respuesta verificación:", verifyData);
+
+      if (!verifyResponse.ok || !verifyData.ok) {
+        throw new Error(verifyData.error || "Error verificando las claves");
       }
 
-      if (!verifyResponse.ok) {
-        throw new Error(verifyData.error || verifyData.message || "Error verificando claves");
-      }
-
-      // 2. Guardar claves (endpoint exacto: /save-binance-keys)
+      // 2. Guardar claves (según saveBinanceKeys.js)
       console.log("💾 Guardando claves en el backend...");
       const saveResponse = await fetch(ENDPOINTS.SAVE_KEYS, {
         method: "POST",
@@ -179,24 +166,17 @@ const Dashboard = ({ onOpenProfile }) => {
         }),
       });
 
-      console.log("📡 Status guardado:", saveResponse.status);
-      
-      let saveData;
-      try {
-        saveData = await saveResponse.json();
-        console.log("💾 Respuesta guardado:", saveData);
-      } catch (e) {
-        console.error("❌ Error parseando respuesta de guardado:", e);
-        throw new Error("Respuesta inválida del servidor");
-      }
+      const saveData = await saveResponse.json();
+      console.log("💾 Respuesta guardado:", saveData);
 
-      if (!saveResponse.ok) {
-        throw new Error(saveData.error || saveData.message || "Error guardando claves");
+      if (!saveResponse.ok || !saveData.ok) {
+        throw new Error(saveData.error || "Error guardando las claves");
       }
 
       // 3. Actualizar estado local
       setIsConnected(true);
-      setBinanceApiKey("••••••••" + binanceApiKey.trim().slice(-4));
+      // Mostrar máscara como lo hace el backend
+      setBinanceApiKey(`${binanceApiKey.trim().slice(0,6)}...${binanceApiKey.trim().slice(-6)}`);
       setBinanceApiSecret("••••••••••••••••");
       setShowKeyForm(false);
       
@@ -213,7 +193,7 @@ const Dashboard = ({ onOpenProfile }) => {
     }
   };
 
-  // Sincronizar P2P (endpoint exacto: /sync-binance-p2p)
+  // Sincronizar P2P (según syncBinance.js)
   const handleSyncBinanceP2P = async () => {
     if (!user) {
       alert("Debes iniciar sesión primero.");
@@ -240,23 +220,15 @@ const Dashboard = ({ onOpenProfile }) => {
         }),
       });
 
-      console.log("📡 Status sincronización:", response.status);
-      
-      let data;
-      try {
-        data = await response.json();
-        console.log("📊 Respuesta sincronización:", data);
-      } catch (e) {
-        console.error("❌ Error parseando respuesta de sincronización:", e);
-        throw new Error("Respuesta inválida del servidor");
-      }
+      const data = await response.json();
+      console.log("📊 Respuesta sincronización:", data);
 
-      if (response.ok) {
-        const opsCount = data.operationsSaved || data.count || data.operations || 0;
+      if (response.ok && data.ok) {
+        const opsCount = data.operationsSaved || 0;
         alert(`✅ Sincronización completada. ${opsCount} operaciones P2P sincronizadas.`);
         window.location.reload();
       } else {
-        throw new Error(data.error || data.message || "Error sincronizando");
+        throw new Error(data.error || data.details || "Error sincronizando");
       }
     } catch (error) {
       console.error("❌ Error sincronizando:", error);
@@ -272,6 +244,17 @@ const Dashboard = ({ onOpenProfile }) => {
 
     if (confirm("¿Estás seguro de que quieres desconectar Binance?")) {
       try {
+        // Limpiar en el backend enviando valores null
+        await fetch(ENDPOINTS.SAVE_KEYS, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.uid,
+            apiKey: null,
+            apiSecret: null,
+          }),
+        });
+
         // Limpiar estado local
         setIsConnected(false);
         setBinanceApiKey("");
@@ -286,17 +269,21 @@ const Dashboard = ({ onOpenProfile }) => {
     }
   };
 
-  // Mostrar/ocultar formulario de claves
+  // Mostrar/ocultar formulario
   const handleShowKeyForm = () => {
     setShowKeyForm(true);
-    setBinanceApiKey("");
+    setBinanceApiKey(""); // Limpiar para nueva entrada
     setBinanceApiSecret("");
   };
 
   const handleCancelKeyForm = () => {
     setShowKeyForm(false);
     if (isConnected) {
-      setBinanceApiKey("••••••••" + binanceApiKey.slice(-4));
+      // Restaurar máscara
+      const kdoc = getDoc(doc(db, "binanceKeys", user.uid));
+      if (kdoc.exists()) {
+        setBinanceApiKey(kdoc.data().apiKeyMasked);
+      }
       setBinanceApiSecret("••••••••••••••••");
     } else {
       setBinanceApiKey("");
@@ -382,7 +369,6 @@ const Dashboard = ({ onOpenProfile }) => {
 
         {/* Métricas principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-          {/* Tarjeta: Total Operaciones */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-purple-500/20">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Total Operaciones</h3>
@@ -392,7 +378,6 @@ const Dashboard = ({ onOpenProfile }) => {
             <p className="text-sm text-gray-500">Operaciones realizadas</p>
           </div>
 
-          {/* Tarjeta: Ganancia USDT */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-purple-500/20">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Ganancia USDT</h3>
@@ -402,7 +387,6 @@ const Dashboard = ({ onOpenProfile }) => {
             <p className="text-sm text-gray-500">Balance total en USDT</p>
           </div>
 
-          {/* Tarjeta: Tasa de Éxito */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-purple-500/20">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Tasa de Éxito</h3>
@@ -412,7 +396,6 @@ const Dashboard = ({ onOpenProfile }) => {
             <p className="text-sm text-gray-500">Operaciones exitosas</p>
           </div>
 
-          {/* Tarjeta: Rendimiento Mensual */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-purple-500/20">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Rendimiento Mensual</h3>
@@ -423,7 +406,7 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
         </div>
 
-        {/* SECCIÓN BINANCE P2P - CORREGIDA */}
+        {/* SECCIÓN BINANCE P2P - COMPLETAMENTE FUNCIONAL */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-yellow-500/30 mb-8">
           <h2 className="text-lg font-semibold mb-4 text-yellow-400 flex items-center gap-2">
             <ArrowsRightLeftIcon className="h-6 w-6" /> Conectar Binance P2P
@@ -480,7 +463,7 @@ const Dashboard = ({ onOpenProfile }) => {
               <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
                 <p className="text-yellow-400 text-sm font-medium">🔒 Conexión Segura</p>
                 <p className="text-gray-300 text-sm mt-1">
-                  Tus claves de Binance se almacenan de forma segura en el backend.
+                  Tus claves de Binance se almacenan de forma segura en el backend con encriptación AES-256-GCM.
                 </p>
               </div>
 
@@ -534,6 +517,7 @@ const Dashboard = ({ onOpenProfile }) => {
 
               <div className="text-xs text-gray-500 mt-2">
                 <p>📋 Crea una API Key en Binance con permisos de <strong>solo lectura</strong> para mayor seguridad.</p>
+                <p>🔐 Las claves se encriptan con AES-256-GCM en el backend</p>
               </div>
             </div>
           )}
