@@ -14,7 +14,6 @@ import {
   XMarkIcon,
   SparklesIcon,
   ShieldCheckIcon,
-  ClockIcon,
   ChartPieIcon
 } from "@heroicons/react/24/outline";
 
@@ -37,6 +36,15 @@ const PremiumChart = ({ data, positive }) => {
   const maxValue = Math.max(...chartData);
   const minValue = Math.min(...chartData);
 
+  // Generar puntos para el path del SVG
+  const points = chartData.map((value, index) => {
+    const x = (index / (chartData.length - 1)) * 360;
+    const y = 200 - ((value - minValue) / (maxValue - minValue)) * 180;
+    return `${x},${y}`;
+  });
+
+  const pathData = `M0,${200 - ((chartData[0] - minValue) / (maxValue - minValue)) * 180} L${points.join(' L')}`;
+
   return (
     <div className="relative h-72 w-full">
       {/* Eje Y */}
@@ -51,9 +59,7 @@ const PremiumChart = ({ data, positive }) => {
         <svg viewBox="0 0 400 200" className="w-full h-full">
           {/* Línea de fondo */}
           <path
-            d={`M0,${200 - ((chartData[0] - minValue) / (maxValue - minValue)) * 180} ${chartData.map((value, index) => 
-              `L${(index / (chartData.length - 1)) * 360},${200 - ((value - minValue) / (maxValue - minValue)) * 180}`
-            ).join(' ')}`}
+            d={pathData}
             stroke="rgba(255,255,255,0.1)"
             strokeWidth="2"
             fill="none"
@@ -61,9 +67,7 @@ const PremiumChart = ({ data, positive }) => {
           
           {/* Línea animada */}
           <path
-            d={`M0,${200 - ((chartData[0] - minValue) / (maxValue - minValue)) * 180} ${chartData.map((value, index) => 
-              `L${(index / (chartData.length - 1)) * 360},${200 - ((value - minValue) / (maxValue - minValue)) * 180}`
-            ).join(' ')}`}
+            d={pathData}
             stroke={positive ? "url(#premiumSuccess)" : "url(#premiumDanger)"}
             strokeWidth="3"
             fill="none"
@@ -239,10 +243,9 @@ const Dashboard = ({ onOpenProfile }) => {
 
           operations.forEach((op) => {
             const cryptoAmount = parseFloat(op.crypto_amount || 0);
-            const opDate =
-              op.timestamp && typeof op.timestamp.toDate === "function"
-                ? op.timestamp.toDate()
-                : new Date();
+            const opDate = op.timestamp && typeof op.timestamp.toDate === "function"
+              ? op.timestamp.toDate()
+              : new Date();
 
             if (op.operation_type === "Venta") {
               totalCryptoSold += cryptoAmount;
@@ -296,51 +299,59 @@ const Dashboard = ({ onOpenProfile }) => {
     setShowPaymentModal(true);
   };
 
-  const MetricCard = ({ title, value, icon: Icon, color, subtitle, trend, index }) => (
-    <div 
-      className="relative group cursor-pointer transform hover:scale-[1.02] transition-all duration-500"
-      onMouseEnter={() => setHoveredMetric(index)}
-      onMouseLeave={() => setHoveredMetric(null)}
-      style={{ transitionDelay: `${index * 100}ms` }}
-    >
-      {/* Efecto de fondo luminoso */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${color} rounded-3xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-500`}></div>
-      
-      {/* Tarjeta principal */}
-      <div className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/80 backdrop-blur-2xl rounded-2xl p-6 border border-purple-500/30 hover:border-purple-500/60 transition-all duration-500 overflow-hidden">
+  const MetricCard = ({ title, value, icon: Icon, color, subtitle, trend, index }) => {
+    const displayValue = typeof value === 'number' 
+      ? (title.includes('USDT') || title.includes('Rendimiento') || title.includes('Ganancia') 
+          ? `$${formatNumber(value)}` 
+          : value)
+      : value;
+
+    return (
+      <div 
+        className="relative group cursor-pointer transform hover:scale-[1.02] transition-all duration-500"
+        onMouseEnter={() => setHoveredMetric(index)}
+        onMouseLeave={() => setHoveredMetric(null)}
+        style={{ transitionDelay: `${index * 100}ms` }}
+      >
+        {/* Efecto de fondo luminoso */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${color} rounded-3xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-500`}></div>
         
-        {/* Efecto de borde luminoso */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        
-        <div className="flex items-center justify-between mb-4 relative z-10">
-          <h3 className="text-gray-300 font-semibold text-sm uppercase tracking-wider">{title}</h3>
-          <div className={`p-3 rounded-xl bg-gradient-to-br ${color} shadow-2xl transform group-hover:scale-110 transition-transform duration-300`}>
-            <Icon className="h-5 w-5 text-white" />
+        {/* Tarjeta principal */}
+        <div className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/80 backdrop-blur-2xl rounded-2xl p-6 border border-purple-500/30 hover:border-purple-500/60 transition-all duration-500 overflow-hidden">
+          
+          {/* Efecto de borde luminoso */}
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <h3 className="text-gray-300 font-semibold text-sm uppercase tracking-wider">{title}</h3>
+            <div className={`p-3 rounded-xl bg-gradient-to-br ${color} shadow-2xl transform group-hover:scale-110 transition-transform duration-300`}>
+              <Icon className="h-5 w-5 text-white" />
+            </div>
           </div>
+          
+          <p className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2 leading-tight">
+            {displayValue}
+          </p>
+          
+          <div className="flex items-center justify-between relative z-10">
+            <span className="text-gray-400 text-sm font-medium">{subtitle}</span>
+            {trend && (
+              <span className={`text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm ${
+                trend.positive 
+                  ? "bg-green-500/20 text-green-300 border border-green-500/30" 
+                  : "bg-red-500/20 text-red-300 border border-red-500/30"
+              }`}>
+                {trend.positive ? "↗" : "↘"} {trend.value}
+              </span>
+            )}
+          </div>
+          
+          {/* Efecto de partículas al hover */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         </div>
-        
-        <p className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2 leading-tight">
-          {typeof value === 'number' ? (title.includes('USDT') ? `$${formatNumber(value)}` : value) : value}
-        </p>
-        
-        <div className="flex items-center justify-between relative z-10">
-          <span className="text-gray-400 text-sm font-medium">{subtitle}</span>
-          {trend && (
-            <span className={`text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm ${
-              trend.positive 
-                ? "bg-green-500/20 text-green-300 border border-green-500/30" 
-                : "bg-red-500/20 text-red-300 border border-red-500/30"
-            }`}>
-              {trend.positive ? "↗" : "↘"} {trend.value}
-            </span>
-          )}
-        </div>
-        
-        {/* Efecto de partículas al hover */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Modal de Pagos (sin modificar)
   const PaymentModal = () => {
@@ -367,7 +378,6 @@ const Dashboard = ({ onOpenProfile }) => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-6 border-2 border-purple-500/30 max-w-md w-full relative">
-          {/* Botón de cerrar */}
           <button 
             onClick={() => setShowPaymentModal(false)}
             className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -375,7 +385,6 @@ const Dashboard = ({ onOpenProfile }) => {
             <XMarkIcon className="h-6 w-6" />
           </button>
 
-          {/* Header del modal */}
           <div className="text-center mb-6">
             <RocketLaunchIcon className="h-12 w-12 text-purple-500 mx-auto mb-3" />
             <h3 className="text-xl font-bold text-white">{plan?.name}</h3>
@@ -390,7 +399,6 @@ const Dashboard = ({ onOpenProfile }) => {
             )}
           </div>
 
-          {/* Características del plan */}
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-300 mb-3">Características incluidas:</h4>
             <ul className="space-y-2">
@@ -403,7 +411,6 @@ const Dashboard = ({ onOpenProfile }) => {
             </ul>
           </div>
 
-          {/* Métodos de pago */}
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-300 mb-3">Métodos de pago</h4>
             <div className="grid grid-cols-1 gap-3">
@@ -419,7 +426,6 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
           </div>
 
-          {/* Información adicional */}
           <div className="text-center text-xs text-gray-400">
             <p>Pago seguro • Cancelación en cualquier momento</p>
           </div>
@@ -589,7 +595,10 @@ const Dashboard = ({ onOpenProfile }) => {
             icon={CurrencyDollarIcon}
             color="from-green-500 to-emerald-500"
             subtitle="Balance en USDT"
-            trend={{ positive: totalProfitUsdt >= 0, value: `${totalProfitUsdt >= 0 ? '+' : ''}$${formatNumber(Math.abs(totalProfitUsdt))}` }}
+            trend={{ 
+              positive: totalProfitUsdt >= 0, 
+              value: `${totalProfitUsdt >= 0 ? '+' : ''}$${formatNumber(Math.abs(totalProfitUsdt))}` 
+            }}
             index={1}
           />
           
@@ -608,7 +617,10 @@ const Dashboard = ({ onOpenProfile }) => {
             icon={ArrowTrendingUpIcon}
             color="from-amber-500 to-orange-500"
             subtitle="Último mes"
-            trend={{ positive: monthlyPerformance >= 0, value: `${monthlyPerformance >= 0 ? '+' : ''}$${formatNumber(Math.abs(monthlyPerformance))}` }}
+            trend={{ 
+              positive: monthlyPerformance >= 0, 
+              value: `${monthlyPerformance >= 0 ? '+' : ''}$${formatNumber(Math.abs(monthlyPerformance))}` 
+            }}
             index={3}
           />
         </div>
@@ -670,7 +682,7 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
         </div>
 
-        {/* Sección: Planes Premium - Diseño ultra premium */}
+        {/* Sección: Planes Premium */}
         <div className="relative bg-gradient-to-br from-gray-900/50 to-gray-800/30 backdrop-blur-2xl rounded-3xl p-8 border border-purple-500/30 mb-8 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
@@ -771,33 +783,18 @@ const Dashboard = ({ onOpenProfile }) => {
               JJXCAPITAL<span className="text-yellow-400">⚡</span>
             </div>
             <div className="w-1 h-1 bg-gray-600 rounded-full"></div>
-            <-600 rounded-full"></div>
-            <div className="flexdiv className="flex items items-center gap-2 text-sm text-gray-400">
-             -center gap-2 text-sm text-gray-400">
-              <Sh <ShieldCheckIcon className="h-ieldCheckIcon className="h-4 w4 w--4 text-green-400" />
-4 text-green-400" />
-                           Plataforma seg Plataforma segura y encriptura y encriptada
-ada
-            </            </divdiv>
->
-                   </div </div>
-          <p className="text>
-          <p className="text-gray-500 text-sm">-gray-500 text-sm">© {© {new Date().getFullYear()}new Date().getFullYear()} JJX JJXCAPITAL⚡ • Sistema premium de trading avanzado</p>
-CAPITAL⚡ • Sistema premium de trading avanzado</p>
-        </        </div>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <ShieldCheckIcon className="h-4 w-4 text-green-400" />
+              Plataforma segura y encriptada
+            </div>
+          </div>
+          <p className="text-gray-500 text-sm">© {new Date().getFullYear()} JJXCAPITAL⚡ • Sistema premium de trading avanzado</p>
+        </div>
       </main>
-
-div>
-      </      <PaymentModal />
-    </divmain>
 
       <PaymentModal />
     </div>
- >
   );
-};
-
- );
 };
 
 export default Dashboard;
