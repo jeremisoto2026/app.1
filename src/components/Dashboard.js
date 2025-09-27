@@ -14,7 +14,6 @@ import {
   FaTimes,
   FaStar,
   FaShieldAlt,
-  FaPieChart,
   FaExchangeAlt,
   FaFileExcel,
   FaFilePdf,
@@ -22,7 +21,9 @@ import {
   FaCrown,
   FaAward,
   FaSync,
-  FaDownload
+  FaDownload,
+  FaChartArea,
+  FaProjectDiagram
 } from 'react-icons/fa';
 
 // Componente de gráfica premium mejorada
@@ -509,7 +510,7 @@ const Dashboard = ({ onOpenProfile }) => {
                 {[
                   { id: 'overview', label: 'Resumen', icon: FaChartBar },
                   { id: 'performance', label: 'Rendimiento', icon: FaChartLine },
-                  { id: 'reports', label: 'Reportes', icon: FaPieChart }
+                  { id: 'reports', label: 'Reportes', icon: FaChartArea } // Cambiado de FaPieChart a FaChartArea
                 ].map((tab) => (
                   <button
                     key={tab.id}
