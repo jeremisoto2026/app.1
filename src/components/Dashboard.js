@@ -1,167 +1,18 @@
 // Dashboard.js
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  FaRocket,
-  FaCheck,
-  FaChartLine,
-  FaMoneyBillWave,
-  FaChartBar,
-  FaUser,
-  FaCalendar,
-  FaTimes,
-  FaStar,
-  FaShieldAlt,
-  FaExchangeAlt,
-  FaFileExcel,
-  FaFilePdf,
-  FaCalculator,
-  FaCrown,
-  FaAward,
-  FaSync,
-  FaDownload,
-  FaChartArea,
-  FaProjectDiagram
-} from 'react-icons/fa';
-
-// Componente de gráfica premium mejorada
-const PremiumChart = ({ data, positive }) => {
-  const [animationProgress, setAnimationProgress] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimationProgress(1);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const chartData = positive
-    ? [65, 78, 90, 82, 95, 110, 105, 120, 135, 125, 140, 130]
-    : [100, 85, 78, 92, 75, 68, 82, 70, 65, 80, 72, 60];
-
-  const maxValue = Math.max(...chartData);
-  const minValue = Math.min(...chartData);
-
-  const points = chartData.map((value, index) => {
-    const x = (index / (chartData.length - 1)) * 360;
-    const y = 200 - ((value - minValue) / (maxValue - minValue)) * 180;
-    return `${x},${y}`;
-  });
-
-  const pathData = `M0,${200 - ((chartData[0] - minValue) / (maxValue - minValue)) * 180} L${points.join(' L')}`;
-
-  return (
-    <div className="relative h-64 w-full">
-      <svg viewBox="0 0 400 200" className="w-full h-full">
-        <path
-          d={pathData}
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth="2"
-          fill="none"
-        />
-        
-        <path
-          d={pathData}
-          stroke={positive ? "url(#premiumSuccess)" : "url(#premiumDanger)"}
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray="1000"
-          strokeDashoffset={1000 - (1000 * animationProgress)}
-          style={{ transition: 'stroke-dashoffset 2s ease-in-out' }}
-        />
-        
-        <defs>
-          <linearGradient id="premiumSuccess" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#8B5CF6" />
-            <stop offset="50%" stopColor="#06B6D4" />
-            <stop offset="100%" stopColor="#10B981" />
-          </linearGradient>
-          <linearGradient id="premiumDanger" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#EF4444" />
-            <stop offset="50%" stopColor="#F59E0B" />
-            <stop offset="100%" stopColor="#EC4899" />
-          </linearGradient>
-        </defs>
-      </svg>
-
-      {chartData.map((value, index) => (
-        <div
-          key={index}
-          className="absolute w-4 h-4 rounded-full border-4 border-white shadow-lg transform -translate-x-2 -translate-y-2"
-          style={{
-            left: `${(index / (chartData.length - 1)) * 100}%`,
-            top: `${100 - ((value - minValue) / (maxValue - minValue)) * 90}%`,
-            opacity: animationProgress,
-            transition: `all 0.5s ${index * 0.1}s`,
-            background: positive ? '#8B5CF6' : '#EF4444',
-            borderColor: positive ? 'rgba(139, 92, 246, 0.8)' : 'rgba(239, 68, 68, 0.8)'
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-// Componente de donut chart premium
-const PremiumDonutChart = ({ successRate }) => {
-  const [animationProgress, setAnimationProgress] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimationProgress(1);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const radius = 60;
-  const circumference = 2 * Math.PI * radius;
-  const successStroke = (successRate / 100) * circumference * animationProgress;
-
-  return (
-    <div className="relative flex items-center justify-center py-6">
-      <svg width="160" height="160" className="transform -rotate-90 drop-shadow-2xl">
-        <circle
-          cx="80"
-          cy="80"
-          r={radius}
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth="12"
-          fill="none"
-        />
-        
-        <circle
-          cx="80"
-          cy="80"
-          r={radius}
-          stroke="url(#donutPremium)"
-          strokeWidth="12"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference - successStroke}
-          strokeLinecap="round"
-          style={{ transition: 'stroke-dashoffset 1.5s ease-out' }}
-        />
-
-        <defs>
-          <linearGradient id="donutPremium" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#8B5CF6" />
-            <stop offset="100%" stopColor="#06B6D4" />
-          </linearGradient>
-        </defs>
-      </svg>
-      
-      <div className="absolute text-center">
-        <div className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent drop-shadow-lg">
-          {Math.round(successRate * animationProgress)}%
-        </div>
-        <div className="text-gray-400 text-sm mt-1 font-medium">Tasa de Éxito</div>
-      </div>
-    </div>
-  );
-};
+  RocketLaunchIcon,
+  CheckBadgeIcon,
+  ArrowTrendingUpIcon,
+  CurrencyDollarIcon,
+  ChartBarIcon,
+  UserIcon,
+  CalendarDaysIcon,
+  XMarkIcon
+} from "@heroicons/react/24/outline";
 
 const Dashboard = ({ onOpenProfile }) => {
   const { user } = useAuth();
@@ -174,7 +25,6 @@ const Dashboard = ({ onOpenProfile }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [hoveredMetric, setHoveredMetric] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -207,9 +57,10 @@ const Dashboard = ({ onOpenProfile }) => {
 
           operations.forEach((op) => {
             const cryptoAmount = parseFloat(op.crypto_amount || 0);
-            const opDate = op.timestamp && typeof op.timestamp.toDate === "function"
-              ? op.timestamp.toDate()
-              : new Date();
+            const opDate =
+              op.timestamp && typeof op.timestamp.toDate === "function"
+                ? op.timestamp.toDate()
+                : new Date();
 
             if (op.operation_type === "Venta") {
               totalCryptoSold += cryptoAmount;
@@ -227,20 +78,22 @@ const Dashboard = ({ onOpenProfile }) => {
           });
 
           const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
-          const monthlyPerformanceCalc = monthlyCryptoBought - monthlyCryptoSold;
+          const monthlyPerformanceCalc =
+            monthlyCryptoBought - monthlyCryptoSold;
+
           const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
 
           setTotalProfitUsdt(totalProfitUsdtCalc);
           setSuccessRate(successRateCalc);
           setMonthlyPerformance(monthlyPerformanceCalc);
+          setLoading(false);
         } else {
           setTotalOperations(0);
           setTotalProfitUsdt(0);
           setSuccessRate(0);
           setMonthlyPerformance(0);
+          setLoading(false);
         }
-        
-        setLoading(false);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Error al cargar los datos del dashboard.");
@@ -251,68 +104,21 @@ const Dashboard = ({ onOpenProfile }) => {
     fetchData();
   }, [user]);
 
-  const formatNumber = useCallback((num) => {
+  // Función para formatear números con separadores de miles
+  const formatNumber = (num) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(num);
-  }, []);
+  };
 
+  // Función para manejar la selección de plan
   const handleSelectPlan = (planType) => {
     setSelectedPlan(planType);
     setShowPaymentModal(true);
   };
 
-  const MetricCard = ({ title, value, icon: Icon, color, subtitle, trend, index }) => {
-    const displayValue = typeof value === 'number' 
-      ? (title.includes('USDT') || title.includes('Rendimiento') || title.includes('Ganancia') 
-          ? `$${formatNumber(value)}` 
-          : value)
-      : value;
-
-    return (
-      <div 
-        className="relative group cursor-pointer transform hover:scale-[1.02] transition-all duration-500"
-        onMouseEnter={() => setHoveredMetric(index)}
-        onMouseLeave={() => setHoveredMetric(null)}
-        style={{ transitionDelay: `${index * 100}ms` }}
-      >
-        <div className={`absolute inset-0 bg-gradient-to-br ${color} rounded-3xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-500`}></div>
-        
-        <div className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/80 backdrop-blur-2xl rounded-2xl p-6 border border-purple-500/30 hover:border-purple-500/60 transition-all duration-500 overflow-hidden">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          
-          <div className="flex items-center justify-between mb-4 relative z-10">
-            <h3 className="text-gray-300 font-semibold text-sm uppercase tracking-wider">{title}</h3>
-            <div className={`p-3 rounded-xl bg-gradient-to-br ${color} shadow-2xl transform group-hover:scale-110 transition-transform duration-300`}>
-              <Icon className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          
-          <p className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2 leading-tight">
-            {displayValue}
-          </p>
-          
-          <div className="flex items-center justify-between relative z-10">
-            <span className="text-gray-400 text-sm font-medium">{subtitle}</span>
-            {trend && (
-              <span className={`text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm ${
-                trend.positive 
-                  ? "bg-green-500/20 text-green-300 border border-green-500/30" 
-                  : "bg-red-500/20 text-red-300 border border-red-500/30"
-              }`}>
-                {trend.positive ? "↗" : "↘"} {trend.value}
-              </span>
-            )}
-          </div>
-          
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        </div>
-      </div>
-    );
-  };
-
-  // Modal de Pagos (sin modificar)
+  // Componente del Modal de Pagos
   const PaymentModal = () => {
     if (!showPaymentModal) return null;
 
@@ -337,15 +143,17 @@ const Dashboard = ({ onOpenProfile }) => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-6 border-2 border-purple-500/30 max-w-md w-full relative">
+          {/* Botón de cerrar */}
           <button 
             onClick={() => setShowPaymentModal(false)}
             className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
           >
-            <FaTimes className="h-6 w-6" />
+            <XMarkIcon className="h-6 w-6" />
           </button>
 
+          {/* Header del modal */}
           <div className="text-center mb-6">
-            <FaRocket className="h-12 w-12 text-purple-500 mx-auto mb-3" />
+            <RocketLaunchIcon className="h-12 w-12 text-purple-500 mx-auto mb-3" />
             <h3 className="text-xl font-bold text-white">{plan?.name}</h3>
             <div className="flex items-center justify-center gap-2 mt-2">
               <span className="text-3xl font-bold text-white">{plan?.price}</span>
@@ -358,18 +166,20 @@ const Dashboard = ({ onOpenProfile }) => {
             )}
           </div>
 
+          {/* Características del plan */}
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-300 mb-3">Características incluidas:</h4>
             <ul className="space-y-2">
               {plan?.features?.map((feature, index) => (
                 <li key={index} className="flex items-center text-sm text-gray-300">
-                  <FaCheck className="h-4 w-4 text-green-400 mr-2" />
+                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
                   {feature}
                 </li>
               ))}
             </ul>
           </div>
 
+          {/* Métodos de pago */}
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-300 mb-3">Métodos de pago</h4>
             <div className="grid grid-cols-1 gap-3">
@@ -385,6 +195,7 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
           </div>
 
+          {/* Información adicional */}
           <div className="text-center text-xs text-gray-400">
             <p>Pago seguro • Cancelación en cualquier momento</p>
           </div>
@@ -397,10 +208,7 @@ const Dashboard = ({ onOpenProfile }) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black flex items-center justify-center">
         <div className="text-center">
-          <div className="relative inline-block">
-            <div className="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
-            <FaStar className="h-8 w-8 text-purple-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
-          </div>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
           <div className="flex justify-center mb-2">
             <div className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
               JJXCAPITAL<span className="text-yellow-400">⚡</span>
@@ -423,7 +231,9 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
           </div>
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-900/20 rounded-full mb-4">
-            <FaShieldAlt className="w-8 h-8 text-red-400" />
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
           </div>
           <h2 className="text-red-400 text-xl font-semibold mb-2">Error</h2>
           <p className="text-gray-300 mb-6">{error}</p>
@@ -446,365 +256,378 @@ const Dashboard = ({ onOpenProfile }) => {
     );
   }
 
-  const premiumFeatures = [
-    {
-      icon: <FaMoneyBillWave className="text-3xl" />,
-      title: "Registro Instantáneo P2P",
-      description: "Registra tus operaciones de arbitraje en segundos",
-      gradient: "from-purple-600 to-blue-600",
-      stats: "<30s por operación"
-    },
-    {
-      icon: <FaCalculator className="text-3xl" />,
-      title: "Simulador de Arbitraje",
-      description: "Calcula ganancias potenciales antes de operar",
-      gradient: "from-blue-600 to-cyan-600",
-      stats: "99.9% precisión"
-    },
-    {
-      icon: <FaFileExcel className="text-3xl" />,
-      title: "Reportes Profesionales",
-      description: "Exporta a Excel y PDF con todos tus comprobantes",
-      gradient: "from-cyan-600 to-purple-600",
-      stats: "2 formatos disponibles"
-    },
-    {
-      icon: <FaChartLine className="text-3xl" />,
-      title: "Dashboard Avanzado",
-      description: "Métricas en tiempo real y análisis de performance",
-      gradient: "from-purple-600 to-pink-600",
-      stats: "24/7 monitoreo"
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white overflow-x-hidden">
-      {/* Fondos animados premium */}
-      <div className="fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/5 via-transparent to-transparent"></div>
-      </div>
-
-      {/* Header premium */}
-      <header className="relative z-20 border-b border-purple-500/20 bg-black/40 backdrop-blur-2xl sticky top-0">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-3 rounded-2xl shadow-2xl shadow-purple-500/30">
-                  <FaRocket className="h-7 w-7 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-black"></div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                  JJXCAPITAL<span className="text-yellow-400">⚡</span>
-                </div>
-                <div className="text-xs text-gray-400 font-medium">ELITE TRADING PLATFORM</div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white">
+      {/* Header con navegación */}
+      <header className="border-b border-purple-500/20 bg-black/30 backdrop-blur-xl sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg mr-3 shadow-lg shadow-purple-500/30">
+              <RocketLaunchIcon className="h-6 w-6 text-white" />
             </div>
-            
-            <div className="flex items-center gap-6">
-              <nav className="hidden lg:flex gap-1 bg-black/30 p-2 rounded-2xl border border-purple-500/10 backdrop-blur-sm">
-                {[
-                  { id: 'overview', label: 'Resumen', icon: FaChartBar },
-                  { id: 'performance', label: 'Rendimiento', icon: FaChartLine },
-                  { id: 'reports', label: 'Reportes', icon: FaChartArea } // Cambiado de FaPieChart a FaChartArea
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                      activeTab === tab.id 
-                        ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white shadow-lg shadow-purple-500/20 border border-purple-500/30' 
-                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    <tab.icon className="h-4 w-4" />
-                    {tab.label}
-                  </button>
-                ))}
-              </nav>
-              
-              <button
-                onClick={onOpenProfile}
-                className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-purple-500/40 hover:border-purple-400 transition-all duration-300 group"
+            <div className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              JJXCAPITAL<span className="text-yellow-400">⚡</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="hidden md:flex space-x-1 bg-gray-900/50 p-1 rounded-lg border border-purple-500/10">
+              <button 
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'overview' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveTab('overview')}
               >
-                {user?.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt="Foto de perfil"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                    <FaUser className="w-6 h-6 text-white" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                Resumen
+              </button>
+              <button 
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'performance' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveTab('performance')}
+              >
+                Rendimiento
+              </button>
+              <button 
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'reports' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveTab('reports')}
+              >
+                Reportes
               </button>
             </div>
+            
+            <button
+              onClick={onOpenProfile}
+              className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500/50 hover:border-purple-400 transition-all duration-300 group"
+            >
+              {user?.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt="Foto de perfil"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-800 flex items-center justify-center text-purple-400 group-hover:bg-purple-950 transition-colors duration-300">
+                  <UserIcon className="w-5 h-5" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 transition-all duration-300"></div>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 container mx-auto px-6 py-8">
-        {/* Header con bienvenida premium */}
-        <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl border border-purple-500/20 mb-6">
-            <FaStar className="h-5 w-5 text-purple-400" />
-            <span className="text-sm font-semibold text-gray-300">DASHBOARD PREMIUM</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Bienvenido, <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              {user?.displayName || user?.email?.split('@')[0] || 'Inversor'}
-            </span>
-          </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Tu centro de control para trading inteligente. Monitorea, analiza y optimiza tus estrategias.
-          </p>
+      <main className="container mx-auto px-4 py-6">
+        {/* Encabezado con bienvenida */}
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">
+            Bienvenido, <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">{user?.displayName || user?.email?.split('@')[0] || 'Inversor'}</span>
+          </h2>
+          <p className="text-gray-400">Tu dashboard premium de JJXCAPITAL⚡</p>
         </div>
 
         {/* Grid de Métricas principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          <MetricCard
-            title="Total Operaciones"
-            value={totalOperations}
-            icon={FaChartBar}
-            color="from-blue-500 to-cyan-500"
-            subtitle="Operaciones ejecutadas"
-            index={0}
-          />
-          
-          <MetricCard
-            title="Ganancia Total"
-            value={totalProfitUsdt}
-            icon={FaMoneyBillWave}
-            color="from-green-500 to-emerald-500"
-            subtitle="Balance en USDT"
-            trend={{ 
-              positive: totalProfitUsdt >= 0, 
-              value: `${totalProfitUsdt >= 0 ? '+' : ''}$${formatNumber(Math.abs(totalProfitUsdt))}` 
-            }}
-            index={1}
-          />
-          
-          <MetricCard
-            title="Tasa de Éxito"
-            value={`${successRate}%`}
-            icon={FaCheck}
-            color="from-purple-500 to-pink-500"
-            subtitle="Eficiencia operacional"
-            index={2}
-          />
-          
-          <MetricCard
-            title="Rendimiento 30D"
-            value={monthlyPerformance}
-            icon={FaChartLine}
-            color="from-amber-500 to-orange-500"
-            subtitle="Último mes"
-            trend={{ 
-              positive: monthlyPerformance >= 0, 
-              value: `${monthlyPerformance >= 0 ? '+' : ''}$${formatNumber(Math.abs(monthlyPerformance))}` 
-            }}
-            index={3}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {/* Tarjeta: Total Operaciones */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-400 font-medium">Total Operaciones</h3>
+              <div className="p-2 bg-blue-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <ChartBarIcon className="h-5 w-5 text-blue-400" />
+              </div>
+            </div>
+            <p className="text-2xl md:text-3xl font-bold mb-1">{totalOperations}</p>
+            <div className="flex items-center text-sm text-gray-500">
+              <span className="h-2 w-2 bg-blue-500 rounded-full mr-2"></span>
+              Operaciones realizadas
+            </div>
+          </div>
+
+          {/* Tarjeta: Ganancia USDT */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-400 font-medium">Ganancia USDT</h3>
+              <div className="p-2 bg-green-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <CurrencyDollarIcon className="h-5 w-5 text-green-400" />
+              </div>
+            </div>
+            <p className="text-2xl md:text-3xl font-bold mb-1">
+              ${formatNumber(totalProfitUsdt)}
+            </p>
+            <div className="flex items-center text-sm text-gray-500">
+              <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
+              Balance total en USDT
+            </div>
+          </div>
+
+          {/* Tarjeta: Tasa de Éxito */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-400 font-medium">Tasa de Éxito</h3>
+              <div className="p-2 bg-purple-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <CheckBadgeIcon className="h-5 w-5 text-purple-400" />
+              </div>
+            </div>
+            <div className="flex items-end">
+              <p className="text-2xl md:text-3xl font-bold mb-1">{successRate}%</p>
+              <div className="ml-3 text-xs px-2 py-1 rounded-full bg-purple-900/50 text-purple-300">
+                {successRate >= 50 ? "Excelente" : "En progreso"}
+              </div>
+            </div>
+            <div className="flex items-center text-sm text-gray-500">
+              <span className="h-2 w-2 bg-purple-500 rounded-full mr-2"></span>
+              Operaciones exitosas
+            </div>
+          </div>
+
+          {/* Tarjeta: Rendimiento Mensual */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-400 font-medium">Rendimiento Mensual</h3>
+              <div className="p-2 bg-amber-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <ArrowTrendingUpIcon className="h-5 w-5 text-amber-400" />
+              </div>
+            </div>
+            <p className="text-2xl md:text-3xl font-bold mb-1">
+              ${formatNumber(monthlyPerformance)}
+            </p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center text-sm text-gray-500">
+                <span className="h-2 w-2 bg-amber-500 rounded-full mr-2"></span>
+                Últimos 30 días
+              </div>
+              <span
+                className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                  monthlyPerformance >= 0
+                    ? "bg-green-900/30 text-green-400"
+                    : "bg-red-900/30 text-red-400"
+                }`}
+              >
+                {monthlyPerformance >= 0 ? "↗ Positivo" : "↘ Negativo"}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Sección de características premium y análisis */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-12">
-          {/* Características Premium */}
-          <div className="xl:col-span-2">
-            <div className="relative bg-gradient-to-br from-gray-900/60 to-gray-800/40 backdrop-blur-2xl rounded-3xl p-8 border border-purple-500/30 hover:border-purple-500/50 transition-all duration-500 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
+        {/* Sección de gráficos y análisis */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold">Rendimiento mensual</h2>
+              <button className="text-sm text-purple-400 hover:text-purple-300 flex items-center">
+                <CalendarDaysIcon className="h-4 w-4 mr-1" />
+                Seleccionar período
+              </button>
+            </div>
+            
+            {/* Gráfico simulado */}
+            <div className="h-64 relative">
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gray-700"></div>
+              <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-700"></div>
               
-              <div className="flex items-center justify-between mb-8 relative z-10">
-                <div>
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2">
-                    Herramientas Premium
-                  </h2>
-                  <p className="text-gray-400">Tecnología enterprise para tu operativa</p>
-                </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all duration-300 border border-purple-500/20">
-                  <FaSync className="h-4 w-4" />
-                  <span className="text-sm font-medium">Actualizar</span>
-                </button>
+              {/* Línea de gráfico */}
+              <div className="absolute bottom-8 left-10 right-10">
+                <svg viewBox="0 0 500 150" className="w-full h-40">
+                  <path 
+                    d="M0,100 C100,50 150,120 250,80 C350,40 400,110 500,70" 
+                    stroke={monthlyPerformance >= 0 ? "url(#greenGradient)" : "url(#redGradient)"} 
+                    strokeWidth="3" 
+                    fill="none" 
+                    strokeLinecap="round"
+                  />
+                  <defs>
+                    <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#4ADE80" />
+                      <stop offset="100%" stopColor="#06B6D4" />
+                    </linearGradient>
+                    <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#F87171" />
+                      <stop offset="100%" stopColor="#F59E0B" />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {premiumFeatures.map((feature, index) => (
-                  <div key={index} className="group relative bg-gradient-to-br from-gray-900/50 to-gray-800/30 rounded-2xl p-6 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500 cursor-pointer">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-                    
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                          {feature.icon}
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white mb-1">{feature.title}</h3>
-                          <p className="text-gray-300 text-sm">{feature.description}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-400">Performance</span>
-                        <span className="text-sm font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                          {feature.stats}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {/* Puntos de datos */}
+              <div className="absolute left-10 bottom-8 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
+              <div className="absolute left-1/3 bottom-12 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
+              <div className="absolute left-2/3 bottom-14 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
+              <div className="absolute right-10 bottom-16 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
             </div>
           </div>
           
-          {/* Análisis de Distribución */}
-          <div className="relative bg-gradient-to-br from-gray-900/60 to-gray-800/40 backdrop-blur-2xl rounded-3xl p-8 border border-purple-500/30 hover:border-purple-500/50 transition-all duration-500 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
+            <h2 className="text-lg font-semibold mb-6">Distribución de operaciones</h2>
             
-            <div className="mb-8 relative z-10">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2">
-                Análisis de Performance
-              </h2>
-              <p className="text-gray-400">Distribución de tus operaciones</p>
+            {/* Gráfico de donut simulado */}
+            <div className="relative h-48 flex items-center justify-center mb-4">
+              <div className="absolute w-36 h-36 rounded-full border-8 border-purple-500/20"></div>
+              <div className="absolute w-36 h-36 rounded-full border-8 border-purple-500 border-t-8 border-t-purple-500" style={{transform: 'rotate(calc(0.7 * 360deg))'}}></div>
+              <div className="absolute w-36 h-36 rounded-full border-8 border-blue-500 border-r-8 border-r-blue-500" style={{transform: 'rotate(calc(0.5 * 360deg))'}}></div>
+              
+              <div className="text-center">
+                <div className="text-2xl font-bold">{successRate}%</div>
+                <div className="text-sm text-gray-400">Éxito</div>
+              </div>
             </div>
             
-            <PremiumDonutChart successRate={successRate} />
-            
-            <div className="space-y-4 relative z-10 mt-8">
-              {[
-                { label: "Operaciones exitosas", value: `${successRate}%`, color: "from-purple-500 to-pink-500" },
-                { label: "Operaciones neutras", value: "20%", color: "from-cyan-500 to-blue-500" },
-                { label: "Operaciones en pérdida", value: "5%", color: "from-gray-500 to-gray-600" }
-              ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${item.color}`}></div>
-                    <span className="text-sm font-medium text-gray-300">{item.label}</span>
-                  </div>
-                  <span className="text-sm font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                    {item.value}
-                  </span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full bg-purple-500 mr-2"></div>
+                  <span className="text-sm">Operaciones exitosas</span>
                 </div>
-              ))}
+                <span className="text-sm font-medium">70%</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+                  <span className="text-sm">Operaciones neutras</span>
+                </div>
+                <span className="text-sm font-medium">20%</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full bg-gray-600 mr-2"></div>
+                  <span className="text-sm">Operaciones en pérdida</span>
+                </div>
+                <span className="text-sm font-medium">10%</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Sección: Planes Premium */}
-        <div className="relative bg-gradient-to-br from-gray-900/50 to-gray-800/30 backdrop-blur-2xl rounded-3xl p-8 border border-purple-500/30 mb-8 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
-          
-          <div className="text-center mb-12 relative z-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full border border-purple-500/30 mb-4">
-              <FaCrown className="h-4 w-4 text-purple-400" />
-              <span className="text-sm font-semibold text-gray-300">PLANES ELITE</span>
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Planes Premium JJXCAPITAL⚡</h2>
+              <p className="text-gray-400">Potencia tu estrategia de trading con nuestros planes exclusivos</p>
             </div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-4">
-              Potencia tu Trading
-            </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Accede a herramientas avanzadas y lleva tu estrategia al siguiente nivel
-            </p>
+            <RocketLaunchIcon className="h-8 w-8 text-purple-500" />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
-            {/* Plan Mensual */}
-            <div className="group relative bg-gradient-to-br from-gray-900/50 to-gray-800/40 rounded-2xl p-8 border border-purple-500/30 hover:border-purple-500/60 transition-all duration-500 cursor-pointer overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Card: Plan Premium Mensual */}
+            <div className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/30 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
               
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-white mb-2">Premium Mensual</h3>
-                    <p className="text-gray-400">Ideal para traders activos</p>
+                    <h3 className="text-lg font-semibold group-hover:text-purple-300 transition-colors">
+                      Plan Premium
+                    </h3>
+                    <p className="text-sm text-gray-400">Ideal para traders activos</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white">$13<span className="text-gray-400 text-lg">/mes</span></div>
+                    <p className="text-xl font-bold text-white">
+                      $13 <span className="text-sm text-gray-400">/mes</span>
+                    </p>
                   </div>
                 </div>
 
-                <div className="mb-8 space-y-4">
-                  {["Operaciones ilimitadas", "Exportaciones PDF/Excel", "Soporte prioritario 24/7", "Análisis técnico avanzado"].map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3 text-gray-300">
-                      <FaCheck className="h-5 w-5 text-green-400 flex-shrink-0" />
-                      {feature}
-                    </div>
-                  ))}
+                <div className="mb-6 text-sm text-gray-300">
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                      Operaciones ilimitadas
+                    </li>
+                    <li className="flex items-center">
+                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                      Exportaciones ilimitadas
+                    </li>
+                    <li className="flex items-center">
+                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                      Soporte prioritario
+                    </li>
+                  </ul>
                 </div>
                 
                 <button 
                   onClick={() => handleSelectPlan('monthly')}
-                  className="w-full py-4 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white font-bold rounded-xl transition-all duration-300 group-hover:shadow-lg border border-gray-600/50"
+                  className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/20"
                 >
-                  Comenzar Prueba
+                  Seleccionar plan
                 </button>
               </div>
             </div>
 
-            {/* Plan Anual - Destacado */}
-            <div className="group relative bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-2xl p-8 border-2 border-purple-500/50 hover:border-purple-500/80 transition-all duration-500 cursor-pointer overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10"></div>
-              <div className="absolute top-6 right-6">
-                <div className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full text-sm font-bold text-black shadow-lg">
-                  ⚡ MÁS POPULAR
-                </div>
+            {/* Card: Plan Premium Anual */}
+            <div className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/50 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">
+                MÁS POPULAR
               </div>
               
+              <div className="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+              
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-white mb-2">Premium Anual</h3>
-                    <p className="text-gray-300">Para traders profesionales</p>
+                    <h3 className="text-lg font-semibold group-hover:text-purple-300 transition-colors">
+                      Plan Premium Anual
+                    </h3>
+                    <p className="text-sm text-gray-400">Para traders serios</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white">$125<span className="text-gray-300 text-lg">/año</span></div>
-                    <div className="text-green-400 text-sm font-bold mt-1">Ahorra ~20%</div>
+                    <p className="text-xl font-bold text-white">
+                      $125 <span className="text-sm text-gray-400">/año</span>
+                    </p>
+                    <p className="text-xs text-green-400 font-semibold">Ahorra ~20%</p>
                   </div>
                 </div>
 
-                <div className="mb-8 space-y-4">
-                  {["Todo lo del plan mensual", "Alertas inteligentes", "Reportes executive", "API access", "Mentoría premium", "Webinars exclusivos"].map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3 text-gray-300">
-                      <FaCheck className="h-5 w-5 text-green-400 flex-shrink-0" />
-                      {feature}
-                    </div>
-                  ))}
+                <div className="mb-6 text-sm text-gray-300">
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                      Operaciones ilimitadas
+                    </li>
+                    <li className="flex items-center">
+                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                      Exportaciones ilimitadas
+                    </li>
+                    <li className="flex items-center">
+                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                      Soporte prioritario
+                    </li>
+                    <li className="flex items-center">
+                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                      Alertas personalizadas
+                    </li>
+                  </ul>
                 </div>
                 
                 <button 
                   onClick={() => handleSelectPlan('annual')}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/25 border border-purple-500/50"
+                  className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/30"
                 >
-                  💎 Comenzar Ahora
+                  Seleccionar plan
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer premium */}
-        <div className="text-center py-8 border-t border-purple-500/20">
-          <div className="flex justify-center items-center gap-4 mb-4">
-            <div className="text-xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+        {/* Footer o información adicional */}
+        <div className="text-center text-gray-500 text-sm pb-6">
+          <div className="flex justify-center items-center mb-2">
+            <div className="text-lg font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
               JJXCAPITAL<span className="text-yellow-400">⚡</span>
             </div>
-            <div className="w-1 h-1 bg-gray-600 rounded-full"></div>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <FaShieldAlt className="h-4 w-4 text-green-400" />
-              Plataforma segura y encriptada
-            </div>
           </div>
-          <p className="text-gray-500 text-sm">© {new Date().getFullYear()} JJXCAPITAL⚡ • Sistema premium de trading avanzado</p>
+          <p>© {new Date().getFullYear()} JJXCAPITAL⚡ • Plataforma premium de trading</p>
         </div>
       </main>
 
+      {/* Modal de Pagos */}
       <PaymentModal />
     </div>
   );
