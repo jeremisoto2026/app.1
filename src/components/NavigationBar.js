@@ -5,7 +5,6 @@ import {
   BoltIcon,
   DocumentTextIcon,
   ClockIcon,
-  UserIcon,
 } from '@heroicons/react/24/outline';
 
 const NavigationBar = ({ activeTab, onTabChange }) => {
@@ -34,11 +33,6 @@ const NavigationBar = ({ activeTab, onTabChange }) => {
       id: 'history', 
       icon: ClockIcon, 
       label: 'Historial'
-    },
-    { 
-      id: 'profile', 
-      icon: UserIcon, 
-      label: 'Perfil'
     }
   ];
 
@@ -91,7 +85,7 @@ const NavigationBar = ({ activeTab, onTabChange }) => {
                 )}
               </div>
               
-              {/* Texto de la etiqueta - Mejorado para responsive */}
+              {/* Texto de la etiqueta */}
               <span className={`text-[10px] xs:text-xs font-medium transition-all duration-300 relative z-10 truncate max-w-full px-1 ${
                 isActive 
                   ? 'text-white font-semibold' 
