@@ -4,18 +4,26 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  RocketLaunchIcon,
-  CheckBadgeIcon,
-  ArrowTrendingUpIcon,
-  CurrencyDollarIcon,
-  ChartBarIcon,
-  UserIcon,
-  CalendarDaysIcon,
-  XMarkIcon,
-  SparklesIcon,
-  ShieldCheckIcon,
-  ChartPieIcon
-} from "@heroicons/react/24/outline";
+  FaRocket,
+  FaCheck,
+  FaChartLine,
+  FaMoneyBillWave,
+  FaChartBar,
+  FaUser,
+  FaCalendar,
+  FaTimes,
+  FaStar,
+  FaShieldAlt,
+  FaPieChart,
+  FaExchangeAlt,
+  FaFileExcel,
+  FaFilePdf,
+  FaCalculator,
+  FaCrown,
+  FaAward,
+  FaSync,
+  FaDownload
+} from 'react-icons/fa';
 
 // Componente de gráfica premium mejorada
 const PremiumChart = ({ data, positive }) => {
@@ -28,7 +36,6 @@ const PremiumChart = ({ data, positive }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Datos simulados más realistas
   const chartData = positive
     ? [65, 78, 90, 82, 95, 110, 105, 120, 135, 125, 140, 130]
     : [100, 85, 78, 92, 75, 68, 82, 70, 65, 80, 72, 60];
@@ -36,7 +43,6 @@ const PremiumChart = ({ data, positive }) => {
   const maxValue = Math.max(...chartData);
   const minValue = Math.min(...chartData);
 
-  // Generar puntos para el path del SVG
   const points = chartData.map((value, index) => {
     const x = (index / (chartData.length - 1)) * 360;
     const y = 200 - ((value - minValue) / (maxValue - minValue)) * 180;
@@ -46,75 +52,54 @@ const PremiumChart = ({ data, positive }) => {
   const pathData = `M0,${200 - ((chartData[0] - minValue) / (maxValue - minValue)) * 180} L${points.join(' L')}`;
 
   return (
-    <div className="relative h-72 w-full">
-      {/* Eje Y */}
-      <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-gray-500">
-        <span>${maxValue}</span>
-        <span>${Math.round((maxValue + minValue) / 2)}</span>
-        <span>${minValue}</span>
-      </div>
+    <div className="relative h-64 w-full">
+      <svg viewBox="0 0 400 200" className="w-full h-full">
+        <path
+          d={pathData}
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="2"
+          fill="none"
+        />
+        
+        <path
+          d={pathData}
+          stroke={positive ? "url(#premiumSuccess)" : "url(#premiumDanger)"}
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray="1000"
+          strokeDashoffset={1000 - (1000 * animationProgress)}
+          style={{ transition: 'stroke-dashoffset 2s ease-in-out' }}
+        />
+        
+        <defs>
+          <linearGradient id="premiumSuccess" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#8B5CF6" />
+            <stop offset="50%" stopColor="#06B6D4" />
+            <stop offset="100%" stopColor="#10B981" />
+          </linearGradient>
+          <linearGradient id="premiumDanger" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#EF4444" />
+            <stop offset="50%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#EC4899" />
+          </linearGradient>
+        </defs>
+      </svg>
 
-      {/* Línea de gráfico principal */}
-      <div className="absolute left-12 right-6 top-0 bottom-6">
-        <svg viewBox="0 0 400 200" className="w-full h-full">
-          {/* Línea de fondo */}
-          <path
-            d={pathData}
-            stroke="rgba(255,255,255,0.1)"
-            strokeWidth="2"
-            fill="none"
-          />
-          
-          {/* Línea animada */}
-          <path
-            d={pathData}
-            stroke={positive ? "url(#premiumSuccess)" : "url(#premiumDanger)"}
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray="1000"
-            strokeDashoffset={1000 - (1000 * animationProgress)}
-            style={{ transition: 'stroke-dashoffset 2s ease-in-out' }}
-          />
-          
-          {/* Área gradiente */}
-          <defs>
-            <linearGradient id="premiumSuccess" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#8B5CF6" />
-              <stop offset="50%" stopColor="#06B6D4" />
-              <stop offset="100%" stopColor="#10B981" />
-            </linearGradient>
-            <linearGradient id="premiumDanger" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#EF4444" />
-              <stop offset="50%" stopColor="#F59E0B" />
-              <stop offset="100%" stopColor="#EC4899" />
-            </linearGradient>
-          </defs>
-        </svg>
-
-        {/* Puntos de datos animados */}
-        {chartData.map((value, index) => (
-          <div
-            key={index}
-            className="absolute w-4 h-4 rounded-full border-4 border-white shadow-lg transform -translate-x-2 -translate-y-2"
-            style={{
-              left: `${(index / (chartData.length - 1)) * 100}%`,
-              top: `${100 - ((value - minValue) / (maxValue - minValue)) * 90}%`,
-              opacity: animationProgress,
-              transition: `all 0.5s ${index * 0.1}s`,
-              background: positive ? '#8B5CF6' : '#EF4444',
-              borderColor: positive ? 'rgba(139, 92, 246, 0.8)' : 'rgba(239, 68, 68, 0.8)'
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Eje X */}
-      <div className="absolute left-12 right-6 bottom-0 flex justify-between text-xs text-gray-500">
-        {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((month, index) => (
-          <span key={index}>{month}</span>
-        ))}
-      </div>
+      {chartData.map((value, index) => (
+        <div
+          key={index}
+          className="absolute w-4 h-4 rounded-full border-4 border-white shadow-lg transform -translate-x-2 -translate-y-2"
+          style={{
+            left: `${(index / (chartData.length - 1)) * 100}%`,
+            top: `${100 - ((value - minValue) / (maxValue - minValue)) * 90}%`,
+            opacity: animationProgress,
+            transition: `all 0.5s ${index * 0.1}s`,
+            background: positive ? '#8B5CF6' : '#EF4444',
+            borderColor: positive ? 'rgba(139, 92, 246, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+          }}
+        />
+      ))}
     </div>
   );
 };
@@ -130,50 +115,33 @@ const PremiumDonutChart = ({ successRate }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  const radius = 70;
+  const radius = 60;
   const circumference = 2 * Math.PI * radius;
   const successStroke = (successRate / 100) * circumference * animationProgress;
-  const neutralStroke = (25 / 100) * circumference * animationProgress;
 
   return (
-    <div className="relative flex items-center justify-center py-8">
-      <svg width="200" height="200" className="transform -rotate-90 drop-shadow-2xl">
-        {/* Fondo del círculo */}
+    <div className="relative flex items-center justify-center py-6">
+      <svg width="160" height="160" className="transform -rotate-90 drop-shadow-2xl">
         <circle
-          cx="100"
-          cy="100"
+          cx="80"
+          cy="80"
           r={radius}
           stroke="rgba(255,255,255,0.1)"
-          strokeWidth="16"
+          strokeWidth="12"
           fill="none"
         />
         
-        {/* Segmento de éxito */}
         <circle
-          cx="100"
-          cy="100"
+          cx="80"
+          cy="80"
           r={radius}
           stroke="url(#donutPremium)"
-          strokeWidth="16"
+          strokeWidth="12"
           fill="none"
           strokeDasharray={circumference}
           strokeDashoffset={circumference - successStroke}
           strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset 1.5s ease-out' }}
-        />
-        
-        {/* Segmento neutral */}
-        <circle
-          cx="100"
-          cy="100"
-          r={radius}
-          stroke="url(#donutNeutralPremium)"
-          strokeWidth="16"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference - (successStroke + neutralStroke)}
-          strokeLinecap="round"
-          style={{ transition: 'stroke-dashoffset 1.5s ease-out 0.5s' }}
         />
 
         <defs>
@@ -181,19 +149,14 @@ const PremiumDonutChart = ({ successRate }) => {
             <stop offset="0%" stopColor="#8B5CF6" />
             <stop offset="100%" stopColor="#06B6D4" />
           </linearGradient>
-          <linearGradient id="donutNeutralPremium" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#06B6D4" />
-            <stop offset="100%" stopColor="#10B981" />
-          </linearGradient>
         </defs>
       </svg>
       
       <div className="absolute text-center">
-        <div className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent drop-shadow-lg">
+        <div className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent drop-shadow-lg">
           {Math.round(successRate * animationProgress)}%
         </div>
-        <div className="text-gray-400 text-sm mt-2 font-medium">Tasa de Éxito</div>
-        <div className="text-xs text-gray-500 mt-1">Global Performance</div>
+        <div className="text-gray-400 text-sm mt-1 font-medium">Tasa de Éxito</div>
       </div>
     </div>
   );
@@ -313,13 +276,9 @@ const Dashboard = ({ onOpenProfile }) => {
         onMouseLeave={() => setHoveredMetric(null)}
         style={{ transitionDelay: `${index * 100}ms` }}
       >
-        {/* Efecto de fondo luminoso */}
         <div className={`absolute inset-0 bg-gradient-to-br ${color} rounded-3xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-500`}></div>
         
-        {/* Tarjeta principal */}
         <div className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/80 backdrop-blur-2xl rounded-2xl p-6 border border-purple-500/30 hover:border-purple-500/60 transition-all duration-500 overflow-hidden">
-          
-          {/* Efecto de borde luminoso */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           
           <div className="flex items-center justify-between mb-4 relative z-10">
@@ -346,7 +305,6 @@ const Dashboard = ({ onOpenProfile }) => {
             )}
           </div>
           
-          {/* Efecto de partículas al hover */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         </div>
       </div>
@@ -382,11 +340,11 @@ const Dashboard = ({ onOpenProfile }) => {
             onClick={() => setShowPaymentModal(false)}
             className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
           >
-            <XMarkIcon className="h-6 w-6" />
+            <FaTimes className="h-6 w-6" />
           </button>
 
           <div className="text-center mb-6">
-            <RocketLaunchIcon className="h-12 w-12 text-purple-500 mx-auto mb-3" />
+            <FaRocket className="h-12 w-12 text-purple-500 mx-auto mb-3" />
             <h3 className="text-xl font-bold text-white">{plan?.name}</h3>
             <div className="flex items-center justify-center gap-2 mt-2">
               <span className="text-3xl font-bold text-white">{plan?.price}</span>
@@ -404,7 +362,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <ul className="space-y-2">
               {plan?.features?.map((feature, index) => (
                 <li key={index} className="flex items-center text-sm text-gray-300">
-                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
+                  <FaCheck className="h-4 w-4 text-green-400 mr-2" />
                   {feature}
                 </li>
               ))}
@@ -440,7 +398,7 @@ const Dashboard = ({ onOpenProfile }) => {
         <div className="text-center">
           <div className="relative inline-block">
             <div className="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
-            <SparklesIcon className="h-8 w-8 text-purple-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+            <FaStar className="h-8 w-8 text-purple-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
           </div>
           <div className="flex justify-center mb-2">
             <div className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
@@ -464,9 +422,7 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
           </div>
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-900/20 rounded-full mb-4">
-            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+            <FaShieldAlt className="w-8 h-8 text-red-400" />
           </div>
           <h2 className="text-red-400 text-xl font-semibold mb-2">Error</h2>
           <p className="text-gray-300 mb-6">{error}</p>
@@ -489,6 +445,37 @@ const Dashboard = ({ onOpenProfile }) => {
     );
   }
 
+  const premiumFeatures = [
+    {
+      icon: <FaMoneyBillWave className="text-3xl" />,
+      title: "Registro Instantáneo P2P",
+      description: "Registra tus operaciones de arbitraje en segundos",
+      gradient: "from-purple-600 to-blue-600",
+      stats: "<30s por operación"
+    },
+    {
+      icon: <FaCalculator className="text-3xl" />,
+      title: "Simulador de Arbitraje",
+      description: "Calcula ganancias potenciales antes de operar",
+      gradient: "from-blue-600 to-cyan-600",
+      stats: "99.9% precisión"
+    },
+    {
+      icon: <FaFileExcel className="text-3xl" />,
+      title: "Reportes Profesionales",
+      description: "Exporta a Excel y PDF con todos tus comprobantes",
+      gradient: "from-cyan-600 to-purple-600",
+      stats: "2 formatos disponibles"
+    },
+    {
+      icon: <FaChartLine className="text-3xl" />,
+      title: "Dashboard Avanzado",
+      description: "Métricas en tiempo real y análisis de performance",
+      gradient: "from-purple-600 to-pink-600",
+      stats: "24/7 monitoreo"
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white overflow-x-hidden">
       {/* Fondos animados premium */}
@@ -505,7 +492,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-3 rounded-2xl shadow-2xl shadow-purple-500/30">
-                  <SparklesIcon className="h-7 w-7 text-white" />
+                  <FaRocket className="h-7 w-7 text-white" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-black"></div>
               </div>
@@ -513,16 +500,16 @@ const Dashboard = ({ onOpenProfile }) => {
                 <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                   JJXCAPITAL<span className="text-yellow-400">⚡</span>
                 </div>
-                <div className="text-xs text-gray-400 font-medium">TRADING PLATFORM</div>
+                <div className="text-xs text-gray-400 font-medium">ELITE TRADING PLATFORM</div>
               </div>
             </div>
             
             <div className="flex items-center gap-6">
               <nav className="hidden lg:flex gap-1 bg-black/30 p-2 rounded-2xl border border-purple-500/10 backdrop-blur-sm">
                 {[
-                  { id: 'overview', label: 'Resumen', icon: ChartBarIcon },
-                  { id: 'performance', label: 'Rendimiento', icon: ArrowTrendingUpIcon },
-                  { id: 'reports', label: 'Reportes', icon: ChartPieIcon }
+                  { id: 'overview', label: 'Resumen', icon: FaChartBar },
+                  { id: 'performance', label: 'Rendimiento', icon: FaChartLine },
+                  { id: 'reports', label: 'Reportes', icon: FaPieChart }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -551,7 +538,7 @@ const Dashboard = ({ onOpenProfile }) => {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                    <UserIcon className="w-6 h-6 text-white" />
+                    <FaUser className="w-6 h-6 text-white" />
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -565,7 +552,7 @@ const Dashboard = ({ onOpenProfile }) => {
         {/* Header con bienvenida premium */}
         <div className="mb-12 text-center">
           <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl border border-purple-500/20 mb-6">
-            <SparklesIcon className="h-5 w-5 text-purple-400" />
+            <FaStar className="h-5 w-5 text-purple-400" />
             <span className="text-sm font-semibold text-gray-300">DASHBOARD PREMIUM</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -578,12 +565,12 @@ const Dashboard = ({ onOpenProfile }) => {
           </p>
         </div>
 
-        {/* Grid de Métricas principales - Diseño premium */}
+        {/* Grid de Métricas principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <MetricCard
             title="Total Operaciones"
             value={totalOperations}
-            icon={ChartBarIcon}
+            icon={FaChartBar}
             color="from-blue-500 to-cyan-500"
             subtitle="Operaciones ejecutadas"
             index={0}
@@ -592,7 +579,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <MetricCard
             title="Ganancia Total"
             value={totalProfitUsdt}
-            icon={CurrencyDollarIcon}
+            icon={FaMoneyBillWave}
             color="from-green-500 to-emerald-500"
             subtitle="Balance en USDT"
             trend={{ 
@@ -605,7 +592,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <MetricCard
             title="Tasa de Éxito"
             value={`${successRate}%`}
-            icon={CheckBadgeIcon}
+            icon={FaCheck}
             color="from-purple-500 to-pink-500"
             subtitle="Eficiencia operacional"
             index={2}
@@ -614,7 +601,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <MetricCard
             title="Rendimiento 30D"
             value={monthlyPerformance}
-            icon={ArrowTrendingUpIcon}
+            icon={FaChartLine}
             color="from-amber-500 to-orange-500"
             subtitle="Último mes"
             trend={{ 
@@ -625,9 +612,9 @@ const Dashboard = ({ onOpenProfile }) => {
           />
         </div>
 
-        {/* Sección de gráficos premium */}
+        {/* Sección de características premium y análisis */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-12">
-          {/* Gráfico principal */}
+          {/* Características Premium */}
           <div className="xl:col-span-2">
             <div className="relative bg-gradient-to-br from-gray-900/60 to-gray-800/40 backdrop-blur-2xl rounded-3xl p-8 border border-purple-500/30 hover:border-purple-500/50 transition-all duration-500 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
@@ -635,29 +622,54 @@ const Dashboard = ({ onOpenProfile }) => {
               <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
                   <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2">
-                    Rendimiento Anual
+                    Herramientas Premium
                   </h2>
-                  <p className="text-gray-400">Evolución de tu portfolio en los últimos 12 meses</p>
+                  <p className="text-gray-400">Tecnología enterprise para tu operativa</p>
                 </div>
                 <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all duration-300 border border-purple-500/20">
-                  <CalendarDaysIcon className="h-4 w-4" />
-                  <span className="text-sm font-medium">2024</span>
+                  <FaSync className="h-4 w-4" />
+                  <span className="text-sm font-medium">Actualizar</span>
                 </button>
               </div>
               
-              <PremiumChart data={monthlyPerformance} positive={monthlyPerformance >= 0} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {premiumFeatures.map((feature, index) => (
+                  <div key={index} className="group relative bg-gradient-to-br from-gray-900/50 to-gray-800/30 rounded-2xl p-6 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500 cursor-pointer">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                          {feature.icon}
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-1">{feature.title}</h3>
+                          <p className="text-gray-300 text-sm">{feature.description}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">Performance</span>
+                        <span className="text-sm font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                          {feature.stats}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           
-          {/* Gráfico de distribución */}
+          {/* Análisis de Distribución */}
           <div className="relative bg-gradient-to-br from-gray-900/60 to-gray-800/40 backdrop-blur-2xl rounded-3xl p-8 border border-purple-500/30 hover:border-purple-500/50 transition-all duration-500 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
             
             <div className="mb-8 relative z-10">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2">
-                Distribución
+                Análisis de Performance
               </h2>
-              <p className="text-gray-400">Análisis detallado de operaciones</p>
+              <p className="text-gray-400">Distribución de tus operaciones</p>
             </div>
             
             <PremiumDonutChart successRate={successRate} />
@@ -665,7 +677,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <div className="space-y-4 relative z-10 mt-8">
               {[
                 { label: "Operaciones exitosas", value: `${successRate}%`, color: "from-purple-500 to-pink-500" },
-                { label: "Operaciones neutras", value: "25%", color: "from-cyan-500 to-blue-500" },
+                { label: "Operaciones neutras", value: "20%", color: "from-cyan-500 to-blue-500" },
                 { label: "Operaciones en pérdida", value: "5%", color: "from-gray-500 to-gray-600" }
               ].map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300">
@@ -690,8 +702,8 @@ const Dashboard = ({ onOpenProfile }) => {
           
           <div className="text-center mb-12 relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full border border-purple-500/30 mb-4">
-              <RocketLaunchIcon className="h-4 w-4 text-purple-400" />
-              <span className="text-sm font-semibold text-gray-300">PLANES PREMIUM</span>
+              <FaCrown className="h-4 w-4 text-purple-400" />
+              <span className="text-sm font-semibold text-gray-300">PLANES ELITE</span>
             </div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-4">
               Potencia tu Trading
@@ -720,7 +732,7 @@ const Dashboard = ({ onOpenProfile }) => {
                 <div className="mb-8 space-y-4">
                   {["Operaciones ilimitadas", "Exportaciones PDF/Excel", "Soporte prioritario 24/7", "Análisis técnico avanzado"].map((feature, index) => (
                     <div key={index} className="flex items-center gap-3 text-gray-300">
-                      <CheckBadgeIcon className="h-5 w-5 text-green-400 flex-shrink-0" />
+                      <FaCheck className="h-5 w-5 text-green-400 flex-shrink-0" />
                       {feature}
                     </div>
                   ))}
@@ -759,7 +771,7 @@ const Dashboard = ({ onOpenProfile }) => {
                 <div className="mb-8 space-y-4">
                   {["Todo lo del plan mensual", "Alertas inteligentes", "Reportes executive", "API access", "Mentoría premium", "Webinars exclusivos"].map((feature, index) => (
                     <div key={index} className="flex items-center gap-3 text-gray-300">
-                      <CheckBadgeIcon className="h-5 w-5 text-green-400 flex-shrink-0" />
+                      <FaCheck className="h-5 w-5 text-green-400 flex-shrink-0" />
                       {feature}
                     </div>
                   ))}
@@ -784,7 +796,7 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
             <div className="w-1 h-1 bg-gray-600 rounded-full"></div>
             <div className="flex items-center gap-2 text-sm text-gray-400">
-              <ShieldCheckIcon className="h-4 w-4 text-green-400" />
+              <FaShieldAlt className="h-4 w-4 text-green-400" />
               Plataforma segura y encriptada
             </div>
           </div>
