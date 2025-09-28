@@ -118,6 +118,11 @@ const Dashboard = ({ onOpenProfile }) => {
     setShowPaymentModal(true);
   };
 
+  // Función para abrir enlace de creación de API
+  const handleCreateAPI = () => {
+    window.open("https://www.binance.com/es-MX/support/faq/detail/538e05e2fd394c489b4cf89e92c55f70", "_blank");
+  };
+
   // Componente del Modal de Pagos
   const PaymentModal = () => {
     if (!showPaymentModal) return null;
@@ -276,19 +281,31 @@ const Dashboard = ({ onOpenProfile }) => {
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'overview' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
                 onClick={() => setActiveTab('overview')}
               >
-                Resumen
+                Dashboard
               </button>
               <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'performance' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('performance')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'p2p' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveTab('p2p')}
               >
-                Rendimiento
+                P2P
               </button>
               <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'reports' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('reports')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'arbitrage' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveTab('arbitrage')}
               >
-                Reportes
+                Arbitraje
+              </button>
+              <button 
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'operations' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveTab('operations')}
+              >
+                Operaciones
+              </button>
+              <button 
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveTab('history')}
+              >
+                Historial
               </button>
             </div>
             
@@ -383,7 +400,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Rendimiento Mensual</h3>
+              <h3 className="text-gray-400 font-medium">Rendimiento 30 días</h3>
               <div className="p-2 bg-amber-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
                 <ArrowTrendingUpIcon className="h-5 w-5 text-amber-400" />
               </div>
@@ -403,100 +420,8 @@ const Dashboard = ({ onOpenProfile }) => {
                     : "bg-red-900/30 text-red-400"
                 }`}
               >
-                {monthlyPerformance >= 0 ? "↗ Positivo" : "↘ Negativo"}
+                {monthlyPerformance >= 0 ? "Positivo" : "Negativo"}
               </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Sección de gráficos y análisis */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 relative overflow-hidden">
-            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold">Rendimiento mensual</h2>
-              <button className="text-sm text-purple-400 hover:text-purple-300 flex items-center">
-                <CalendarDaysIcon className="h-4 w-4 mr-1" />
-                Seleccionar período
-              </button>
-            </div>
-            
-            {/* Gráfico simulado */}
-            <div className="h-64 relative">
-              <div className="absolute bottom-0 left-0 right-0 h-px bg-gray-700"></div>
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-700"></div>
-              
-              {/* Línea de gráfico */}
-              <div className="absolute bottom-8 left-10 right-10">
-                <svg viewBox="0 0 500 150" className="w-full h-40">
-                  <path 
-                    d="M0,100 C100,50 150,120 250,80 C350,40 400,110 500,70" 
-                    stroke={monthlyPerformance >= 0 ? "url(#greenGradient)" : "url(#redGradient)"} 
-                    strokeWidth="3" 
-                    fill="none" 
-                    strokeLinecap="round"
-                  />
-                  <defs>
-                    <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#4ADE80" />
-                      <stop offset="100%" stopColor="#06B6D4" />
-                    </linearGradient>
-                    <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#F87171" />
-                      <stop offset="100%" stopColor="#F59E0B" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-              
-              {/* Puntos de datos */}
-              <div className="absolute left-10 bottom-8 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
-              <div className="absolute left-1/3 bottom-12 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
-              <div className="absolute left-2/3 bottom-14 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
-              <div className="absolute right-10 bottom-16 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"></div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 relative overflow-hidden">
-            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
-            <h2 className="text-lg font-semibold mb-6">Distribución de operaciones</h2>
-            
-            {/* Gráfico de donut simulado */}
-            <div className="relative h-48 flex items-center justify-center mb-4">
-              <div className="absolute w-36 h-36 rounded-full border-8 border-purple-500/20"></div>
-              <div className="absolute w-36 h-36 rounded-full border-8 border-purple-500 border-t-8 border-t-purple-500" style={{transform: 'rotate(calc(0.7 * 360deg))'}}></div>
-              <div className="absolute w-36 h-36 rounded-full border-8 border-blue-500 border-r-8 border-r-blue-500" style={{transform: 'rotate(calc(0.5 * 360deg))'}}></div>
-              
-              <div className="text-center">
-                <div className="text-2xl font-bold">{successRate}%</div>
-                <div className="text-sm text-gray-400">Éxito</div>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-purple-500 mr-2"></div>
-                  <span className="text-sm">Operaciones exitosas</span>
-                </div>
-                <span className="text-sm font-medium">70%</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
-                  <span className="text-sm">Operaciones neutras</span>
-                </div>
-                <span className="text-sm font-medium">20%</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-gray-600 mr-2"></div>
-                  <span className="text-sm">Operaciones en pérdida</span>
-                </div>
-                <span className="text-sm font-medium">10%</span>
-              </div>
             </div>
           </div>
         </div>
@@ -517,17 +442,15 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
           </div>
 
-          {/* Alerta de seguridad */}
-          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+          {/* Mensaje informativo */}
+          <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
             <div className="flex items-start">
-              <svg className="h-5 w-5 text-amber-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg className="h-5 w-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <h4 className="text-amber-300 font-semibold text-sm mb-1">Importante</h4>
-                <p className="text-amber-200/80 text-sm">
-                  Guardar el <span className="font-mono">API Secret</span> desde el cliente es potencialmente inseguro. 
-                  Se recomienda mover el guardado al backend cuando sea posible.
+                <p className="text-blue-200/80 text-sm">
+                  Para llevar a cabo este proceso, requerimos tus claves API. Asegúrate siempre de ingresar la clave API correspondiente a los impuestos o la de solo lectura.
                 </p>
               </div>
             </div>
@@ -579,7 +502,10 @@ const Dashboard = ({ onOpenProfile }) => {
                   </div>
                 </button>
                 
-                <button className="px-6 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-gray-600">
+                <button 
+                  onClick={handleCreateAPI}
+                  className="px-6 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-gray-600"
+                >
                   <div className="flex items-center justify-center">
                     <span className="text-sm">¿Crear una API?</span>
                   </div>
