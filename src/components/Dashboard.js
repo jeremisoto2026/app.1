@@ -501,6 +501,146 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
         </div>
 
+        {/* Sección: Conexión Binance P2P */}
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
+          
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                Conectar Binance P2P
+              </h2>
+              <p className="text-gray-400">Registra automáticamente tus órdenes</p>
+            </div>
+            <div className="p-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl">
+              <CurrencyDollarIcon className="h-6 w-6 text-white" />
+            </div>
+          </div>
+
+          {/* Alerta de seguridad */}
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+            <div className="flex items-start">
+              <svg className="h-5 w-5 text-amber-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <h4 className="text-amber-300 font-semibold text-sm mb-1">Importante</h4>
+                <p className="text-amber-200/80 text-sm">
+                  Guardar el <span className="font-mono">API Secret</span> desde el cliente es potencialmente inseguro. 
+                  Se recomienda mover el guardado al backend cuando sea posible.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Formulario de conexión */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  API Key
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Ej: AbCdEFG..."
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  API Secret
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    placeholder="Tu API Secret"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-500/20">
+                  <div className="flex items-center justify-center">
+                    <CheckBadgeIcon className="h-5 w-5 mr-2" />
+                    Verificar
+                  </div>
+                </button>
+                
+                <button className="px-6 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-gray-600">
+                  <div className="flex items-center justify-center">
+                    <span className="text-sm">¿Crear una API?</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Panel de información */}
+            <div className="bg-gray-800/30 rounded-xl p-5 border border-blue-500/20">
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-blue-500/10 rounded-lg mr-3">
+                  <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-blue-300 font-semibold">Consejos de seguridad</h3>
+              </div>
+              
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li className="flex items-start">
+                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>Crea una API Key con permisos mínimos necesarios</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>Idealmente el backend maneja las claves y firma las peticiones</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>Usa siempre la clave API de solo lectura para impuestos</span>
+                </li>
+              </ul>
+
+              <div className="mt-6 pt-4 border-t border-gray-700">
+                <div className="flex items-center text-xs text-gray-400">
+                  <CalendarDaysIcon className="h-4 w-4 mr-2" />
+                  <span>Se toman las operaciones de los últimos 10 días</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer de la sección */}
+          <div className="mt-6 pt-4 border-t border-gray-700">
+            <div className="flex flex-col sm:flex-row justify-between items-center">
+              <div className="flex items-center text-sm text-gray-400 mb-2 sm:mb-0">
+                <span className="text-yellow-400 mr-1">⚡</span>
+                Próximamente agregaremos más exchanges
+              </div>
+              <div className="flex items-center">
+                <div className="text-sm font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+                  JJXCAPITAL
+                </div>
+                <div className="ml-2 text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
+                  ✅
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Sección: Planes Premium */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
