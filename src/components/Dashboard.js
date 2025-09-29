@@ -17,6 +17,7 @@ import {
 
 // Añadir la variable API_BASE después de los imports
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+alert("🌍 API_BASE: " + API_BASE);
 
 const Dashboard = ({ onOpenProfile }) => {
   const { user } = useAuth();
