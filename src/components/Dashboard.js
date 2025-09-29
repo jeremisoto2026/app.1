@@ -185,7 +185,7 @@ const Dashboard = ({ onOpenProfile }) => {
 
     try {
       // MODIFICADO: Usar API_BASE en la llamada
-      const resp = await axios.post(`${API_BASE}/connect-binance`, {
+      const resp = await axios.post(`${API_BASE}/api/connect-binance`, {
         uid: user.uid,
         apiKey: apiKeyInput.trim(),
         apiSecret: apiSecretInput.trim(),
