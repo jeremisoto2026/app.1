@@ -219,7 +219,7 @@ const Dashboard = ({ onOpenProfile }) => {
 
     try {
       // MODIFICADO: Usar API_BASE en la llamada
-      const resp = await axios.post(`${API_BASE}/disconnect-binance`, { uid: user.uid });
+      const resp = await axios.post(`${API_BASE}/api/disconnect-binance`, { uid: user.uid });
 
       if (resp.data?.success) {
         setIsDisconnecting(false);
