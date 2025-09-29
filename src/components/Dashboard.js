@@ -1,8 +1,9 @@
 // Dashboard.js
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
+import axios from "axios";
 import {
   RocketLaunchIcon,
   CheckBadgeIcon,
@@ -25,6 +26,14 @@ const Dashboard = ({ onOpenProfile }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+
+  // --- NUEVO: estados para conectar Binance ---
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiSecretInput, setApiSecretInput] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [binanceConnected, setBinanceConnected] = useState(false);
+  const [maskedApiKey, setMaskedApiKey] = useState(""); // opcion: mostrar api key parcialmente
 
   useEffect(() => {
     const fetchData = async () => {
@@ -104,6 +113,40 @@ const Dashboard = ({ onOpenProfile }) => {
     fetchData();
   }, [user]);
 
+  // --- NUEVO: escuchador en tiempo real del documento user para estado binanceConnected ---
+  useEffect(() => {
+    if (!user) return;
+
+    const userDocRef = doc(db, "users", user.uid);
+    const unsub = onSnapshot(userDocRef, (snap) => {
+      if (!snap.exists()) {
+        setBinanceConnected(false);
+        setMaskedApiKey("");
+        return;
+      }
+      const data = snap.data();
+      if (data?.binanceConnected) {
+        setBinanceConnected(true);
+        // Si quieres mostrar parte de la key (solo visual), la enmascaramos:
+        if (data?.binanceApiKey) {
+          const k = data.binanceApiKey;
+          const visible = k.slice(0, 4);
+          const last = k.slice(-4);
+          setMaskedApiKey(`${visible}••••••••${last}`);
+        } else {
+          setMaskedApiKey("");
+        }
+      } else {
+        setBinanceConnected(false);
+        setMaskedApiKey("");
+      }
+    }, (err) => {
+      console.error("Error escuchando usuario:", err);
+    });
+
+    return () => unsub();
+  }, [user]);
+
   // Función para formatear números con separadores de miles
   const formatNumber = (num) => {
     return new Intl.NumberFormat('en-US', {
@@ -121,6 +164,72 @@ const Dashboard = ({ onOpenProfile }) => {
   // Función para abrir enlace de creación de API
   const handleCreateAPI = () => {
     window.open("https://www.binance.com/es-MX/support/faq/detail/538e05e2fd394c489b4cf89e92c55f70", "_blank");
+  };
+
+  // === NUEVO: Verificar / conectar Binance ===
+  const handleVerifyAndConnect = async () => {
+    if (!user) {
+      setError("No estás autenticado.");
+      return;
+    }
+    if (!apiKeyInput || !apiSecretInput) {
+      setError("Por favor ingresa API Key y API Secret.");
+      return;
+    }
+
+    setError(null);
+    setIsVerifying(true);
+
+    try {
+      // Ajusta la URL si tu backend corre en otra ruta/dominio
+      const resp = await axios.post("/connect-binance", {
+        uid: user.uid,
+        apiKey: apiKeyInput.trim(),
+        apiSecret: apiSecretInput.trim(),
+      });
+
+      if (resp.data?.success) {
+        // éxito: backend guarda keys y arranca stream
+        setApiSecretInput(""); // limpiar secret del input por seguridad
+        setIsVerifying(false);
+        // binanceConnected lo actualizará el snapshot listener cuando Firestore cambie
+      } else {
+        setIsVerifying(false);
+        setError(resp.data?.error || "Error conectando con Binance");
+      }
+    } catch (err) {
+      console.error("Error connect-binance:", err.response?.data || err.message);
+      setIsVerifying(false);
+      setError(err.response?.data?.error || err.message || "Error en la conexión");
+    }
+  };
+
+  // === NUEVO: Desconectar ===
+  const handleDisconnect = async () => {
+    if (!user) {
+      setError("No estás autenticado.");
+      return;
+    }
+
+    setIsDisconnecting(true);
+    setError(null);
+
+    try {
+      // Llama endpoint que debe parar WS/listenKey y limpiar estado en Firestore
+      const resp = await axios.post("/disconnect-binance", { uid: user.uid });
+
+      if (resp.data?.success) {
+        setIsDisconnecting(false);
+        // el snapshot listener actualizará binanceConnected
+      } else {
+        setIsDisconnecting(false);
+        setError(resp.data?.error || "No se pudo desconectar");
+      }
+    } catch (err) {
+      console.error("Error disconnect-binance:", err.response?.data || err.message);
+      setIsDisconnecting(false);
+      setError(err.response?.data?.error || err.message || "Error al desconectar");
+    }
   };
 
   // Componente del Modal de Pagos
@@ -426,7 +535,9 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
         </div>
 
-        {/* Sección: Conexión Binance P2P */}
+        {/* =========================
+            Sección: Conexión Binance P2P
+            ========================= */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
           
@@ -465,12 +576,14 @@ const Dashboard = ({ onOpenProfile }) => {
                 </label>
                 <div className="relative">
                   <input
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
                     type="text"
                     placeholder="Ej: AbCdEFG..."
                     className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <div className={`w-2 h-2 rounded-full ${binanceConnected ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`}></div>
                   </div>
                 </div>
               </div>
@@ -481,6 +594,8 @@ const Dashboard = ({ onOpenProfile }) => {
                 </label>
                 <div className="relative">
                   <input
+                    value={apiSecretInput}
+                    onChange={(e) => setApiSecretInput(e.target.value)}
                     type="password"
                     placeholder="Tu API Secret"
                     className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
@@ -495,13 +610,29 @@ const Dashboard = ({ onOpenProfile }) => {
               </div>
 
               <div className="flex gap-3">
-                <button className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-500/20">
+                {/* Verificar / conectar */}
+                <button
+                  onClick={handleVerifyAndConnect}
+                  disabled={isVerifying || binanceConnected}
+                  className={`flex-1 ${isVerifying || binanceConnected ? 'opacity-60 cursor-not-allowed' : ''} bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-500/20`}
+                >
                   <div className="flex items-center justify-center">
                     <CheckBadgeIcon className="h-5 w-5 mr-2" />
-                    Verificar
+                    {isVerifying ? 'Verificando...' : binanceConnected ? 'Conectado' : 'Verificar'}
                   </div>
                 </button>
-                
+
+                {/* Desconectar (visible cuando está conectado) */}
+                {binanceConnected && (
+                  <button
+                    onClick={handleDisconnect}
+                    disabled={isDisconnecting}
+                    className={`px-6 ${isDisconnecting ? 'opacity-60 cursor-not-allowed' : ''} bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-red-500`}
+                  >
+                    {isDisconnecting ? 'Desconectando...' : 'Desconectar'}
+                  </button>
+                )}
+
                 <button 
                   onClick={handleCreateAPI}
                   className="px-6 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-gray-600"
@@ -510,6 +641,29 @@ const Dashboard = ({ onOpenProfile }) => {
                     <span className="text-sm">¿Crear una API?</span>
                   </div>
                 </button>
+              </div>
+
+              {/* Mensajes y estado */}
+              <div className="mt-3">
+                {binanceConnected ? (
+                  <div className="inline-flex items-center gap-3 bg-green-900/20 text-green-300 px-4 py-2 rounded-xl">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <div>
+                      <div className="font-semibold">Binance conectado ✅</div>
+                      {maskedApiKey && <div className="text-xs text-green-200">API: {maskedApiKey}</div>}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-3 bg-yellow-900/20 text-yellow-300 px-4 py-2 rounded-xl">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <div className="text-sm">Aún no conectado a Binance.</div>
+                  </div>
+                )}
+                {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
               </div>
             </div>
 
