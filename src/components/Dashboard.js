@@ -1,4 +1,3 @@
-
 // Dashboard.js
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy, doc, onSnapshot } from "firebase/firestore";
@@ -15,6 +14,9 @@ import {
   CalendarDaysIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline";
+
+// Añadir la variable API_BASE después de los imports
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 const Dashboard = ({ onOpenProfile }) => {
   const { user } = useAuth();
@@ -182,8 +184,8 @@ const Dashboard = ({ onOpenProfile }) => {
     setIsVerifying(true);
 
     try {
-      // Ajusta la URL si tu backend corre en otra ruta/dominio
-      const resp = await axios.post("/connect-binance", {
+      // MODIFICADO: Usar API_BASE en la llamada
+      const resp = await axios.post(`${API_BASE}/connect-binance`, {
         uid: user.uid,
         apiKey: apiKeyInput.trim(),
         apiSecret: apiSecretInput.trim(),
@@ -216,8 +218,8 @@ const Dashboard = ({ onOpenProfile }) => {
     setError(null);
 
     try {
-      // Llama endpoint que debe parar WS/listenKey y limpiar estado en Firestore
-      const resp = await axios.post("/disconnect-binance", { uid: user.uid });
+      // MODIFICADO: Usar API_BASE en la llamada
+      const resp = await axios.post(`${API_BASE}/disconnect-binance`, { uid: user.uid });
 
       if (resp.data?.success) {
         setIsDisconnecting(false);
