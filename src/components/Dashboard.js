@@ -16,7 +16,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 // Añadir la variable API_BASE después de los imports
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE = process.env.REACT_APP_BACKEND_URL;
 alert("🌍 API_BASE: " + API_BASE);
 
 const Dashboard = ({ onOpenProfile }) => {
