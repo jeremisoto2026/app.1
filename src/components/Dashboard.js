@@ -143,6 +143,8 @@ const Dashboard = ({ onOpenProfile }) => {
       } else {
         setBinanceConnected(false);
         setMaskedApiKey("");
+        setApiKey("");
+      setApiSecret("");
       }
     }, (err) => {
       console.error("Error escuchando usuario:", err);
