@@ -656,12 +656,16 @@ const Dashboard = ({ onOpenProfile }) => {
                     </div>
                     
                     <button
-                      onClick={disconnectBinance}
-                      disabled={isDisconnecting}
-                      className={`w-full ${isDisconnecting ? 'opacity-60 cursor-not-allowed' : ''} bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-red-500`}
-                    >
-                      {isDisconnecting ? 'Desconectando...' : 'Desconectar'}
-                    </button>
+  type="button"   // 👈 evita que actúe como submit
+  onClick={() => {
+    alert("Botón clickeado en UI ✅"); // prueba que sí dispara
+    disconnectBinance();
+  }}
+  disabled={isDisconnecting}
+  className={`w-full ${isDisconnecting ? 'opacity-60 cursor-not-allowed' : ''} bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-red-500`}
+>
+  {isDisconnecting ? 'Desconectando...' : 'Desconectar'}
+</button>
                   </div>
                 </>
               )}
