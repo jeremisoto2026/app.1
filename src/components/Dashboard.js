@@ -190,7 +190,7 @@ const Dashboard = ({ onOpenProfile }) => {
     }
   };
 
-  // Desconectar Binance
+  // === NUEVA FUNCIÓN DESCONECTAR CORREGIDA ===
   const disconnectBinance = async () => {
     if (!user) {
       setError("No estás autenticado.");
@@ -201,13 +201,19 @@ const Dashboard = ({ onOpenProfile }) => {
     setError(null);
 
     try {
-      const resp = await axios.post(`${API_BASE}/api/disconnect-binance`, { 
-        uid: user.uid 
-      });
+      const resp = await axios.post(`${API_BASE}/api/disconnect-binance`, { uid: user.uid });
 
       if (resp.data?.success) {
+        // ✅ Actualizar UI inmediatamente
+        setBinanceConnected(false);
+        setMaskedApiKey("");
+        setApiKey("");
+        setApiSecret("");
         setIsDisconnecting(false);
-        // El estado binanceConnected se actualizará automáticamente via el listener de Firestore
+
+        // Mensaje temporal de confirmación
+        setError("Desconectado correctamente.");
+        setTimeout(() => setError(null), 2000);
       } else {
         setIsDisconnecting(false);
         setError(resp.data?.error || "No se pudo desconectar");
@@ -341,7 +347,7 @@ const Dashboard = ({ onOpenProfile }) => {
     );
   }
 
-  if (error) {
+  if (error && !error.includes("Desconectado correctamente")) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black flex items-center justify-center p-4">
         <div className="text-center p-8 bg-gray-900/70 backdrop-blur-lg rounded-2xl border border-purple-500/30 max-w-md w-full shadow-2xl">
@@ -658,8 +664,18 @@ const Dashboard = ({ onOpenProfile }) => {
 
               {/* Mensajes de error */}
               {error && (
-                <div className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-xl">
-                  <div className="text-sm text-red-400">{error}</div>
+                <div className={`mt-3 p-3 rounded-xl ${
+                  error.includes("Desconectado correctamente") 
+                    ? "bg-green-900/20 border border-green-500/30" 
+                    : "bg-red-900/20 border border-red-500/30"
+                }`}>
+                  <div className={`text-sm ${
+                    error.includes("Desconectado correctamente") 
+                      ? "text-green-400" 
+                      : "text-red-400"
+                  }`}>
+                    {error}
+                  </div>
                 </div>
               )}
             </div>
