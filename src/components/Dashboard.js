@@ -30,13 +30,13 @@ const Dashboard = ({ onOpenProfile }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  // --- NUEVO: estados para conectar Binance ---
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [apiSecretInput, setApiSecretInput] = useState("");
+  // --- Estados optimizados para Binance ---
+  const [apiKey, setApiKey] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [binanceConnected, setBinanceConnected] = useState(false);
-  const [maskedApiKey, setMaskedApiKey] = useState(""); // opcion: mostrar api key parcialmente
+  const [maskedApiKey, setMaskedApiKey] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,7 +116,7 @@ const Dashboard = ({ onOpenProfile }) => {
     fetchData();
   }, [user]);
 
-  // --- NUEVO: escuchador en tiempo real del documento user para estado binanceConnected ---
+  // --- Listener optimizado para estado Binance ---
   useEffect(() => {
     if (!user) return;
 
@@ -130,7 +130,7 @@ const Dashboard = ({ onOpenProfile }) => {
       const data = snap.data();
       if (data?.binanceConnected) {
         setBinanceConnected(true);
-        // Si quieres mostrar parte de la key (solo visual), la enmascaramos:
+        // Enmascarar API Key para mostrar
         if (data?.binanceApiKey) {
           const k = data.binanceApiKey;
           const visible = k.slice(0, 4);
@@ -150,6 +150,75 @@ const Dashboard = ({ onOpenProfile }) => {
     return () => unsub();
   }, [user]);
 
+  // === FUNCIONES OPTIMIZADAS PARA BINANCE ===
+
+  // Conectar Binance
+  const connectBinance = async () => {
+    if (!user) {
+      setError("No estás autenticado.");
+      return;
+    }
+    if (!apiKey || !apiSecret) {
+      setError("Por favor ingresa API Key y API Secret.");
+      return;
+    }
+
+    setError(null);
+    setIsVerifying(true);
+
+    try {
+      const resp = await axios.post(`${API_BASE}/api/connect-binance`, {
+        uid: user.uid,
+        apiKey: apiKey.trim(),
+        apiSecret: apiSecret.trim(),
+      });
+
+      if (resp.data?.success) {
+        // Éxito: limpiar inputs y actualizar estado
+        setApiKey("");
+        setApiSecret("");
+        setIsVerifying(false);
+        // El estado binanceConnected se actualizará automáticamente via el listener de Firestore
+      } else {
+        setIsVerifying(false);
+        setError(resp.data?.error || "Error conectando con Binance");
+      }
+    } catch (err) {
+      console.error("Error connect-binance:", err.response?.data || err.message);
+      setIsVerifying(false);
+      setError(err.response?.data?.error || err.message || "Error en la conexión");
+    }
+  };
+
+  // Desconectar Binance
+  const disconnectBinance = async () => {
+    if (!user) {
+      setError("No estás autenticado.");
+      return;
+    }
+
+    setIsDisconnecting(true);
+    setError(null);
+
+    try {
+      const resp = await axios.post(`${API_BASE}/api/disconnect-binance`, { 
+        uid: user.uid 
+      });
+
+      if (resp.data?.success) {
+        setIsDisconnecting(false);
+        // El estado binanceConnected se actualizará automáticamente via el listener de Firestore
+      } else {
+        setIsDisconnecting(false);
+        setError(resp.data?.error || "No se pudo desconectar");
+      }
+    } catch (err) {
+      console.error("Error disconnect-binance:", err.response?.data || err.message);
+      setIsDisconnecting(false);
+      setError(err.response?.data?.error || err.message || "Error al desconectar");
+    }
+  };
+
   // Función para formatear números con separadores de miles
   const formatNumber = (num) => {
     return new Intl.NumberFormat('en-US', {
@@ -166,73 +235,7 @@ const Dashboard = ({ onOpenProfile }) => {
 
   // Función para abrir enlace de creación de API
   const handleCreateAPI = () => {
-    window.open("https://www.binance.com/es-MX/support/faq/detail/538e05e2fd394c489b4cf89e92c55f70", "_blank");
-  };
-
-  // === NUEVO: Verificar / conectar Binance ===
-  const handleVerifyAndConnect = async () => {
-    if (!user) {
-      setError("No estás autenticado.");
-      return;
-    }
-    if (!apiKeyInput || !apiSecretInput) {
-      setError("Por favor ingresa API Key y API Secret.");
-      return;
-    }
-
-    setError(null);
-    setIsVerifying(true);
-
-    try {
-      // MODIFICADO: Usar API_BASE en la llamada
-      const resp = await axios.post(`${API_BASE}/api/connect-binance`, {
-        uid: user.uid,
-        apiKey: apiKeyInput.trim(),
-        apiSecret: apiSecretInput.trim(),
-      });
-
-      if (resp.data?.success) {
-        // éxito: backend guarda keys y arranca stream
-        setApiSecretInput(""); // limpiar secret del input por seguridad
-        setIsVerifying(false);
-        // binanceConnected lo actualizará el snapshot listener cuando Firestore cambie
-      } else {
-        setIsVerifying(false);
-        setError(resp.data?.error || "Error conectando con Binance");
-      }
-    } catch (err) {
-      console.error("Error connect-binance:", err.response?.data || err.message);
-      setIsVerifying(false);
-      setError(err.response?.data?.error || err.message || "Error en la conexión");
-    }
-  };
-
-  // === NUEVO: Desconectar ===
-  const handleDisconnect = async () => {
-    if (!user) {
-      setError("No estás autenticado.");
-      return;
-    }
-
-    setIsDisconnecting(true);
-    setError(null);
-
-    try {
-      // MODIFICADO: Usar API_BASE en la llamada
-      const resp = await axios.post(`${API_BASE}/api/disconnect-binance`, { uid: user.uid });
-
-      if (resp.data?.success) {
-        setIsDisconnecting(false);
-        // el snapshot listener actualizará binanceConnected
-      } else {
-        setIsDisconnecting(false);
-        setError(resp.data?.error || "No se pudo desconectar");
-      }
-    } catch (err) {
-      console.error("Error disconnect-binance:", err.response?.data || err.message);
-      setIsDisconnecting(false);
-      setError(err.response?.data?.error || err.message || "Error al desconectar");
-    }
+    window.open("https://www.binance.com/es/my/settings/api-management", "_blank");
   };
 
   // Componente del Modal de Pagos
@@ -539,7 +542,7 @@ const Dashboard = ({ onOpenProfile }) => {
         </div>
 
         {/* =========================
-            Sección: Conexión Binance P2P
+            Sección: Conexión Binance P2P OPTIMIZADA
             ========================= */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
@@ -571,103 +574,94 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Formulario de conexión */}
+            {/* Formulario de conexión - RENDERIZADO CONDICIONAL */}
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  API Key
-                </label>
-                <div className="relative">
-                  <input
-                    value={apiKeyInput}
-                    onChange={(e) => setApiKeyInput(e.target.value)}
-                    type="text"
-                    placeholder="Ej: AbCdEFG..."
-                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className={`w-2 h-2 rounded-full ${binanceConnected ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`}></div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  API Secret
-                </label>
-                <div className="relative">
-                  <input
-                    value={apiSecretInput}
-                    onChange={(e) => setApiSecretInput(e.target.value)}
-                    type="password"
-                    placeholder="Tu API Secret"
-                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                {/* Verificar / conectar */}
-                <button
-                  onClick={handleVerifyAndConnect}
-                  disabled={isVerifying || binanceConnected}
-                  className={`flex-1 ${isVerifying || binanceConnected ? 'opacity-60 cursor-not-allowed' : ''} bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-500/20`}
-                >
-                  <div className="flex items-center justify-center">
-                    <CheckBadgeIcon className="h-5 w-5 mr-2" />
-                    {isVerifying ? 'Verificando...' : binanceConnected ? 'Conectado' : 'Verificar'}
-                  </div>
-                </button>
-
-                {/* Desconectar (visible cuando está conectado) */}
-                {binanceConnected && (
-                  <button
-                    onClick={handleDisconnect}
-                    disabled={isDisconnecting}
-                    className={`px-6 ${isDisconnecting ? 'opacity-60 cursor-not-allowed' : ''} bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-red-500`}
-                  >
-                    {isDisconnecting ? 'Desconectando...' : 'Desconectar'}
-                  </button>
-                )}
-
-                <button 
-                  onClick={handleCreateAPI}
-                  className="px-6 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-gray-600"
-                >
-                  <div className="flex items-center justify-center">
-                    <span className="text-sm">¿Crear una API?</span>
-                  </div>
-                </button>
-              </div>
-
-              {/* Mensajes y estado */}
-              <div className="mt-3">
-                {binanceConnected ? (
-                  <div className="inline-flex items-center gap-3 bg-green-900/20 text-green-300 px-4 py-2 rounded-xl">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                      <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <div>
-                      <div className="font-semibold">Binance conectado ✅</div>
-                      {maskedApiKey && <div className="text-xs text-green-200">API: {maskedApiKey}</div>}
+              {!binanceConnected ? (
+                // ESTADO: NO CONECTADO - Mostrar inputs
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      API Key
+                    </label>
+                    <div className="relative">
+                      <input
+                        value={apiKey}
+                        onChange={(e) => setApiKey(e.target.value)}
+                        type="text"
+                        placeholder="Ej: AbCdEFG..."
+                        className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      />
                     </div>
                   </div>
-                ) : (
-                  <div className="inline-flex items-center gap-3 bg-yellow-900/20 text-yellow-300 px-4 py-2 rounded-xl">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <div className="text-sm">Aún no conectado a Binance.</div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      API Secret
+                    </label>
+                    <div className="relative">
+                      <input
+                        value={apiSecret}
+                        onChange={(e) => setApiSecret(e.target.value)}
+                        type="password"
+                        placeholder="Tu API Secret"
+                        className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      />
+                    </div>
                   </div>
-                )}
-                {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
-              </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={connectBinance}
+                      disabled={isVerifying}
+                      className={`flex-1 ${isVerifying ? 'opacity-60 cursor-not-allowed' : ''} bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-500/20`}
+                    >
+                      <div className="flex items-center justify-center">
+                        <CheckBadgeIcon className="h-5 w-5 mr-2" />
+                        {isVerifying ? 'Verificando...' : 'Conectar'}
+                      </div>
+                    </button>
+
+                    <button 
+                      onClick={handleCreateAPI}
+                      className="px-6 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-gray-600"
+                    >
+                      <div className="flex items-center justify-center">
+                        <span className="text-sm">Crear API</span>
+                      </div>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                // ESTADO: CONECTADO - Mostrar estado y botón desconectar
+                <>
+                  <div className="text-center p-6 bg-green-900/20 border border-green-500/30 rounded-xl">
+                    <div className="inline-flex items-center gap-3 text-green-300 mb-4">
+                      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <div className="text-left">
+                        <div className="font-semibold text-lg">✅ Binance Conectado</div>
+                        {maskedApiKey && <div className="text-sm text-green-200">API: {maskedApiKey}</div>}
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={disconnectBinance}
+                      disabled={isDisconnecting}
+                      className={`w-full ${isDisconnecting ? 'opacity-60 cursor-not-allowed' : ''} bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-red-500`}
+                    >
+                      {isDisconnecting ? 'Desconectando...' : 'Desconectar'}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Mensajes de error */}
+              {error && (
+                <div className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-xl">
+                  <div className="text-sm text-red-400">{error}</div>
+                </div>
+              )}
             </div>
 
             {/* Panel de información */}
