@@ -192,6 +192,7 @@ const Dashboard = ({ onOpenProfile }) => {
 
   // === NUEVA FUNCIÓN DESCONECTAR CORREGIDA ===
   const disconnectBinance = async () => {
+    alert("Botón de Desconectar presionado ✅");
     if (!user) {
       setError("No estás autenticado.");
       return;
