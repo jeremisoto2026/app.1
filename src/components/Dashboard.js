@@ -34,7 +34,6 @@ const Dashboard = ({ onOpenProfile }) => {
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [binanceConnected, setBinanceConnected] = useState(false);
   const [maskedApiKey, setMaskedApiKey] = useState("");
 
@@ -128,7 +127,6 @@ const Dashboard = ({ onOpenProfile }) => {
         return;
       }
       const data = snap.data();
-      
       if (data?.binanceConnected) {
         setBinanceConnected(true);
         // Enmascarar API Key para mostrar
@@ -143,8 +141,6 @@ const Dashboard = ({ onOpenProfile }) => {
       } else {
         setBinanceConnected(false);
         setMaskedApiKey("");
-        setApiKey("");
-      setApiSecret("");
       }
     }, (err) => {
       console.error("Error escuchando usuario:", err);
@@ -153,9 +149,7 @@ const Dashboard = ({ onOpenProfile }) => {
     return () => unsub();
   }, [user]);
 
-  // === FUNCIONES OPTIMIZADAS PARA BINANCE ===
-
-  // Conectar Binance
+  // === FUNCIÓN SIMPLIFICADA PARA CONECTAR BINANCE ===
   const connectBinance = async () => {
     if (!user) {
       setError("No estás autenticado.");
@@ -177,7 +171,7 @@ const Dashboard = ({ onOpenProfile }) => {
       });
 
       if (resp.data?.success) {
-        // Éxito: limpiar inputs y actualizar estado
+        // Éxito: limpiar inputs
         setApiKey("");
         setApiSecret("");
         setIsVerifying(false);
@@ -190,42 +184,6 @@ const Dashboard = ({ onOpenProfile }) => {
       console.error("Error connect-binance:", err.response?.data || err.message);
       setIsVerifying(false);
       setError(err.response?.data?.error || err.message || "Error en la conexión");
-    }
-  };
-
-  // === NUEVA FUNCIÓN DESCONECTAR CORREGIDA ===
-  const disconnectBinance = async () => {
-    alert("Botón de Desconectar presionado ✅");
-    if (!user) {
-      setError("No estás autenticado.");
-      return;
-    }
-
-    setIsDisconnecting(true);
-    setError(null);
-
-    try {
-      const resp = await axios.post(`${API_BASE}/api/disconnect-binance`, { uid: user.uid });
-  
-      if (resp.data?.success) {
-        // ✅ Actualizar UI inmediatamente
-        setBinanceConnected(false);
-        setMaskedApiKey("");
-        setApiKey("");
-        setApiSecret("");
-        setIsDisconnecting(false);
-
-        // Mensaje temporal de confirmación
-        setError("Desconectado correctamente.");
-        setTimeout(() => setError(null), 2000);
-      } else {
-        setIsDisconnecting(false);
-        setError(resp.data?.error || "No se pudo desconectar");
-      }
-    } catch (err) {
-      console.error("Error disconnect-binance:", err.response?.data || err.message);
-      setIsDisconnecting(false);
-      setError(err.response?.data?.error || err.message || "Error al desconectar");
     }
   };
 
@@ -351,7 +309,7 @@ const Dashboard = ({ onOpenProfile }) => {
     );
   }
 
-  if (error && !error.includes("Desconectado correctamente")) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black flex items-center justify-center p-4">
         <div className="text-center p-8 bg-gray-900/70 backdrop-blur-lg rounded-2xl border border-purple-500/30 max-w-md w-full shadow-2xl">
@@ -552,7 +510,7 @@ const Dashboard = ({ onOpenProfile }) => {
         </div>
 
         {/* =========================
-            Sección: Conexión Binance P2P OPTIMIZADA
+            Sección: Conexión Binance P2P - ESTILO CRIPTOEXCEL
             ========================= */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
@@ -642,10 +600,10 @@ const Dashboard = ({ onOpenProfile }) => {
                   </div>
                 </>
               ) : (
-                // ESTADO: CONECTADO - Mostrar estado y botón desconectar
+                // ESTADO: CONECTADO - Solo mostrar mensaje (sin botón desconectar)
                 <>
                   <div className="text-center p-6 bg-green-900/20 border border-green-500/30 rounded-xl">
-                    <div className="inline-flex items-center gap-3 text-green-300 mb-4">
+                    <div className="inline-flex items-center gap-3 text-green-300">
                       <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
                         <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
@@ -654,36 +612,20 @@ const Dashboard = ({ onOpenProfile }) => {
                         {maskedApiKey && <div className="text-sm text-green-200">API: {maskedApiKey}</div>}
                       </div>
                     </div>
-                    
-                    <button
-  type="button"   // 👈 evita que actúe como submit
-  onClick={() => {
-    alert("Botón clickeado en UI ✅"); // prueba que sí dispara
-    disconnectBinance();
-  }}
-  disabled={isDisconnecting}
-  className={`w-full ${isDisconnecting ? 'opacity-60 cursor-not-allowed' : ''} bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-red-500`}
->
-  {isDisconnecting ? 'Desconectando...' : 'Desconectar'}
-</button>
+                    <div className="mt-4 text-sm text-green-200">
+                      <p>Tu conexión está activa y registrando operaciones automáticamente.</p>
+                      <p className="text-xs text-green-300 mt-1">
+                        Para actualizar tus credenciales, simplemente conecta nuevamente.
+                      </p>
+                    </div>
                   </div>
                 </>
               )}
 
               {/* Mensajes de error */}
               {error && (
-                <div className={`mt-3 p-3 rounded-xl ${
-                  error.includes("Desconectado correctamente") 
-                    ? "bg-green-900/20 border border-green-500/30" 
-                    : "bg-red-900/20 border border-red-500/30"
-                }`}>
-                  <div className={`text-sm ${
-                    error.includes("Desconectado correctamente") 
-                      ? "text-green-400" 
-                      : "text-red-400"
-                  }`}>
-                    {error}
-                  </div>
+                <div className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-xl">
+                  <div className="text-sm text-red-400">{error}</div>
                 </div>
               )}
             </div>
