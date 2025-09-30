@@ -128,6 +128,7 @@ const Dashboard = ({ onOpenProfile }) => {
         return;
       }
       const data = snap.data();
+      console.log("Cambio en Firestore:", data);
       if (data?.binanceConnected) {
         setBinanceConnected(true);
         // Enmascarar API Key para mostrar
@@ -203,6 +204,7 @@ const Dashboard = ({ onOpenProfile }) => {
 
     try {
       const resp = await axios.post(`${API_BASE}/api/disconnect-binance`, { uid: user.uid });
+      console.log("Respuesta backend:", resp.data);
 
       if (resp.data?.success) {
         // ✅ Actualizar UI inmediatamente
