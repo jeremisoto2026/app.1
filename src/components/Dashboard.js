@@ -128,8 +128,6 @@ const Dashboard = ({ onOpenProfile }) => {
         return;
       }
       const data = snap.data();
-      console.log("Cambio en Firestore:", data);
-      alert("Cambio en Firestore: " + JSON.stringify(data));
       
       if (data?.binanceConnected) {
         setBinanceConnected(true);
@@ -206,10 +204,7 @@ const Dashboard = ({ onOpenProfile }) => {
 
     try {
       const resp = await axios.post(`${API_BASE}/api/disconnect-binance`, { uid: user.uid });
-      
-      console.log("Respuesta backend:", resp.data);
-alert("Respuesta backend: " + JSON.stringify(resp.data));
-
+  
       if (resp.data?.success) {
         // ✅ Actualizar UI inmediatamente
         setBinanceConnected(false);
