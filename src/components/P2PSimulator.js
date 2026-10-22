@@ -43,7 +43,15 @@ const P2PSimulator = () => {
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
-      setError(`Por favor completa todos los campos requeridos: ${missingFields.join(', ')}`);
+      const fieldLabels = {
+        crypto: "criptomoneda",
+        fiat: "moneda fiat",
+        operation_type: "tipo de operación",
+        amount: "cantidad",
+        exchange_rate: "tasa de cambio",
+      };
+      const missingLabels = missingFields.map((field) => fieldLabels[field] || field);
+      setError(`Completa estos campos obligatorios: ${missingLabels.join(", ")}.`);
       return;
     }
 
@@ -284,6 +292,8 @@ const P2PSimulator = () => {
                     type="button"
                     onClick={resetForm}
                     variant="outline"
+                    aria-label="Limpiar formulario"
+                    title="Limpiar formulario"
                     className="border-purple-500/30 text-gray-300 hover:bg-gray-700/50 h-11 rounded-xl disabled:opacity-50"
                     disabled={loading}
                   >
