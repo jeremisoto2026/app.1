@@ -13,6 +13,7 @@ describe("CSV helpers", () => {
     expect(formulaCell).toContain('""https://example.com""');
     expect(escapeCsvCell("+SUM(A1:A2)", true)).toBe("'+SUM(A1:A2)");
     expect(escapeCsvCell("normal text", true)).toBe("normal text");
+    expect(escapeCsvCell("-RUN(1+1)", true)).toBe("'-RUN(1+1)");
   });
 
   test("keeps negative numeric results numeric and emits UTF-8 BOM/CRLF", () => {
