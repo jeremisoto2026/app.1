@@ -4,6 +4,7 @@ import { collection, getDocs, query, orderBy, doc, onSnapshot } from "firebase/f
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
+import { calculateDashboardMetrics } from "../utils/financialCalculations";
 import {
   RocketLaunchIcon,
   CheckBadgeIcon,
@@ -21,9 +22,9 @@ const API_BASE = process.env.REACT_APP_BACKEND_URL;
 const Dashboard = ({ onOpenProfile }) => {
   const { user } = useAuth();
   const [totalOperations, setTotalOperations] = useState(0);
-  const [totalProfitUsdt, setTotalProfitUsdt] = useState(0);
+  const [profitByCurrency, setProfitByCurrency] = useState({});
   const [successRate, setSuccessRate] = useState(0);
-  const [monthlyPerformance, setMonthlyPerformance] = useState(0);
+  const [monthlyProfitByCurrency, setMonthlyProfitByCurrency] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
@@ -55,56 +56,12 @@ const Dashboard = ({ onOpenProfile }) => {
           operations.push({ id: doc.id, ...doc.data() });
         });
 
-        if (operations.length > 0) {
-          setTotalOperations(operations.length);
-
-          let totalCryptoBought = 0;
-          let totalCryptoSold = 0;
-          let monthlyCryptoBought = 0;
-          let monthlyCryptoSold = 0;
-
-          const last30Days = new Date();
-          last30Days.setDate(last30Days.getDate() - 30);
-
-          operations.forEach((op) => {
-            const cryptoAmount = parseFloat(op.crypto_amount || 0);
-            const opDate =
-              op.timestamp && typeof op.timestamp.toDate === "function"
-                ? op.timestamp.toDate()
-                : new Date();
-
-            if (op.operation_type === "Venta") {
-              totalCryptoSold += cryptoAmount;
-            } else if (op.operation_type === "Compra") {
-              totalCryptoBought += cryptoAmount;
-            }
-
-            if (opDate >= last30Days) {
-              if (op.operation_type === "Venta") {
-                monthlyCryptoSold += cryptoAmount;
-              } else if (op.operation_type === "Compra") {
-                monthlyCryptoBought += cryptoAmount;
-              }
-            }
-          });
-
-          const totalProfitUsdtCalc = totalCryptoBought - totalCryptoSold;
-          const monthlyPerformanceCalc =
-            monthlyCryptoBought - monthlyCryptoSold;
-
-          const successRateCalc = totalProfitUsdtCalc > 0 ? 100 : 0;
-
-          setTotalProfitUsdt(totalProfitUsdtCalc);
-          setSuccessRate(successRateCalc);
-          setMonthlyPerformance(monthlyPerformanceCalc);
-          setLoading(false);
-        } else {
-          setTotalOperations(0);
-          setTotalProfitUsdt(0);
-          setSuccessRate(0);
-          setMonthlyPerformance(0);
-          setLoading(false);
-        }
+        const metrics = calculateDashboardMetrics(operations);
+        setTotalOperations(metrics.totalOperations);
+        setProfitByCurrency(metrics.profitByCurrency);
+        setMonthlyProfitByCurrency(metrics.monthlyProfitByCurrency);
+        setSuccessRate(metrics.successRate);
+        setLoading(false);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Error al cargar los datos del dashboard.");
@@ -193,6 +150,43 @@ const Dashboard = ({ onOpenProfile }) => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(num);
+  };
+
+  // Formatear el resultado por moneda; las divisas distintas nunca se suman entre sí.
+  const formatCurrencyValue = (amount, currency) => {
+    try {
+      return new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount);
+    } catch {
+      return Number(amount).toLocaleString("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + " " + currency;
+    }
+  };
+
+  const renderCurrencyTotals = (totals) => {
+    const entries = Object.entries(totals || {})
+      .filter(([, amount]) => Number.isFinite(amount))
+      .sort(([currencyA], [currencyB]) => currencyA.localeCompare(currencyB));
+
+    if (!entries.length) {
+      return <span className="text-sm text-gray-500">Sin ventas cerradas para calcular el beneficio</span>;
+    }
+
+    return (
+      <div className="flex flex-col gap-1 text-lg md:text-xl font-bold">
+        {entries.map(([currency, amount]) => (
+          <span key={currency} className={amount > 0 ? "text-green-400" : amount < 0 ? "text-red-400" : "text-white"}>
+            {formatCurrencyValue(amount, currency)}
+          </span>
+        ))}
+      </div>
+    );
   };
 
   // Función para manejar la selección de plan
@@ -444,17 +438,15 @@ const Dashboard = ({ onOpenProfile }) => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Ganancia USDT</h3>
+              <h3 className="text-gray-400 font-medium">Beneficio realizado</h3>
               <div className="p-2 bg-green-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
                 <CurrencyDollarIcon className="h-5 w-5 text-green-400" />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold mb-1">
-              ${formatNumber(totalProfitUsdt)}
-            </p>
+            <div className="mb-1">{renderCurrencyTotals(profitByCurrency)}</div>
             <div className="flex items-center text-sm text-gray-500">
               <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
-              Balance total en USDT
+              Resultado por moneda fiat (FIFO)
             </div>
           </div>
 
@@ -475,7 +467,7 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <span className="h-2 w-2 bg-purple-500 rounded-full mr-2"></span>
-              Operaciones exitosas
+              Ventas cerradas con beneficio
             </div>
           </div>
 
@@ -483,27 +475,19 @@ const Dashboard = ({ onOpenProfile }) => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Rendimiento 30 días</h3>
+              <h3 className="text-gray-400 font-medium">Beneficio realizado · 30 días</h3>
               <div className="p-2 bg-amber-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
                 <ArrowTrendingUpIcon className="h-5 w-5 text-amber-400" />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold mb-1">
-              ${formatNumber(monthlyPerformance)}
-            </p>
+            <div className="mb-1">{renderCurrencyTotals(monthlyProfitByCurrency)}</div>
             <div className="flex items-center justify-between">
               <div className="flex items-center text-sm text-gray-500">
                 <span className="h-2 w-2 bg-amber-500 rounded-full mr-2"></span>
                 Últimos 30 días
               </div>
-              <span
-                className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  monthlyPerformance >= 0
-                    ? "bg-green-900/30 text-green-400"
-                    : "bg-red-900/30 text-red-400"
-                }`}
-              >
-                {monthlyPerformance >= 0 ? "Positivo" : "Negativo"}
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-800 text-gray-300">
+                Desglosado por moneda
               </span>
             </div>
           </div>
