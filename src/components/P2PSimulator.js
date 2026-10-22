@@ -52,7 +52,7 @@ const P2PSimulator = () => {
     const feePercent = formData.fee === '' ? 0 : Number(formData.fee);
 
     if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(exchangeRate) || exchangeRate <= 0) {
-      setError('Los montos y tasas de cambio deben ser números mayores a 0');
+      setError('Las cantidades y la tasa de cambio deben ser números mayores que 0');
       return;
     }
     if (!Number.isFinite(feePercent) || feePercent < 0 || feePercent >= 100) {
@@ -74,7 +74,7 @@ const P2PSimulator = () => {
       });
       setResult(simulationResult);
     } catch (err) {
-      console.error('Error in P2P simulation:', err);
+      console.error('Error en el simulador P2P:', err);
       setError(err.message || 'Error al realizar la simulación. Revisa los importes y la comisión.');
     } finally {
       setLoading(false);
@@ -164,7 +164,7 @@ const P2PSimulator = () => {
                       disabled={loading}
                     >
                       <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
-                        <SelectValue placeholder="Seleccionar fiat" />
+                        <SelectValue placeholder="Seleccionar moneda fiat" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                         {fiats.map(fiat => (
@@ -322,7 +322,7 @@ const P2PSimulator = () => {
                 <div className="space-y-6">
                   {/* Operation Summary */}
                   <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                    <h4 className="text-white font-medium mb-4 text-lg">Resumen de Operación</h4>
+                    <h4 className="text-white font-medium mb-4 text-lg">Resumen de la operación</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center">
                         <span className="text-gray-400">Tipo:</span>
@@ -347,10 +347,10 @@ const P2PSimulator = () => {
 
                   {/* Calculation Details */}
                   <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                    <h4 className="text-white font-medium mb-4 text-lg">Detalles del Cálculo</h4>
+                    <h4 className="text-white font-medium mb-4 text-lg">Detalles del cálculo</h4>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Cantidad Enviada:</span>
+                        <span className="text-gray-400">Cantidad enviada:</span>
                         <span className="text-white font-medium">
                           {result.amount_sent !== undefined
                             ? (result.operation_type === 'Venta'
@@ -360,7 +360,7 @@ const P2PSimulator = () => {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Cantidad Recibida (Bruta):</span>
+                        <span className="text-gray-400">Cantidad recibida (bruta):</span>
                         <span className="text-white font-medium">
                           {result.amount_received !== undefined
                             ? (result.operation_type === 'Venta'
