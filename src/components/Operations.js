@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { saveOperation } from '../services/database';
+import { calculateOperationAmounts } from '../utils/financialCalculations';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -62,23 +63,19 @@ const Operations = ({ onOperationSaved }) => {
       return;
     }
 
-    const exchangeRate = parseFloat(formData.exchange_rate);
-    const fee = parseFloat(formData.fee) || 0;
-    
-    if (exchangeRate <= 0 || parseFloat(formData[amountField]) <= 0) {
-      setError('Los montos y tasas de cambio deben ser mayores a 0');
+    let calculatedAmounts;
+    try {
+      calculatedAmounts = calculateOperationAmounts({
+        operation_type: formData.operation_type,
+        amount: formData[amountField],
+        exchange_rate: formData.exchange_rate,
+        fee: formData.fee,
+        crypto: formData.crypto,
+        fiat: formData.fiat,
+      });
+    } catch (calculationError) {
+      setError(calculationError.message || 'Revisa la cantidad, la tasa y la comisión.');
       return;
-    }
-
-    let cryptoAmount = 0;
-    let fiatAmount = 0;
-
-    if (formData.operation_type === 'Venta') {
-      cryptoAmount = parseFloat(formData.crypto_amount);
-      fiatAmount = (cryptoAmount * exchangeRate) - fee;
-    } else {
-      fiatAmount = parseFloat(formData.fiat_amount);
-      cryptoAmount = (fiatAmount / exchangeRate) - fee;
     }
 
     try {
@@ -91,11 +88,8 @@ const Operations = ({ onOperationSaved }) => {
         operation_type: formData.operation_type,
         crypto: formData.crypto,
         fiat: formData.fiat,
-        crypto_amount: cryptoAmount,
-        fiat_amount: fiatAmount,
-        exchange_rate: exchangeRate,
-        fee: fee,
-        profit: 0,
+        ...calculatedAmounts,
+        // La ganancia real solo se conoce al emparejar una venta con su coste de compra (FIFO).
         timestamp: new Date()
       };
 
@@ -129,18 +123,25 @@ const Operations = ({ onOperationSaved }) => {
 
   let previewAmountCrypto = 0;
   let previewAmountFiat = 0;
-  const previewFee = parseFloat(formData.fee) || 0;
+  const previewFee = formData.fee === '' ? 0 : Number(formData.fee);
+  const previewFeeCurrency = formData.operation_type === 'Venta' ? formData.fiat : formData.crypto;
 
-  if (formData.operation_type === 'Venta') {
-    const cryptoInput = parseFloat(formData.crypto_amount) || 0;
-    const rateInput = parseFloat(formData.exchange_rate) || 0;
-    previewAmountCrypto = cryptoInput;
-    previewAmountFiat = (cryptoInput * rateInput) - previewFee;
-  } else if (formData.operation_type === 'Compra') {
-    const fiatInput = parseFloat(formData.fiat_amount) || 0;
-    const rateInput = parseFloat(formData.exchange_rate) || 0;
-    previewAmountFiat = fiatInput;
-    previewAmountCrypto = (fiatInput / rateInput) - previewFee;
+  try {
+    if (formData.operation_type) {
+      const previewInput = formData.operation_type === 'Venta' ? formData.crypto_amount : formData.fiat_amount;
+      const preview = calculateOperationAmounts({
+        operation_type: formData.operation_type,
+        amount: previewInput,
+        exchange_rate: formData.exchange_rate,
+        fee: formData.fee,
+        crypto: formData.crypto,
+        fiat: formData.fiat,
+      });
+      previewAmountCrypto = preview.crypto_amount;
+      previewAmountFiat = preview.fiat_amount;
+    }
+  } catch {
+    // Un formulario incompleto no debe mostrar importes calculados que parecen válidos.
   }
 
   return (
@@ -318,8 +319,15 @@ const Operations = ({ onOperationSaved }) => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="fee" className="text-gray-300 font-medium">
-                    Comisión
+                    Comisión ({formData.operation_type === 'Venta' ? (formData.fiat || 'fiat') : (formData.crypto || 'cripto')})
                   </Label>
+                  <p className="text-xs text-gray-500">
+                    {formData.operation_type === 'Venta'
+                      ? 'En una venta, la comisión se resta del importe recibido en moneda fiat.'
+                      : formData.operation_type === 'Compra'
+                        ? 'En una compra, la comisión se resta de la cantidad de cripto recibida.'
+                        : 'Selecciona Compra o Venta para definir la unidad de la comisión.'}
+                  </p>
                   <Input
                     id="fee"
                     type="number"
@@ -358,7 +366,7 @@ const Operations = ({ onOperationSaved }) => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Comisión:</span>
                     <Badge className="bg-gray-700 text-gray-300 border-gray-600">
-                      {previewFee.toFixed(8)} {formData.crypto || "Cripto"}
+                      {Number.isFinite(previewFee) ? previewFee.toFixed(formData.operation_type === 'Venta' ? 2 : 8) : '0.00'} {previewFeeCurrency || 'unidad'}
                     </Badge>
                   </div>
                 </CardContent>
