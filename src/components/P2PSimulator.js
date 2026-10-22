@@ -106,7 +106,7 @@ const P2PSimulator = () => {
             Simulador P2P
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Estima cantidades brutas y netas después de la comisión. Para saber la ganancia real, también necesitas el coste al que adquiriste la criptomoneda.
+            Calcula las cantidades brutas y netas tras la comisión. Para conocer la ganancia real, también necesitas el coste al que adquiriste la criptomoneda.
           </p>
         </div>
 
@@ -141,7 +141,7 @@ const P2PSimulator = () => {
                       disabled={loading}
                     >
                       <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
-                        <SelectValue placeholder="Seleccionar crypto" />
+                        <SelectValue placeholder="Seleccionar criptomoneda" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                         {cryptos.map(crypto => (
@@ -156,7 +156,7 @@ const P2PSimulator = () => {
                   {/* Fiat */}
                   <div className="space-y-2">
                     <Label htmlFor="fiat" className="text-gray-300 font-medium">
-                      Moneda Fiat <span className="text-red-400">*</span>
+                      Moneda fiat <span className="text-red-400">*</span>
                     </Label>
                     <Select 
                       value={formData.fiat} 
