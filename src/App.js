@@ -48,57 +48,57 @@ const MainApp = () => {
     {
       icon: <FaMoneyBillWave className="text-5xl" />,
       title: "Registro de operaciones P2P",
-      description: "Registra manualmente compras y ventas, incluyendo importes, tasas y comisiones.",
-      benefits: ["Registro manual", "Cálculo de importes", "Comisiones identificadas", "Historial de operaciones"],
+      description: "Registra manualmente compras y ventas, con cantidades, tasas de cambio y comisiones.",
+      benefits: ["Registro manual", "Importes claros", "Comisiones identificadas", "Historial de operaciones"],
       gradient: "from-purple-600 to-blue-600",
-      stats: ["P2P", "registro", ""]
+      stats: ["REGISTRO", "MANUAL", ""]
     },
     {
       icon: <FaCalculator className="text-5xl" />,
-      title: "Simulador de Arbitraje",
-      description: "Estima el resultado de vender y recomprar cripto después de las comisiones introducidas.",
-      benefits: ["Análisis previo", "Precio de compra", "Precio de venta", "Comisiones incluidas"],
+      title: "Simulador de arbitraje",
+      description: "Compara un precio de venta con un precio de recompra y estima el resultado tras las comisiones.",
+      benefits: ["Precio de venta", "Precio de recompra", "Comisiones incluidas", "Resultado en cripto"],
       gradient: "from-blue-600 to-cyan-600",
-      stats: ["P2P", "simulador", ""]
+      stats: ["SIMULACIÓN", "", ""]
     },
     {
-      icon: <FaFileExcel className="text-5xl" />,
+      icon: <FaFileAlt className="text-5xl" />,
       title: "Exportación del historial",
-      description: "Descarga el historial de operaciones en formato CSV para consultarlo o trabajarlo en una hoja de cálculo.",
-      benefits: ["Exportación CSV", "Filtro por fechas", "Historial de operaciones", "Datos descargables"],
+      description: "Descarga las operaciones en un archivo CSV para revisarlas o trabajarlas en una hoja de cálculo.",
+      benefits: ["Exportación CSV", "Filtro por fechas", "Datos descargables", "Orden cronológico"],
       gradient: "from-cyan-600 to-purple-600",
-      stats: ["CSV", "exportación", ""]
+      stats: ["CSV", "HISTORIAL", ""]
     },
     {
       icon: <FaChartLine className="text-5xl" />,
       title: "Resumen de resultados",
-      description: "Consulta tus operaciones, el beneficio realizado calculado con coste de compra conocido y los resultados separados por moneda.",
+      description: "Consulta las operaciones registradas, el beneficio realizado por moneda y la tasa de éxito.",
       benefits: ["Total de operaciones", "Beneficio por moneda", "Tasa de éxito", "Últimos 30 días"],
       gradient: "from-purple-600 to-pink-600",
-      stats: ["FIFO", "beneficio", ""]
+      stats: ["FIFO", "COSTE CONOCIDO", ""]
     }
   ];
 
   const problemSolutions = [
     {
-      target: "PARA EL ARBITRADOR",
-      problem: "Arbitrar requiere controlar cantidades, precios y comisiones",
-      solution: "Organiza las operaciones y consulta los importes registrados",
+      target: "PARA QUIEN OPERA",
+      problem: "Arbitrar requiere controlar cantidades, precios y comisiones.",
+      solution: "Registra las operaciones y consulta sus importes y costes.",
       icon: "🎯",
       color: "from-purple-600 to-blue-600"
     },
     {
-      target: "PARA EL CONTADOR", 
-      problem: "Consulta o trabaja con los datos exportados en CSV",
-      solution: "Exporta el historial de las operaciones registradas en CSV",
-      icon: "👔",
+      target: "PARA QUIEN ANALIZA",
+      problem: "A menudo hay que revisar muchas operaciones después de ejecutarlas.",
+      solution: "Filtra el historial y exporta los registros a CSV.",
+      icon: "📊",
       color: "from-blue-600 to-cyan-600"
     },
     {
-      target: "PARA EL BANCO",
-      problem: "Facilita el orden de la información registrada",
-      solution: "Revisa importes, comisiones y fechas de las operaciones registradas",
-      icon: "🏦",
+      target: "PARA QUIEN ORGANIZA",
+      problem: "Las cantidades deben revisarse en su unidad correcta.",
+      solution: "Consulta cada importe con el código de moneda correspondiente.",
+      icon: "🧾",
       color: "from-cyan-600 to-purple-600"
     }
   ];
@@ -286,7 +286,7 @@ const MainApp = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
               {eliteStats.map((stat, index) => (
                 <div key={index} className="text-center bg-gradient-to-br from-gray-900/50 to-black/50 rounded-3xl p-6 border border-purple-500/20 backdrop-blur-sm transform hover:scale-105 transition-all duration-500 group">
-                  <div className={`${String(stat.value).length > 8 ? "text-xl lg:text-2xl" : "text-4xl lg:text-5xl"} font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2`}>
+                  <div className={`${String(stat.value).length > 8 ? "text-xl lg:text-2xl" : "text-4xl lg:text-5xl"} font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2` }>
                     {stat.value}
                   </div>
                   <div className="text-lg font-bold text-white mb-1">{stat.label}</div>
