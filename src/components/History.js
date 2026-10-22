@@ -462,9 +462,13 @@ const History = () => {
                     </p>
                   )}
                 </>
+              ) : realizedProfitByOperation[operation.id] ? (
+                <p className="text-sm text-amber-300">
+                  Beneficio no calculable: no hay una compra registrada que permita conocer el coste de esta venta.
+                </p>
               ) : (
                 <p className="text-sm text-amber-300">
-                  Beneficio no calculable: no hay coste de compra conocido y emparejado para esta venta.
+                  Beneficio no calculable: faltan una fecha fiable o importes válidos para aplicar el cálculo FIFO.
                 </p>
               )}
             </div>
