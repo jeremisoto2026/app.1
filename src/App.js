@@ -320,14 +320,14 @@ const MainApp = () => {
               <div className="flex flex-wrap justify-center items-center gap-6 text-base text-gray-400 mt-12">
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-purple-500/20">
                   <FaLock className="text-purple-400 text-xl" />
-                  <span>Autenticación de cuenta</span>
+                  <span>Inicio de sesión con Firebase</span>
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-blue-500/20">
-                  <FaAward className="text-blue-400 text-xl" />
-                  <span>Inicio de sesión con cuenta</span>
+                  <FaFileAlt className="text-blue-400 text-xl" />
+                  <span>Historial y exportación CSV</span>
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-cyan-500/20">
-                  <FaCrown className="text-cyan-400 text-xl" />
+                  <FaArrowRight className="text-cyan-400 text-xl" />
                   <span>Soporte por correo</span>
                 </div>
               </div>
