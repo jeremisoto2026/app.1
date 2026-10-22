@@ -121,18 +121,13 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
           <h2 className="text-red-400 text-xl font-semibold mb-2">Error</h2>
           <p className="text-gray-300 mb-6">{error}</p>
-          <div className="flex gap-3 justify-center">
-            <button 
+          <div className="flex justify-center">
+            <button
+              type="button"
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 shadow-lg shadow-purple-500/20"
             >
               Reintentar
-            </button>
-            <button 
-              onClick={() => setError(null)}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
-            >
-              Volver
             </button>
           </div>
         </div>
