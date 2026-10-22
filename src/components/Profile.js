@@ -34,16 +34,16 @@ export default function Profile() {
   const [actionError, setActionError] = useState("");
   const [operationCount, setOperationCount] = useState(0);
 
-  // Estado adicional: contador de exportaciones en tiempo real (no toca UI/lógica existente)
+  // Contador de exportaciones en tiempo real.
   const [exportCount, setExportCount] = useState(null);
 
-  // Valores de reserva para mostrar los contadores cuando el perfil todavía no los contiene.
+  // Valores por defecto si el perfil aún no contiene contadores.
   const defaultUsage = {
     operaciones: { usadas: 0 },
     exportaciones: { usadas: 0 },
   };
 
-  // ---------- Fetch profile & usage ----------
+  // ---------- Carga del perfil y uso ----------
   useEffect(() => {
     let cancelled = false;
 
@@ -92,20 +92,18 @@ export default function Profile() {
         // Si el documento tenía usage, respetarlo pero asegurar operaciones.usadas reflejan conteo real
         if (!data.usage) {
           data.usage = {
-            operaciones: { usadas: opsCount, total: defaultUsage.operaciones.total },
+            operaciones: { usadas: opsCount },
             exportaciones: defaultUsage.exportaciones,
           };
-        } else {
-          // si existe pero no trae operaciones.usadas, actualizamos para mostrar algo real
-          if (!data.usage.operaciones || data.usage.operaciones.usadas === undefined) {
-            data.usage = {
-              ...(data.usage || {}),
-              operaciones: {
-                usadas: opsCount,
-                total: data.usage?.operaciones?.total || defaultUsage.operaciones.total,
-              },
-            };
-          }
+        } else if (!data.usage.operaciones || data.usage.operaciones.usadas === undefined) {
+          // Mostrar el recuento real; no inventar límites de operaciones.
+          data.usage = {
+            ...data.usage,
+            operaciones: {
+              ...(data.usage?.operaciones || {}),
+              usadas: opsCount,
+            },
+          };
         }
 
         // seteamos nuevamente profileData para tener usage consistente
@@ -127,7 +125,7 @@ export default function Profile() {
     };
   }, [user]);
 
-  // ---------- Listener en tiempo real para exportaciones ----------
+  // ---------- Actualización en tiempo real del contador de exportaciones ----------
   // Solo añadí este efecto: escucha el documento users/{uid} y actualiza exportCount cuando cambie.
   useEffect(() => {
     if (!user) return;
@@ -164,7 +162,7 @@ export default function Profile() {
     return () => unsubscribe();
   }, [user]);
 
-  // ---------- Helpers ----------
+  // ---------- Funciones auxiliares ----------
   const getPhotoURL = () => {
     // Prioriza la foto guardada en Firestore -> foto del auth -> null
     if (profileData?.photoURL) return profileData.photoURL;
@@ -190,7 +188,7 @@ export default function Profile() {
     return "Fecha no disponible";
   };
 
-  // contenido loading
+  // Estado de carga
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -199,7 +197,7 @@ export default function Profile() {
     );
   }
 
-  // si no hay profileData (caso raro)
+  // Si no se han podido cargar los datos del perfil
   if (!profileData) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
