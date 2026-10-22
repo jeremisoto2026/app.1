@@ -12,7 +12,7 @@ const NavigationBar = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: "dashboard", icon: ChartBarIcon, label: "Resumen", mobileLabel: "Inicio" },
     { id: "p2p", icon: ArrowsRightLeftIcon, label: "Simulador P2P", mobileLabel: "P2P" },
-    { id: "arbitrage", icon: BoltIcon, label: "Arbitraje", mobileLabel: "Arbitraje" },
+    { id: "arbitrage", icon: BoltIcon, label: "Arbitraje", mobileLabel: "Arbit." },
     { id: "operations", icon: DocumentTextIcon, label: "Operaciones", mobileLabel: "Oper." },
     { id: "history", icon: ClockIcon, label: "Historial", mobileLabel: "Hist." },
     { id: "profile", icon: UserCircleIcon, label: "Perfil", mobileLabel: "Perfil" },
