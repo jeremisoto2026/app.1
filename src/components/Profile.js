@@ -302,7 +302,7 @@ export default function Profile() {
           <div className="lg:col-span-2 space-y-8">
             {/* ---- Tarjeta Información del perfil ---- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">Información del Perfil</h3>
+              <h3 className="text-xl font-semibold mb-4">Información del perfil</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Nombre</p>
