@@ -13,11 +13,10 @@ import {
 } from "@heroicons/react/24/outline";
 
 /**
- * Profile component
- * - Conecta con Firestore para traer doc usuario y contar subcolección operations.
+ * Perfil de usuario: consulta los datos de la cuenta y el uso registrado.
  */
 export default function Profile() {
-  const { user, signOut } = useAuth(); // espera que useAuth devuelva { user, signOut, ... }
+  const { user, signOut } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [operationCount, setOperationCount] = useState(0);
@@ -27,7 +26,7 @@ export default function Profile() {
 
   // Límites por defecto (si el documento no tiene usage)
   const defaultUsage = {
-    operaciones: { usadas: 0, total: 200 },
+    operaciones: { usadas: 0 },
     exportaciones: { usadas: 0, total: 40 },
   };
 
@@ -202,21 +201,17 @@ export default function Profile() {
   // Uso (operaciones / exportaciones) - prioriza operationCount real
   const usage = profileData.usage || defaultUsage;
   const operacionesUsadas = operationCount ?? (usage.operaciones?.usadas || 0);
-  let operacionesTotal = usage.operaciones?.total || defaultUsage.operaciones.total;
 
-  // Aquí priorizamos el valor en tiempo real (exportCount) si existe, si no usamos lo ya presente en profileData
-  let exportacionesUsadas = (exportCount !== null && exportCount !== undefined)
-    ? exportCount
-    : (usage.exportaciones?.usadas || defaultUsage.exportaciones.usadas);
+  // El límite de exportación Free sí se aplica en el historial. No se muestra
+  // un límite de operaciones porque el formulario no lo impone al guardar.
+  const exportacionesUsadas = (exportCount !== null && exportCount !== undefined)
+    ? (Number(exportCount) || 0)
+    : (Number(usage.exportaciones?.usadas) || Number(profileData.exportsUsed) || 0);
 
   let exportacionesTotal = usage.exportaciones?.total || defaultUsage.exportaciones.total;
-
-  // ⚡️ Ajuste: si es Premium → ilimitado (Infinity)
   if (profileData.plan?.toLowerCase() === "premium") {
-    operacionesTotal = Infinity;
     exportacionesTotal = Infinity;
   }
-
   // ---------- Render (diseño completo, sin UID, sin navegación, tarjetas separadas) ----------
   return (
     <div className="min-h-screen bg-black text-white py-8 px-4">
@@ -305,24 +300,11 @@ export default function Profile() {
               <div className="space-y-6">
                 {/* Operaciones */}
                 <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-300">Operaciones</span>
-                    <span className="text-gray-400">
-                      {operacionesUsadas}/{operacionesTotal === Infinity ? "∞" : operacionesTotal}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-800 rounded-full h-2.5">
-                    <div
-                      className="bg-indigo-600 h-2.5 rounded-full transition-all"
-                      style={{
-                        width: operacionesTotal === Infinity
-                          ? "100%"
-                          : `${Math.min((operacionesUsadas / operacionesTotal) * 100, 100)}%`,
-                      }}
-                    />
+                  <div className="flex justify-between text-sm items-center">
+                    <span className="text-gray-300">Operaciones registradas</span>
+                    <span className="text-white font-semibold">{operacionesUsadas}</span>
                   </div>
                 </div>
-
                 {/* Exportaciones */}
                 <div>
                   <div className="flex justify-between text-sm mb-2">
