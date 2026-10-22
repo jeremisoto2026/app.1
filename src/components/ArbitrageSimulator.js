@@ -354,7 +354,7 @@ const ArbitrageSimulator = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Comisión de venta:</span>
-                      <span className="text-white font-medium">{formData.sell_fee}% en fiat</span>
+                      <span className="text-white font-medium">{formData.sell_fee}% en moneda de cotización</span>
                     </div>
                   </div>
                 </div>
