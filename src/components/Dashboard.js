@@ -49,7 +49,7 @@ const Dashboard = ({ onOpenProfile }) => {
         setClosedSales(metrics.closedSales);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching dashboard data:", err);
+        console.error("Error al cargar el resumen:", err);
         setError("Error al cargar los datos del dashboard.");
         setLoading(false);
       }
@@ -98,8 +98,8 @@ const Dashboard = ({ onOpenProfile }) => {
               JJXCAPITAL<span className="text-yellow-400">⚡</span>
             </div>
           </div>
-          <p className="text-gray-400 text-lg">Cargando dashboard premium...</p>
-          <p className="text-gray-600 text-sm mt-2">Preparando tu análisis de inversión</p>
+          <p className="text-gray-400 text-lg">Cargando resumen...</p>
+          <p className="text-gray-600 text-sm mt-2">Preparando tus operaciones</p>
         </div>
       </div>
     );
@@ -177,7 +177,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <h2 className="text-2xl md:text-3xl font-bold mb-2">
             Bienvenido, <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">{user?.displayName || user?.email?.split('@')[0] || 'Inversor'}</span>
           </h2>
-          <p className="text-gray-400">Tu dashboard premium de JJXCAPITAL⚡</p>
+          <p className="text-gray-400">Resumen de JJXCAPITAL⚡</p>
         </div>
 
         {/* Grid de Métricas principales */}
@@ -202,7 +202,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Beneficio realizado (moneda fiat)</h3>
+              <h3 className="text-gray-400 font-medium">Beneficio realizado por moneda</h3>
               <div className="p-2 bg-green-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
                 <CurrencyDollarIcon className="h-5 w-5 text-green-400" />
               </div>
@@ -210,7 +210,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <div className="mb-1">{renderCurrencyTotals(profitByCurrency)}</div>
             <div className="flex items-center text-sm text-gray-500">
               <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
-              Resultado por moneda de cotización (FIFO)
+              Importes identificados por código de moneda (FIFO)
             </div>
           </div>
 
@@ -272,7 +272,7 @@ const Dashboard = ({ onOpenProfile }) => {
               JJXCAPITAL<span className="text-yellow-400">⚡</span>
             </div>
           </div>
-          <p>© {new Date().getFullYear()} JJXCAPITAL⚡ • Plataforma premium de trading</p>
+          <p>© {new Date().getFullYear()} JJXCAPITAL⚡ • Gestión de operaciones P2P</p>
         </div>
       </main>
 
