@@ -1,25 +1,20 @@
 
 // src/components/Profile.js
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext"; // <- usa el hook exportado por tu AuthContext
+import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { doc, getDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
 
-// Iconos (usa @heroicons/react/24/outline)
+// Iconos de la interfaz
 import {
   RocketLaunchIcon,
   ArrowLeftOnRectangleIcon,
   ChartBarIcon,
-  StarIcon,
-  CheckBadgeIcon,
 } from "@heroicons/react/24/outline";
 
 /**
  * Profile component
- * - Mantiene estructura, estilos y bloques.
  * - Conecta con Firestore para traer doc usuario y contar subcolección operations.
- * - No muestra UID ni navegación.
- * - Botón Contactar abre mailto:soportejjxcapital@gmail.com
  */
 export default function Profile() {
   const { user, signOut } = useAuth(); // espera que useAuth devuelva { user, signOut, ... }
@@ -355,81 +350,30 @@ export default function Profile() {
             {/* Si más adelante quieres mostrar listados de operaciones, aquí va la tabla pequeña */}
           </div>
 
-          {/* ---------- Columna derecha (Plan Premium + Métodos + Soporte) ---------- */}
+          {/* ---------- Suscripciones y soporte ---------- */}
           <div className="space-y-8">
-            {/* ---------- Card: Plan Premium Mensual ---------- */}
-            <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <RocketLaunchIcon className="h-5 w-5 mr-2 text-purple-400" />
-                  <h3 className="text-lg font-semibold">Plan Premium</h3>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-white">$13 <span className="text-sm text-gray-400">/mes</span></p>
-                </div>
+            <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-purple-500/20">
+              <div className="flex items-center gap-3 mb-3">
+                <RocketLaunchIcon className="h-6 w-6 text-purple-400" />
+                <h3 className="text-lg font-semibold">Suscripciones</h3>
               </div>
+              <p className="text-sm text-gray-300">
+                La contratación y los pagos de planes aún no están habilitados. Esta pantalla no procesa cobros ni modifica tu suscripción.
+              </p>
+            </section>
 
-              <div className="mb-4 text-sm text-gray-300">
-                <ul className="space-y-2">
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Operaciones ilimitadas</li>
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Exportaciones ilimitadas</li>
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Soporte prioritario</li>
-                </ul>
-              </div>
-
-              {/* Métodos de pago (RESTORADOS) */}
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-300 mb-2">Métodos de pago</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-md">PayPal</button>
-                  <button className="bg-yellow-400 hover:brightness-95 text-black py-2 px-3 rounded-md">Binance Pay</button>
-                  <button className="bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-3 rounded-md">Blockchain Pay</button>
-                </div>
-              </div>
-
-            </div>
-
-            {/* ---------- Card: Plan Premium Anual (separada) ---------- */}
-            <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <RocketLaunchIcon className="h-5 w-5 mr-2 text-purple-400" />
-                  <h3 className="text-lg font-semibold">Plan Premium Anual</h3>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-white">$125 <span className="text-sm text-gray-400">/año</span></p>
-                  <p className="text-xs text-green-400 font-semibold">Ahorra ~20%</p>
-                </div>
-              </div>
-
-              <div className="mb-4 text-sm text-gray-300">
-                <ul className="space-y-2">
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Operaciones ilimitadas</li>
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Exportaciones ilimitadas</li>
-                  <li className="flex items-center"><CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />Soporte prioritario</li>
-                </ul>
-              </div>
-
-              {/* Métodos de pago (RESTORADOS) */}
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-300 mb-2">Métodos de pago</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-md">PayPal</button>
-                  <button className="bg-yellow-400 hover:brightness-95 text-black py-2 px-3 rounded-md">Binance Pay</button>
-                  <button className="bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-3 rounded-md">Blockchain Pay</button>
-                </div>
-              </div>
-            </div>
-
-            {/* ---------- Card: Contactar Soporte ---------- */}
-            <div className="bg-gray-900 rounded-xl p-6 shadow-lg text-center">
+            <section className="bg-gray-900 rounded-xl p-6 shadow-lg text-center">
+              <h3 className="text-lg font-semibold mb-2">¿Necesitas ayuda?</h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Contacta con el equipo de soporte para consultas sobre tu cuenta.
+              </p>
               <a
                 href="mailto:soportejjxcapital@gmail.com"
-                className="w-full inline-block bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                className="w-full inline-block bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
               >
-                Contactar a Soporte
+                Contactar con soporte
               </a>
-            </div>
+            </section>
           </div>
         </div>
 
