@@ -172,7 +172,7 @@ const History = () => {
 
     try {
       const headers = [
-        "ID_Operacion", "Tipo_Operacion", "Plataforma", "Criptomoneda", "Cantidad_Cripto",
+        "ID_Documento", "ID_Orden", "Tipo_Operacion", "Plataforma", "Criptomoneda", "Cantidad_Cripto",
         "Moneda_Cotizacion", "Importe_Cotizado", "Tasa_Cambio", "Comision", "Moneda_Comision",
         "Cantidad_Cripto_Emparejada", "Ingreso_Emparejado", "Coste_Emparejado",
         "Beneficio_Realizado", "Moneda_Beneficio", "Cobertura_Coste", "Fecha"
@@ -202,16 +202,23 @@ const History = () => {
                 : "Sin coste conocido";
 
         return [
-          op.order_id || "N/A",
-          op.operation_type || "N/A",
-          op.exchange || "N/A",
-          op.crypto || "N/A",
+          op.id || "",
+          op.order_id || "",
+          op.operation_type || "",
+          op.exchange || "",
+          op.crypto || "",
           formattedCryptoAmount,
-          op.fiat || "N/A",
-          Number.isFinite(Number(op.fiat_amount)) ? Number(op.fiat_amount).toFixed(2) : "",
-          Number.isFinite(Number(op.exchange_rate)) ? String(op.exchange_rate) : "",
-          op.fee ?? 0,
-          op.fee_currency || (op.operation_type === "Venta" ? op.fiat : op.crypto) || "N/A",
+          op.fiat || "",
+          op.fiat_amount === null || op.fiat_amount === undefined || op.fiat_amount === ""
+            ? ""
+            : Number.isFinite(Number(op.fiat_amount)) ? Number(op.fiat_amount).toFixed(2) : "",
+          op.exchange_rate === null || op.exchange_rate === undefined || op.exchange_rate === ""
+            ? ""
+            : Number.isFinite(Number(op.exchange_rate)) ? String(op.exchange_rate) : "",
+          op.fee === null || op.fee === undefined || op.fee === "" ? "" : op.fee,
+          op.fee === null || op.fee === undefined || op.fee === ""
+            ? ""
+            : op.fee_currency || (op.operation_type === "Venta" ? op.fiat : op.crypto) || "",
           knownProfit ? realization.matchedQuantity.toFixed(8) : "",
           knownProfit ? realization.matchedProceeds.toFixed(2) : "",
           knownProfit ? realization.matchedCost.toFixed(2) : "",
@@ -325,6 +332,7 @@ const History = () => {
   };
 
   const formatCurrency = (value, currency = "USD") => {
+    if (value === null || value === undefined || value === "") return "—";
     const amount = Number(value);
     if (!Number.isFinite(amount)) return "—";
     const formatted = new Intl.NumberFormat("es-ES", {
@@ -411,7 +419,7 @@ const History = () => {
             <div className="flex items-center">
               <span className="text-gray-400 w-28">Criptomoneda:</span>
               <Badge className="ml-2 bg-purple-500/10 text-purple-400 border-purple-500/30">
-                {Number.isFinite(Number(operation.crypto_amount)) ? Number(operation.crypto_amount).toFixed(8) : "0.00000000"} {operation.crypto || "N/A"}
+                {operation.crypto_amount === null || operation.crypto_amount === undefined || operation.crypto_amount === "" ? "—" : Number.isFinite(Number(operation.crypto_amount)) ? Number(operation.crypto_amount).toFixed(8) + " " + (operation.crypto || "") : "—"}
               </Badge>
             </div>
             <div className="flex items-center">
@@ -427,13 +435,13 @@ const History = () => {
             <div className="flex items-center">
               <span className="text-gray-400 w-28">Tasa de cambio:</span>
               <Badge className="ml-2 bg-gray-700 text-gray-300 border-gray-600">
-                {Number.isFinite(Number(operation.exchange_rate)) ? Number(operation.exchange_rate).toFixed(2) : "0.00"}
+                {operation.exchange_rate === null || operation.exchange_rate === undefined || operation.exchange_rate === "" ? "—" : Number.isFinite(Number(operation.exchange_rate)) ? Number(operation.exchange_rate).toFixed(2) : "—"}
               </Badge>
             </div>
             <div className="flex items-center">
               <span className="text-gray-400 w-20">Comisión:</span>
               <Badge className="ml-2 bg-gray-700 text-gray-300 border-gray-600">
-                {Number.isFinite(Number(operation.fee)) ? Number(operation.fee).toFixed((operation.fee_currency || (operation.operation_type === 'Venta' ? operation.fiat : operation.crypto)) === operation.crypto ? 8 : 2) : "0.00"} {operation.fee_currency || (operation.operation_type === 'Venta' ? operation.fiat : operation.crypto) || "N/A"}
+                {operation.fee === null || operation.fee === undefined || operation.fee === "" ? "No registrada" : Number.isFinite(Number(operation.fee)) ? Number(operation.fee).toFixed((operation.fee_currency || (operation.operation_type === 'Venta' ? operation.fiat : operation.crypto)) === operation.crypto ? 8 : 2) + " " + (operation.fee_currency || (operation.operation_type === 'Venta' ? operation.fiat : operation.crypto) || "N/A") : "No válida"}
               </Badge>
             </div>
             <div className="md:col-span-2 flex items-center">
