@@ -103,8 +103,8 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-black rounded-3xl p-10 w-full max-w-lg relative border border-purple-500/30 shadow-2xl shadow-purple-500/10 overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-xl flex items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-black rounded-3xl p-6 sm:p-10 w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto relative border border-purple-500/30 shadow-2xl shadow-purple-500/10">
         {/* Elementos decorativos de fondo */}
         <div className="absolute -top-20 -right-20 w-60 h-60 bg-purple-600/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl"></div>
@@ -112,7 +112,8 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-6 right-6 text-gray-400 hover:text-purple-400 text-xl transition-all duration-300 p-2 rounded-full hover:bg-purple-500/10 z-10"
+          aria-label="Cerrar formulario"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-400 hover:text-purple-400 text-xl transition-all duration-300 p-2 rounded-full hover:bg-purple-500/10 z-10"
         >
           <FaTimes />
         </button>
@@ -157,6 +158,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
                 </div>
                 <input
                   type="text"
+                  aria-label="Nombre"
                   name="firstName"
                   autoComplete="given-name"
                   placeholder="Nombre"
@@ -169,6 +171,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
               <div className="relative">
                 <input
                   type="text"
+                  aria-label="Apellidos"
                   name="lastName"
                   autoComplete="family-name"
                   placeholder="Apellidos"
@@ -187,6 +190,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             </div>
             <input
               type="email"
+              aria-label="Correo electrónico"
               name="email"
               autoComplete="email"
               placeholder="Correo electrónico"
@@ -204,6 +208,8 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             <input
               type={showPassword ? "text" : "password"}
               name="password"
+              aria-label="Contraseña"
+              autoComplete={mode === "register" ? "new-password" : "current-password"}
               placeholder="Contraseña"
               value={formData.password}
               onChange={handleChange}
@@ -213,6 +219,8 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             <button
               type="button"
               onClick={togglePasswordVisibility}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-pressed={showPassword}
               className="absolute inset-y-0 right-0 pr-4 flex items-center text-purple-400/70 hover:text-purple-300 transition-colors duration-200"
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
