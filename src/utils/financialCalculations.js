@@ -118,6 +118,7 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
   const monthlyProfitByCurrency = {};
   const inventoryByPair = new Map();
   const closedSales = [];
+  const realizedProfitByOperation = {};
   const bestOperationByCurrency = {};
   const worstOperationByCurrency = {};
 
@@ -179,7 +180,23 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
     }
 
     // Only the matched portion has a known cost basis; unmatched quantities
-    // are not incorrectly treated as profit or loss.
+    // are never treated as profit or loss. The per-sale record is also used by
+    // the history screen and CSV export so every result remains auditable.
+    const isFullyMatched = remainingToMatch <= Math.max(1e-8, saleQuantity * 1e-8);
+    const saleResult = {
+      id: operation.id || null,
+      profit: saleProfit,
+      currency: operation._fiatCode,
+      timestamp: operation.timestamp,
+      matchedQuantity,
+      soldQuantity: saleQuantity,
+      fullyMatched: isFullyMatched,
+    };
+
+    if (operation.id) {
+      realizedProfitByOperation[operation.id] = saleResult;
+    }
+
     if (matchedQuantity > 0) {
       addToCurrencyTotal(profitByCurrency, operation._fiatCode, saleProfit);
       if (operation._calculationDate >= startOfWindow && operation._calculationDate <= referenceDate) {
@@ -187,21 +204,14 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
       }
     }
 
-    const isFullyMatched = remainingToMatch <= Math.max(1e-8, saleQuantity * 1e-8);
     if (isFullyMatched) {
-      const closedSale = {
-        id: operation.id || null,
-        profit: saleProfit,
-        currency: operation._fiatCode,
-        timestamp: operation.timestamp,
-      };
-      closedSales.push(closedSale);
+      closedSales.push(saleResult);
       const currency = operation._fiatCode;
       if (!bestOperationByCurrency[currency] || saleProfit > bestOperationByCurrency[currency].profit) {
-        bestOperationByCurrency[currency] = closedSale;
+        bestOperationByCurrency[currency] = saleResult;
       }
       if (!worstOperationByCurrency[currency] || saleProfit < worstOperationByCurrency[currency].profit) {
-        worstOperationByCurrency[currency] = closedSale;
+        worstOperationByCurrency[currency] = saleResult;
       }
     }
   });
@@ -217,6 +227,7 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
     successRate,
     closedSales: closedSales.length,
     winningSales,
+    realizedProfitByOperation,
     bestOperationByCurrency,
     worstOperationByCurrency,
   };
