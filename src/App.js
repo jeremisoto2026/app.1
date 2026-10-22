@@ -324,7 +324,7 @@ const MainApp = () => {
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-blue-500/20">
                   <FaAward className="text-blue-400 text-xl" />
-                  <span>Acceso web protegido</span>
+                  <span>Inicio de sesión con cuenta</span>
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-cyan-500/20">
                   <FaCrown className="text-cyan-400 text-xl" />
