@@ -267,6 +267,7 @@ export const calculateCryptoArbitrage = ({
     gross_crypto_repurchased: grossCryptoRepurchased,
     buy_fee_crypto: buyFeeCrypto,
     profit: cryptoProfit,
+    profit_fiat_equivalent: cryptoProfit * buyPrice,
     profit_percentage: profitPercentage,
   };
 };
