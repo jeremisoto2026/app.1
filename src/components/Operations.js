@@ -280,7 +280,7 @@ const Operations = () => {
 
                 <div className="space-y-2">
                   <Label id="fiat-label" htmlFor="fiat" className="text-gray-300 font-medium">
-                    Moneda fiat <span className="text-red-400">*</span>
+                    Moneda de cotización <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)} disabled={loading}>
                     <SelectTrigger id="fiat" aria-labelledby="fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
