@@ -34,6 +34,17 @@ describe("simulateP2P", () => {
     expect(result.fee_currency).toBe("USDT");
   });
 
+  test("rejects using the same crypto as the quote currency", () => {
+    expect(() => simulateP2P({
+      crypto: "USDT",
+      fiat: "USDT",
+      operation_type: "Venta",
+      amount: 10,
+      exchange_rate: 1,
+      fee: 0,
+    })).toThrow(/deben ser distintas/i);
+  });
+
   test("rejects invalid inputs and impossible fees", () => {
     expect(() => simulateP2P({
       crypto: "USDT",
