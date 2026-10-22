@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
           {
             uid: result.user.uid,
             email: result.user.email,
-            photoURL: result.user.photoURL || "",
+            photoURL: result.user.photoURL || existingProfile.data().photoURL || "",
           },
           { merge: true }
         );
