@@ -100,7 +100,7 @@ const ArbitrageSimulator = () => {
             Simulador de Arbitraje
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Calcula oportunidades de arbitraje entre diferentes exchanges y maximiza tus ganancias
+            Simula vender tu cripto al precio de venta y recomprarla al precio de compra. El resultado muestra cuánta cripto ganas o pierdes después de ambas comisiones.
           </p>
         </div>
         
@@ -158,7 +158,7 @@ const ArbitrageSimulator = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="buy_price" className="text-gray-300 font-medium">
-                    Precio de Compra <span className="text-red-400 ml-1">*</span>
+                    Precio de Compra (recompra) <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Input
                     type="number"
@@ -173,7 +173,7 @@ const ArbitrageSimulator = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sell_price" className="text-gray-300 font-medium">
-                    Precio de Venta <span className="text-red-400 ml-1">*</span>
+                    Precio de Venta (venta inicial) <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Input
                     type="number"
