@@ -78,7 +78,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
       await signInWithGoogle();
       onClose();
     } catch (error) {
-      setError(error.message);
+      setError(getAuthErrorMessage(error));
     } finally {
       setLoading(false);
     }
