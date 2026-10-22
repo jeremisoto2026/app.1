@@ -10,12 +10,12 @@ import {
 
 const NavigationBar = ({ activeTab, onTabChange }) => {
   const tabs = [
-    { id: "dashboard", icon: ChartBarIcon, label: "Dashboard" },
-    { id: "p2p", icon: ArrowsRightLeftIcon, label: "Simulador P2P" },
-    { id: "arbitrage", icon: BoltIcon, label: "Arbitraje" },
-    { id: "operations", icon: DocumentTextIcon, label: "Operaciones" },
-    { id: "history", icon: ClockIcon, label: "Historial" },
-    { id: "profile", icon: UserCircleIcon, label: "Perfil" },
+    { id: "dashboard", icon: ChartBarIcon, label: "Resumen", mobileLabel: "Inicio" },
+    { id: "p2p", icon: ArrowsRightLeftIcon, label: "Simulador P2P", mobileLabel: "P2P" },
+    { id: "arbitrage", icon: BoltIcon, label: "Arbitraje", mobileLabel: "Arbitraje" },
+    { id: "operations", icon: DocumentTextIcon, label: "Operaciones", mobileLabel: "Oper." },
+    { id: "history", icon: ClockIcon, label: "Historial", mobileLabel: "Hist." },
+    { id: "profile", icon: UserCircleIcon, label: "Perfil", mobileLabel: "Perfil" },
   ];
 
   return (
@@ -42,7 +42,10 @@ const NavigationBar = ({ activeTab, onTabChange }) => {
               }`}
             >
               <IconComponent className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-              <span className="truncate max-w-full">{tab.label}</span>
+              <span className="truncate max-w-full">
+                <span className="md:hidden">{tab.mobileLabel}</span>
+                <span className="hidden md:inline">{tab.label}</span>
+              </span>
               {isActive && (
                 <span className="absolute bottom-0 md:bottom-auto md:right-2 w-1.5 h-1.5 rounded-full bg-green-400 md:static" aria-hidden="true" />
               )}
