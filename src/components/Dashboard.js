@@ -182,7 +182,7 @@ const Dashboard = ({ onOpenProfile }) => {
 
         {/* Grid de Métricas principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-          {/* Tarjeta: Total Operaciones */}
+          {/* Tarjeta: Total de operaciones */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
@@ -214,7 +214,7 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
           </div>
 
-          {/* Tarjeta: Tasa de Éxito */}
+          {/* Tarjeta: Tasa de éxito */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
@@ -256,6 +256,10 @@ const Dashboard = ({ onOpenProfile }) => {
             </div>
           </div>
         </div>
+
+        <p className="text-sm text-gray-500 -mt-4 mb-8 leading-relaxed">
+          El beneficio se expresa en la moneda de cotización guardada en cada operación. Por ejemplo, USD son dólares estadounidenses y USDT es un criptoactivo distinto; no se mezclan ni se muestran como si fueran la misma moneda.
+        </p>
 
         {/* Las compras de planes todavía no están habilitadas. */}
         <section className="bg-gray-900/70 rounded-2xl p-6 border border-purple-500/20 mb-8" aria-labelledby="subscriptions-title">
