@@ -48,7 +48,7 @@ const ArbitrageSimulator = () => {
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -61,9 +61,6 @@ const ArbitrageSimulator = () => {
     }
 
     try {
-      // Simular pequeña demora para mostrar estado de carga
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       const calculatedResult = calculateCryptoArbitrage(formData); 
       setResult(calculatedResult);
       setError(null);
