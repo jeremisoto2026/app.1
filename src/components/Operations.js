@@ -180,6 +180,9 @@ const Operations = () => {
           <p className="text-gray-400 max-w-2xl mx-auto">
             Registra tus compras y ventas, y mantén un historial de importes y comisiones
           </p>
+          <p className="text-xs text-gray-500 max-w-2xl mx-auto mt-3">
+            Registro manual: no se conecta a Binance ni se envían órdenes mediante API. Elegir Binance como plataforma solo etiqueta la operación que introduces.
+          </p>
         </div>
 
         <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl">
