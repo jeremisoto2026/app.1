@@ -173,27 +173,32 @@ const History = () => {
       const sortedData = [...buyOperations, ...sellOperations];
 
       const rows = sortedData.map(op => {
-        const formattedCryptoAmount = op.crypto_amount ? parseFloat(op.crypto_amount).toFixed(3) : "0.000";
+        const cryptoAmount = Number(op.crypto_amount);
+        const formattedCryptoAmount = Number.isFinite(cryptoAmount) ? cryptoAmount.toFixed(8) : "";
 
         return [
-          op.order_id || 'N/A',
-          op.operation_type || 'N/A',
-          op.exchange || 'N/A',
-          op.crypto || 'N/A',
+          op.order_id || "N/A",
+          op.operation_type || "N/A",
+          op.exchange || "N/A",
+          op.crypto || "N/A",
           formattedCryptoAmount,
-          op.fiat || 'N/A',
-          op.fiat_amount || 0,
-          op.exchange_rate || 0,
+          op.fiat || "N/A",
+          Number.isFinite(Number(op.fiat_amount)) ? Number(op.fiat_amount).toFixed(2) : "",
+          Number.isFinite(Number(op.exchange_rate)) ? String(op.exchange_rate) : "",
           op.fee ?? 0,
-          op.fee_currency || (op.operation_type === 'Venta' ? op.fiat : op.crypto) || 'N/A',
-          formatDateForCSV(op.timestamp)
+          op.fee_currency || (op.operation_type === "Venta" ? op.fiat : op.crypto) || "N/A",
+          formatDateForCSV(op.timestamp),
         ];
       });
 
+      const escapeCsvCell = (value) => {
+        const text = String(value ?? "");
+        return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+      };
       const csvContent = [
-        headers.join(','),
-        ...rows.map(e => e.join(','))
-      ].join('\n');
+        headers.map(escapeCsvCell).join(","),
+        ...rows.map(row => row.map(escapeCsvCell).join(",")),
+      ].join("\r\n");
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
@@ -289,14 +294,13 @@ const History = () => {
   };
 
   const formatCurrency = (value, currency = "USD") => {
-    try {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency,
-      }).format(value);
-    } catch (error) {
-      return `${value} ${currency}`;
-    }
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return "—";
+    const formatted = new Intl.NumberFormat("es-ES", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+    return formatted + " " + currency;
   };
 
   const formatDate = (timestamp) => {
@@ -316,12 +320,13 @@ const History = () => {
     if (filters.exchange && op.exchange !== filters.exchange) filtered = false;
 
     if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered =
-        String(op.order_id)?.toLowerCase().includes(searchLower) ||
-        String(op.crypto)?.toLowerCase().includes(searchLower) ||
-        String(op.fiat)?.toLowerCase().includes(searchLower) ||
-        String(op.exchange)?.toLowerCase().includes(searchLower);
+      const searchLower = filters.search.toLowerCase().trim();
+      const matchesSearch =
+        String(op.order_id || "").toLowerCase().includes(searchLower) ||
+        String(op.crypto || "").toLowerCase().includes(searchLower) ||
+        String(op.fiat || "").toLowerCase().includes(searchLower) ||
+        String(op.exchange || "").toLowerCase().includes(searchLower);
+      filtered = filtered && matchesSearch;
     }
 
     return filtered;
