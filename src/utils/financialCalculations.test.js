@@ -81,10 +81,10 @@ describe("calculateDashboardMetrics", () => {
 
   test("calculates realized P&L using FIFO and not crypto totals", () => {
     const operations = [
-      operation({ operation_type: "Compra", crypto_amount: 10, fiat_amount: 100 }),
-      operation({ operation_type: "Venta", crypto_amount: 4, fiat_amount: 60, timestamp: new Date("2026-10-05T12:00:00.000Z") }),
-      operation({ operation_type: "Compra", crypto_amount: 5, fiat_amount: 75, timestamp: new Date("2026-10-06T12:00:00.000Z") }),
-      operation({ operation_type: "Venta", crypto_amount: 8, fiat_amount: 112, timestamp: new Date("2026-10-07T12:00:00.000Z") }),
+      operation({ id: "buy-1", operation_type: "Compra", crypto_amount: 10, fiat_amount: 100 }),
+      operation({ id: "sale-1", operation_type: "Venta", crypto_amount: 4, fiat_amount: 60, timestamp: new Date("2026-10-05T12:00:00.000Z") }),
+      operation({ id: "buy-2", operation_type: "Compra", crypto_amount: 5, fiat_amount: 75, timestamp: new Date("2026-10-06T12:00:00.000Z") }),
+      operation({ id: "sale-2", operation_type: "Venta", crypto_amount: 8, fiat_amount: 112, timestamp: new Date("2026-10-07T12:00:00.000Z") }),
     ];
 
     const result = calculateDashboardMetrics(operations, new Date("2026-10-22T12:00:00.000Z"));
@@ -93,6 +93,10 @@ describe("calculateDashboardMetrics", () => {
     expect(result.closedSales).toBe(2);
     expect(result.winningSales).toBe(2);
     expect(result.successRate).toBe(100);
+    expect(result.realizedProfitByOperation["sale-1"].profit).toBeCloseTo(20, 8);
+    expect(result.realizedProfitByOperation["sale-1"].fullyMatched).toBe(true);
+    expect(result.realizedProfitByOperation["sale-2"].profit).toBeCloseTo(22, 8);
+    expect(result.realizedProfitByOperation["sale-2"].fullyMatched).toBe(true);
   });
 
   test("keeps fiat currencies separate instead of adding unlike amounts", () => {
@@ -105,6 +109,21 @@ describe("calculateDashboardMetrics", () => {
 
     const result = calculateDashboardMetrics(operations, new Date("2026-10-22T12:00:00.000Z"));
     expect(result.profitByCurrency).toEqual({ EUR: 20, USD: 10 });
+  });
+
+  test("reports only the matched part when a sale exceeds known inventory", () => {
+    const operations = [
+      operation({ id: "buy-part", operation_type: "Compra", crypto_amount: 1, fiat_amount: 100 }),
+      operation({ id: "sale-part", operation_type: "Venta", crypto_amount: 2, fiat_amount: 240, timestamp: new Date("2026-10-02T12:00:00.000Z") }),
+    ];
+
+    const result = calculateDashboardMetrics(operations, new Date("2026-10-22T12:00:00.000Z"));
+    expect(result.realizedProfitByOperation["sale-part"].profit).toBeCloseTo(20, 8);
+    expect(result.realizedProfitByOperation["sale-part"].matchedQuantity).toBeCloseTo(1, 8);
+    expect(result.realizedProfitByOperation["sale-part"].soldQuantity).toBeCloseTo(2, 8);
+    expect(result.realizedProfitByOperation["sale-part"].fullyMatched).toBe(false);
+    expect(result.closedSales).toBe(0);
+    expect(result.profitByCurrency.EUR).toBeCloseTo(20, 8);
   });
 
   test("excludes sales with missing cost basis from win rate", () => {
