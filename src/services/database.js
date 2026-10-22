@@ -2,8 +2,6 @@
 import { 
   collection, 
   addDoc, 
-  query, 
-  orderBy, 
   getDocs, 
   serverTimestamp,
   doc,
@@ -12,7 +10,7 @@ import {
   deleteDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { calculateDashboardMetrics, calculateCryptoArbitrage } from "../utils/financialCalculations";
+import { calculateDashboardMetrics, calculateCryptoArbitrage, getOperationDate } from "../utils/financialCalculations";
 import { simulateP2P as runP2PSimulation } from "../utils/simulations";
 
 // --- Operations CRUD ---
@@ -49,16 +47,19 @@ export const deleteOperation = async (userId, operationId) => {
 export const getUserOperations = async (userId) => {
   try {
     const userOperationsCollection = collection(db, "users", userId, "operations");
-    const q = query(
-      userOperationsCollection,
-      orderBy("timestamp", "desc")
-    );
-    
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    const querySnapshot = await getDocs(userOperationsCollection);
+    const operations = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
+
+    operations.sort((a, b) => {
+      const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+      const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+      return dateB - dateA;
+    });
+
+    return operations;
   } catch (error) {
     console.error("Error getting user operations:", error);
     throw error;
