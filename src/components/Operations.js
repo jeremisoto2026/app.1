@@ -11,7 +11,7 @@ import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
 import { PlusCircleIcon, DocumentTextIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
-const Operations = ({ onOperationSaved }) => {
+const Operations = () => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     order_id: '',
@@ -59,7 +59,17 @@ const Operations = ({ onOperationSaved }) => {
     }
     
     if (missingFields.length > 0) {
-      setError(`Completa los siguientes campos obligatorios: ${missingFields.join(', ')}`);
+      const fieldLabels = {
+        exchange: "plataforma",
+        operation_type: "tipo de operación",
+        crypto: "criptomoneda",
+        fiat: "moneda fiat",
+        exchange_rate: "tasa de cambio",
+        crypto_amount: "cantidad en cripto",
+        fiat_amount: "importe en moneda fiat",
+      };
+      const missingLabels = [...new Set(missingFields)].map((field) => fieldLabels[field] || field);
+      setError(`Completa estos campos obligatorios: ${missingLabels.join(", ")}.`);
       return;
     }
 
@@ -95,7 +105,7 @@ const Operations = ({ onOperationSaved }) => {
 
       await saveOperation(user.uid, operationData);
       
-      setSuccess('¡Operación guardada exitosamente!');
+      setSuccess('La operación se ha guardado correctamente.');
       
       setFormData({
         order_id: '',
@@ -108,10 +118,6 @@ const Operations = ({ onOperationSaved }) => {
         exchange_rate: '',
         fee: '0'
       });
-
-      if (onOperationSaved) {
-        onOperationSaved();
-      }
 
     } catch (err) {
       console.error('Error al guardar la operación:', err);
@@ -152,7 +158,7 @@ const Operations = ({ onOperationSaved }) => {
             <PlusCircleIcon className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-            Nueva Operación
+            Nueva operación
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
             Registra tus compras y ventas, y mantén un historial de importes y comisiones
@@ -184,7 +190,7 @@ const Operations = ({ onOperationSaved }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="order_id" className="text-gray-300 font-medium">
-                    Número de Orden (Opcional)
+                    Número de orden (opcional)
                   </Label>
                   <Input
                     id="order_id"
@@ -218,7 +224,7 @@ const Operations = ({ onOperationSaved }) => {
 
                 <div className="space-y-2">
                   <Label htmlFor="operation_type" className="text-gray-300 font-medium">
-                    Tipo de Operación <span className="text-red-400">*</span>
+                    Tipo de operación <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)} disabled={loading}>
                     <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
@@ -386,7 +392,7 @@ const Operations = ({ onOperationSaved }) => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <PlusCircleIcon className="h-5 w-5" />
-                    Guardar Operación
+                    Guardar operación
                   </div>
                 )}
               </Button>
