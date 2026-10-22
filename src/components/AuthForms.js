@@ -45,10 +45,11 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -57,10 +58,17 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
     setLoading(true);
 
     try {
+      const email = formData.email.trim();
       if (mode === 'register') {
-        await signUp(formData.email, formData.password, formData.firstName, formData.lastName);
+        const firstName = formData.firstName.trim();
+        const lastName = formData.lastName.trim();
+        if (!firstName || !lastName) {
+          setError("Introduce tu nombre y tus apellidos.");
+          return;
+        }
+        await signUp(email, formData.password, firstName, lastName);
       } else {
-        await signIn(formData.email, formData.password);
+        await signIn(email, formData.password);
       }
       onClose();
     } catch (error) {
@@ -150,6 +158,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
                 <input
                   type="text"
                   name="firstName"
+                  autoComplete="given-name"
                   placeholder="Nombre"
                   value={formData.firstName}
                   onChange={handleChange}
@@ -161,7 +170,8 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
                 <input
                   type="text"
                   name="lastName"
-                  placeholder="Apellido"
+                  autoComplete="family-name"
+                  placeholder="Apellidos"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
@@ -178,6 +188,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             <input
               type="email"
               name="email"
+              autoComplete="email"
               placeholder="Correo electrónico"
               value={formData.email}
               onChange={handleChange}
