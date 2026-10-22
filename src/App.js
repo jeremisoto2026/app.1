@@ -8,7 +8,7 @@ import ArbitrageSimulator from './components/ArbitrageSimulator';
 import Operations from './components/Operations';
 import History from './components/History';
 import Profile from './components/Profile';
-import { FaSignInAlt, FaRocket, FaChartLine, FaLock, FaAward, FaCheck, FaCrown, FaFileExcel, FaCalculator, FaMoneyBillWave, FaArrowRight } from 'react-icons/fa';
+import { FaSignInAlt, FaRocket, FaChartLine, FaLock, FaAward, FaCheck, FaCrown, FaFileAlt, FaCalculator, FaMoneyBillWave, FaArrowRight } from 'react-icons/fa';
 import './App.css';
 
 // <- Añadido para FCM (no se tocó nada más)
@@ -83,7 +83,7 @@ const MainApp = () => {
   const premiumFeatures = [
     {
       icon: <FaMoneyBillWave className="text-5xl" />,
-      title: "Registro Instantáneo P2P",
+      title: "Registro de operaciones P2P",
       description: "Registra manualmente compras y ventas, incluyendo importes, tasas y comisiones.",
       benefits: ["Registro manual", "Cálculo de importes", "Comisiones identificadas", "Historial de operaciones"],
       gradient: "from-purple-600 to-blue-600",
@@ -99,15 +99,15 @@ const MainApp = () => {
     },
     {
       icon: <FaFileExcel className="text-5xl" />,
-      title: "Reportes Profesionales",
-      description: "Exporta el historial de operaciones en formato CSV para consultarlo o trabajarlo en una hoja de cálculo.",
+      title: "Exportación del historial",
+      description: "Descarga el historial de operaciones en formato CSV para consultarlo o trabajarlo en una hoja de cálculo.",
       benefits: ["Exportación CSV", "Filtro por fechas", "Historial de operaciones", "Datos descargables"],
       gradient: "from-cyan-600 to-purple-600",
       stats: ["CSV", "exportación", ""]
     },
     {
       icon: <FaChartLine className="text-5xl" />,
-      title: "Dashboard Avanzado",
+      title: "Resumen de resultados",
       description: "Consulta tus operaciones, el beneficio realizado calculado con coste de compra conocido y los resultados separados por moneda.",
       benefits: ["Total de operaciones", "Beneficio por moneda", "Tasa de éxito", "Últimos 30 días"],
       gradient: "from-purple-600 to-pink-600",
@@ -143,7 +143,7 @@ const MainApp = () => {
     { value: "P2P", label: "Registro de operaciones", sublabel: "Compras y ventas" },
     { value: "FIFO", label: "Cálculo de beneficio", sublabel: "Con coste de compra conocido" },
     { value: "CSV", label: "Exportación", sublabel: "Historial descargable" },
-    { value: "USD · EUR · VES", label: "Monedas separadas", sublabel: "Sin sumar divisas diferentes" }
+    { value: "USD · EUR · VES", label: "Monedas separadas", sublabel: "Y otras monedas, siempre separadas" }
   ];
 
   if (!user) {
