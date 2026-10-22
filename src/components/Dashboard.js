@@ -15,7 +15,7 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/outline";
 
-const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
+const Dashboard = ({ onOpenProfile }) => {
   const { user } = useAuth();
   const [totalOperations, setTotalOperations] = useState(0);
   const [profitByCurrency, setProfitByCurrency] = useState({});
@@ -29,7 +29,7 @@ const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
     const fetchData = async () => {
       if (!user) {
         setLoading(false);
-        setError("User not authenticated.");
+        setError("Inicia sesión para consultar el dashboard.");
         return;
       }
 
@@ -62,19 +62,12 @@ const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
 
   // Formatear el resultado por moneda; las divisas distintas nunca se suman entre sí.
   const formatCurrencyValue = (amount, currency) => {
-    try {
-      return new Intl.NumberFormat("es-ES", {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(amount);
-    } catch {
-      return Number(amount).toLocaleString("es-ES", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + " " + currency;
-    }
+    const formatted = new Intl.NumberFormat("es-ES", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+    // Mostrar siempre el código de moneda evita confundir USD con USDT.
+    return formatted + " " + currency;
   };
 
   const renderCurrencyTotals = (totals) => {
@@ -152,7 +145,7 @@ const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white">
       {/* Header con navegación */}
-      <header className="border-b border-purple-500/20 bg-black/30 backdrop-blur-xl sticky top-0 z-10">
+      <header className="border-b border-purple-500/20 bg-black/30 backdrop-blur-xl sticky top-0 md:top-16 z-10">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
             <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg mr-3 shadow-lg shadow-purple-500/30">
@@ -164,39 +157,6 @@ const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex space-x-1 bg-gray-900/50 p-1 rounded-lg border border-purple-500/10">
-              <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => onTabChange && onTabChange('dashboard')}
-              >
-                Dashboard
-              </button>
-              <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'p2p' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => onTabChange && onTabChange('p2p')}
-              >
-                P2P
-              </button>
-              <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'arbitrage' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => onTabChange && onTabChange('arbitrage')}
-              >
-                Arbitraje
-              </button>
-              <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'operations' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => onTabChange && onTabChange('operations')}
-              >
-                Operaciones
-              </button>
-              <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => onTabChange && onTabChange('history')}
-              >
-                Historial
-              </button>
-            </div>
-            
             <button
               onClick={onOpenProfile}
               className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500/50 hover:border-purple-400 transition-all duration-300 group"
@@ -249,7 +209,7 @@ const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Beneficio realizado</h3>
+              <h3 className="text-gray-400 font-medium">Beneficio realizado (moneda fiat)</h3>
               <div className="p-2 bg-green-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
                 <CurrencyDollarIcon className="h-5 w-5 text-green-400" />
               </div>
@@ -257,7 +217,7 @@ const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
             <div className="mb-1">{renderCurrencyTotals(profitByCurrency)}</div>
             <div className="flex items-center text-sm text-gray-500">
               <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
-              Resultado por moneda fiat (FIFO)
+              Resultado por moneda de cotización (FIFO)
             </div>
           </div>
 
@@ -286,7 +246,7 @@ const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Beneficio realizado · 30 días</h3>
+              <h3 className="text-gray-400 font-medium">Beneficio realizado · últimos 30 días</h3>
               <div className="p-2 bg-amber-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
                 <ArrowTrendingUpIcon className="h-5 w-5 text-amber-400" />
               </div>
@@ -298,7 +258,7 @@ const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
                 Últimos 30 días
               </div>
               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-800 text-gray-300">
-                Desglosado por moneda
+                Moneda de cotización
               </span>
             </div>
           </div>
