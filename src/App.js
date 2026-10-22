@@ -195,12 +195,12 @@ const MainApp = () => {
             <div className="text-center mb-16">
               <div className="bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-3xl p-8 border-2 border-purple-500/30 backdrop-blur-sm mb-8">
                 <h3 className="text-3xl font-bold text-white mb-6">
-                  Comienza tu <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Recorrido profesional</span>
+                  Comienza tu <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">recorrido profesional</span>
                 </h3>
                 
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-4">
                   <button 
-                    onClick={() => handleShowAuth('register')}
+                    onClick={() => handleShowAuth('register')} aria-label="Abrir registro"
                     className="group relative bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-black text-lg py-5 px-12 rounded-2xl transition-all duration-300 shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 transform hover:scale-105 flex items-center gap-4"
                   >
                     <FaRocket className="text-xl animate-bounce" />
@@ -210,7 +210,7 @@ const MainApp = () => {
                   </button>
 
                   <button 
-                    onClick={() => handleShowAuth('login')}
+                    onClick={() => handleShowAuth('login')} aria-label="Abrir inicio de sesión"
                     className="group bg-transparent hover:bg-white/10 text-white font-semibold text-lg py-5 px-12 rounded-2xl transition-all duration-300 border-2 border-purple-500/40 hover:border-purple-500/60 backdrop-blur-sm flex items-center gap-4"
                   >
                     <FaSignInAlt className="text-xl" />
@@ -308,7 +308,7 @@ const MainApp = () => {
                 </p>
                 
                 <button 
-                  onClick={() => handleShowAuth('register')}
+                  onClick={() => handleShowAuth('register')} aria-label="Crear una cuenta gratis"
                   className="group relative bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-black text-lg py-5 px-16 rounded-2xl transition-all duration-300 shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 transform hover:scale-105 mx-auto"
                 >
                   <div className="flex items-center justify-center gap-4">
@@ -351,7 +351,7 @@ const MainApp = () => {
 
   // Render para usuarios autenticados
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white">
       <main className="pb-24 pt-4 md:pb-6 md:pt-20">
         {activeTab === 'dashboard' && <Dashboard onOpenProfile={() => handleTabChange('profile')} />}
         {activeTab === 'p2p' && <P2PSimulator />}
