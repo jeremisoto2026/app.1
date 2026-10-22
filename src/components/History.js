@@ -158,8 +158,9 @@ const History = () => {
       });
 
       const rows = sortedData.map(op => {
+        const hasCryptoAmount = op.crypto_amount !== null && op.crypto_amount !== undefined && op.crypto_amount !== "";
         const cryptoAmount = Number(op.crypto_amount);
-        const formattedCryptoAmount = Number.isFinite(cryptoAmount) ? cryptoAmount.toFixed(8) : "";
+        const formattedCryptoAmount = hasCryptoAmount && Number.isFinite(cryptoAmount) ? cryptoAmount.toFixed(8) : "";
         const realization = op.operation_type === "Venta" ? realizedProfitByOperation[op.id] : null;
         const knownProfit = realization && realization.matchedQuantity > 0;
         const costCoverage = op.operation_type !== "Venta"
@@ -394,7 +395,7 @@ const History = () => {
               </Badge>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-400 w-28">Importe fiat:</span>
+              <span className="text-gray-400 w-28">Importe de cotización:</span>
               <Badge className="ml-2 bg-blue-500/10 text-blue-400 border-blue-500/30">
                 {formatCurrency(operation.fiat_amount, operation.fiat)}
               </Badge>
@@ -535,10 +536,10 @@ const History = () => {
               </div>
 
               <div className="space-y-2">
-                <Label id="history-fiat-label" htmlFor="history-fiat" className="text-gray-300 font-medium">Moneda fiat</Label>
+                <Label id="history-fiat-label" htmlFor="history-fiat" className="text-gray-300 font-medium">Moneda de cotización</Label>
                 <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, fiat: value === "__all__" ? "" : value }))}>
                   <SelectTrigger id="history-fiat" aria-labelledby="history-fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                    <SelectValue placeholder="Todas las monedas fiat" />
+                    <SelectValue placeholder="Todas las monedas de cotización" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                     <SelectItem value="__all__" className="rounded-lg focus:bg-purple-500/10">Todas las monedas fiat</SelectItem>
