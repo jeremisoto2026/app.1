@@ -369,7 +369,7 @@ const P2PSimulator = () => {
                         <span className="text-white ml-2 font-medium">{result.crypto}/{result.fiat}</span>
                       </div>
                       <div className="flex items-center">
-                        <span className="text-gray-400">Tasa:</span>
+                        <span className="text-gray-400">Tasa de cambio:</span>
                         <span className="text-white ml-2 font-medium">{result.exchange_rate}</span>
                       </div>
                       <div className="flex items-center">
