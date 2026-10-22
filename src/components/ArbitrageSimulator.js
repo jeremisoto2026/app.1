@@ -111,7 +111,7 @@ const ArbitrageSimulator = () => {
             <BoltIcon className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-            Simulador de Arbitraje
+            Simulador de arbitraje
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
             Simula vender tu cripto al precio de venta y recomprarla al precio de compra. El resultado muestra cuánta cripto ganas o pierdes después de ambas comisiones.
@@ -124,7 +124,7 @@ const ArbitrageSimulator = () => {
               <div className="p-2 bg-purple-500/10 rounded-lg">
                 <ChartBarIcon className="h-5 w-5 text-purple-400" />
               </div>
-              Configuración de Arbitraje
+              Configuración del arbitraje
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -330,7 +330,7 @@ const ArbitrageSimulator = () => {
                 <div className="p-2 bg-blue-500/10 rounded-lg">
                   <ChartBarIcon className="h-5 w-5 text-blue-400" />
                 </div>
-                Resultados del Arbitraje
+                Resultados del arbitraje
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
