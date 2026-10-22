@@ -14,6 +14,24 @@ import {
   FaRocket
 } from 'react-icons/fa';
 
+const getAuthErrorMessage = (error) => {
+  const messages = {
+    "auth/email-already-in-use": "Ese correo ya tiene una cuenta. Inicia sesión.",
+    "auth/invalid-email": "Introduce un correo electrónico válido.",
+    "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
+    "auth/invalid-credential": "El correo o la contraseña no son correctos.",
+    "auth/user-not-found": "No hay una cuenta con ese correo.",
+    "auth/wrong-password": "El correo o la contraseña no son correctos.",
+    "auth/too-many-requests": "Se han realizado demasiados intentos. Espera un momento y vuelve a intentarlo.",
+    "auth/network-request-failed": "No se pudo conectar. Comprueba tu conexión a internet.",
+    "auth/popup-closed-by-user": "Cerraste la ventana de Google antes de completar el acceso.",
+    "auth/cancelled-popup-request": "La solicitud de acceso con Google se canceló.",
+    "auth/account-exists-with-different-credential": "Este correo ya está asociado a otro método de acceso.",
+    "auth/unauthorized-domain": "Este dominio no está autorizado para iniciar sesión con Google.",
+  };
+  return messages[error?.code] || "No se pudo completar el acceso. Revisa los datos e inténtalo de nuevo.";
+};
+
 const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   const { signUp, signIn, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
@@ -46,7 +64,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
       }
       onClose();
     } catch (error) {
-      setError(error.message);
+      setError(getAuthErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -84,6 +102,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl"></div>
         
         <button
+          type="button"
           onClick={onClose}
           className="absolute top-6 right-6 text-gray-400 hover:text-purple-400 text-xl transition-all duration-300 p-2 rounded-full hover:bg-purple-500/10 z-10"
         >
@@ -103,12 +122,12 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
           </div>
           
           <h3 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mb-3">
-            {mode === 'register' ? 'Acceso Élite' : 'Experiencia Premium'}
+            {mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión'}
           </h3>
           <p className="text-gray-400 text-lg">
             {mode === 'register' 
-              ? 'Desbloquea herramientas profesionales de trading' 
-              : 'Accede a tu dashboard de inversión'}
+              ? 'Crea una cuenta para registrar y consultar tus operaciones.' 
+              : 'Inicia sesión para acceder a tu historial y tus resultados.'}
           </p>
         </div>
 
@@ -200,7 +219,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
                 <>
-                  {mode === 'register' ? 'Crear Cuenta Premium' : 'Acceder a la Plataforma'}
+                  {mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión'}
                   <FaRocket className="text-cyan-300" />
                 </>
               )}
@@ -220,6 +239,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
 
           <div className="mt-6 flex justify-center">
             <button
+              type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
               className="flex items-center justify-center p-4 bg-gray-900/60 hover:bg-gray-800/60 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 disabled:opacity-50 group backdrop-blur-sm"
@@ -233,9 +253,10 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
         <div className="mt-8 text-center relative z-10">
           <p className="text-gray-400 text-sm">
             {mode === 'register' 
-              ? '¿Ya eres miembro de la élite? ' 
-              : '¿Listo para unirte a la élite? '}
+              ? '¿Ya tienes una cuenta? ' 
+              : '¿Todavía no tienes una cuenta? '}
             <button 
+              type="button"
               onClick={handleSwitchMode}
               className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 hover:from-purple-300 hover:to-blue-300 font-medium transition-all duration-300"
             >
