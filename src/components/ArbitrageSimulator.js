@@ -371,6 +371,15 @@ const ArbitrageSimulator = () => {
                         {result.profit > 0 ? "+" : ""}{result.profit.toFixed(8)} {formData.crypto}
                       </Badge>
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Equivalente estimado al precio de recompra:</span>
+                      <span className={`font-medium ${result.profit_fiat_equivalent > 0 ? "text-green-400" : result.profit_fiat_equivalent < 0 ? "text-red-400" : "text-white"}`}>
+                        {result.profit_fiat_equivalent.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.fiat_currency}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Es una valoración estimada de la diferencia en cripto al precio de recompra; no es dinero fiat ya cobrado.
+                    </p>
                     <div className="border-t border-purple-500/20 pt-3">
                       <div className="flex justify-between items-center">
                         <span className="text-white font-medium">Rentabilidad sobre cripto inicial:</span>
