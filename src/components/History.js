@@ -510,9 +510,9 @@ const History = () => {
           <CardContent className="p-0">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Criptomoneda</Label>
+                <Label id="history-crypto-label" htmlFor="history-crypto" className="text-gray-300 font-medium">Criptomoneda</Label>
                 <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value }))}>
-                  <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                  <SelectTrigger id="history-crypto" aria-labelledby="history-crypto-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las criptomonedas" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -526,9 +526,9 @@ const History = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Moneda fiat</Label>
+                <Label id="history-fiat-label" htmlFor="history-fiat" className="text-gray-300 font-medium">Moneda fiat</Label>
                 <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, fiat: value }))}>
-                  <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                  <SelectTrigger id="history-fiat" aria-labelledby="history-fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las monedas fiat" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -542,9 +542,9 @@ const History = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Plataforma</Label>
+                <Label id="history-exchange-label" htmlFor="history-exchange" className="text-gray-300 font-medium">Plataforma</Label>
                 <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, exchange: value }))}>
-                  <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                  <SelectTrigger id="history-exchange" aria-labelledby="history-exchange-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las plataformas" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
