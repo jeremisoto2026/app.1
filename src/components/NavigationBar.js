@@ -21,9 +21,9 @@ const NavigationBar = ({ activeTab, onTabChange }) => {
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed z-50 bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-xl md:bottom-auto md:top-0 md:left-0 md:right-0 md:translate-x-0 md:w-full md:max-w-none md:rounded-none bg-gray-950/95 md:bg-gray-950/95 backdrop-blur-2xl rounded-2xl border border-purple-500/30 md:border-x-0 md:border-t-0 md:border-b shadow-2xl shadow-purple-500/20 md:shadow-lg md:px-4 lg:px-8"
+      className="fixed z-[100] bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-xl md:bottom-auto md:top-0 md:left-0 md:right-0 md:translate-x-0 md:w-full md:max-w-none md:rounded-none bg-gray-950/95 backdrop-blur-2xl rounded-2xl border border-purple-500/30 md:border-x-0 md:border-t-0 md:border-b shadow-2xl shadow-purple-500/20 md:shadow-lg md:px-4 lg:px-8"
     >
-      <div className="flex items-center justify-between md:justify-center gap-1 md:gap-2 p-2 md:py-3 max-w-7xl mx-auto">
+      <div className="flex items-center justify-start md:justify-center gap-1 md:gap-2 p-2 md:py-3 max-w-7xl mx-auto overflow-x-auto overscroll-x-contain">
         {tabs.map((tab) => {
           const IconComponent = tab.icon;
           const isActive = activeTab === tab.id;
@@ -35,7 +35,7 @@ const NavigationBar = ({ activeTab, onTabChange }) => {
               aria-current={isActive ? "page" : undefined}
               aria-label={tab.label}
               onClick={() => onTabChange(tab.id)}
-              className={`relative flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 flex-1 md:flex-none min-w-0 px-1.5 md:px-4 py-2.5 md:py-2 rounded-xl text-xs md:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+              className={`relative flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 flex-1 md:flex-none md:shrink-0 min-w-0 md:min-w-max px-1.5 md:px-4 py-2.5 md:py-2 rounded-xl text-xs md:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
                 isActive
                   ? "bg-gradient-to-br from-purple-600/30 to-blue-600/30 text-white"
                   : "text-gray-400 hover:bg-white/5 hover:text-white"
