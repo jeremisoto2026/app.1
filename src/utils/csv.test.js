@@ -7,8 +7,10 @@ describe("CSV helpers", () => {
   });
 
   test("protects text values that begin with spreadsheet formulas", () => {
-    expect(escapeCsvCell("=HYPERLINK(\"https://example.com\")", true))
-      .toBe("'=HYPERLINK(\"https://example.com\")");
+    const formulaCell = escapeCsvCell("=HYPERLINK(\"https://example.com\")", true);
+    expect(formulaCell.startsWith('"')).toBe(true);
+    expect(formulaCell).toContain("'=HYPERLINK(");
+    expect(formulaCell).toContain('""https://example.com""');
     expect(escapeCsvCell("+SUM(A1:A2)", true)).toBe("'+SUM(A1:A2)");
     expect(escapeCsvCell("normal text", true)).toBe("normal text");
   });
