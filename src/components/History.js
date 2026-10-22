@@ -390,7 +390,7 @@ const History = () => {
               </Badge>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-400 w-20">Exchange:</span>
+              <span className="text-gray-400 w-20">Plataforma:</span>
               <span className="text-white ml-2">{operation.exchange || "N/A"}</span>
             </div>
             <div className="flex items-center">
@@ -453,7 +453,7 @@ const History = () => {
             Historial de Operaciones
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Revisa y gestiona todas tus transacciones de compra y venta en un solo lugar
+            Consulta y organiza tus operaciones de compra y venta en un solo lugar
           </p>
         </div>
 
@@ -473,7 +473,7 @@ const History = () => {
                 <Label className="text-gray-300 font-medium">Criptomoneda</Label>
                 <Select onValueChange={(value) => setFilters({ ...filters, crypto: value })}>
                   <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                    <SelectValue placeholder="Todas las cryptos" />
+                    <SelectValue placeholder="Todas las criptomonedas" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                     {getUniqueValues("crypto").map((crypto) => (
@@ -489,7 +489,7 @@ const History = () => {
                 <Label className="text-gray-300 font-medium">Moneda Fiat</Label>
                 <Select onValueChange={(value) => setFilters({ ...filters, fiat: value })}>
                   <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                    <SelectValue placeholder="Todas las fiats" />
+                    <SelectValue placeholder="Todas las monedas fiat" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                     {getUniqueValues("fiat").map((fiat) => (
@@ -502,10 +502,10 @@ const History = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Exchange</Label>
+                <Label className="text-gray-300 font-medium">Plataforma</Label>
                 <Select onValueChange={(value) => setFilters({ ...filters, exchange: value })}>
                   <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                    <SelectValue placeholder="Todos los exchanges" />
+                    <SelectValue placeholder="Todas las plataformas" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                     {getUniqueValues("exchange").map((exchange) => (
