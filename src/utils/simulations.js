@@ -15,6 +15,12 @@ export function simulateP2P({ crypto, fiat, operation_type, amount, exchange_rat
   if (operation_type !== "Venta" && operation_type !== "Compra") {
     throw new Error("Selecciona Compra o Venta.");
   }
+  if (
+    String(crypto || "").trim().toUpperCase() &&
+    String(crypto || "").trim().toUpperCase() === String(fiat || "").trim().toUpperCase()
+  ) {
+    throw new Error("La criptomoneda y la moneda de cotización deben ser distintas.");
+  }
   if (!Number.isFinite(quantity) || quantity <= 0) {
     throw new Error("La cantidad debe ser un número mayor que 0.");
   }
