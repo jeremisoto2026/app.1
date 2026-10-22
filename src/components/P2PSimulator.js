@@ -58,7 +58,7 @@ const P2PSimulator = () => {
     if (missingFields.length > 0) {
       const fieldLabels = {
         crypto: "criptomoneda",
-        fiat: "moneda fiat",
+        fiat: "moneda de cotización",
         operation_type: "tipo de operación",
         amount: "cantidad",
         exchange_rate: "tasa de cambio",
@@ -177,7 +177,7 @@ const P2PSimulator = () => {
                   {/* Fiat */}
                   <div className="space-y-2">
                     <Label id="p2p-fiat-label" htmlFor="p2p-fiat" className="text-gray-300 font-medium">
-                      Moneda fiat <span className="text-red-400">*</span>
+                      Moneda de cotización <span className="text-red-400">*</span>
                     </Label>
                     <Select 
                       value={formData.fiat} 
@@ -185,7 +185,7 @@ const P2PSimulator = () => {
                       disabled={loading}
                     >
                       <SelectTrigger id="p2p-fiat" aria-labelledby="p2p-fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
-                        <SelectValue placeholder="Seleccionar moneda fiat" />
+                        <SelectValue placeholder="Seleccionar moneda de cotización" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                         {fiats.map(fiat => (
