@@ -10,14 +10,14 @@ import {
   updateProfile
 } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth debe utilizarse dentro de un AuthProvider.");
   }
   return context;
 };
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
       return result;
     } catch (error) {
-      console.error("Error creating account:", error);
+      console.error("Error al crear la cuenta:", error);
       throw error;
     }
   };
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     try {
       return await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      console.error("Error signing in:", error);
+      console.error("Error al iniciar sesión:", error);
       throw error;
     }
   };
@@ -81,25 +81,37 @@ export const AuthProvider = ({ children }) => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      // ✅ Guardar o actualizar en Firestore
-      await setDoc(
-        doc(db, "users", result.user.uid),
-        {
+      // Crear el perfil solo si no existe. Nunca reiniciar el plan, el contador
+      // de exportaciones ni la fecha de alta al iniciar sesión de nuevo.
+      const userRef = doc(db, "users", result.user.uid);
+      const existingProfile = await getDoc(userRef);
+
+      if (existingProfile.exists()) {
+        await setDoc(
+          userRef,
+          {
+            uid: result.user.uid,
+            email: result.user.email,
+            photoURL: result.user.photoURL || "",
+          },
+          { merge: true }
+        );
+      } else {
+        await setDoc(userRef, {
           uid: result.user.uid,
           email: result.user.email,
           nombre: result.user.displayName?.split(" ")[0] || "",
-          apellido: result.user.displayName?.split(" ")[1] || "",
+          apellido: result.user.displayName?.split(" ").slice(1).join(" ") || "",
           photoURL: result.user.photoURL || "",
-          plan: "free",         // 👈 solo plan
-          exportsUsed: 0,       // 👈 contador inicial
-          createdAt: serverTimestamp()
-        },
-        { merge: true } // para no sobrescribir si ya existe
-      );
+          plan: "free",
+          exportsUsed: 0,
+          createdAt: serverTimestamp(),
+        });
+      }
 
       return result;
     } catch (error) {
-      console.error("Error signing in with Google:", error);
+      console.error("Error al iniciar sesión con Google:", error);
       throw error;
     }
   };
@@ -109,7 +121,7 @@ export const AuthProvider = ({ children }) => {
     try {
       return await firebaseSignOut(auth);
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("Error al cerrar sesión:", error);
       throw error;
     }
   };
