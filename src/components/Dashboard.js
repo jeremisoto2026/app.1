@@ -193,7 +193,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <h2 className="text-2xl md:text-3xl font-bold mb-2">
             Bienvenido, <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">{user?.displayName || user?.email?.split('@')[0] || 'Inversor'}</span>
           </h2>
-          <p className="text-gray-400">Resumen de JJXCAPITAL⚡</p>
+          <p className="text-gray-400">Resumen de JJXCAPITAL ⚡</p>
         </div>
 
         {/* Grid de Métricas principales */}
@@ -242,7 +242,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <div className="flex items-end">
               <p className="text-2xl md:text-3xl font-bold mb-1">{successRate.toFixed(1)}%</p>
               <div className="ml-3 text-xs px-2 py-1 rounded-full bg-purple-900/50 text-purple-300">
-                {closedSales === 0 ? "Sin datos" : "Ventas cerradas"}
+                {closedSales === 0 ? "Sin datos" : "Basada en ventas cerradas"}
               </div>
             </div>
             <div className="flex items-center text-sm text-gray-500">
