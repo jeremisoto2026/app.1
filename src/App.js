@@ -300,7 +300,7 @@ const MainApp = () => {
             <div className="text-center">
               <div className="bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-cyan-600/10 rounded-3xl p-12 border-2 border-purple-500/30 backdrop-blur-sm">
                 <h2 className="text-4xl font-black text-white mb-6">
-                  ¿Listo para <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Optimizar tu Arbitraje P2P</span>?
+                  ¿Listo para <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">organizar tus operaciones P2P</span>?
                 </h2>
                 <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
                   Organiza compras y ventas, consulta resultados registrados y exporta el historial.
