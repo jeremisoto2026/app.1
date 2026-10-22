@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, deleteDoc, doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
+import { getOperationDate } from "../utils/financialCalculations";
 import { 
   TrashIcon, 
   DocumentArrowDownIcon, 
@@ -73,12 +74,18 @@ const History = () => {
     
     try {
       setLoading(true);
-      const q = query(collection(db, "users", user.uid, "operations"), orderBy("timestamp", "desc"));
-      const querySnapshot = await getDocs(q);
+      // Fetch every document, including legacy operations without a timestamp.
+      // Undated operations are sorted last and shown as "N/A" instead of disappearing.
+      const querySnapshot = await getDocs(collection(db, "users", user.uid, "operations"));
       const data = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
+      data.sort((a, b) => {
+        const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+        const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+        return dateB - dateA;
+      });
       setOperations(data);
     } catch (error) {
       console.error("Error fetching operations:", error);
@@ -212,14 +219,29 @@ const History = () => {
   const handleExport = async () => {
     let dataToExport = [...operations];
     
-    if (exportStartDate && exportEndDate) {
-      const start = new Date(exportStartDate);
-      const end = new Date(exportEndDate);
-      
+    if (exportStartDate || exportEndDate) {
+      const parseLocalDate = (value, endOfDay = false) => {
+        if (!value) return null;
+        const [year, month, day] = value.split("-").map(Number);
+        if (![year, month, day].every(Number.isFinite)) return null;
+        const date = new Date(year, month - 1, day);
+        if (endOfDay) date.setHours(23, 59, 59, 999);
+        return Number.isFinite(date.getTime()) ? date : null;
+      };
+      const start = parseLocalDate(exportStartDate);
+      const end = parseLocalDate(exportEndDate, true);
+
+      if ((exportStartDate && !start) || (exportEndDate && !end) || (start && end && start > end)) {
+        showExportDialog('warning', 'Rango de fechas no válido', 'Comprueba que la fecha de inicio no sea posterior a la fecha de fin.');
+        return;
+      }
+
       dataToExport = dataToExport.filter(op => {
-        const opDate = op.timestamp?.toDate ? op.timestamp.toDate() : (op.timestamp ? new Date(op.timestamp.seconds * 1000) : null);
+        const opDate = getOperationDate(op.timestamp);
         if (!opDate) return false;
-        return opDate >= start && opDate <= end;
+        if (start && opDate < start) return false;
+        if (end && opDate > end) return false;
+        return true;
       });
     }
 
@@ -261,22 +283,8 @@ const History = () => {
   };
   
   const formatDateForCSV = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    try {
-      let date;
-      if (timestamp.toDate) {
-        date = timestamp.toDate();
-      } else if (timestamp instanceof Date) {
-        date = timestamp;
-      } else {
-        date = new Date(timestamp.seconds * 1000);
-      }
-      if (isNaN(date)) return 'N/A';
-      return format(date, 'yyyy-MM-dd HH:mm:ss');
-    } catch (e) {
-      console.error("Error formateando fecha para CSV:", e, timestamp);
-      return "N/A";
-    }
+    const date = getOperationDate(timestamp);
+    return date ? format(date, 'yyyy-MM-dd HH:mm:ss') : 'N/A';
   };
 
   const formatCurrency = (value, currency = "USD") => {
@@ -291,12 +299,8 @@ const History = () => {
   };
 
   const formatDate = (timestamp) => {
-    try {
-      if (!timestamp) return "N/A";
-      return new Date(timestamp.seconds * 1000).toLocaleString();
-    } catch {
-      return "Invalid date";
-    }
+    const date = getOperationDate(timestamp);
+    return date ? date.toLocaleString() : "N/A";
   };
 
   const getUniqueValues = (field) => {
@@ -370,7 +374,7 @@ const History = () => {
             <div className="flex items-center">
               <span className="text-gray-400 w-20">Cripto:</span>
               <Badge className="ml-2 bg-purple-500/10 text-purple-400 border-purple-500/30">
-                {operation.crypto_amount?.toFixed(8) ?? "0.00000000"} {operation.crypto || "N/A"}
+                {Number.isFinite(Number(operation.crypto_amount)) ? Number(operation.crypto_amount).toFixed(8) : "0.00000000"} {operation.crypto || "N/A"}
               </Badge>
             </div>
             <div className="flex items-center">
@@ -386,7 +390,7 @@ const History = () => {
             <div className="flex items-center">
               <span className="text-gray-400 w-20">Tasa:</span>
               <Badge className="ml-2 bg-gray-700 text-gray-300 border-gray-600">
-                {operation.exchange_rate?.toFixed(2) ?? "0.00"}
+                {Number.isFinite(Number(operation.exchange_rate)) ? Number(operation.exchange_rate).toFixed(2) : "0.00"}
               </Badge>
             </div>
             <div className="md:col-span-2 flex items-center">
