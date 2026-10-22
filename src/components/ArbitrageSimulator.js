@@ -18,7 +18,7 @@ import {
 } from "./ui/select";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
-import { CalculatorIcon, ArrowPathIcon, TrashIcon, ChartBarIcon, BoltIcon } from "@heroicons/react/24/outline";
+import { CalculatorIcon, TrashIcon, ChartBarIcon, BoltIcon } from "@heroicons/react/24/outline";
 
 
 const ArbitrageSimulator = () => {
@@ -191,7 +191,7 @@ const ArbitrageSimulator = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="fiat_currency" className="text-gray-300 font-medium">
-                    Moneda Fiat <span className="text-red-400 ml-1">*</span>
+                    Moneda fiat <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Select
                     name="fiat_currency"
@@ -215,7 +215,7 @@ const ArbitrageSimulator = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="buy_fee" className="text-gray-300 font-medium">Comisión Compra (%)</Label>
+                  <Label htmlFor="buy_fee" className="text-gray-300 font-medium">Comisión de compra (%)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -228,7 +228,7 @@ const ArbitrageSimulator = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sell_fee" className="text-gray-300 font-medium">Comisión Venta (%)</Label>
+                  <Label htmlFor="sell_fee" className="text-gray-300 font-medium">Comisión de venta (%)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -305,7 +305,7 @@ const ArbitrageSimulator = () => {
             <CardContent className="p-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                  <h4 className="text-white font-medium mb-4 text-lg">Resumen de la Operación</h4>
+                  <h4 className="text-white font-medium mb-4 text-lg">Resumen de la operación</h4>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Criptomoneda:</span>
@@ -329,7 +329,7 @@ const ArbitrageSimulator = () => {
                 </div>
 
                 <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                  <h4 className="text-white font-medium mb-4 text-lg">Resultados Financieros</h4>
+                  <h4 className="text-white font-medium mb-4 text-lg">Resultados financieros</h4>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Cripto inicial:</span>
