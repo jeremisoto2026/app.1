@@ -11,8 +11,6 @@ import {
   CurrencyDollarIcon,
   ChartBarIcon,
   UserIcon,
-  CalendarDaysIcon,
-  XMarkIcon
 } from "@heroicons/react/24/outline";
 
 const Dashboard = ({ onOpenProfile }) => {
