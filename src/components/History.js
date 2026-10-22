@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, deleteDoc, doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, updateDoc, increment } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -34,17 +34,6 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 
-const getExportUsageCount = (data = {}) => {
-  const candidates = [
-    data?.exportsUsed,
-    data?.usage?.exportaciones?.usadas,
-    data?.usage?.exportsUsed,
-    data?.usage?.exportaciones?.exportsUsed,
-  ].map((value) => Number(value))
-    .filter((value) => Number.isFinite(value) && value >= 0);
-  return candidates.length ? Math.max(...candidates) : 0;
-};
-
 const History = () => {
   const { user } = useAuth();
   const [operations, setOperations] = useState([]);
@@ -61,11 +50,6 @@ const History = () => {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [operationToDelete, setOperationToDelete] = useState(null);
-
-  // ---------- NUEVO: estados para control de exportaciones ----------
-  const [userRole, setUserRole] = useState('free');
-  const [exportsUsed, setExportsUsed] = useState(0);
-  const EXPORT_LIMIT_FREE = 40;
 
   // Calcular cada venta con el historial completo, no solo con el filtro visual,
   // porque una compra anterior puede ser el coste de adquisición de una venta.
@@ -113,36 +97,11 @@ const History = () => {
     }
   };
 
-  const fetchUserDoc = async () => {
-    if (!user) {
-      setUserRole('free');
-      setExportsUsed(0);
-      return;
-    }
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        const data = userSnap.data();
-        setUserRole(data.role || data.plan || 'free');
-        setExportsUsed(getExportUsageCount(data));
-      } else {
-        setUserRole('free');
-        setExportsUsed(0);
-      }
-    } catch (err) {
-      console.error("Error al cargar los datos del usuario:", err);
-    }
-  };
-
   useEffect(() => {
     if (user) {
       fetchOperations();
-      fetchUserDoc();
     } else {
       setOperations([]);
-      setExportsUsed(0);
-      setUserRole('free');
     }
   }, [user]);
 
@@ -249,7 +208,7 @@ const History = () => {
         ...rows.map(row => row.map(escapeCsvCell).join(",")),
       ].join("\r\n");
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob(["\uFEFF", csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
@@ -309,15 +268,6 @@ const History = () => {
       return;
     }
 
-    if (userRole && String(userRole).toLowerCase() === 'free' && exportsUsed >= EXPORT_LIMIT_FREE) {
-      showExportDialog(
-        'warning',
-        'Límite de Exportaciones Alcanzado',
-        `Has alcanzado el límite de exportaciones (${EXPORT_LIMIT_FREE}) para el plan Free. Contacta con soporte si necesitas ayuda con tu límite de exportaciones. Los pagos de planes no están habilitados desde la aplicación.`
-      );
-      return;
-    }
-
     const exported = exportToCSV(dataToExport);
 
     if (!exported) {
@@ -333,7 +283,6 @@ const History = () => {
           exportsUsed: increment(1),
           "usage.exportaciones.usadas": increment(1),
         });
-        setExportsUsed(prev => (typeof prev === 'number' ? prev + 1 : 1));
       } catch (error) {
         console.error("Error al actualizar el contador de exportaciones:", error);
       }
