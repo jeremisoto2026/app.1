@@ -59,7 +59,7 @@ const Operations = ({ onOperationSaved }) => {
     }
     
     if (missingFields.length > 0) {
-      setError(`Por favor completa todos los campos requeridos: ${missingFields.join(', ')}`);
+      setError(`Completa los siguientes campos obligatorios: ${missingFields.join(', ')}`);
       return;
     }
 
@@ -114,8 +114,8 @@ const Operations = ({ onOperationSaved }) => {
       }
 
     } catch (err) {
-      console.error('Error saving operation:', err);
-      setError('Error al guardar la operación. Por favor intenta de nuevo.');
+      console.error('Error al guardar la operación:', err);
+      setError('Error al guardar la operación. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -189,6 +189,7 @@ const Operations = ({ onOperationSaved }) => {
                   <Input
                     id="order_id"
                     type="text"
+                    autoComplete="off"
                     placeholder="ID de la orden"
                     value={formData.order_id}
                     onChange={(e) => handleInputChange('order_id', e.target.value)}
