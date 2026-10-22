@@ -27,7 +27,7 @@ export default function Profile() {
   // Estado adicional: contador de exportaciones en tiempo real (no toca UI/lógica existente)
   const [exportCount, setExportCount] = useState(null);
 
-  // Límites por defecto (si el documento no tiene usage)
+  // Valores de reserva para mostrar los contadores cuando el perfil todavía no los contiene.
   const defaultUsage = {
     operaciones: { usadas: 0 },
     exportaciones: { usadas: 0, total: 40 },
@@ -238,6 +238,11 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-black text-white py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        {profileError && (
+          <div role="alert" className="mb-4 rounded-lg border border-red-500/30 bg-red-900/20 p-3 text-sm text-red-200">
+            {profileError}
+          </div>
+        )}
         {/* ================= Header con avatar e info ================= */}
         <div className="bg-gradient-to-r from-indigo-800 to-purple-800 rounded-2xl p-6 mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
