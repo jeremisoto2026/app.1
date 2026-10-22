@@ -39,6 +39,17 @@ describe("calculateOperationAmounts", () => {
     });
   });
 
+  test("rejects using the same asset as both crypto and quote currency", () => {
+    expect(() => calculateOperationAmounts({
+      operation_type: "Compra",
+      amount: 100,
+      exchange_rate: 1,
+      fee: 0,
+      crypto: "USDT",
+      fiat: "USDT",
+    })).toThrow(/deben ser distintas/i);
+  });
+
   test("rejects negative fees and rates that are zero", () => {
     expect(() => calculateOperationAmounts({
       operation_type: "Venta",
@@ -197,6 +208,16 @@ describe("calculateCryptoArbitrage", () => {
     expect(result.profit).toBeCloseTo(0.07811, 8);
     expect(result.profit_fiat_equivalent).toBeCloseTo(7.811, 8);
     expect(result.profit_percentage).toBeCloseTo(7.811, 8);
+  });
+
+  test("rejects using the same asset as the quote currency", () => {
+    expect(() => calculateCryptoArbitrage({
+      amount: 1,
+      buy_price: 1,
+      sell_price: 1.1,
+      crypto: "USDT",
+      fiat_currency: "USDT",
+    })).toThrow(/deben ser distintas/i);
   });
 
   test("rejects a zero price and invalid fee percentage", () => {
