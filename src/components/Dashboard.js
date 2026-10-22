@@ -1,6 +1,6 @@
 // Dashboard.js
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, doc, onSnapshot } from "firebase/firestore";
+import { collection, getDocs, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
@@ -48,8 +48,8 @@ const Dashboard = ({ onOpenProfile }) => {
 
       try {
         const operationsRef = collection(db, "users", user.uid, "operations");
-        const q = query(operationsRef, orderBy("timestamp", "desc"));
-        const querySnapshot = await getDocs(q);
+        // Fetch all records; the calculator safely ignores operations without trustworthy dates.
+        const querySnapshot = await getDocs(operationsRef);
 
         const operations = [];
         querySnapshot.forEach((doc) => {
