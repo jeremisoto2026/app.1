@@ -88,7 +88,7 @@ const History = () => {
       });
       setOperations(data);
     } catch (error) {
-      console.error("Error fetching operations:", error);
+      console.error("Error al cargar las operaciones:", error);
     } finally {
       setLoading(false);
     }
@@ -112,7 +112,7 @@ const History = () => {
         setExportsUsed(0);
       }
     } catch (err) {
-      console.error("Error fetching user doc:", err);
+      console.error("Error al cargar los datos del usuario:", err);
     }
   };
 
@@ -152,7 +152,7 @@ const History = () => {
       setIsDeleteDialogOpen(false);
       setOperationToDelete(null);
     } catch (error) {
-      console.error("Error removing operation: ", error);
+      console.error("Error al eliminar la operación: ", error);
       showExportDialog('error', 'Error', 'Error al eliminar la operación. Por favor, inténtalo de nuevo.');
     }
   };
@@ -168,9 +168,13 @@ const History = () => {
         "Moneda_Cotizacion", "Importe_Cotizado", "Tasa_Cambio", "Comision", "Moneda_Comision", "Fecha"
       ];
 
-      const buyOperations = data.filter(op => op.operation_type === 'Compra');
-      const sellOperations = data.filter(op => op.operation_type === 'Venta');
-      const sortedData = [...buyOperations, ...sellOperations];
+      // Exportar por orden cronológico ascendente para que el registro permita
+      // reconstruir el coste de adquisición y revisar el cálculo FIFO.
+      const sortedData = [...data].sort((a, b) => {
+        const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.POSITIVE_INFINITY;
+        const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.POSITIVE_INFINITY;
+        return dateA - dateB;
+      });
 
       const rows = sortedData.map(op => {
         const cryptoAmount = Number(op.crypto_amount);
@@ -216,7 +220,7 @@ const History = () => {
         return false;
       }
     } catch (err) {
-      console.error("Error generando CSV:", err);
+      console.error("Error al generar el CSV:", err);
       showExportDialog('error', 'Error', 'Ocurrió un error al generar el CSV.');
       return false;
     }
@@ -283,7 +287,7 @@ const History = () => {
         });
         setExportsUsed(prev => (typeof prev === 'number' ? prev + 1 : 1));
       } catch (error) {
-        console.error("Error actualizando contador de exportaciones:", error);
+        console.error("Error al actualizar el contador de exportaciones:", error);
       }
     }
   };
@@ -384,7 +388,7 @@ const History = () => {
               </Badge>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-400 w-28">Importe:</span>
+              <span className="text-gray-400 w-28">Importe fiat:</span>
               <Badge className="ml-2 bg-blue-500/10 text-blue-400 border-blue-500/30">
                 {formatCurrency(operation.fiat_amount, operation.fiat)}
               </Badge>
