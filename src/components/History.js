@@ -300,7 +300,7 @@ const History = () => {
     return date ? format(date, 'yyyy-MM-dd HH:mm:ss') : 'N/A';
   };
 
-  const formatCurrency = (value, currency = "USD") => {
+  const formatCurrency = (value, currency = "") => {
     if (value === null || value === undefined || value === "") return "—";
     const amount = Number(value);
     if (!Number.isFinite(amount)) return "—";
@@ -308,7 +308,9 @@ const History = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
-    return formatted + " " + currency;
+    const currencyCode = String(currency || "").trim().toUpperCase();
+    // Mostrar siempre el código evita confundir USD con USDT u otras monedas con símbolo $.
+    return currencyCode ? formatted + " " + currencyCode : formatted + " (moneda no especificada)";
   };
 
   const formatDate = (timestamp) => {
