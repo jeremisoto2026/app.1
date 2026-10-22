@@ -17,6 +17,7 @@ Aplicación web para registrar operaciones manuales de compra y venta de criptom
 - La interfaz ya no ofrece conexión de una cuenta de Binance mediante API.
 - No hay pasarela de pago ni contratación de suscripciones habilitada.
 - Las notificaciones push no están habilitadas en esta versión.
+- Se retiró el seguimiento de analítica de terceros que venía en la plantilla; no se inicializa PostHog desde la página.
 
 **Nota sobre el backend:** esta rama solo modifica `app.1`. Si existe un servicio de Binance API desplegado por separado (por ejemplo, en Railway), estos cambios del frontend no lo apagan ni eliminan las credenciales que estén guardadas allí. Para deshabilitar también ese servicio se necesita un cambio y un despliegue independiente. Si alguna API key ya se conectó y quieres dejar de usarla, revócala desde la gestión de API de Binance.
 
