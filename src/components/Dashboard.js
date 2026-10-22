@@ -218,7 +218,7 @@ const Dashboard = ({ onOpenProfile }) => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group relative overflow-hidden">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-10 blur transition-all duration-300"></div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Tasa de Éxito</h3>
+              <h3 className="text-gray-400 font-medium">Tasa de éxito</h3>
               <div className="p-2 bg-purple-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
                 <CheckBadgeIcon className="h-5 w-5 text-purple-400" />
               </div>
