@@ -221,3 +221,52 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
     worstOperationByCurrency,
   };
 };
+
+ 
+export const calculateCryptoArbitrage = ({
+  amount,
+  buy_price,
+  sell_price,
+  buy_fee = 0,
+  sell_fee = 0,
+}) => {
+  const quantity = toFiniteNumber(amount);
+  const buyPrice = toFiniteNumber(buy_price);
+  const sellPrice = toFiniteNumber(sell_price);
+  const buyFeePercent = buy_fee === "" || buy_fee === null || buy_fee === undefined ? 0 : toFiniteNumber(buy_fee);
+  const sellFeePercent = sell_fee === "" || sell_fee === null || sell_fee === undefined ? 0 : toFiniteNumber(sell_fee);
+
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    throw new Error("La cantidad inicial de cripto debe ser mayor que 0.");
+  }
+  if (!Number.isFinite(buyPrice) || buyPrice <= 0 || !Number.isFinite(sellPrice) || sellPrice <= 0) {
+    throw new Error("Los precios de compra y venta deben ser números mayores que 0.");
+  }
+  if (!Number.isFinite(buyFeePercent) || buyFeePercent < 0 || buyFeePercent >= 100 ||
+      !Number.isFinite(sellFeePercent) || sellFeePercent < 0 || sellFeePercent >= 100) {
+    throw new Error("Cada comisión debe ser un porcentaje entre 0 y menos de 100.");
+  }
+
+  // This is a round-trip arbitrage model: sell the initial crypto at sell_price,
+  // then use the net fiat proceeds to buy crypto again at buy_price.
+  const grossFiatProceeds = quantity * sellPrice;
+  const sellFeeFiat = grossFiatProceeds * sellFeePercent / 100;
+  const netFiatProceeds = grossFiatProceeds - sellFeeFiat;
+  const grossCryptoRepurchased = netFiatProceeds / buyPrice;
+  const buyFeeCrypto = grossCryptoRepurchased * buyFeePercent / 100;
+  const finalCrypto = grossCryptoRepurchased - buyFeeCrypto;
+  const cryptoProfit = finalCrypto - quantity;
+  const profitPercentage = (cryptoProfit / quantity) * 100;
+
+  return {
+    investment: quantity,
+    revenue: finalCrypto,
+    gross_fiat_proceeds: grossFiatProceeds,
+    sell_fee_fiat: sellFeeFiat,
+    net_fiat_proceeds: netFiatProceeds,
+    gross_crypto_repurchased: grossCryptoRepurchased,
+    buy_fee_crypto: buyFeeCrypto,
+    profit: cryptoProfit,
+    profit_percentage: profitPercentage,
+  };
+};
