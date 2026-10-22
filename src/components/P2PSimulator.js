@@ -75,7 +75,7 @@ const P2PSimulator = () => {
       setResult(simulationResult);
     } catch (err) {
       console.error('Error in P2P simulation:', err);
-      setError('Error al realizar la simulación. Por favor intenta de nuevo.');
+      setError(err.message || 'Error al realizar la simulación. Revisa los importes y la comisión.');
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ const P2PSimulator = () => {
             Simulador P2P
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Simula operaciones peer-to-peer y calcula ganancias/pérdidas en tiempo real con nuestra tecnología avanzada
+            Estima cantidades brutas y netas después de la comisión. Para saber la ganancia real, también necesitas el coste al que adquiriste la criptomoneda.
           </p>
         </div>
 
@@ -340,7 +340,7 @@ const P2PSimulator = () => {
                       </div>
                       <div className="flex items-center">
                         <span className="text-gray-400">Comisión:</span>
-                        <span className="text-white ml-2 font-medium">{result.fee}% en {result.crypto}</span>
+                        <span className="text-white ml-2 font-medium">{result.fee}% en {result.fee_currency || result.crypto}</span>
                       </div>
                     </div>
                   </div>
@@ -392,23 +392,16 @@ const P2PSimulator = () => {
                     </div>
                   </div>
 
-                  {/* Profitability Indicator */}
-                  <div className={`rounded-xl p-5 border ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'bg-green-900/20 border-green-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                  {/* A positive conversion amount is not the same as a trading profit. */}
+                  <div className="rounded-xl p-5 border bg-blue-900/20 border-blue-500/30">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                        <span className={`text-2xl ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? '📈' : '📉'}
-                        </span>
+                      <div className="p-2 rounded-lg bg-blue-500/20">
+                        <span className="text-2xl text-blue-400">ℹ️</span>
                       </div>
                       <div>
-                        <h4 className={`font-medium text-lg ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'Operación Rentable' : 'Operación con Pérdida'}
-                        </h4>
+                        <h4 className="font-medium text-lg text-blue-300">Conversión calculada</h4>
                         <p className="text-gray-400 text-sm">
-                          {result.operation_type === 'Venta' 
-                            ? 'Vendiendo criptomonedas por moneda fiat'
-                            : 'Comprando criptomonedas con moneda fiat'
-                          }
+                          El importe neto refleja la comisión, no el beneficio. Para calcular ganancias o pérdidas, registra también el coste de compra y la venta correspondiente.
                         </p>
                       </div>
                     </div>
