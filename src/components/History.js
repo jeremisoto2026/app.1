@@ -186,7 +186,9 @@ const History = () => {
           op.exchange_rate === null || op.exchange_rate === undefined || op.exchange_rate === ""
             ? ""
             : Number.isFinite(Number(op.exchange_rate)) ? String(op.exchange_rate) : "",
-          op.fee === null || op.fee === undefined || op.fee === "" ? "" : op.fee,
+          op.fee === null || op.fee === undefined || op.fee === ""
+            ? ""
+            : Number.isFinite(Number(op.fee)) ? String(Number(op.fee)) : "",
           op.fee === null || op.fee === undefined || op.fee === ""
             ? ""
             : op.fee_currency || (op.operation_type === "Venta" ? op.fiat : op.crypto) || "",
@@ -204,7 +206,7 @@ const History = () => {
       // numéricas conservan sus valores, incluidos los beneficios negativos.
       const csvContent = serializeCsv(headers, rows, [0, 1, 2, 3, 4, 6, 11, 16, 17]);
 
-      const blob = new Blob(["\uFEFF", csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
@@ -236,6 +238,12 @@ const History = () => {
         const [year, month, day] = value.split("-").map(Number);
         if (![year, month, day].every(Number.isFinite)) return null;
         const date = new Date(year, month - 1, day);
+        // No aceptar fechas normalizadas silenciosamente (p. ej., 31 de febrero).
+        if (
+          date.getFullYear() !== year ||
+          date.getMonth() !== month - 1 ||
+          date.getDate() !== day
+        ) return null;
         if (endOfDay) date.setHours(23, 59, 59, 999);
         return Number.isFinite(date.getTime()) ? date : null;
       };
