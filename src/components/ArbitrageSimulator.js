@@ -350,7 +350,19 @@ const ArbitrageSimulator = () => {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Ganancia/Pérdida:</span>
+                      <span className="text-gray-400">Comisión de venta:</span>
+                      <span className="text-white font-medium">
+                        {result.sell_fee_fiat.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.fiat_currency}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Comisión de compra:</span>
+                      <span className="text-white font-medium">
+                        {result.buy_fee_crypto.toFixed(8)} {formData.crypto}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Ganancia/Pérdida en {formData.crypto}:</span>
                       <Badge className={`text-lg font-semibold ${
                         result.profit > 0 
                           ? "bg-green-500/20 text-green-400 border-green-500/30" 
@@ -361,7 +373,7 @@ const ArbitrageSimulator = () => {
                     </div>
                     <div className="border-t border-purple-500/20 pt-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-white font-medium">Rentabilidad:</span>
+                        <span className="text-white font-medium">Rentabilidad sobre cripto inicial:</span>
                         <Badge className={`text-lg font-semibold ${
                           result.profit_percentage > 0 
                             ? "bg-gradient-to-r from-green-500 to-green-600 text-white" 
