@@ -34,6 +34,17 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 
+const getExportUsageCount = (data = {}) => {
+  const candidates = [
+    data?.exportsUsed,
+    data?.usage?.exportaciones?.usadas,
+    data?.usage?.exportsUsed,
+    data?.usage?.exportaciones?.exportsUsed,
+  ].map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value >= 0);
+  return candidates.length ? Math.max(...candidates) : 0;
+};
+
 const History = () => {
   const { user } = useAuth();
   const [operations, setOperations] = useState([]);
@@ -114,7 +125,7 @@ const History = () => {
       if (userSnap.exists()) {
         const data = userSnap.data();
         setUserRole(data.role || data.plan || 'free');
-        setExportsUsed(typeof data.exportsUsed === 'number' ? data.exportsUsed : (data.exportsUsed ? Number(data.exportsUsed) : 0));
+        setExportsUsed(getExportUsageCount(data));
       } else {
         setUserRole('free');
         setExportsUsed(0);
@@ -316,8 +327,11 @@ const History = () => {
     if (user) {
       try {
         const userRef = doc(db, "users", user.uid);
+        // Mantener sincronizados el contador actual y la ruta histórica para
+        // que los perfiles antiguos no pierdan el límite ya consumido.
         await updateDoc(userRef, {
-          exportsUsed: increment(1)
+          exportsUsed: increment(1),
+          "usage.exportaciones.usadas": increment(1),
         });
         setExportsUsed(prev => (typeof prev === 'number' ? prev + 1 : 1));
       } catch (error) {
