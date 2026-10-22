@@ -14,6 +14,7 @@ import {
 import { db } from "../firebase";
 import { calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
 import { serializeCsv } from "../utils/csv";
+import { filterOperations } from "../utils/operationFilters";
 import { 
   TrashIcon, 
   DocumentArrowDownIcon, 
@@ -240,7 +241,7 @@ const History = () => {
   };
 
   const handleExport = async () => {
-    let dataToExport = [...operations];
+    let dataToExport = [...filteredOperations];
     
     if (exportStartDate || exportEndDate) {
       const parseLocalDate = (value, endOfDay = false) => {
@@ -331,25 +332,10 @@ const History = () => {
     return [...new Set(operations.map((op) => op[field]).filter(Boolean))];
   };
 
-  const filteredOperations = operations.filter((op) => {
-    let filtered = true;
-
-    if (filters.crypto && op.crypto !== filters.crypto) filtered = false;
-    if (filters.fiat && op.fiat !== filters.fiat) filtered = false;
-    if (filters.exchange && op.exchange !== filters.exchange) filtered = false;
-
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase().trim();
-      const matchesSearch =
-        String(op.order_id || "").toLowerCase().includes(searchLower) ||
-        String(op.crypto || "").toLowerCase().includes(searchLower) ||
-        String(op.fiat || "").toLowerCase().includes(searchLower) ||
-        String(op.exchange || "").toLowerCase().includes(searchLower);
-      filtered = filtered && matchesSearch;
-    }
-
-    return filtered;
-  });
+  const filteredOperations = useMemo(
+    () => filterOperations(operations, filters),
+    [operations, filters]
+  );
 
   const buyOperations = filteredOperations.filter(op => op.operation_type === 'Compra');
   const sellOperations = filteredOperations.filter(op => op.operation_type === 'Venta');
