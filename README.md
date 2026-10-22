@@ -4,7 +4,7 @@ Aplicación web para registrar operaciones manuales de compra y venta de criptom
 
 ## Funciones disponibles
 
-- Registro manual de compras y ventas con cantidades, tasa de cambio y comisiones.
+- Registro manual de compras y ventas con cantidades, moneda de cotización, tasa de cambio y comisiones.
 - Resumen de beneficio realizado por moneda de cotización.
 - Método FIFO para emparejar ventas con compras registradas.
 - Simuladores P2P y de arbitraje. Son estimaciones manuales: no envían órdenes.
@@ -23,10 +23,11 @@ Aplicación web para registrar operaciones manuales de compra y venta de criptom
 
 ## Reglas de cálculo
 
-- En una compra, el importe fiat es el coste y la comisión indicada se resta de la cantidad de cripto recibida.
+- En una compra, el importe en la moneda de cotización es el coste y la comisión indicada se resta de la cantidad de cripto recibida.
 - En una venta, la comisión indicada se resta del importe recibido en la moneda de cotización.
 - El beneficio se calcula por par de criptomoneda/moneda de cotización mediante FIFO, solo sobre cantidades cuyo coste de adquisición consta en el historial.
-- Las ganancias se muestran con el código de moneda correspondiente (por ejemplo, `USD`, `USDT`, `EUR` o `VES`). No se suman monedas diferentes como si fueran equivalentes.
+- Las ganancias se muestran con el código de moneda correspondiente (por ejemplo, `USD`, `USDT`, `USDC`, `EUR` o `VES`). No se suman monedas diferentes como si fueran equivalentes.
+- La aplicación conserva el nombre técnico histórico `fiat` en los documentos, pero ese campo representa la moneda de cotización: puede ser una moneda tradicional (EUR, USD, VES) o una stablecoin (USDT, USDC).
 - Las ventas que exceden la cripto comprada registrada no se cuentan como ventas totalmente cerradas para la tasa de éxito.
 - Las operaciones antiguas de Firestore no se migran ni reescriben automáticamente. Si a un registro histórico le faltan fechas, cantidades, coste o comisiones, los datos originales deben revisarse por separado.
 
