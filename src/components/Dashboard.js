@@ -24,39 +24,55 @@ const Dashboard = ({ onOpenProfile }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
       if (!user) {
+        setTotalOperations(0);
+        setProfitByCurrency({});
+        setMonthlyProfitByCurrency({});
+        setSuccessRate(0);
+        setClosedSales(0);
+        setError(null);
         setLoading(false);
-        setError("Inicia sesión para consultar el dashboard.");
         return;
       }
 
+      setLoading(true);
+      setError(null);
+
       try {
         const operationsRef = collection(db, "users", user.uid, "operations");
-        // Fetch all records; the calculator safely ignores operations without trustworthy dates.
+        // Leer todos los registros; el cálculo descarta fechas e importes no fiables.
         const querySnapshot = await getDocs(operationsRef);
-
-        const operations = [];
-        querySnapshot.forEach((doc) => {
-          operations.push({ id: doc.id, ...doc.data() });
-        });
+        const operations = querySnapshot.docs.map((operationDoc) => ({
+          id: operationDoc.id,
+          ...operationDoc.data(),
+        }));
 
         const metrics = calculateDashboardMetrics(operations);
+        if (cancelled) return;
+
         setTotalOperations(metrics.totalOperations);
         setProfitByCurrency(metrics.profitByCurrency);
         setMonthlyProfitByCurrency(metrics.monthlyProfitByCurrency);
         setSuccessRate(metrics.successRate);
         setClosedSales(metrics.closedSales);
-        setLoading(false);
       } catch (err) {
-        console.error("Error al cargar el resumen:", err);
-        setError("No se pudieron cargar las operaciones. Inténtalo de nuevo.");
-        setLoading(false);
+        if (!cancelled) {
+          console.error("Error al cargar el resumen:", err);
+          setError("No se pudieron cargar las operaciones. Inténtalo de nuevo.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
-  }, [user]);
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
 
   // Formatear el resultado por moneda; las divisas distintas nunca se suman entre sí.
   const formatCurrencyValue = (amount, currency) => {
