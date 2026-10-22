@@ -67,9 +67,9 @@ export const getUserOperations = async (userId) => {
 };
 
 // --- Dashboard stats calculation ---
-// Profit is expressed per fiat currency and calculated from FIFO-matched sales.
+// Profit is expressed per quote-currency code and calculated from FIFO-matched sales.
 // It is intentionally not exposed as one "USDT/USD" number when the underlying
-// operations may be denominated in EUR, VES, MXN, or other currencies.
+// operations may be denominated in EUR, USD, VES, USDT, USDC, or other currencies.
 export const getDashboardStats = async (userId) => {
   try {
     const operations = await getUserOperations(userId);
