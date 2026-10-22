@@ -131,7 +131,7 @@ const ArbitrageSimulator = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="crypto" className="text-gray-300 font-medium">
+                  <Label id="arb-crypto-label" htmlFor="arb-crypto" className="text-gray-300 font-medium">
                     Criptomoneda <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Select
@@ -140,7 +140,7 @@ const ArbitrageSimulator = () => {
                     onValueChange={(value) => handleSelectChange("crypto", value)}
                     disabled={loading}
                   >
-                    <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectTrigger id="arb-crypto" aria-labelledby="arb-crypto-label" className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Seleccionar criptomoneda" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -204,7 +204,7 @@ const ArbitrageSimulator = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fiat_currency" className="text-gray-300 font-medium">
+                  <Label id="arb-fiat-label" htmlFor="arb-fiat" className="text-gray-300 font-medium">
                     Moneda fiat <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Select
@@ -213,7 +213,7 @@ const ArbitrageSimulator = () => {
                     onValueChange={(value) => handleSelectChange("fiat_currency", value)}
                     disabled={loading}
                   >
-                    <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectTrigger id="arb-fiat" aria-labelledby="arb-fiat-label" className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Seleccionar moneda fiat" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
