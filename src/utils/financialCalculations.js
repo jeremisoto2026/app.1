@@ -80,7 +80,7 @@ export const calculateOperationAmounts = ({
     cryptoAmount = parsedAmount;
     fiatAmount = parsedAmount * rate - parsedFee;
     feeCurrency = fiat;
-    if (!Number.isFinite(fiatAmount) || fiatAmount < 0) {
+    if (!Number.isFinite(fiatAmount) || fiatAmount <= 0) {
       throw new Error("La comisión no puede superar el importe bruto de la venta.");
     }
   } else {
@@ -118,6 +118,8 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
   const monthlyProfitByCurrency = {};
   const inventoryByPair = new Map();
   const closedSales = [];
+  const bestOperationByCurrency = {};
+  const worstOperationByCurrency = {};
 
   const datedOperations = allOperations
     .map((operation, index) => ({
@@ -187,12 +189,20 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
 
     const isFullyMatched = remainingToMatch <= Math.max(1e-8, saleQuantity * 1e-8);
     if (isFullyMatched) {
-      closedSales.push({
+      const closedSale = {
         id: operation.id || null,
         profit: saleProfit,
         currency: operation._fiatCode,
         timestamp: operation.timestamp,
-      });
+      };
+      closedSales.push(closedSale);
+      const currency = operation._fiatCode;
+      if (!bestOperationByCurrency[currency] || saleProfit > bestOperationByCurrency[currency].profit) {
+        bestOperationByCurrency[currency] = closedSale;
+      }
+      if (!worstOperationByCurrency[currency] || saleProfit < worstOperationByCurrency[currency].profit) {
+        worstOperationByCurrency[currency] = closedSale;
+      }
     }
   });
 
@@ -200,13 +210,6 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
   const successRate = closedSales.length
     ? (winningSales / closedSales.length) * 100
     : 0;
-  const bestOperation = closedSales.length
-    ? closedSales.reduce((best, sale) => sale.profit > best.profit ? sale : best)
-    : null;
-  const worstOperation = closedSales.length
-    ? closedSales.reduce((worst, sale) => sale.profit < worst.profit ? sale : worst)
-    : null;
-
   return {
     totalOperations: allOperations.length,
     profitByCurrency,
@@ -214,7 +217,7 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
     successRate,
     closedSales: closedSales.length,
     winningSales,
-    bestOperation,
-    worstOperation,
+    bestOperationByCurrency,
+    worstOperationByCurrency,
   };
 };
