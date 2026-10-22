@@ -37,7 +37,7 @@ const ArbitrageSimulator = () => {
   const [loading, setLoading] = useState(false);
 
   const cryptos = ["USDT", "USDC", "ETH", "BTC", "SOL", "BNB"];
-  const fiatCurrencies = ["USD", "EUR", "VES", "COP", "MXN", "CLP", "ARS", "BRL"];
+  const fiatCurrencies = ["USD", "USDT", "USDC", "EUR", "VES", "COP", "MXN", "CLP", "ARS", "BRL"];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -171,6 +171,9 @@ const ArbitrageSimulator = () => {
                 </div>
               </div>
 
+              <p className="text-xs text-gray-500">
+                Los precios se expresan en {formData.fiat_currency || "la moneda de cotización"} por cada unidad de {formData.crypto || "cripto"}.
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="buy_price" className="text-gray-300 font-medium">
@@ -211,7 +214,7 @@ const ArbitrageSimulator = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label id="arb-fiat-label" htmlFor="arb-fiat" className="text-gray-300 font-medium">
-                    Moneda fiat <span className="text-red-400 ml-1">*</span>
+                    Moneda de cotización <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Select
                     name="fiat_currency"
@@ -220,7 +223,7 @@ const ArbitrageSimulator = () => {
                     disabled={loading}
                   >
                     <SelectTrigger id="arb-fiat" aria-labelledby="arb-fiat-label" className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Seleccionar moneda fiat" />
+                      <SelectValue placeholder="Seleccionar moneda de cotización" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {fiatCurrencies.map((f) => (
@@ -342,7 +345,7 @@ const ArbitrageSimulator = () => {
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Moneda fiat:</span>
+                      <span className="text-gray-400">Moneda de cotización:</span>
                       <span className="text-white font-medium">{formData.fiat_currency}</span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -372,7 +375,7 @@ const ArbitrageSimulator = () => {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Venta neta en fiat:</span>
+                      <span className="text-gray-400">Venta neta en moneda de cotización:</span>
                       <span className="text-white font-medium">
                         {result.net_fiat_proceeds.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.fiat_currency}
                       </span>
