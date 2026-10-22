@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { calculateCryptoArbitrage } from "../utils/financialCalculations";
 import {
   Card,
   CardHeader,
@@ -19,42 +20,6 @@ import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
 import { CalculatorIcon, ArrowPathIcon, TrashIcon, ChartBarIcon, BoltIcon } from "@heroicons/react/24/outline";
 
-// Función de cálculo para la ganancia en criptomonedas
-const calculateCryptoArbitrage = (data) => {
-  const { amount, buy_price, sell_price, buy_fee, sell_fee } = data;
-  
-  // Convertimos todos los valores a números flotantes
-  const initial_investment = parseFloat(amount);
-  const sell_price_num = parseFloat(sell_price);
-  const buy_price_num = parseFloat(buy_price);
-  const buy_fee_num = parseFloat(buy_fee) / 100;
-  const sell_fee_num = parseFloat(sell_fee) / 100;
-
-  // Paso 1: Venta
-  const result1 = initial_investment * sell_price_num;
-
-  // Paso 2: Restar la comisión de venta
-  const result2 = result1 - (result1 * sell_fee_num);
-
-  // Paso 3: Comprar
-  const result3 = result2 / buy_price_num;
-
-  // Paso 4: Restar la comisión de compra
-  const final_amount = result3 - (result3 * buy_fee_num);
-  
-  // Ganancia en criptomoneda
-  const crypto_profit = final_amount - initial_investment;
-  
-  // Porcentaje de ganancia
-  const profit_percentage = (crypto_profit / initial_investment) * 100;
-
-  return {
-    investment: initial_investment,
-    revenue: final_amount,
-    profit: crypto_profit,
-    profit_percentage: profit_percentage,
-  };
-};
 
 const ArbitrageSimulator = () => {
   const [formData, setFormData] = useState({
@@ -103,7 +68,7 @@ const ArbitrageSimulator = () => {
       setResult(calculatedResult);
       setError(null);
     } catch (err) {
-      setError("Error al calcular el arbitraje. Revisa los valores.");
+      setError(err.message || "Error al calcular el arbitraje. Revisa los valores.");
       setResult(null);
     } finally {
       setLoading(false);
@@ -354,11 +319,11 @@ const ArbitrageSimulator = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Comisión Compra:</span>
-                      <span className="text-white font-medium">{formData.buy_fee}%</span>
+                      <span className="text-white font-medium">{formData.buy_fee}% en cripto</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Comisión Venta:</span>
-                      <span className="text-white font-medium">{formData.sell_fee}%</span>
+                      <span className="text-white font-medium">{formData.sell_fee}% en fiat</span>
                     </div>
                   </div>
                 </div>
@@ -367,15 +332,21 @@ const ArbitrageSimulator = () => {
                   <h4 className="text-white font-medium mb-4 text-lg">Resultados Financieros</h4>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Inversión Inicial:</span>
+                      <span className="text-gray-400">Cripto inicial:</span>
                       <span className="text-white font-medium">
                         {result.investment.toFixed(8)} {formData.crypto}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Retorno Final:</span>
+                      <span className="text-gray-400">Cripto final tras recomprar:</span>
                       <span className="text-white font-medium">
                         {result.revenue.toFixed(8)} {formData.crypto}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Venta neta en fiat:</span>
+                      <span className="text-white font-medium">
+                        {result.net_fiat_proceeds.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.fiat_currency}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
