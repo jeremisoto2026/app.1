@@ -34,12 +34,25 @@ const Operations = () => {
   const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    if (error) setError('');
-    if (success) setSuccess('');
+    setFormData((previous) => {
+      const next = { ...previous, [field]: value };
+
+      // Evita reutilizar cantidades o comisiones calculadas con otra operación/unidad.
+      if (field === "operation_type" && value !== previous.operation_type) {
+        next.crypto_amount = "";
+        next.fiat_amount = "";
+        next.fee = "0";
+      } else if (
+        (field === "crypto" && previous.operation_type === "Compra" && value !== previous.crypto) ||
+        (field === "fiat" && previous.operation_type === "Venta" && value !== previous.fiat)
+      ) {
+        next.fee = "0";
+      }
+
+      return next;
+    });
+    if (error) setError("");
+    if (success) setSuccess("");
   };
 
   const handleSubmit = async (e) => {
