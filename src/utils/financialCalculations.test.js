@@ -157,6 +157,7 @@ describe("calculateCryptoArbitrage", () => {
     expect(result.net_fiat_proceeds).toBeCloseTo(108.9, 8);
     expect(result.revenue).toBeCloseTo(1.07811, 8);
     expect(result.profit).toBeCloseTo(0.07811, 8);
+    expect(result.profit_fiat_equivalent).toBeCloseTo(7.811, 8);
     expect(result.profit_percentage).toBeCloseTo(7.811, 8);
   });
 
