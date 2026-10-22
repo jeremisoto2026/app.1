@@ -257,7 +257,7 @@ const Operations = ({ onOperationSaved }) => {
                   </Label>
                   <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)} disabled={loading}>
                     <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Selecciona fiat" />
+                      <SelectValue placeholder="Selecciona moneda fiat" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {fiats.map(fiat => (
@@ -319,7 +319,7 @@ const Operations = ({ onOperationSaved }) => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="fee" className="text-gray-300 font-medium">
-                    Comisión ({formData.operation_type === 'Venta' ? (formData.fiat || 'fiat') : (formData.crypto || 'cripto')})
+                    Comisión ({formData.operation_type === 'Venta' ? (formData.fiat || 'moneda fiat') : (formData.crypto || 'cripto')})
                   </Label>
                   <p className="text-xs text-gray-500">
                     {formData.operation_type === 'Venta'
