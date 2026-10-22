@@ -37,11 +37,13 @@ const MainApp = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    // Evita que la nueva pantalla se abra en el scroll que dejó la pestaña anterior.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   const handleOperationSaved = () => {
     // Volver al resumen desmonta el formulario y vuelve a cargar las operaciones.
-    setActiveTab('dashboard');
+    handleTabChange('dashboard');
   };
 
   const premiumFeatures = [
@@ -351,7 +353,7 @@ const MainApp = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white overflow-x-hidden">
       <main className="pb-24 pt-4 md:pb-6 md:pt-20">
-        {activeTab === 'dashboard' && <Dashboard onOpenProfile={() => setActiveTab('profile')} />}
+        {activeTab === 'dashboard' && <Dashboard onOpenProfile={() => handleTabChange('profile')} />}
         {activeTab === 'p2p' && <P2PSimulator />}
         {activeTab === 'arbitrage' && <ArbitrageSimulator />}
         {activeTab === 'operations' && <Operations onOperationSaved={handleOperationSaved} />}
