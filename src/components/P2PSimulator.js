@@ -235,6 +235,7 @@ const P2PSimulator = () => {
                     <Input
                       id="amount"
                       type="number"
+                      min="0"
                       step="0.00000001"
                       placeholder="0.00000000"
                       value={formData.amount}
@@ -252,6 +253,7 @@ const P2PSimulator = () => {
                     <Input
                       id="exchange_rate"
                       type="number"
+                      min="0"
                       step="0.01"
                       placeholder="0.00"
                       value={formData.exchange_rate}
@@ -273,6 +275,8 @@ const P2PSimulator = () => {
                   <Input
                     id="fee"
                     type="number"
+                    min="0"
+                    max="99.99"
                     step="0.01"
                     placeholder="0.00"
                     value={formData.fee}
