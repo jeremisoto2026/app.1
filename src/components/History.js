@@ -539,7 +539,7 @@ const History = () => {
                     <SelectValue placeholder="Todas las monedas de cotización" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
-                    <SelectItem value="__all__" className="rounded-lg focus:bg-purple-500/10">Todas las monedas fiat</SelectItem>
+                    <SelectItem value="__all__" className="rounded-lg focus:bg-purple-500/10">Todas las monedas de cotización</SelectItem>
                     {getUniqueValues("fiat").map((fiat) => (
                       <SelectItem key={fiat} value={fiat} className="rounded-lg focus:bg-purple-500/10">
                         {fiat}
