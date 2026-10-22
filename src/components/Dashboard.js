@@ -258,7 +258,7 @@ const Dashboard = ({ onOpenProfile }) => {
         </div>
 
         <p className="text-sm text-gray-500 -mt-4 mb-8 leading-relaxed">
-          El beneficio se expresa en la moneda de cotización guardada en cada operación. Por ejemplo, USD son dólares estadounidenses y USDT es un criptoactivo distinto; no se mezclan ni se muestran como si fueran la misma moneda.
+          El beneficio se expresa en la moneda de cotización guardada en cada operación: USD son dólares estadounidenses y USDT es un criptoactivo distinto. No se suman monedas diferentes. En ventas cuyo coste de compra se conoce solo parcialmente, el resumen cuenta únicamente la parte emparejada por FIFO; la tasa de éxito solo incluye ventas completamente cubiertas por compras registradas.
         </p>
 
         {/* Las compras de planes todavía no están habilitadas. */}
