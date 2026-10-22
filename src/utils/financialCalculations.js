@@ -164,6 +164,8 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
     const proceedsPerUnit = operation._fiatValue / saleQuantity;
     let remainingToMatch = saleQuantity;
     let matchedQuantity = 0;
+    let matchedCost = 0;
+    let matchedProceeds = 0;
     let saleProfit = 0;
 
     while (remainingToMatch > 1e-10 && lots.length > 0) {
@@ -172,6 +174,8 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
       const profit = matched * (proceedsPerUnit - lot.costPerUnit);
 
       matchedQuantity += matched;
+      matchedCost += matched * lot.costPerUnit;
+      matchedProceeds += matched * proceedsPerUnit;
       saleProfit += profit;
       remainingToMatch -= matched;
       lot.remainingQuantity -= matched;
@@ -189,6 +193,8 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
       currency: operation._fiatCode,
       timestamp: operation.timestamp,
       matchedQuantity,
+      matchedCost,
+      matchedProceeds,
       soldQuantity: saleQuantity,
       fullyMatched: isFullyMatched,
     };
