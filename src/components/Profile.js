@@ -302,7 +302,7 @@ export default function Profile() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* ---------- Columna izquierda (información + uso) ocupa 2 columnas ---------- */}
           <div className="lg:col-span-2 space-y-8">
-            {/* ---- Tarjeta Información del Perfil ---- */}
+            {/* ---- Tarjeta Información del perfil ---- */}
             <div className="bg-gray-900 rounded-xl p-6 shadow-lg">
               <h3 className="text-xl font-semibold mb-4">Información del Perfil</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -317,7 +317,7 @@ export default function Profile() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <p className="text-sm text-gray-400 mb-1">Email</p>
+                  <p className="text-sm text-gray-400 mb-1">Correo electrónico</p>
                   <div className="p-3 bg-gray-800 rounded-md">{profileData.email || user?.email}</div>
                 </div>
 
