@@ -519,11 +519,12 @@ const History = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label id="history-crypto-label" htmlFor="history-crypto" className="text-gray-300 font-medium">Criptomoneda</Label>
-                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value }))}>
+                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value === "__all__" ? "" : value }))}>
                   <SelectTrigger id="history-crypto" aria-labelledby="history-crypto-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las criptomonedas" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    <SelectItem value="__all__" className="rounded-lg focus:bg-purple-500/10">Todas las criptomonedas</SelectItem>
                     {getUniqueValues("crypto").map((crypto) => (
                       <SelectItem key={crypto} value={crypto} className="rounded-lg focus:bg-purple-500/10">
                         {crypto}
@@ -535,11 +536,12 @@ const History = () => {
 
               <div className="space-y-2">
                 <Label id="history-fiat-label" htmlFor="history-fiat" className="text-gray-300 font-medium">Moneda fiat</Label>
-                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, fiat: value }))}>
+                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, fiat: value === "__all__" ? "" : value }))}>
                   <SelectTrigger id="history-fiat" aria-labelledby="history-fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las monedas fiat" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    <SelectItem value="__all__" className="rounded-lg focus:bg-purple-500/10">Todas las monedas fiat</SelectItem>
                     {getUniqueValues("fiat").map((fiat) => (
                       <SelectItem key={fiat} value={fiat} className="rounded-lg focus:bg-purple-500/10">
                         {fiat}
@@ -551,11 +553,12 @@ const History = () => {
 
               <div className="space-y-2">
                 <Label id="history-exchange-label" htmlFor="history-exchange" className="text-gray-300 font-medium">Plataforma</Label>
-                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, exchange: value }))}>
+                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, exchange: value === "__all__" ? "" : value }))}>
                   <SelectTrigger id="history-exchange" aria-labelledby="history-exchange-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las plataformas" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    <SelectItem value="__all__" className="rounded-lg focus:bg-purple-500/10">Todas las plataformas</SelectItem>
                     {getUniqueValues("exchange").map((exchange) => (
                       <SelectItem key={exchange} value={exchange} className="rounded-lg focus:bg-purple-500/10">
                         {exchange}
