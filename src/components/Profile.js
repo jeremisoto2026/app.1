@@ -19,6 +19,9 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [operationCount, setOperationCount] = useState(0);
 
   // Estado adicional: contador de exportaciones en tiempo real (no toca UI/lógica existente)
@@ -36,6 +39,7 @@ export default function Profile() {
 
     const fetchProfileAndUsage = async () => {
       setLoading(true);
+      setProfileError("");
       try {
         if (!user) {
           setProfileData(null);
@@ -97,7 +101,10 @@ export default function Profile() {
         // seteamos nuevamente profileData para tener usage consistente
         if (!cancelled) setProfileData(data);
       } catch (err) {
-        console.error("Error fetching profile/usage:", err);
+        console.error("Error al cargar el perfil y su uso:", err);
+        if (!cancelled) {
+          setProfileError("No se pudieron cargar los datos del perfil. Comprueba la conexión e inténtalo de nuevo.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -186,10 +193,11 @@ export default function Profile() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="text-white text-xl mb-4">No se encontraron datos del perfil.</div>
+          <div className="text-white text-xl mb-4">{profileError || "No se encontraron datos del perfil."}</div>
           <button
+            type="button"
             onClick={() => window.location.reload()}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
           >
             Reintentar
           </button>
@@ -197,6 +205,20 @@ export default function Profile() {
       </div>
     );
   }
+
+  const handleSignOut = async () => {
+    if (!signOut || signingOut) return;
+    setActionError("");
+    setSigningOut(true);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error al cerrar sesión desde el perfil:", error);
+      setActionError("No se pudo cerrar la sesión. Inténtalo de nuevo.");
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   // Uso (operaciones / exportaciones) - prioriza operationCount real
   const usage = profileData.usage || defaultUsage;
@@ -246,14 +268,20 @@ export default function Profile() {
               {/* Botón cerrar sesión (se mantiene) */}
               <div className="mt-4 flex items-center justify-center md:justify-start gap-3">
                 <button
-                  onClick={() => signOut && signOut()}
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={signingOut}
                   title="Cerrar sesión"
-                  className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600 transition flex items-center"
+                  aria-label="Cerrar sesión"
+                  className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600 transition flex items-center disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
                 >
                   <ArrowLeftOnRectangleIcon className="h-4 w-4 mr-2" />
-                  Cerrar sesión
+                  {signingOut ? "Cerrando sesión..." : "Cerrar sesión"}
                 </button>
               </div>
+              {actionError && (
+                <p role="alert" className="text-sm text-red-300 mt-3">{actionError}</p>
+              )}
             </div>
           </div>
         </div>
