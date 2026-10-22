@@ -165,7 +165,7 @@ const History = () => {
     try {
       const headers = [
         "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
-        "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Fecha"
+        "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Moneda_Comision", "Fecha"
       ];
 
       const buyOperations = data.filter(op => op.operation_type === 'Compra');
@@ -184,7 +184,8 @@ const History = () => {
           op.fiat || 'N/A',
           op.fiat_amount || 0,
           op.exchange_rate || 0,
-          op.fee || 0,
+          op.fee ?? 0,
+          op.fee_currency || (op.operation_type === 'Venta' ? op.fiat : op.crypto) || 'N/A',
           formatDateForCSV(op.timestamp)
         ];
       });
@@ -391,6 +392,12 @@ const History = () => {
               <span className="text-gray-400 w-20">Tasa:</span>
               <Badge className="ml-2 bg-gray-700 text-gray-300 border-gray-600">
                 {Number.isFinite(Number(operation.exchange_rate)) ? Number(operation.exchange_rate).toFixed(2) : "0.00"}
+              </Badge>
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-400 w-20">Comisión:</span>
+              <Badge className="ml-2 bg-gray-700 text-gray-300 border-gray-600">
+                {Number.isFinite(Number(operation.fee)) ? Number(operation.fee).toFixed((operation.fee_currency || (operation.operation_type === 'Venta' ? operation.fiat : operation.crypto)) === operation.crypto ? 8 : 2) : "0.00"} {operation.fee_currency || (operation.operation_type === 'Venta' ? operation.fiat : operation.crypto) || "N/A"}
               </Badge>
             </div>
             <div className="md:col-span-2 flex items-center">
