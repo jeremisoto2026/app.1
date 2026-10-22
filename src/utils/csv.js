@@ -1,5 +1,5 @@
 // CSV helpers shared by exports and their regression tests.
-const FORMULA_PREFIX = /^[\t\r\n ]*[=+@]/;
+const FORMULA_PREFIX = /^[\t\r\n ]*[=+@-]/;
 
 export const escapeCsvCell = (value, protectFormula = false) => {
   let text = String(value ?? "");
