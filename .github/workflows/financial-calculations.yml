@@ -1,5 +1,13 @@
 name: Validate JJXCAPITAL financial calculations
 
+# Cancelar las ejecuciones antiguas del mismo ref: solo interesa validar el código más reciente.
+concurrency:
+  group: financial-calculations-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -11,6 +19,7 @@ on:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
