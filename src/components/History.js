@@ -174,6 +174,7 @@ const History = () => {
       const headers = [
         "ID_Operacion", "Tipo_Operacion", "Plataforma", "Criptomoneda", "Cantidad_Cripto",
         "Moneda_Cotizacion", "Importe_Cotizado", "Tasa_Cambio", "Comision", "Moneda_Comision",
+        "Cantidad_Cripto_Emparejada", "Ingreso_Emparejado", "Coste_Emparejado",
         "Beneficio_Realizado", "Moneda_Beneficio", "Cobertura_Coste", "Fecha"
       ];
 
@@ -211,6 +212,9 @@ const History = () => {
           Number.isFinite(Number(op.exchange_rate)) ? String(op.exchange_rate) : "",
           op.fee ?? 0,
           op.fee_currency || (op.operation_type === "Venta" ? op.fiat : op.crypto) || "N/A",
+          knownProfit ? realization.matchedQuantity.toFixed(8) : "",
+          knownProfit ? realization.matchedProceeds.toFixed(2) : "",
+          knownProfit ? realization.matchedCost.toFixed(2) : "",
           knownProfit ? realization.profit.toFixed(2) : "",
           knownProfit ? realization.currency : "",
           costCoverage,
@@ -453,8 +457,12 @@ const History = () => {
                       {formatCurrency(realizedProfitByOperation[operation.id].profit, realizedProfitByOperation[operation.id].currency)}
                     </span>
                   </div>
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-400">
+                    <span>Ingreso emparejado: {formatCurrency(realizedProfitByOperation[operation.id].matchedProceeds, realizedProfitByOperation[operation.id].currency)}</span>
+                    <span>Coste emparejado: {formatCurrency(realizedProfitByOperation[operation.id].matchedCost, realizedProfitByOperation[operation.id].currency)}</span>
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    Se ha emparejado {realizedProfitByOperation[operation.id].matchedQuantity.toFixed(8)} de {realizedProfitByOperation[operation.id].soldQuantity.toFixed(8)} {operation.crypto || "cripto"} con compras registradas.
+                    Cantidad emparejada: {realizedProfitByOperation[operation.id].matchedQuantity.toFixed(8)} de {realizedProfitByOperation[operation.id].soldQuantity.toFixed(8)} {operation.crypto || "cripto"}.
                   </p>
                   {!realizedProfitByOperation[operation.id].fullyMatched && (
                     <p className="mt-1 text-xs text-amber-300">
