@@ -41,10 +41,10 @@ const MainApp = () => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
-  const handleOperationSaved = () => {
-    // Volver al resumen desmonta el formulario y vuelve a cargar las operaciones.
-    handleTabChange('dashboard');
-  };
+  useEffect(() => {
+    // Tras cerrar sesión, la siguiente sesión siempre empieza en el resumen.
+    if (!user) setActiveTab("dashboard");
+  }, [user?.uid]);
 
   const premiumFeatures = [
     {
@@ -356,7 +356,7 @@ const MainApp = () => {
         {activeTab === 'dashboard' && <Dashboard onOpenProfile={() => handleTabChange('profile')} />}
         {activeTab === 'p2p' && <P2PSimulator />}
         {activeTab === 'arbitrage' && <ArbitrageSimulator />}
-        {activeTab === 'operations' && <Operations onOperationSaved={handleOperationSaved} />}
+        {activeTab === 'operations' && <Operations />}
         {activeTab === 'history' && <History />}
         {activeTab === 'profile' && <Profile />}
       </main>
