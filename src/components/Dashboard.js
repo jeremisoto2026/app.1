@@ -50,7 +50,7 @@ const Dashboard = ({ onOpenProfile }) => {
         setLoading(false);
       } catch (err) {
         console.error("Error al cargar el resumen:", err);
-        setError("Error al cargar los datos del dashboard.");
+        setError("No se pudieron cargar las operaciones. Inténtalo de nuevo.");
         setLoading(false);
       }
     };
@@ -226,7 +226,7 @@ const Dashboard = ({ onOpenProfile }) => {
             <div className="flex items-end">
               <p className="text-2xl md:text-3xl font-bold mb-1">{successRate.toFixed(1)}%</p>
               <div className="ml-3 text-xs px-2 py-1 rounded-full bg-purple-900/50 text-purple-300">
-                {closedSales === 0 ? "Sin ventas cerradas" : successRate >= 70 ? "Excelente" : successRate >= 50 ? "Intermedia" : "Baja"}
+                {closedSales === 0 ? "Sin datos" : "Ventas cerradas"}
               </div>
             </div>
             <div className="flex items-center text-sm text-gray-500">
