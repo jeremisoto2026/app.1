@@ -169,6 +169,19 @@ describe("calculateDashboardMetrics", () => {
   });
 });
 
+test("keeps USD dollars and USDT stablecoin profits in separate totals", () => {
+  const operations = [
+    { id: "usd-buy", crypto: "BTC", fiat: "USD", operation_type: "Compra", crypto_amount: 1, fiat_amount: 100, timestamp: new Date("2026-10-01T10:00:00Z") },
+    { id: "usd-sell", crypto: "BTC", fiat: "USD", operation_type: "Venta", crypto_amount: 1, fiat_amount: 110, timestamp: new Date("2026-10-02T10:00:00Z") },
+    { id: "usdt-buy", crypto: "ETH", fiat: "USDT", operation_type: "Compra", crypto_amount: 1, fiat_amount: 200, timestamp: new Date("2026-10-03T10:00:00Z") },
+    { id: "usdt-sell", crypto: "ETH", fiat: "USDT", operation_type: "Venta", crypto_amount: 1, fiat_amount: 210, timestamp: new Date("2026-10-04T10:00:00Z") },
+  ];
+
+  const result = calculateDashboardMetrics(operations, new Date("2026-10-22T12:00:00.000Z"));
+  expect(result.profitByCurrency).toEqual({ USD: 10, USDT: 10 });
+  expect(result.profitByCurrency.USD).not.toBe(result.profitByCurrency.USDT * 2);
+});
+
 describe("calculateCryptoArbitrage", () => {
   test("applies sell fees to fiat proceeds and buy fees to repurchased crypto", () => {
     const result = calculateCryptoArbitrage({
