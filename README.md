@@ -1,70 +1,40 @@
-# Getting Started with Create React App
+# JJXCAPITAL
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicación web para registrar operaciones de compra y venta de criptomonedas, calcular resultados con el coste de compra conocido y exportar el historial.
 
-## Available Scripts
+## Funciones disponibles
 
-In the project directory, you can run:
+- Registro manual de compras y ventas, con importe, tasa de cambio y comisión.
+- Resumen de beneficio realizado calculado con coste de adquisición FIFO.
+- Resultados agrupados por moneda de cotización; USD, USDT, EUR, VES y otras monedas no se mezclan entre sí.
+- Simulador de conversión P2P y simulador de arbitraje con comisiones explícitas.
+- Historial filtrable y exportación CSV.
 
-### `npm start`
+## Funciones que no están habilitadas
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- No se conecta una cuenta de Binance mediante API desde el frontend.
+- No hay contratación de suscripciones ni pasarela de pago activa en la interfaz.
+- El simulador calcula escenarios hipotéticos; no ejecuta órdenes ni garantiza ganancias.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Reglas de cálculo
 
-### `npm test`
+- En una compra, la comisión registrada se resta de la cantidad de cripto recibida; el importe fiat representa el coste.
+- En una venta, la comisión se resta del importe recibido en moneda de cotización.
+- El beneficio realizado utiliza el método FIFO por par de criptomoneda y moneda de cotización y solo se calcula sobre cantidades cuya adquisición consta en el historial.
+- Si falta una fecha fiable o el coste de compra, esa operación no se inventa como beneficio. Las operaciones antiguas ya guardadas no se convierten ni se reescriben automáticamente.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Desarrollo y validación
 
-### `npm run build`
+Requisitos: Node.js y npm.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+npm install --legacy-peer-deps
+npm test -- --watchAll=false --runInBand
+npm run build
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+La compilación solo genera la carpeta `build`; este proyecto no despliega cambios por ejecutar los comandos anteriores.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Configuración
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+La autenticación y los datos de usuario se gestionan con Firebase. El proyecto requiere sus variables/configuración de Firebase válidas y reglas de Firestore apropiadas. No publiques credenciales privadas ni claves secretas en el frontend.
