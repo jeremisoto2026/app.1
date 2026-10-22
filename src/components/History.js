@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { collection, getDocs, deleteDoc, doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
-import { getOperationDate } from "../utils/financialCalculations";
+import { calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
 import { 
   TrashIcon, 
   DocumentArrowDownIcon, 
@@ -55,6 +55,14 @@ const History = () => {
   const [userRole, setUserRole] = useState('free');
   const [exportsUsed, setExportsUsed] = useState(0);
   const EXPORT_LIMIT_FREE = 40;
+
+  // Calcular cada venta con el historial completo, no solo con el filtro visual,
+  // porque una compra anterior puede ser el coste de adquisición de una venta.
+  const financialMetrics = useMemo(
+    () => calculateDashboardMetrics(operations),
+    [operations]
+  );
+  const realizedProfitByOperation = financialMetrics.realizedProfitByOperation || {};
 
   // ---------- NUEVO: estados para diálogos personalizados ----------
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -164,8 +172,9 @@ const History = () => {
 
     try {
       const headers = [
-        "ID_Operacion", "Tipo_Operacion", "Plataforma", "Criptomoneda", "Cantidad_Cripto", 
-        "Moneda_Cotizacion", "Importe_Cotizado", "Tasa_Cambio", "Comision", "Moneda_Comision", "Fecha"
+        "ID_Operacion", "Tipo_Operacion", "Plataforma", "Criptomoneda", "Cantidad_Cripto",
+        "Moneda_Cotizacion", "Importe_Cotizado", "Tasa_Cambio", "Comision", "Moneda_Comision",
+        "Beneficio_Realizado", "Moneda_Beneficio", "Cobertura_Coste", "Fecha"
       ];
 
       // Exportar por orden cronológico ascendente para que el registro permita
@@ -179,6 +188,17 @@ const History = () => {
       const rows = sortedData.map(op => {
         const cryptoAmount = Number(op.crypto_amount);
         const formattedCryptoAmount = Number.isFinite(cryptoAmount) ? cryptoAmount.toFixed(8) : "";
+        const realization = op.operation_type === "Venta" ? realizedProfitByOperation[op.id] : null;
+        const knownProfit = realization && realization.matchedQuantity > 0;
+        const costCoverage = op.operation_type !== "Venta"
+          ? "No aplica (compra)"
+          : !realization
+            ? "No calculable"
+            : realization.fullyMatched
+              ? "Completo"
+              : knownProfit
+                ? "Parcial"
+                : "Sin coste conocido";
 
         return [
           op.order_id || "N/A",
@@ -191,6 +211,9 @@ const History = () => {
           Number.isFinite(Number(op.exchange_rate)) ? String(op.exchange_rate) : "",
           op.fee ?? 0,
           op.fee_currency || (op.operation_type === "Venta" ? op.fiat : op.crypto) || "N/A",
+          knownProfit ? realization.profit.toFixed(2) : "",
+          knownProfit ? realization.currency : "",
+          costCoverage,
           formatDateForCSV(op.timestamp),
         ];
       });
@@ -416,6 +439,36 @@ const History = () => {
               </span>
             </div>
           </div>
+          {operation.operation_type === "Venta" && (
+            <div className="rounded-xl border border-purple-500/20 bg-gray-950/50 p-3">
+              {realizedProfitByOperation[operation.id] && realizedProfitByOperation[operation.id].matchedQuantity > 0 ? (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm text-gray-300">
+                      {realizedProfitByOperation[operation.id].fullyMatched
+                        ? "Beneficio realizado"
+                        : "Beneficio de la parte emparejada"}
+                    </span>
+                    <span className={`font-semibold ${realizedProfitByOperation[operation.id].profit > 0 ? "text-green-400" : realizedProfitByOperation[operation.id].profit < 0 ? "text-red-400" : "text-white"}`}>
+                      {formatCurrency(realizedProfitByOperation[operation.id].profit, realizedProfitByOperation[operation.id].currency)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Se ha emparejado {realizedProfitByOperation[operation.id].matchedQuantity.toFixed(8)} de {realizedProfitByOperation[operation.id].soldQuantity.toFixed(8)} {operation.crypto || "cripto"} con compras registradas.
+                  </p>
+                  {!realizedProfitByOperation[operation.id].fullyMatched && (
+                    <p className="mt-1 text-xs text-amber-300">
+                      El beneficio es parcial: falta coste de compra conocido para parte de la venta.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-amber-300">
+                  Beneficio no calculable: no hay coste de compra conocido y emparejado para esta venta.
+                </p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     ));
