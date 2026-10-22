@@ -41,11 +41,16 @@ const ArbitrageSimulator = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    setFormData((previous) => ({ ...previous, [name]: value }));
+    // No mostrar como vigente un resultado calculado con valores anteriores.
+    setResult(null);
+    setError(null);
   };
 
   const handleSelectChange = (name, value) => {
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    setFormData((previous) => ({ ...previous, [name]: value }));
+    setResult(null);
+    setError(null);
   };
 
   const handleSubmit = (e) => {
@@ -54,7 +59,7 @@ const ArbitrageSimulator = () => {
 
     const { amount, buy_price, sell_price, crypto, fiat_currency } = formData;
     if (!amount || !buy_price || !sell_price || !crypto || !fiat_currency) {
-      setError("Por favor, completa todos los campos obligatorios.");
+      setError("Completa todos los campos obligatorios.");
       setResult(null);
       setLoading(false);
       return;
@@ -267,6 +272,8 @@ const ArbitrageSimulator = () => {
                   type="button"
                   onClick={handleClear}
                   variant="outline"
+                  aria-label="Limpiar formulario de arbitraje"
+                  title="Limpiar formulario"
                   className="border-purple-500/30 text-gray-300 hover:bg-gray-700/50 h-11 rounded-xl"
                   disabled={loading}
                 >
