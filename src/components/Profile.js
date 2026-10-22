@@ -322,7 +322,7 @@ export default function Profile() {
                 <div className="md:col-span-2">
                   <p className="text-sm text-gray-400 mb-1">Plan actual</p>
                   <div className="inline-block mt-2 px-3 py-1 bg-indigo-900 text-indigo-300 rounded-full text-xs font-medium">
-                    {profileData.plan === "free" || !profileData.plan ? "Free" : profileData.plan}
+                    {String(profileData.plan || "free").toLowerCase() === "free" ? "Gratis" : profileData.plan}
                   </div>
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function Profile() {
                     <span className="text-white font-semibold">{exportacionesUsadas}</span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    La exportación CSV está disponible sin un límite configurado en la aplicación.
+                    Puedes exportar el historial CSV sin un límite configurado en la aplicación.
                   </p>
                 </div>
               </div>
