@@ -4,7 +4,7 @@
 // - A purchase adds the net crypto quantity received at its fiat cost.
 // - A sale realizes profit only for crypto quantity matched to earlier purchases.
 // - FIFO is applied separately to each crypto/fiat pair.
-// - P&L is grouped by fiat currency; currencies are never added together.
+// - Profit and loss is grouped by quote currency; distinct currency codes are never added together.
 // - Operations without a valid timestamp are excluded from FIFO matching because
 //   their chronological order cannot be trusted.
 
