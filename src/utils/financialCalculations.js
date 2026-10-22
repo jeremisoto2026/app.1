@@ -62,6 +62,12 @@ export const calculateOperationAmounts = ({
   if (operation_type !== "Compra" && operation_type !== "Venta") {
     throw new Error("Selecciona si la operación es una Compra o una Venta.");
   }
+  if (
+    String(crypto || "").trim().toUpperCase() &&
+    String(crypto || "").trim().toUpperCase() === String(fiat || "").trim().toUpperCase()
+  ) {
+    throw new Error("La criptomoneda y la moneda de cotización deben ser distintas.");
+  }
   if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
     throw new Error("La cantidad debe ser un número mayor que 0.");
   }
@@ -137,6 +143,7 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
       (operation.operation_type === "Compra" || operation.operation_type === "Venta") &&
       operation._cryptoCode &&
       operation._fiatCode &&
+      operation._cryptoCode !== operation._fiatCode &&
       Number.isFinite(operation._cryptoQuantity) &&
       operation._cryptoQuantity > 0 &&
       Number.isFinite(operation._fiatValue) &&
@@ -246,6 +253,8 @@ export const calculateCryptoArbitrage = ({
   sell_price,
   buy_fee = 0,
   sell_fee = 0,
+  crypto = "",
+  fiat_currency = "",
 }) => {
   const quantity = toFiniteNumber(amount);
   const buyPrice = toFiniteNumber(buy_price);
@@ -258,6 +267,12 @@ export const calculateCryptoArbitrage = ({
   }
   if (!Number.isFinite(buyPrice) || buyPrice <= 0 || !Number.isFinite(sellPrice) || sellPrice <= 0) {
     throw new Error("Los precios de compra y venta deben ser números mayores que 0.");
+  }
+  if (
+    String(crypto || "").trim().toUpperCase() &&
+    String(crypto || "").trim().toUpperCase() === String(fiat_currency || "").trim().toUpperCase()
+  ) {
+    throw new Error("La criptomoneda y la moneda de cotización deben ser distintas.");
   }
   if (!Number.isFinite(buyFeePercent) || buyFeePercent < 0 || buyFeePercent >= 100 ||
       !Number.isFinite(sellFeePercent) || sellFeePercent < 0 || sellFeePercent >= 100) {
