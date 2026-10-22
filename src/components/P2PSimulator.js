@@ -205,7 +205,11 @@ const P2PSimulator = () => {
                   {/* Amount */}
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="text-gray-300 font-medium">
-                      Cantidad <span className="text-red-400">*</span>
+                      {formData.operation_type === 'Venta'
+                        ? 'Cantidad de criptomoneda que vendes'
+                        : formData.operation_type === 'Compra'
+                          ? 'Importe en moneda fiat que inviertes'
+                          : 'Cantidad'} <span className="text-red-400">*</span>
                     </Label>
                     <Input
                       id="amount"
@@ -222,7 +226,7 @@ const P2PSimulator = () => {
                   {/* Exchange Rate */}
                   <div className="space-y-2">
                     <Label htmlFor="exchange_rate" className="text-gray-300 font-medium">
-                      Tasa de Cambio <span className="text-red-400">*</span>
+                      Tasa de cambio <span className="text-red-400">*</span>
                     </Label>
                     <Input
                       id="exchange_rate"
@@ -234,6 +238,9 @@ const P2PSimulator = () => {
                       className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl disabled:opacity-50"
                       disabled={loading}
                     />
+                    <p className="text-xs text-gray-500">
+                      Indica cuántas unidades de {formData.fiat || 'moneda fiat'} equivalen a 1 {formData.crypto || 'unidad de cripto'}.
+                    </p>
                   </div>
                 </div>
 
@@ -379,7 +386,7 @@ const P2PSimulator = () => {
                       </div>
                       <div className="border-t border-purple-500/20 pt-4">
                         <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">Cantidad Neta:</span>
+                          <span className="text-white font-medium">Cantidad neta:</span>
                           <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-lg px-3 py-1 rounded-lg">
                             {result.net_amount !== undefined
                               ? (result.operation_type === 'Venta'
