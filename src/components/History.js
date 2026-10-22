@@ -13,6 +13,7 @@ import {
 } from "./ui/select";
 import { db } from "../firebase";
 import { calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
+import { serializeCsv } from "../utils/csv";
 import { 
   TrashIcon, 
   DocumentArrowDownIcon, 
@@ -126,7 +127,7 @@ const History = () => {
 
     try {
       await deleteDoc(doc(db, "users", user.uid, "operations", operationToDelete));
-      setOperations(operations.filter((op) => op.id !== operationToDelete));
+      setOperations((previous) => previous.filter((op) => op.id !== operationToDelete));
       setIsDeleteDialogOpen(false);
       setOperationToDelete(null);
     } catch (error) {
@@ -199,14 +200,9 @@ const History = () => {
         ];
       });
 
-      const escapeCsvCell = (value) => {
-        const text = String(value ?? "");
-        return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
-      };
-      const csvContent = [
-        headers.map(escapeCsvCell).join(","),
-        ...rows.map(row => row.map(escapeCsvCell).join(",")),
-      ].join("\r\n");
+      // Las columnas textuales son seguras frente a fórmulas; las columnas
+      // numéricas conservan sus valores, incluidos los beneficios negativos.
+      const csvContent = serializeCsv(headers, rows, [0, 1, 2, 3, 4, 6, 11, 16, 17]);
 
       const blob = new Blob(["\uFEFF", csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
@@ -214,10 +210,11 @@ const History = () => {
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
         link.setAttribute("download", `historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-        link.style.visibility = 'hidden';
+        link.style.visibility = "hidden";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
         return true;
       } else {
         showExportDialog('error', 'Error de Navegador', 'Tu navegador no permite descargar archivos desde esta página.');
