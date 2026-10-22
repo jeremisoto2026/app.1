@@ -23,7 +23,7 @@ const P2PSimulator = () => {
   const [loading, setLoading] = useState(false);
 
   const cryptos = ['USDT', 'BTC', 'ETH', 'BNB', 'USDC'];
-  const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
+  const fiats = ['EUR', 'USD', 'USDT', 'USDC', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
   const operationTypes = ['Venta', 'Compra'];
 
   const handleInputChange = (field, value) => {
@@ -229,7 +229,7 @@ const P2PSimulator = () => {
                       {formData.operation_type === 'Venta'
                         ? 'Cantidad de criptomoneda que vendes'
                         : formData.operation_type === 'Compra'
-                          ? 'Importe en moneda fiat que inviertes'
+                          ? 'Importe en moneda de cotización que inviertes'
                           : 'Cantidad'} <span className="text-red-400">*</span>
                     </Label>
                     <Input
@@ -262,7 +262,7 @@ const P2PSimulator = () => {
                       disabled={loading}
                     />
                     <p className="text-xs text-gray-500">
-                      Indica cuántas unidades de {formData.fiat || 'moneda fiat'} equivalen a 1 {formData.crypto || 'unidad de cripto'}.
+                      Indica cuántas unidades de {formData.fiat || 'moneda de cotización'} equivalen a 1 {formData.crypto || 'unidad de cripto'}.
                     </p>
                   </div>
                 </div>
