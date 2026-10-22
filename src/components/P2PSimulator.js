@@ -27,12 +27,25 @@ const P2PSimulator = () => {
   const operationTypes = ['Venta', 'Compra'];
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData((previous) => {
+      const next = { ...previous, [field]: value };
+
+      // La misma cifra puede representar cripto o fiat según la operación y el par.
+      if (field === "operation_type" && value !== previous.operation_type) {
+        next.amount = "";
+        next.exchange_rate = "";
+      } else if (field === "crypto" && value !== previous.crypto) {
+        next.exchange_rate = "";
+        if (previous.operation_type === "Venta") next.amount = "";
+      } else if (field === "fiat" && value !== previous.fiat) {
+        next.exchange_rate = "";
+        if (previous.operation_type === "Compra") next.amount = "";
+      }
+
+      return next;
+    });
     if (result) setResult(null);
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleSimulate = async (e) => {
