@@ -24,6 +24,7 @@ const Dashboard = ({ onOpenProfile }) => {
   const [totalOperations, setTotalOperations] = useState(0);
   const [profitByCurrency, setProfitByCurrency] = useState({});
   const [successRate, setSuccessRate] = useState(0);
+  const [closedSales, setClosedSales] = useState(0);
   const [monthlyProfitByCurrency, setMonthlyProfitByCurrency] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,6 +62,7 @@ const Dashboard = ({ onOpenProfile }) => {
         setProfitByCurrency(metrics.profitByCurrency);
         setMonthlyProfitByCurrency(metrics.monthlyProfitByCurrency);
         setSuccessRate(metrics.successRate);
+        setClosedSales(metrics.closedSales);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
@@ -454,12 +456,12 @@ const Dashboard = ({ onOpenProfile }) => {
             <div className="flex items-end">
               <p className="text-2xl md:text-3xl font-bold mb-1">{successRate.toFixed(1)}%</p>
               <div className="ml-3 text-xs px-2 py-1 rounded-full bg-purple-900/50 text-purple-300">
-                {successRate >= 50 ? "Excelente" : "En progreso"}
+                {closedSales === 0 ? "Sin ventas cerradas" : successRate >= 70 ? "Excelente" : successRate >= 50 ? "Intermedia" : "Baja"}
               </div>
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <span className="h-2 w-2 bg-purple-500 rounded-full mr-2"></span>
-              Ventas cerradas con beneficio
+              {closedSales} ventas cerradas con coste de compra conocido
             </div>
           </div>
 
