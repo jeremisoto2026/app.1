@@ -215,7 +215,7 @@ const History = () => {
 
       // Las columnas textuales son seguras frente a fórmulas; las columnas
       // numéricas conservan sus valores, incluidos los beneficios negativos.
-      const csvContent = serializeCsv(headers, rows, [0, 1, 2, 3, 4, 6, 11, 16, 17]);
+      const csvContent = serializeCsv(headers, rows, [0, 1, 2, 3, 4, 6, 10, 15, 16, 17]);
 
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
@@ -279,7 +279,7 @@ const History = () => {
       showExportDialog(
         'warning', 
         'Sin datos para exportar', 
-        'No hay datos disponibles en el rango seleccionado para exportar.'
+        'No hay operaciones que coincidan con los filtros y el rango de fechas seleccionados.'
       );
       return;
     }
