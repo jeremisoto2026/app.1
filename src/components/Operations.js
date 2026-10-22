@@ -80,10 +80,10 @@ const Operations = () => {
         exchange: "plataforma",
         operation_type: "tipo de operación",
         crypto: "criptomoneda",
-        fiat: "moneda fiat",
+        fiat: "moneda de cotización",
         exchange_rate: "tasa de cambio",
         crypto_amount: "cantidad en cripto",
-        fiat_amount: "importe en moneda fiat",
+        fiat_amount: "importe en moneda de cotización",
       };
       const missingLabels = [...new Set(missingFields)].map((field) => fieldLabels[field] || field);
       setError(`Completa estos campos obligatorios: ${missingLabels.join(", ")}.`);
@@ -315,7 +315,7 @@ const Operations = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="fiat_amount" className="text-gray-300 font-medium">
-                    Importe en moneda fiat {formData.operation_type === 'Compra' && <span className="text-red-400">*</span>}
+                    Importe en moneda de cotización {formData.operation_type === 'Compra' && <span className="text-red-400">*</span>}
                   </Label>
                   <Input
                     id="fiat_amount"
@@ -349,7 +349,7 @@ const Operations = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="fee" className="text-gray-300 font-medium">
-                    Comisión ({formData.operation_type === 'Venta' ? (formData.fiat || 'moneda fiat') : (formData.crypto || 'cripto')})
+                    Comisión ({formData.operation_type === 'Venta' ? (formData.fiat || 'moneda de cotización') : (formData.crypto || 'cripto')})
                   </Label>
                   <p className="text-xs text-gray-500">
                     {formData.operation_type === 'Venta'
@@ -389,7 +389,7 @@ const Operations = () => {
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Importe en moneda fiat:</span>
+                    <span className="text-gray-400">Importe en moneda de cotización:</span>
                     <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
                       {Number.isFinite(previewAmountFiat) ? previewAmountFiat.toFixed(2) + ' ' + (formData.fiat || '') : '—'}
                     </Badge>
