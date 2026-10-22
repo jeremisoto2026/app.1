@@ -153,7 +153,7 @@ const P2PSimulator = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Crypto */}
                   <div className="space-y-2">
-                    <Label htmlFor="crypto" className="text-gray-300 font-medium">
+                    <Label id="p2p-crypto-label" htmlFor="p2p-crypto" className="text-gray-300 font-medium">
                       Criptomoneda <span className="text-red-400">*</span>
                     </Label>
                     <Select 
@@ -161,7 +161,7 @@ const P2PSimulator = () => {
                       onValueChange={(value) => handleInputChange('crypto', value)}
                       disabled={loading}
                     >
-                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
+                      <SelectTrigger id="p2p-crypto" aria-labelledby="p2p-crypto-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
                         <SelectValue placeholder="Seleccionar criptomoneda" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -176,7 +176,7 @@ const P2PSimulator = () => {
 
                   {/* Fiat */}
                   <div className="space-y-2">
-                    <Label htmlFor="fiat" className="text-gray-300 font-medium">
+                    <Label id="p2p-fiat-label" htmlFor="p2p-fiat" className="text-gray-300 font-medium">
                       Moneda fiat <span className="text-red-400">*</span>
                     </Label>
                     <Select 
@@ -184,7 +184,7 @@ const P2PSimulator = () => {
                       onValueChange={(value) => handleInputChange('fiat', value)}
                       disabled={loading}
                     >
-                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
+                      <SelectTrigger id="p2p-fiat" aria-labelledby="p2p-fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
                         <SelectValue placeholder="Seleccionar moneda fiat" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -200,7 +200,7 @@ const P2PSimulator = () => {
 
                 {/* Operation Type */}
                 <div className="space-y-2">
-                  <Label htmlFor="operation_type" className="text-gray-300 font-medium">
+                  <Label id="p2p-operation-type-label" htmlFor="p2p-operation-type" className="text-gray-300 font-medium">
                     Tipo de Operación <span className="text-red-400">*</span>
                   </Label>
                   <Select 
@@ -208,7 +208,7 @@ const P2PSimulator = () => {
                     onValueChange={(value) => handleInputChange('operation_type', value)}
                     disabled={loading}
                   >
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
+                    <SelectTrigger id="p2p-operation-type" aria-labelledby="p2p-operation-type-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
