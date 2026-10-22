@@ -144,14 +144,6 @@ const Dashboard = ({ onOpenProfile }) => {
     }
   };
 
-  // Función para formatear números con separadores de miles
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(num);
-  };
-
   // Formatear el resultado por moneda; las divisas distintas nunca se suman entre sí.
   const formatCurrencyValue = (amount, currency) => {
     try {
@@ -460,7 +452,7 @@ const Dashboard = ({ onOpenProfile }) => {
               </div>
             </div>
             <div className="flex items-end">
-              <p className="text-2xl md:text-3xl font-bold mb-1">{successRate}%</p>
+              <p className="text-2xl md:text-3xl font-bold mb-1">{successRate.toFixed(1)}%</p>
               <div className="ml-3 text-xs px-2 py-1 rounded-full bg-purple-900/50 text-purple-300">
                 {successRate >= 50 ? "Excelente" : "En progreso"}
               </div>
