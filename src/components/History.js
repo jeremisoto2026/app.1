@@ -363,10 +363,13 @@ const History = () => {
                 : "bg-red-500/20 text-red-400 border-red-500/30"}>
                 {operation.operation_type || "N/A"}
               </Badge>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => confirmDelete(operation.id)}
+                aria-label={`Eliminar operación ${operation.order_id || operation.id}`}
+                title="Eliminar operación"
                 className="hover:bg-red-500/10 text-red-400 rounded-xl"
               >
                 <TrashIcon className="h-4 w-4" />
@@ -487,7 +490,7 @@ const History = () => {
             <DocumentArrowDownIcon className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-            Historial de Operaciones
+            Historial de operaciones
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
             Consulta y organiza tus operaciones de compra y venta en un solo lugar
@@ -501,14 +504,14 @@ const History = () => {
               <div className="p-2 bg-purple-500/10 rounded-lg">
                 <FunnelIcon className="h-5 w-5 text-purple-400" />
               </div>
-              Filtros y Búsqueda
+              Filtros y búsqueda
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label className="text-gray-300 font-medium">Criptomoneda</Label>
-                <Select onValueChange={(value) => setFilters({ ...filters, crypto: value })}>
+                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value }))}>
                   <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las criptomonedas" />
                   </SelectTrigger>
@@ -524,7 +527,7 @@ const History = () => {
 
               <div className="space-y-2">
                 <Label className="text-gray-300 font-medium">Moneda fiat</Label>
-                <Select onValueChange={(value) => setFilters({ ...filters, fiat: value })}>
+                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, fiat: value }))}>
                   <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las monedas fiat" />
                   </SelectTrigger>
@@ -540,7 +543,7 @@ const History = () => {
 
               <div className="space-y-2">
                 <Label className="text-gray-300 font-medium">Plataforma</Label>
-                <Select onValueChange={(value) => setFilters({ ...filters, exchange: value })}>
+                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, exchange: value }))}>
                   <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las plataformas" />
                   </SelectTrigger>
@@ -555,12 +558,14 @@ const History = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Búsqueda</Label>
+                <Label htmlFor="history-search" className="text-gray-300 font-medium">Búsqueda</Label>
                 <div className="relative">
                   <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                   <Input
-                    placeholder="Buscar..."
-                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    id="history-search"
+                    aria-label="Buscar operaciones"
+                    placeholder="Buscar por orden, criptomoneda o plataforma..."
+                    onChange={(e) => setFilters((previous) => ({ ...previous, search: e.target.value }))}
                     className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl pl-10"
                   />
                 </div>
@@ -576,17 +581,18 @@ const History = () => {
               <div className="p-2 bg-blue-500/10 rounded-lg">
                 <DocumentArrowDownIcon className="h-5 w-5 text-blue-400" />
               </div>
-              Exportar Historial
+              Exportar historial
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
                 <div className="space-y-2">
-                  <Label className="text-gray-300 font-medium">Fecha de inicio</Label>
+                  <Label htmlFor="export-start-date" className="text-gray-300 font-medium">Fecha de inicio</Label>
                   <div className="relative">
                     <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
+                      id="export-start-date"
                       type="date"
                       value={exportStartDate}
                       onChange={(e) => setExportStartDate(e.target.value)}
@@ -595,10 +601,11 @@ const History = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-gray-300 font-medium">Fecha de fin</Label>
+                  <Label htmlFor="export-end-date" className="text-gray-300 font-medium">Fecha de fin</Label>
                   <div className="relative">
                     <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
+                      id="export-end-date"
                       type="date"
                       value={exportEndDate}
                       onChange={(e) => setExportEndDate(e.target.value)}
