@@ -88,31 +88,31 @@ const MainApp = () => {
       icon: <FaMoneyBillWave className="text-5xl" />,
       title: "Registro Instantáneo P2P",
       description: "Registra tus operaciones de arbitraje en segundos. Cálculo automático de comisiones y ganancias.",
-      benefits: ["1-click registration", "Auto-cálculo comisiones", "Saldos en tiempo real", "Historial automático"],
+      benefits: ["Registro sencillo", "Cálculo de comisiones", "Saldos en tiempo real", "Historial automático"],
       gradient: "from-purple-600 to-blue-600",
       stats: ["<30s", "por operación", ""]
     },
     {
       icon: <FaCalculator className="text-5xl" />,
       title: "Simulador de Arbitraje",
-      description: "Calcula ganancias potenciales antes de operar. Múltiples escenarios y optimización inteligente.",
-      benefits: ["Análisis pre-operación", "Múltiples escenarios", "Optimización AI", "Alertas rentabilidad"],
+      description: "Estima el resultado de vender y recomprar cripto después de las comisiones introducidas.",
+      benefits: ["Análisis pre-operación", "Múltiples escenarios", "Comparación de escenarios", "Estimación de rentabilidad"],
       gradient: "from-blue-600 to-cyan-600",
-      stats: ["99.9%", "precisión", ""]
+      stats: ["CSV", "exportación", ""]
     },
     {
       icon: <FaFileExcel className="text-5xl" />,
       title: "Reportes Profesionales",
-      description: "Exporta a Excel y PDF con todos tus comprobantes. Perfecto para contadores y bancos.",
-      benefits: ["Excel automático", "PDF profesional", "Comprobantes incluidos", "Formatos AFIP"],
+      description: "Exporta el historial de operaciones en formato CSV para consultarlo o trabajarlo en una hoja de cálculo.",
+      benefits: ["Exportación CSV", "Filtros por fecha", "Historial de operaciones", "Datos descargables"],
       gradient: "from-cyan-600 to-purple-600",
       stats: ["2", "formatos", ""]
     },
     {
       icon: <FaChartLine className="text-5xl" />,
       title: "Dashboard Avanzado",
-      description: "Métricas en tiempo real, gráficos interactivos y análisis de performance completo.",
-      benefits: ["Métricas tiempo real", "Gráficos interactivos", "Análisis performance", "Trend analysis"],
+      description: "Consulta tus operaciones, el beneficio realizado calculado con coste de compra conocido y los resultados separados por moneda.",
+      benefits: ["Métricas de tus operaciones", "Gráficos interactivos", "Análisis de resultados", "Tendencias"],
       gradient: "from-purple-600 to-pink-600",
       stats: ["24/7", "monitoreo", ""]
     }
@@ -121,32 +121,32 @@ const MainApp = () => {
   const problemSolutions = [
     {
       target: "PARA EL ARBITRADOR",
-      problem: "Ya tienes muchos temas en cuenta al arbitrar",
-      solution: "Te resolvemos la gestión y organización al 90%",
+      problem: "Arbitrar requiere controlar cantidades, precios y comisiones",
+      solution: "Organiza las operaciones y consulta los importes registrados",
       icon: "🎯",
       color: "from-purple-600 to-blue-600"
     },
     {
       target: "PARA EL CONTADOR", 
-      problem: "No necesita estudiar Excel complejos",
+      problem: "Consulta o trabaja con los datos exportados en CSV",
       solution: "Formatos estandarizados automáticos para cada cliente",
       icon: "👔",
       color: "from-blue-600 to-cyan-600"
     },
     {
       target: "PARA EL BANCO",
-      problem: "Comprende a su cliente y evita cerrarle la cuenta",
-      solution: "Documentación profesional que evita malentendidos",
+      problem: "Facilita el orden de la información registrada",
+      solution: "Historial organizado para revisar cada operación",
       icon: "🏦",
       color: "from-cyan-600 to-purple-600"
     }
   ];
 
   const eliteStats = [
-    { value: "15,847", label: "Operaciones Registradas", sublabel: "Este mes" },
-    { value: "$3.2B", label: "Volumen Procesado", sublabel: "En arbitraje P2P" },
-    { value: "99.7%", label: "Precisión", sublabel: "En cálculos automáticos" },
-    { value: "2,584", label: "Traders Activos", sublabel: "Usando la plataforma" }
+    { value: "P2P", label: "Registro de operaciones", sublabel: "Compras y ventas" },
+    { value: "FIFO", label: "Cálculo de beneficio", sublabel: "Con coste de compra conocido" },
+    { value: "CSV", label: "Exportación", sublabel: "Historial descargable" },
+    { value: "USD · EUR · VES", label: "Monedas separadas", sublabel: "Sin sumar divisas diferentes" }
   ];
 
   if (!user) {
@@ -197,7 +197,7 @@ const MainApp = () => {
                   <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                     JJXCAPITAL
                   </h1>
-                  <p className="text-xs text-gray-400">ELITE TRADING PLATFORM</p>
+                  <p className="text-xs text-gray-400">Gestión de operaciones P2P</p>
                 </div>
               </div>
             </div>
@@ -219,13 +219,12 @@ const MainApp = () => {
               </h1>
               
               <h2 className="text-4xl lg:text-5xl text-white font-light mb-6 max-w-4xl mx-auto leading-tight">
-                Plataforma <span className="text-purple-400 font-bold">Premium</span> para{' '}
-                <span className="text-blue-400 font-bold">Registro de Arbitraje P2P</span>
+                Plataforma para{' '}
+                <span className="text-blue-400 font-bold">Gestión de Operaciones P2P</span>
               </h2>
               
               <p className="text-2xl lg:text-3xl text-gray-300 font-light mb-12 max-w-5xl mx-auto leading-relaxed">
-                La solución <span className="text-cyan-400 font-semibold">definitiva</span> para traders profesionales. 
-                Registra, calcula y exporta tus operaciones con <span className="text-purple-400 font-semibold">tecnología de élite</span>.
+                Registra tus compras y ventas, consulta tu historial y calcula los resultados con las cantidades y comisiones que introduces.
               </p>
             </div>
 
@@ -233,7 +232,7 @@ const MainApp = () => {
             <div className="text-center mb-16">
               <div className="bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-3xl p-8 border-2 border-purple-500/30 backdrop-blur-sm mb-8">
                 <h3 className="text-3xl font-bold text-white mb-6">
-                  Comienza Tu <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Journey Profesional</span>
+                  Comienza tu <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Recorrido profesional</span>
                 </h3>
                 
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-4">
@@ -242,7 +241,7 @@ const MainApp = () => {
                     className="group relative bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-black text-lg py-5 px-12 rounded-2xl transition-all duration-300 shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 transform hover:scale-105 flex items-center gap-4"
                   >
                     <FaRocket className="text-xl animate-bounce" />
-                    <span>REGISTRATE GRATIS</span>
+                    <span>REGÍSTRATE GRATIS</span>
                     <FaArrowRight className="text-lg group-hover:translate-x-1 transition-transform duration-300" />
                     <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   </button>
@@ -257,7 +256,7 @@ const MainApp = () => {
                 </div>
                 
                 <p className="text-gray-400 text-sm">
-                  ✅ <span className="text-green-400">Comienza en 30 segundos</span> • Sin tarjetas de crédito • Acceso inmediato
+                  ✅ <span className="text-green-400">Crea tu cuenta y empieza</span> • Sin tarjetas de crédito • Acceso inmediato
                 </p>
               </div>
             </div>
@@ -342,7 +341,7 @@ const MainApp = () => {
                   ¿Listo para <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Optimizar tu Arbitraje P2P</span>?
                 </h2>
                 <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                  Únete a la plataforma preferida por traders profesionales. Tecnología enterprise a tu alcance.
+                  Únete a la plataforma preferida por traders profesionales. Herramientas para organizar tus operaciones.
                 </p>
                 
                 <button 
@@ -364,7 +363,7 @@ const MainApp = () => {
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-blue-500/20">
                   <FaAward className="text-blue-400 text-xl" />
-                  <span>Certificación SSL</span>
+                  <span>Conexión segura</span>
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-cyan-500/20">
                   <FaCrown className="text-cyan-400 text-xl" />
@@ -390,8 +389,8 @@ const MainApp = () => {
   // Render para usuarios autenticados
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white overflow-x-hidden">
-      <main className="pb-20">
-        {activeTab === 'dashboard' && <Dashboard refreshTrigger={refreshTrigger} onOpenProfile={() => setActiveTab('profile')} />}
+      <main className="pb-24 pt-4 md:pb-6 md:pt-20">
+        {activeTab === 'dashboard' && <Dashboard onOpenProfile={() => setActiveTab('profile')} />}
         {activeTab === 'p2p' && <P2PSimulator />}
         {activeTab === 'arbitrage' && <ArbitrageSimulator />}
         {activeTab === 'operations' && <Operations onOperationSaved={handleOperationSaved} />}
@@ -399,10 +398,7 @@ const MainApp = () => {
         {activeTab === 'profile' && <Profile />}
       </main>
 
-      <NavigationBar 
-        activeTab={activeTab} 
-        onTabChange={handleTabChange} 
-      />
+      <NavigationBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {showAuth && (
         <AuthForms 
