@@ -4,6 +4,14 @@ import { act } from "react-dom/test-utils";
 import NavigationBar from "./NavigationBar";
 
 describe("NavigationBar", () => {
+  beforeAll(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  });
+
+  afterAll(() => {
+    delete globalThis.IS_REACT_ACT_ENVIRONMENT;
+  });
+
   let container;
   let root;
 
