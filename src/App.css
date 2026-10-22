@@ -825,3 +825,12 @@ svg {
 .star-appear {
   animation: star-appear 1.5s ease-out forwards;
 }
+/* La navegación principal debe permanecer estable al pasar el ratón. */
+nav[aria-label="Navegación principal"] button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+nav[aria-label="Navegación principal"] button:focus-visible {
+  outline-offset: 2px;
+}
