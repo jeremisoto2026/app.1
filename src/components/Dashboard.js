@@ -1,9 +1,8 @@
 // Dashboard.js
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, doc, onSnapshot } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
-import axios from "axios";
 import { calculateDashboardMetrics } from "../utils/financialCalculations";
 import {
   RocketLaunchIcon,
@@ -16,10 +15,7 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/outline";
 
-// Añadir la variable API_BASE después de los imports
-const API_BASE = process.env.REACT_APP_BACKEND_URL;
-
-const Dashboard = ({ onOpenProfile }) => {
+const Dashboard = ({ onOpenProfile, activeTab = "dashboard", onTabChange }) => {
   const { user } = useAuth();
   const [totalOperations, setTotalOperations] = useState(0);
   const [profitByCurrency, setProfitByCurrency] = useState({});
@@ -28,16 +24,6 @@ const Dashboard = ({ onOpenProfile }) => {
   const [monthlyProfitByCurrency, setMonthlyProfitByCurrency] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
-
-  // --- Estados optimizados para Binance ---
-  const [apiKey, setApiKey] = useState("");
-  const [apiSecret, setApiSecret] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [binanceConnected, setBinanceConnected] = useState(false);
-  const [maskedApiKey, setMaskedApiKey] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,78 +60,6 @@ const Dashboard = ({ onOpenProfile }) => {
     fetchData();
   }, [user]);
 
-  // --- Listener optimizado para estado Binance ---
-  useEffect(() => {
-    if (!user) return;
-
-    const userDocRef = doc(db, "users", user.uid);
-    const unsub = onSnapshot(userDocRef, (snap) => {
-      if (!snap.exists()) {
-        setBinanceConnected(false);
-        setMaskedApiKey("");
-        return;
-      }
-      const data = snap.data();
-      if (data?.binanceConnected) {
-        setBinanceConnected(true);
-        // Enmascarar API Key para mostrar
-        if (data?.binanceApiKey) {
-          const k = data.binanceApiKey;
-          const visible = k.slice(0, 4);
-          const last = k.slice(-4);
-          setMaskedApiKey(`${visible}••••••••${last}`);
-        } else {
-          setMaskedApiKey("");
-        }
-      } else {
-        setBinanceConnected(false);
-        setMaskedApiKey("");
-      }
-    }, (err) => {
-      console.error("Error escuchando usuario:", err);
-    });
-
-    return () => unsub();
-  }, [user]);
-
-  // === FUNCIÓN SIMPLIFICADA PARA CONECTAR BINANCE ===
-  const connectBinance = async () => {
-    if (!user) {
-      setError("No estás autenticado.");
-      return;
-    }
-    if (!apiKey || !apiSecret) {
-      setError("Por favor ingresa API Key y API Secret.");
-      return;
-    }
-
-    setError(null);
-    setIsVerifying(true);
-
-    try {
-      const resp = await axios.post(`${API_BASE}/api/connect-binance`, {
-        uid: user.uid,
-        apiKey: apiKey.trim(),
-        apiSecret: apiSecret.trim(),
-      });
-
-      if (resp.data?.success) {
-        // Éxito: limpiar inputs
-        setApiKey("");
-        setApiSecret("");
-        setIsVerifying(false);
-        // El estado binanceConnected se actualizará automáticamente via el listener de Firestore
-      } else {
-        setIsVerifying(false);
-        setError(resp.data?.error || "Error conectando con Binance");
-      }
-    } catch (err) {
-      console.error("Error connect-binance:", err.response?.data || err.message);
-      setIsVerifying(false);
-      setError(err.response?.data?.error || err.message || "Error en la conexión");
-    }
-  };
-
   // Formatear el resultado por moneda; las divisas distintas nunca se suman entre sí.
   const formatCurrencyValue = (amount, currency) => {
     try {
@@ -179,103 +93,6 @@ const Dashboard = ({ onOpenProfile }) => {
             {formatCurrencyValue(amount, currency)}
           </span>
         ))}
-      </div>
-    );
-  };
-
-  // Función para manejar la selección de plan
-  const handleSelectPlan = (planType) => {
-    setSelectedPlan(planType);
-    setShowPaymentModal(true);
-  };
-
-  // Función para abrir enlace de creación de API
-  const handleCreateAPI = () => {
-    window.open("https://www.binance.com/es/my/settings/api-management", "_blank");
-  };
-
-  // Componente del Modal de Pagos
-  const PaymentModal = () => {
-    if (!showPaymentModal) return null;
-
-    const planDetails = {
-      monthly: {
-        name: "Plan Premium Mensual",
-        price: "$13",
-        period: "/mes",
-        features: ["Operaciones ilimitadas", "Exportaciones ilimitadas", "Soporte prioritario"]
-      },
-      annual: {
-        name: "Plan Premium Anual",
-        price: "$125", 
-        period: "/año",
-        features: ["Operaciones ilimitadas", "Exportaciones ilimitadas", "Soporte prioritario", "Alertas personalizadas"],
-        savings: "Ahorra ~20%"
-      }
-    };
-
-    const plan = planDetails[selectedPlan];
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-        <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-6 border-2 border-purple-500/30 max-w-md w-full relative">
-          {/* Botón de cerrar */}
-          <button 
-            onClick={() => setShowPaymentModal(false)}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-
-          {/* Header del modal */}
-          <div className="text-center mb-6">
-            <RocketLaunchIcon className="h-12 w-12 text-purple-500 mx-auto mb-3" />
-            <h3 className="text-xl font-bold text-white">{plan?.name}</h3>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <span className="text-3xl font-bold text-white">{plan?.price}</span>
-              <span className="text-gray-400">{plan?.period}</span>
-            </div>
-            {plan?.savings && (
-              <span className="text-green-400 text-sm font-semibold mt-1 block">
-                {plan.savings}
-              </span>
-            )}
-          </div>
-
-          {/* Características del plan */}
-          <div className="mb-6">
-            <h4 className="text-sm font-medium text-gray-300 mb-3">Características incluidas:</h4>
-            <ul className="space-y-2">
-              {plan?.features?.map((feature, index) => (
-                <li key={index} className="flex items-center text-sm text-gray-300">
-                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Métodos de pago */}
-          <div className="mb-6">
-            <h4 className="text-sm font-medium text-gray-300 mb-3">Métodos de pago</h4>
-            <div className="grid grid-cols-1 gap-3">
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium">
-                PayPal
-              </button>
-              <button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black py-3 px-4 rounded-lg transition-colors font-medium">
-                Binance Pay
-              </button>
-              <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 px-4 rounded-lg transition-colors font-medium">
-                Blockchain Pay
-              </button>
-            </div>
-          </div>
-
-          {/* Información adicional */}
-          <div className="text-center text-xs text-gray-400">
-            <p>Pago seguro • Cancelación en cualquier momento</p>
-          </div>
-        </div>
       </div>
     );
   };
@@ -349,32 +166,32 @@ const Dashboard = ({ onOpenProfile }) => {
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex space-x-1 bg-gray-900/50 p-1 rounded-lg border border-purple-500/10">
               <button 
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'overview' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('overview')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => onTabChange && onTabChange('dashboard')}
               >
                 Dashboard
               </button>
               <button 
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'p2p' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('p2p')}
+                onClick={() => onTabChange && onTabChange('p2p')}
               >
                 P2P
               </button>
               <button 
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'arbitrage' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('arbitrage')}
+                onClick={() => onTabChange && onTabChange('arbitrage')}
               >
                 Arbitraje
               </button>
               <button 
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'operations' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('operations')}
+                onClick={() => onTabChange && onTabChange('operations')}
               >
                 Operaciones
               </button>
               <button 
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-gradient-to-r from-purple-700 to-blue-700 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('history')}
+                onClick={() => onTabChange && onTabChange('history')}
               >
                 Historial
               </button>
@@ -487,295 +304,13 @@ const Dashboard = ({ onOpenProfile }) => {
           </div>
         </div>
 
-        {/* =========================
-            Sección: Conexión Binance P2P - ESTILO CRIPTOEXCEL
-            ========================= */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
-          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
-          
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                Conectar Binance P2P
-              </h2>
-              <p className="text-gray-400">Registra automáticamente tus órdenes</p>
-            </div>
-            <div className="p-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl">
-              <CurrencyDollarIcon className="h-6 w-6 text-white" />
-            </div>
-          </div>
-
-          {/* Mensaje informativo */}
-          <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-            <div className="flex items-start">
-              <svg className="h-5 w-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p className="text-blue-200/80 text-sm">
-                  Para llevar a cabo este proceso, requerimos tus claves API. Asegúrate siempre de ingresar la clave API correspondiente a los impuestos o la de solo lectura.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Formulario de conexión - RENDERIZADO CONDICIONAL */}
-            <div className="space-y-6">
-              {!binanceConnected ? (
-                // ESTADO: NO CONECTADO - Mostrar inputs
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      API Key
-                    </label>
-                    <div className="relative">
-                      <input
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        type="text"
-                        placeholder="Ej: AbCdEFG..."
-                        className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      API Secret
-                    </label>
-                    <div className="relative">
-                      <input
-                        value={apiSecret}
-                        onChange={(e) => setApiSecret(e.target.value)}
-                        type="password"
-                        placeholder="Tu API Secret"
-                        className="w-full bg-gray-800/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={connectBinance}
-                      disabled={isVerifying}
-                      className={`flex-1 ${isVerifying ? 'opacity-60 cursor-not-allowed' : ''} bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-500/20`}
-                    >
-                      <div className="flex items-center justify-center">
-                        <CheckBadgeIcon className="h-5 w-5 mr-2" />
-                        {isVerifying ? 'Verificando...' : 'Conectar'}
-                      </div>
-                    </button>
-
-                    <button 
-                      onClick={handleCreateAPI}
-                      className="px-6 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-xl transition-all duration-300 border border-gray-600"
-                    >
-                      <div className="flex items-center justify-center">
-                        <span className="text-sm">Crear API</span>
-                      </div>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                // ESTADO: CONECTADO - Solo mostrar mensaje (sin botón desconectar)
-                <>
-                  <div className="text-center p-6 bg-green-900/20 border border-green-500/30 rounded-xl">
-                    <div className="inline-flex items-center gap-3 text-green-300">
-                      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <div className="text-left">
-                        <div className="font-semibold text-lg">✅ Binance Conectado</div>
-                        {maskedApiKey && <div className="text-sm text-green-200">API: {maskedApiKey}</div>}
-                      </div>
-                    </div>
-                    <div className="mt-4 text-sm text-green-200">
-                      <p>Tu conexión está activa y registrando operaciones automáticamente.</p>
-                      <p className="text-xs text-green-300 mt-1">
-                        Para actualizar tus credenciales, simplemente conecta nuevamente.
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Mensajes de error */}
-              {error && (
-                <div className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-xl">
-                  <div className="text-sm text-red-400">{error}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Panel de información */}
-            <div className="bg-gray-800/30 rounded-xl p-5 border border-blue-500/20">
-              <div className="flex items-center mb-4">
-                <div className="p-2 bg-blue-500/10 rounded-lg mr-3">
-                  <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-blue-300 font-semibold">Consejos de seguridad</h3>
-              </div>
-              
-              <ul className="space-y-3 text-sm text-gray-300">
-                <li className="flex items-start">
-                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Crea una API Key con permisos mínimos necesarios</span>
-                </li>
-                <li className="flex items-start">
-                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Idealmente el backend maneja las claves y firma las peticiones</span>
-                </li>
-                <li className="flex items-start">
-                  <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Usa siempre la clave API de solo lectura para impuestos</span>
-                </li>
-              </ul>
-
-              <div className="mt-6 pt-4 border-t border-gray-700">
-                <div className="flex items-center text-xs text-gray-400">
-                  <CalendarDaysIcon className="h-4 w-4 mr-2" />
-                  <span>Se toman las operaciones de los últimos 10 días</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer de la sección */}
-          <div className="mt-6 pt-4 border-t border-gray-700">
-            <div className="flex flex-col sm:flex-row justify-between items-center">
-              <div className="flex items-center text-sm text-gray-400 mb-2 sm:mb-0">
-                <span className="text-yellow-400 mr-1">⚡</span>
-                Próximamente agregaremos más exchanges
-              </div>
-              <div className="flex items-center">
-                <div className="text-sm font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-                  JJXCAPITAL
-                </div>
-                <div className="ml-2 text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
-                  ✅
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sección: Planes Premium */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-purple-500/20 mb-8 relative overflow-hidden">
-          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-5 blur"></div>
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Planes Premium JJXCAPITAL⚡</h2>
-              <p className="text-gray-400">Potencia tu estrategia de trading con nuestros planes exclusivos</p>
-            </div>
-            <RocketLaunchIcon className="h-8 w-8 text-purple-500" />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Card: Plan Premium Mensual */}
-            <div className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/30 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden">
-              <div className="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
-              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold group-hover:text-purple-300 transition-colors">
-                      Plan Premium
-                    </h3>
-                    <p className="text-sm text-gray-400">Ideal para traders activos</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-white">
-                      $13 <span className="text-sm text-gray-400">/mes</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mb-6 text-sm text-gray-300">
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                      Operaciones ilimitadas
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                      Exportaciones ilimitadas
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                      Soporte prioritario
-                    </li>
-                  </ul>
-                </div>
-                
-                <button 
-                  onClick={() => handleSelectPlan('monthly')}
-                  className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/20"
-                >
-                  Seleccionar plan
-                </button>
-              </div>
-            </div>
-
-            {/* Card: Plan Premium Anual */}
-            <div className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-purple-500/50 hover:border-purple-500 hover:shadow-2xl transition-all duration-500 cursor-pointer relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">
-                MÁS POPULAR
-              </div>
-              
-              <div className="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
-              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-purple-500/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold group-hover:text-purple-300 transition-colors">
-                      Plan Premium Anual
-                    </h3>
-                    <p className="text-sm text-gray-400">Para traders serios</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-white">
-                      $125 <span className="text-sm text-gray-400">/año</span>
-                    </p>
-                    <p className="text-xs text-green-400 font-semibold">Ahorra ~20%</p>
-                  </div>
-                </div>
-
-                <div className="mb-6 text-sm text-gray-300">
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                      Operaciones ilimitadas
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                      Exportaciones ilimitadas
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                      Soporte prioritario
-                    </li>
-                    <li className="flex items-center">
-                      <CheckBadgeIcon className="h-4 w-4 text-green-400 mr-2" />
-                      Alertas personalizadas
-                    </li>
-                  </ul>
-                </div>
-                
-                <button 
-                  onClick={() => handleSelectPlan('annual')}
-                  className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium rounded-lg transition-all duration-300 text-center group-hover:shadow-lg group-hover:shadow-purple-500/30"
-                >
-                  Seleccionar plan
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Las compras de planes todavía no están habilitadas. */}
+        <section className="bg-gray-900/70 rounded-2xl p-6 border border-purple-500/20 mb-8" aria-labelledby="subscriptions-title">
+          <h2 id="subscriptions-title" className="text-xl font-bold text-white mb-2">Suscripciones</h2>
+          <p className="text-gray-300">
+            Los pagos y las suscripciones todavía no están habilitados en esta aplicación. No se realizará ningún cobro desde aquí.
+          </p>
+        </section>
 
         {/* Footer o información adicional */}
         <div className="text-center text-gray-500 text-sm pb-6">
@@ -788,8 +323,6 @@ const Dashboard = ({ onOpenProfile }) => {
         </div>
       </main>
 
-      {/* Modal de Pagos */}
-      <PaymentModal />
     </div>
   );
 };
