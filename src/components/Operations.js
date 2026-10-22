@@ -121,8 +121,8 @@ const Operations = ({ onOperationSaved }) => {
     }
   };
 
-  let previewAmountCrypto = 0;
-  let previewAmountFiat = 0;
+  let previewAmountCrypto = null;
+  let previewAmountFiat = null;
   const previewFee = formData.fee === '' ? 0 : Number(formData.fee);
   const previewFeeCurrency = formData.operation_type === 'Venta' ? formData.fiat : formData.crypto;
 
@@ -354,13 +354,13 @@ const Operations = ({ onOperationSaved }) => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Cantidad Cripto:</span>
                     <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                      {previewAmountCrypto.toFixed(8)} {formData.crypto}
+                      {Number.isFinite(previewAmountCrypto) ? previewAmountCrypto.toFixed(8) + ' ' + (formData.crypto || '') : '—'}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Cantidad Fiat:</span>
                     <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                      {previewAmountFiat.toFixed(2)} {formData.fiat}
+                      {Number.isFinite(previewAmountFiat) ? previewAmountFiat.toFixed(2) + ' ' + (formData.fiat || '') : '—'}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
