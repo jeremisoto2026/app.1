@@ -47,12 +47,16 @@ const P2PSimulator = () => {
       return;
     }
 
-    const amount = parseFloat(formData.amount);
-    const exchangeRate = parseFloat(formData.exchange_rate);
-    const feePercent = parseFloat(formData.fee) || 0;
+    const amount = Number(formData.amount);
+    const exchangeRate = Number(formData.exchange_rate);
+    const feePercent = formData.fee === '' ? 0 : Number(formData.fee);
 
-    if (amount <= 0 || exchangeRate <= 0) {
-      setError('Los montos y tasas de cambio deben ser mayores a 0');
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+      setError('Los montos y tasas de cambio deben ser números mayores a 0');
+      return;
+    }
+    if (!Number.isFinite(feePercent) || feePercent < 0 || feePercent >= 100) {
+      setError('La comisión debe ser un porcentaje entre 0 y menos de 100');
       return;
     }
 
@@ -60,71 +64,15 @@ const P2PSimulator = () => {
       setLoading(true);
       setError('');
 
-      // --- Nueva lógica: la comisión SIEMPRE será cobrada en la cripto seleccionada ---
-      // Mantendremos las mismas etiquetas del UI:
-      // - "Cantidad Enviada": lo que el usuario entrega (crypto si Venta, fiat si Compra)
-      // - "Cantidad Recibida (Bruta)": valor bruto antes de aplicar comisión (fiat para Venta, crypto para Compra)
-      // - "Comisión": se muestra y calcula siempre en la criptomoneda seleccionada
-      // - "Cantidad Neta": cantidad final (en la unidad que la UI ya mostraba: fiat para Venta, crypto para Compra)
-      let amount_sent, amount_received, fee_amount, net_amount;
-
-      if (formData.operation_type === 'Venta') {
-        // Usuario vende cripto → entrega 'amount' en CRIPTO y recibe fiat
-        amount_sent = amount; // en cripto
-        // bruto fiat (antes de comisión)
-        amount_received = amount * exchangeRate; // en fiat
-
-        // comisión en cripto (porcentaje sobre la cantidad enviada en cripto)
-        fee_amount = (amount * feePercent) / 100; // en cripto
-
-        // cantidad neta en cripto (cripto - comisión en cripto)
-        const net_crypto = amount - fee_amount; // en cripto
-
-        // cantidad neta en fiat (lo que realmente recibe el usuario en fiat después de cobrar comisión en cripto)
-        net_amount = net_crypto * exchangeRate; // en fiat (UI espera net en fiat para 'Venta')
-        
-        // guardamos también valores auxiliares si los quieres usar en UI (por compatibilidad)
-        setResult({
-          crypto: formData.crypto,
-          fiat: formData.fiat,
-          operation_type: formData.operation_type,
-          exchange_rate: exchangeRate,
-          fee: feePercent,
-          amount, // amount original (cripto)
-          amount_sent, // crypto
-          amount_received, // bruto fiat
-          fee_amount, // crypto
-          net_amount, // fiat (para mostrar en UI donde net se muestra en fiat para Venta)
-          // Proporcionamos también net_crypto por si quieres usarlo en otro lugar
-          net_crypto
-        });
-      } else {
-        // Compra: usuario entrega fiat (amount) y recibe cripto
-        amount_sent = amount; // en fiat
-        // bruto crypto antes de comisión
-        amount_received = amount / exchangeRate; // en crypto
-
-        // comisión en cripto (porcentaje sobre la cantidad bruta recibida en cripto)
-        fee_amount = (amount_received * feePercent) / 100; // en cripto
-
-        // cantidad neta en cripto (cripto bruto - comisión en cripto)
-        net_amount = amount_received - fee_amount; // en crypto (UI espera net en crypto para 'Compra')
-
-        setResult({
-          crypto: formData.crypto,
-          fiat: formData.fiat,
-          operation_type: formData.operation_type,
-          exchange_rate: exchangeRate,
-          fee: feePercent,
-          amount, // amount original (fiat)
-          amount_sent, // fiat
-          amount_received, // bruto crypto
-          fee_amount, // crypto
-          net_amount // crypto
-        });
-      }
-
-      // Nota: no eliminé la importación de simulateP2P en caso de que la uses en otro flujo.
+      const simulationResult = simulateP2P({
+        crypto: formData.crypto,
+        fiat: formData.fiat,
+        operation_type: formData.operation_type,
+        amount,
+        exchange_rate: exchangeRate,
+        fee: feePercent,
+      });
+      setResult(simulationResult);
     } catch (err) {
       console.error('Error in P2P simulation:', err);
       setError('Error al realizar la simulación. Por favor intenta de nuevo.');
