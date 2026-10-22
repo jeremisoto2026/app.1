@@ -14,6 +14,17 @@ import {
 /**
  * Perfil de usuario: consulta los datos de la cuenta y el uso registrado.
  */
+const getExportUsageCount = (data = {}) => {
+  const candidates = [
+    data?.exportsUsed,
+    data?.usage?.exportaciones?.usadas,
+    data?.usage?.exportsUsed,
+    data?.usage?.exportaciones?.exportsUsed,
+  ].map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value >= 0);
+  return candidates.length ? Math.max(...candidates) : 0;
+};
+
 export default function Profile() {
   const { user, signOut } = useAuth();
   const [profileData, setProfileData] = useState(null);
@@ -134,14 +145,15 @@ export default function Profile() {
         // - exportsUsed (ejemplo JSON que compartiste antes)
         // - usage.exportsUsed (por si alguien guardó ese path)
         // - usage.exportaciones.exportsUsed (por compatibilidad extra)
-        const used =
-          data?.usage?.exportaciones?.usadas ??
-          data?.exportsUsed ??
-          data?.usage?.exportsUsed ??
-          data?.usage?.exportaciones?.exportsUsed;
+        const hasAnyCounter = [
+          data?.exportsUsed,
+          data?.usage?.exportaciones?.usadas,
+          data?.usage?.exportsUsed,
+          data?.usage?.exportaciones?.exportsUsed,
+        ].some((value) => value !== undefined && value !== null && value !== "");
 
-        if (used !== undefined && used !== null) {
-          setExportCount(used);
+        if (hasAnyCounter) {
+          setExportCount(getExportUsageCount(data));
         }
       },
       (error) => {
