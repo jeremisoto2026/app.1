@@ -8,7 +8,7 @@ import ArbitrageSimulator from './components/ArbitrageSimulator';
 import Operations from './components/Operations';
 import History from './components/History';
 import Profile from './components/Profile';
-import { FaSignInAlt, FaUserPlus, FaRocket, FaChartLine, FaSync, FaDownload, FaGoogle, FaExchangeAlt, FaLock, FaAward, FaCheck, FaCrown, FaFileExcel, FaFilePdf, FaCalculator, FaMoneyBillWave, FaArrowRight } from 'react-icons/fa';
+import { FaSignInAlt, FaRocket, FaChartLine, FaLock, FaAward, FaCheck, FaCrown, FaFileExcel, FaCalculator, FaMoneyBillWave, FaArrowRight } from 'react-icons/fa';
 import './App.css';
 
 // <- Añadido para FCM (no se tocó nada más)
@@ -19,12 +19,9 @@ const MainApp = () => {
   const [showAuth, setShowAuth] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    setIsVisible(true);
-    
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
@@ -87,34 +84,34 @@ const MainApp = () => {
     {
       icon: <FaMoneyBillWave className="text-5xl" />,
       title: "Registro Instantáneo P2P",
-      description: "Registra tus operaciones de arbitraje en segundos. Cálculo automático de comisiones y ganancias.",
-      benefits: ["Registro sencillo", "Cálculo de comisiones", "Saldos en tiempo real", "Historial automático"],
+      description: "Registra manualmente compras y ventas, incluyendo importes, tasas y comisiones.",
+      benefits: ["Registro manual", "Cálculo de importes", "Comisiones identificadas", "Historial de operaciones"],
       gradient: "from-purple-600 to-blue-600",
-      stats: ["<30s", "por operación", ""]
+      stats: ["P2P", "registro", ""]
     },
     {
       icon: <FaCalculator className="text-5xl" />,
       title: "Simulador de Arbitraje",
       description: "Estima el resultado de vender y recomprar cripto después de las comisiones introducidas.",
-      benefits: ["Análisis pre-operación", "Múltiples escenarios", "Comparación de escenarios", "Estimación de rentabilidad"],
+      benefits: ["Análisis previo", "Precio de compra", "Precio de venta", "Comisiones incluidas"],
       gradient: "from-blue-600 to-cyan-600",
-      stats: ["CSV", "exportación", ""]
+      stats: ["P2P", "simulador", ""]
     },
     {
       icon: <FaFileExcel className="text-5xl" />,
       title: "Reportes Profesionales",
       description: "Exporta el historial de operaciones en formato CSV para consultarlo o trabajarlo en una hoja de cálculo.",
-      benefits: ["Exportación CSV", "Filtros por fecha", "Historial de operaciones", "Datos descargables"],
+      benefits: ["Exportación CSV", "Filtro por fechas", "Historial de operaciones", "Datos descargables"],
       gradient: "from-cyan-600 to-purple-600",
-      stats: ["2", "formatos", ""]
+      stats: ["CSV", "exportación", ""]
     },
     {
       icon: <FaChartLine className="text-5xl" />,
       title: "Dashboard Avanzado",
       description: "Consulta tus operaciones, el beneficio realizado calculado con coste de compra conocido y los resultados separados por moneda.",
-      benefits: ["Métricas de tus operaciones", "Gráficos interactivos", "Análisis de resultados", "Tendencias"],
+      benefits: ["Total de operaciones", "Beneficio por moneda", "Tasa de éxito", "Últimos 30 días"],
       gradient: "from-purple-600 to-pink-600",
-      stats: ["24/7", "monitoreo", ""]
+      stats: ["FIFO", "beneficio", ""]
     }
   ];
 
@@ -129,14 +126,14 @@ const MainApp = () => {
     {
       target: "PARA EL CONTADOR", 
       problem: "Consulta o trabaja con los datos exportados en CSV",
-      solution: "Formatos estandarizados automáticos para cada cliente",
+      solution: "Exporta el historial de las operaciones registradas en CSV",
       icon: "👔",
       color: "from-blue-600 to-cyan-600"
     },
     {
       target: "PARA EL BANCO",
       problem: "Facilita el orden de la información registrada",
-      solution: "Historial organizado para revisar cada operación",
+      solution: "Revisa importes, comisiones y fechas de las operaciones registradas",
       icon: "🏦",
       color: "from-cyan-600 to-purple-600"
     }
@@ -325,7 +322,7 @@ const MainApp = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
               {eliteStats.map((stat, index) => (
                 <div key={index} className="text-center bg-gradient-to-br from-gray-900/50 to-black/50 rounded-3xl p-6 border border-purple-500/20 backdrop-blur-sm transform hover:scale-105 transition-all duration-500 group">
-                  <div className="text-4xl lg:text-5xl font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
+                  <div className={`${String(stat.value).length > 8 ? "text-xl lg:text-2xl" : "text-4xl lg:text-5xl"} font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2`}>
                     {stat.value}
                   </div>
                   <div className="text-lg font-bold text-white mb-1">{stat.label}</div>
@@ -341,7 +338,7 @@ const MainApp = () => {
                   ¿Listo para <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Optimizar tu Arbitraje P2P</span>?
                 </h2>
                 <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                  Únete a la plataforma preferida por traders profesionales. Herramientas para organizar tus operaciones.
+                  Organiza compras y ventas, consulta resultados registrados y exporta el historial.
                 </p>
                 
                 <button 
@@ -359,15 +356,15 @@ const MainApp = () => {
               <div className="flex flex-wrap justify-center items-center gap-6 text-base text-gray-400 mt-12">
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-purple-500/20">
                   <FaLock className="text-purple-400 text-xl" />
-                  <span>Seguridad Bancaria</span>
+                  <span>Autenticación de cuenta</span>
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-blue-500/20">
                   <FaAward className="text-blue-400 text-xl" />
-                  <span>Conexión segura</span>
+                  <span>Acceso web protegido</span>
                 </div>
                 <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-cyan-500/20">
                   <FaCrown className="text-cyan-400 text-xl" />
-                  <span>Soporte 24/7</span>
+                  <span>Soporte por correo</span>
                 </div>
               </div>
             </div>
