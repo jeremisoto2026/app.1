@@ -31,7 +31,7 @@ const Operations = () => {
   const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin'];
   const operationTypes = ['Venta', 'Compra'];
   const cryptos = ['USDT', 'BTC', 'ETH', 'BNB', 'USDC'];
-  const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
+  const fiats = ['EUR', 'USD', 'USDT', 'USDC', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
 
   const handleInputChange = (field, value) => {
     setFormData((previous) => {
@@ -284,7 +284,7 @@ const Operations = () => {
                   </Label>
                   <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)} disabled={loading}>
                     <SelectTrigger id="fiat" aria-labelledby="fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Selecciona moneda fiat" />
+                      <SelectValue placeholder="Selecciona moneda de cotización" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {fiats.map(fiat => (
@@ -353,10 +353,10 @@ const Operations = () => {
                   </Label>
                   <p className="text-xs text-gray-500">
                     {formData.operation_type === 'Venta'
-                      ? 'Introduce la comisión como cantidad fiat; se resta del importe recibido.'
+                      ? 'Introduce la comisión en la moneda de cotización; se resta del importe recibido.'
                       : formData.operation_type === 'Compra'
                         ? 'Introduce la comisión como cantidad cripto; se resta de la cripto recibida.'
-                        : 'La comisión es un importe fijo, no un porcentaje. La unidad depende de Compra o Venta.'}
+                        : 'La comisión es un importe fijo, no un porcentaje. La unidad depende de si compras o vendes.'}
                   </p>
                   <Input
                     id="fee"
