@@ -183,7 +183,7 @@ const MainApp = () => {
               
               <h2 className="text-4xl lg:text-5xl text-white font-light mb-6 max-w-4xl mx-auto leading-tight">
                 Plataforma para{' '}
-                <span className="text-blue-400 font-bold">Gestión de Operaciones P2P</span>
+                <span className="text-blue-400 font-bold">Gestión de operaciones P2P</span>
               </h2>
               
               <p className="text-2xl lg:text-3xl text-gray-300 font-light mb-12 max-w-5xl mx-auto leading-relaxed">
