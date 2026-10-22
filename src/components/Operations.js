@@ -300,6 +300,7 @@ const Operations = () => {
                   <Input
                     id="crypto_amount"
                     type="number"
+                    min="0"
                     step="0.00000001"
                     placeholder="0.00000000"
                     value={formData.crypto_amount}
@@ -316,6 +317,7 @@ const Operations = () => {
                   <Input
                     id="fiat_amount"
                     type="number"
+                    min="0"
                     step="0.01"
                     placeholder="0.00"
                     value={formData.fiat_amount}
@@ -332,6 +334,7 @@ const Operations = () => {
                   <Input
                     id="exchange_rate"
                     type="number"
+                    min="0"
                     step="0.01"
                     placeholder="0.00"
                     value={formData.exchange_rate}
@@ -355,6 +358,7 @@ const Operations = () => {
                   <Input
                     id="fee"
                     type="number"
+                    min="0"
                     step={formData.operation_type === 'Compra' ? '0.00000001' : '0.01'}
                     placeholder="0.00"
                     value={formData.fee}
