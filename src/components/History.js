@@ -164,8 +164,8 @@ const History = () => {
 
     try {
       const headers = [
-        "ID_Operacion", "Tipo_Operacion", "Exchange", "Crypto", "Cantidad_Crypto", 
-        "Fiat", "Cantidad_Fiat", "Tasa_Cambio", "Comision", "Moneda_Comision", "Fecha"
+        "ID_Operacion", "Tipo_Operacion", "Plataforma", "Criptomoneda", "Cantidad_Cripto", 
+        "Moneda_Cotizacion", "Importe_Cotizado", "Tasa_Cambio", "Comision", "Moneda_Comision", "Fecha"
       ];
 
       const buyOperations = data.filter(op => op.operation_type === 'Compra');
@@ -264,7 +264,7 @@ const History = () => {
       showExportDialog(
         'warning',
         'Límite de Exportaciones Alcanzado',
-        `Has alcanzado el límite de exportaciones (${EXPORT_LIMIT_FREE}) para el plan Free. Actualiza a Premium para exportaciones ilimitadas.`
+        `Has alcanzado el límite de exportaciones (${EXPORT_LIMIT_FREE}) para el plan Free. Contacta con soporte si necesitas ayuda con tu límite de exportaciones. Los pagos de planes no están habilitados desde la aplicación.`
       );
       return;
     }
@@ -378,13 +378,13 @@ const History = () => {
         <CardContent className="pt-4 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div className="flex items-center">
-              <span className="text-gray-400 w-20">Cripto:</span>
+              <span className="text-gray-400 w-28">Criptomoneda:</span>
               <Badge className="ml-2 bg-purple-500/10 text-purple-400 border-purple-500/30">
                 {Number.isFinite(Number(operation.crypto_amount)) ? Number(operation.crypto_amount).toFixed(8) : "0.00000000"} {operation.crypto || "N/A"}
               </Badge>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-400 w-20">Fiat:</span>
+              <span className="text-gray-400 w-28">Importe:</span>
               <Badge className="ml-2 bg-blue-500/10 text-blue-400 border-blue-500/30">
                 {formatCurrency(operation.fiat_amount, operation.fiat)}
               </Badge>
@@ -394,7 +394,7 @@ const History = () => {
               <span className="text-white ml-2">{operation.exchange || "N/A"}</span>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-400 w-20">Tasa:</span>
+              <span className="text-gray-400 w-28">Tasa de cambio:</span>
               <Badge className="ml-2 bg-gray-700 text-gray-300 border-gray-600">
                 {Number.isFinite(Number(operation.exchange_rate)) ? Number(operation.exchange_rate).toFixed(2) : "0.00"}
               </Badge>
@@ -486,7 +486,7 @@ const History = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Moneda Fiat</Label>
+                <Label className="text-gray-300 font-medium">Moneda fiat</Label>
                 <Select onValueChange={(value) => setFilters({ ...filters, fiat: value })}>
                   <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las monedas fiat" />
