@@ -158,7 +158,9 @@ const ArbitrageSimulator = () => {
                   </Label>
                   <Input
                     type="number"
+                    id="amount"
                     step="0.000001"
+                    min="0"
                     name="amount"
                     value={formData.amount}
                     onChange={handleChange}
@@ -176,7 +178,9 @@ const ArbitrageSimulator = () => {
                   </Label>
                   <Input
                     type="number"
+                    id="buy_price"
                     step="0.01"
+                    min="0"
                     name="buy_price"
                     value={formData.buy_price}
                     onChange={handleChange}
@@ -191,7 +195,9 @@ const ArbitrageSimulator = () => {
                   </Label>
                   <Input
                     type="number"
+                    id="sell_price"
                     step="0.01"
+                    min="0"
                     name="sell_price"
                     value={formData.sell_price}
                     onChange={handleChange}
@@ -232,7 +238,10 @@ const ArbitrageSimulator = () => {
                   <Label htmlFor="buy_fee" className="text-gray-300 font-medium">Comisión de compra (%)</Label>
                   <Input
                     type="number"
+                    id="buy_fee"
                     step="0.01"
+                    min="0"
+                    max="99.99"
                     name="buy_fee"
                     value={formData.buy_fee}
                     onChange={handleChange}
@@ -245,7 +254,10 @@ const ArbitrageSimulator = () => {
                   <Label htmlFor="sell_fee" className="text-gray-300 font-medium">Comisión de venta (%)</Label>
                   <Input
                     type="number"
+                    id="sell_fee"
                     step="0.01"
+                    min="0"
+                    max="99.99"
                     name="sell_fee"
                     value={formData.sell_fee}
                     onChange={handleChange}
