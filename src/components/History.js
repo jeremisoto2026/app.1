@@ -217,7 +217,7 @@ const History = () => {
         window.setTimeout(() => URL.revokeObjectURL(url), 1000);
         return true;
       } else {
-        showExportDialog('error', 'Error de Navegador', 'Tu navegador no permite descargar archivos desde esta página.');
+        showExportDialog('error', 'Error del navegador', 'Tu navegador no permite descargar archivos desde esta página.');
         return false;
       }
     } catch (err) {
@@ -259,7 +259,7 @@ const History = () => {
     if (!dataToExport || dataToExport.length === 0) {
       showExportDialog(
         'warning', 
-        'Sin Datos para Exportar', 
+        'Sin datos para exportar', 
         'No hay datos disponibles en el rango seleccionado para exportar.'
       );
       return;
@@ -657,7 +657,7 @@ const History = () => {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px] bg-gradient-to-br from-gray-900 to-gray-800 border border-purple-500/20 rounded-2xl text-white">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-white">Confirmar Eliminación</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-white">Confirmar eliminación</DialogTitle>
             <DialogDescription className="text-gray-400">
               ¿Estás seguro de que quieres eliminar esta operación? Esta acción no se puede deshacer.
             </DialogDescription>
