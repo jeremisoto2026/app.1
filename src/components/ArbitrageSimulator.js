@@ -197,7 +197,7 @@ const ArbitrageSimulator = () => {
                     disabled={loading}
                   >
                     <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder="Seleccionar moneda fiat" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {fiatCurrencies.map((f) => (
