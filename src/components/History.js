@@ -39,6 +39,7 @@ const History = () => {
   const { user } = useAuth();
   const [operations, setOperations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const [filters, setFilters] = useState({
     crypto: "",
     fiat: "",
@@ -69,42 +70,50 @@ const History = () => {
     icon: null
   });
 
-  const fetchOperations = async () => {
-    if (!user) {
-      setOperations([]);
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      // Fetch every document, including legacy operations without a timestamp.
-      // Undated operations are sorted last and shown as "N/A" instead of disappearing.
-      const querySnapshot = await getDocs(collection(db, "users", user.uid, "operations"));
-      const data = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      data.sort((a, b) => {
-        const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
-        const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
-        return dateB - dateA;
-      });
-      setOperations(data);
-    } catch (error) {
-      console.error("Error al cargar las operaciones:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (user) {
-      fetchOperations();
-    } else {
-      setOperations([]);
-    }
-  }, [user]);
+    let cancelled = false;
+
+    const fetchOperations = async () => {
+      if (!user) {
+        setOperations([]);
+        setFetchError("");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setFetchError("");
+
+      try {
+        // Incluye operaciones antiguas sin fecha y las ordena de forma fiable en cliente.
+        const querySnapshot = await getDocs(collection(db, "users", user.uid, "operations"));
+        const data = querySnapshot.docs.map((operationDoc) => ({
+          id: operationDoc.id,
+          ...operationDoc.data(),
+        }));
+        data.sort((a, b) => {
+          const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+          const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+          return dateB - dateA;
+        });
+
+        if (!cancelled) setOperations(data);
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Error al cargar las operaciones:", error);
+          setOperations([]);
+          setFetchError("No se pudo cargar el historial. Comprueba la conexión e inténtalo de nuevo.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchOperations();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
 
   // ---------- NUEVA FUNCIÓN: Mostrar diálogo personalizado ----------
   const showExportDialog = (type, title, message) => {
@@ -638,6 +647,12 @@ const History = () => {
             </div>
           </CardContent>
         </Card>
+
+        {fetchError && (
+          <div role="alert" className="rounded-xl border border-red-500/30 bg-red-900/20 p-4 text-red-200">
+            {fetchError}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-16">
