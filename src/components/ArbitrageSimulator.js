@@ -48,7 +48,19 @@ const ArbitrageSimulator = () => {
   };
 
   const handleSelectChange = (name, value) => {
-    setFormData((previous) => ({ ...previous, [name]: value }));
+    setFormData((previous) => {
+      const next = { ...previous, [name]: value };
+      // Los precios dependen tanto del activo como de la moneda de cotización.
+      if (name === "crypto" && value !== previous.crypto) {
+        next.amount = "";
+        next.buy_price = "";
+        next.sell_price = "";
+      } else if (name === "fiat_currency" && value !== previous.fiat_currency) {
+        next.buy_price = "";
+        next.sell_price = "";
+      }
+      return next;
+    });
     setResult(null);
     setError(null);
   };
