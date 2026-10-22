@@ -8,7 +8,7 @@ import ArbitrageSimulator from './components/ArbitrageSimulator';
 import Operations from './components/Operations';
 import History from './components/History';
 import Profile from './components/Profile';
-import { FaSignInAlt, FaRocket, FaChartLine, FaLock, FaAward, FaCheck, FaCrown, FaFileAlt, FaCalculator, FaMoneyBillWave, FaArrowRight } from 'react-icons/fa';
+import { FaSignInAlt, FaRocket, FaChartLine, FaLock, FaCheck, FaFileAlt, FaCalculator, FaMoneyBillWave, FaArrowRight } from 'react-icons/fa';
 import './App.css';
 
 
