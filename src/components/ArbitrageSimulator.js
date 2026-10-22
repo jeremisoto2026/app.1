@@ -68,7 +68,7 @@ const ArbitrageSimulator = () => {
       setResult(calculatedResult);
       setError(null);
     } catch (err) {
-      setError(err.message || "Error al calcular el arbitraje. Revisa los valores.");
+      setError(err.message || "Error al calcular el arbitraje. Comprueba los importes y las comisiones.");
       setResult(null);
     } finally {
       setLoading(false);
@@ -127,7 +127,7 @@ const ArbitrageSimulator = () => {
                     disabled={loading}
                   >
                     <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Seleccionar crypto" />
+                      <SelectValue placeholder="Seleccionar criptomoneda" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {cryptos.map((c) => (
@@ -314,15 +314,15 @@ const ArbitrageSimulator = () => {
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Moneda Fiat:</span>
+                      <span className="text-gray-400">Moneda fiat:</span>
                       <span className="text-white font-medium">{formData.fiat_currency}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Comisión Compra:</span>
+                      <span className="text-gray-400">Comisión de compra:</span>
                       <span className="text-white font-medium">{formData.buy_fee}% en cripto</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Comisión Venta:</span>
+                      <span className="text-gray-400">Comisión de venta:</span>
                       <span className="text-white font-medium">{formData.sell_fee}% en fiat</span>
                     </div>
                   </div>
