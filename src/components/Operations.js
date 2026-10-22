@@ -323,15 +323,15 @@ const Operations = ({ onOperationSaved }) => {
                   </Label>
                   <p className="text-xs text-gray-500">
                     {formData.operation_type === 'Venta'
-                      ? 'En una venta, la comisión se resta del importe recibido en moneda fiat.'
+                      ? 'Introduce la comisión como cantidad fiat; se resta del importe recibido.'
                       : formData.operation_type === 'Compra'
-                        ? 'En una compra, la comisión se resta de la cantidad de cripto recibida.'
-                        : 'Selecciona Compra o Venta para definir la unidad de la comisión.'}
+                        ? 'Introduce la comisión como cantidad cripto; se resta de la cripto recibida.'
+                        : 'La comisión es un importe fijo, no un porcentaje. La unidad depende de Compra o Venta.'}
                   </p>
                   <Input
                     id="fee"
                     type="number"
-                    step="0.01"
+                    step={formData.operation_type === 'Compra' ? '0.00000001' : '0.01'}
                     placeholder="0.00"
                     value={formData.fee}
                     onChange={(e) => handleInputChange('fee', e.target.value)}
