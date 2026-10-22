@@ -40,7 +40,7 @@ export default function Profile() {
   // Valores de reserva para mostrar los contadores cuando el perfil todavía no los contiene.
   const defaultUsage = {
     operaciones: { usadas: 0 },
-    exportaciones: { usadas: 0, total: 40 },
+    exportaciones: { usadas: 0 },
   };
 
   // ---------- Fetch profile & usage ----------
@@ -241,10 +241,6 @@ export default function Profile() {
     ? (Number(exportCount) || 0)
     : (Number(usage.exportaciones?.usadas) || Number(profileData.exportsUsed) || 0);
 
-  let exportacionesTotal = usage.exportaciones?.total || defaultUsage.exportaciones.total;
-  if (profileData.plan?.toLowerCase() === "premium") {
-    exportacionesTotal = Infinity;
-  }
   // ---------- Render (diseño completo, sin UID, sin navegación, tarjetas separadas) ----------
   return (
     <div className="min-h-screen bg-black text-white py-8 px-4">
@@ -351,22 +347,13 @@ export default function Profile() {
                 </div>
                 {/* Exportaciones */}
                 <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-300">Exportaciones</span>
-                    <span className="text-gray-400">
-                      {exportacionesUsadas}/{exportacionesTotal === Infinity ? "∞" : exportacionesTotal}
-                    </span>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-300">Exportaciones realizadas</span>
+                    <span className="text-white font-semibold">{exportacionesUsadas}</span>
                   </div>
-                  <div className="w-full bg-gray-800 rounded-full h-2.5">
-                    <div
-                      className="bg-green-600 h-2.5 rounded-full transition-all"
-                      style={{
-                        width: exportacionesTotal === Infinity
-                          ? "100%"
-                          : `${Math.min((exportacionesUsadas / exportacionesTotal) * 100, 100)}%`,
-                      }}
-                    />
-                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    La exportación CSV está disponible sin un límite configurado en la aplicación.
+                  </p>
                 </div>
               </div>
               </div>
