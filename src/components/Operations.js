@@ -41,12 +41,16 @@ const Operations = () => {
       if (field === "operation_type" && value !== previous.operation_type) {
         next.crypto_amount = "";
         next.fiat_amount = "";
+        next.exchange_rate = "";
         next.fee = "0";
-      } else if (
-        (field === "crypto" && previous.operation_type === "Compra" && value !== previous.crypto) ||
-        (field === "fiat" && previous.operation_type === "Venta" && value !== previous.fiat)
-      ) {
-        next.fee = "0";
+      } else if (field === "crypto" && value !== previous.crypto) {
+        next.crypto_amount = "";
+        next.exchange_rate = "";
+        if (previous.operation_type === "Compra") next.fee = "0";
+      } else if (field === "fiat" && value !== previous.fiat) {
+        next.fiat_amount = "";
+        next.exchange_rate = "";
+        if (previous.operation_type === "Venta") next.fee = "0";
       }
 
       return next;
@@ -59,7 +63,7 @@ const Operations = () => {
     e.preventDefault();
     
     if (!user) {
-      setError('Debes iniciar sesión para crear operaciones');
+      setError('Inicia sesión para registrar una operación.');
       return;
     }
 
