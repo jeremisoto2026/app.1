@@ -139,7 +139,7 @@ const P2PSimulator = () => {
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <ChartBarIcon className="h-5 w-5 text-purple-400" />
                 </div>
-                Configuración de Simulación
+                Configuración de la simulación
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
@@ -201,7 +201,7 @@ const P2PSimulator = () => {
                 {/* Operation Type */}
                 <div className="space-y-2">
                   <Label id="p2p-operation-type-label" htmlFor="p2p-operation-type" className="text-gray-300 font-medium">
-                    Tipo de Operación <span className="text-red-400">*</span>
+                    Tipo de operación <span className="text-red-400">*</span>
                   </Label>
                   <Select 
                     value={formData.operation_type} 
@@ -328,7 +328,7 @@ const P2PSimulator = () => {
                 <div className="p-2 bg-blue-500/10 rounded-lg">
                   <ChartBarIcon className="h-5 w-5 text-blue-400" />
                 </div>
-                Resultados de Simulación
+                Resultados de la simulación
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
