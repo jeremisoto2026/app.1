@@ -94,8 +94,12 @@ describe("calculateDashboardMetrics", () => {
     expect(result.winningSales).toBe(2);
     expect(result.successRate).toBe(100);
     expect(result.realizedProfitByOperation["sale-1"].profit).toBeCloseTo(20, 8);
+    expect(result.realizedProfitByOperation["sale-1"].matchedCost).toBeCloseTo(40, 8);
+    expect(result.realizedProfitByOperation["sale-1"].matchedProceeds).toBeCloseTo(60, 8);
     expect(result.realizedProfitByOperation["sale-1"].fullyMatched).toBe(true);
     expect(result.realizedProfitByOperation["sale-2"].profit).toBeCloseTo(22, 8);
+    expect(result.realizedProfitByOperation["sale-2"].matchedCost).toBeCloseTo(90, 8);
+    expect(result.realizedProfitByOperation["sale-2"].matchedProceeds).toBeCloseTo(112, 8);
     expect(result.realizedProfitByOperation["sale-2"].fullyMatched).toBe(true);
   });
 
@@ -120,6 +124,8 @@ describe("calculateDashboardMetrics", () => {
     const result = calculateDashboardMetrics(operations, new Date("2026-10-22T12:00:00.000Z"));
     expect(result.realizedProfitByOperation["sale-part"].profit).toBeCloseTo(20, 8);
     expect(result.realizedProfitByOperation["sale-part"].matchedQuantity).toBeCloseTo(1, 8);
+    expect(result.realizedProfitByOperation["sale-part"].matchedCost).toBeCloseTo(100, 8);
+    expect(result.realizedProfitByOperation["sale-part"].matchedProceeds).toBeCloseTo(120, 8);
     expect(result.realizedProfitByOperation["sale-part"].soldQuantity).toBeCloseTo(2, 8);
     expect(result.realizedProfitByOperation["sale-part"].fullyMatched).toBe(false);
     expect(result.closedSales).toBe(0);
