@@ -16,7 +16,6 @@ const MainApp = () => {
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -41,7 +40,7 @@ const MainApp = () => {
   };
 
   const handleOperationSaved = () => {
-    setRefreshTrigger(prev => prev + 1);
+    // Volver al resumen desmonta el formulario y vuelve a cargar las operaciones.
     setActiveTab('dashboard');
   };
 
@@ -356,7 +355,7 @@ const MainApp = () => {
         {activeTab === 'p2p' && <P2PSimulator />}
         {activeTab === 'arbitrage' && <ArbitrageSimulator />}
         {activeTab === 'operations' && <Operations onOperationSaved={handleOperationSaved} />}
-        {activeTab === 'history' && <History refreshTrigger={refreshTrigger} />}
+        {activeTab === 'history' && <History />}
         {activeTab === 'profile' && <Profile />}
       </main>
 
