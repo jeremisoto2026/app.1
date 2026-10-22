@@ -222,11 +222,11 @@ const Operations = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="exchange" className="text-gray-300 font-medium">
+                  <Label id="exchange-label" htmlFor="exchange" className="text-gray-300 font-medium">
                     Plataforma <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.exchange} onValueChange={(value) => handleInputChange('exchange', value)} disabled={loading}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectTrigger id="exchange" aria-labelledby="exchange-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona plataforma" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -240,11 +240,11 @@ const Operations = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="operation_type" className="text-gray-300 font-medium">
+                  <Label id="operation_type-label" htmlFor="operation_type" className="text-gray-300 font-medium">
                     Tipo de operación <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)} disabled={loading}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectTrigger id="operation_type" aria-labelledby="operation_type-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona tipo" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -258,11 +258,11 @@ const Operations = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="crypto" className="text-gray-300 font-medium">
+                  <Label id="crypto-label" htmlFor="crypto" className="text-gray-300 font-medium">
                     Criptomoneda <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.crypto} onValueChange={(value) => handleInputChange('crypto', value)} disabled={loading}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectTrigger id="crypto" aria-labelledby="crypto-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona criptomoneda" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -276,11 +276,11 @@ const Operations = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fiat" className="text-gray-300 font-medium">
+                  <Label id="fiat-label" htmlFor="fiat" className="text-gray-300 font-medium">
                     Moneda fiat <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)} disabled={loading}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectTrigger id="fiat" aria-labelledby="fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona moneda fiat" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
