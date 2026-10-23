@@ -45,7 +45,18 @@ La compilación solo genera la carpeta `build`; no publica automáticamente la a
 
 ## Configuración y seguridad
 
-La autenticación y los datos se gestionan con Firebase; revisa que las reglas de Firestore permitan a cada usuario leer y escribir solo sus propios documentos y operaciones. La configuración cliente de Firebase es pública por diseño, pero las claves privadas y secretos nunca deben incluirse en código frontend ni en el repositorio.
+La autenticación y los datos se gestionan con Firebase. Esta rama incluye una configuración de reglas base en `firestore.rules` y `firebase.json`:
+
+- Cada usuario autenticado solo puede leer su propio documento `users/{uid}` y la subcolección `users/{uid}/operations`.
+- No se permite enumerar perfiles de usuarios.
+- El alta del perfil exige el plan `free`; el cliente no puede cambiar por su cuenta el plan ni la fecha de creación de la cuenta.
+- Cualquier ruta de Firestore no contemplada queda denegada.
+
+**Importante:** añadir estos archivos al repositorio no cambia las reglas activas en Firebase. Antes de desplegarlas, compáralas con las reglas actuales de la consola y prueba al menos dos cuentas distintas: cada cuenta debe poder leer y escribir sus operaciones, pero no acceder al perfil ni a las operaciones de la otra. La publicación de reglas es independiente del despliegue de Vercel y puede bloquear funciones de otra aplicación si el mismo proyecto de Firebase se comparte con otros clientes.
+
+Una vez revisadas y probadas con el proyecto correcto, se pueden desplegar explícitamente con `firebase deploy --only firestore:rules --project jjxcapital-2` usando Firebase CLI autenticado. **No se han desplegado desde esta PR.** No se deben guardar claves de cuentas de servicio, tokens ni secretos de Firebase en el frontend o en GitHub.
+
+La configuración cliente del SDK de Firebase está diseñada para ser visible; la seguridad real depende de reglas restrictivas, autenticación y restricciones adecuadas de las API.
 
 ## Diseño y experiencia de usuario
 
