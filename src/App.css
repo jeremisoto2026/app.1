@@ -1301,3 +1301,62 @@ input:focus, select:focus, textarea:focus {
   .jjx-edit-dialog [data-radix-dialog-footer] { flex-direction: column-reverse; }
   .jjx-edit-dialog [data-radix-dialog-footer] button { width: 100%; }
 }
+
+
+
+/* Shared page headers for the P2P, arbitrage, operation and history workspaces. */
+.app-shell .app-content > .min-h-screen > div > .mb-8.text-center,
+.app-shell .app-content > .min-h-screen > div > .text-center.mb-8 {
+  display: grid;
+  grid-template-columns: 48px minmax(0,1fr);
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 5px;
+  margin: 0 0 25px !important;
+  text-align: left !important;
+}
+.app-shell .app-content > .min-h-screen > div > .mb-8.text-center > .inline-flex,
+.app-shell .app-content > .min-h-screen > div > .text-center.mb-8 > .inline-flex {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  align-self: start;
+  width: 46px !important;
+  height: 46px !important;
+  margin: 0 !important;
+  border-radius: 13px !important;
+}
+.app-shell .app-content > .min-h-screen > div > .mb-8.text-center > h1,
+.app-shell .app-content > .min-h-screen > div > .text-center.mb-8 > h1 {
+  grid-column: 2;
+  margin: 0 !important;
+  font-size: clamp(23px, 2.8vw, 33px) !important;
+  line-height: 1.2;
+  letter-spacing: -.045em;
+  text-align: left;
+}
+.app-shell .app-content > .min-h-screen > div > .mb-8.text-center > p,
+.app-shell .app-content > .min-h-screen > div > .text-center.mb-8 > p {
+  grid-column: 2;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: left;
+}
+@media (max-width: 560px) {
+  .app-shell .app-content > .min-h-screen > div > .mb-8.text-center,
+  .app-shell .app-content > .min-h-screen > div > .text-center.mb-8 {
+    grid-template-columns: 40px minmax(0,1fr);
+    column-gap: 12px;
+    margin-bottom: 19px !important;
+  }
+  .app-shell .app-content > .min-h-screen > div > .mb-8.text-center > .inline-flex,
+  .app-shell .app-content > .min-h-screen > div > .text-center.mb-8 > .inline-flex {
+    width: 39px !important;
+    height: 39px !important;
+  }
+  .app-shell .app-content > .min-h-screen > div > .mb-8.text-center > h1,
+  .app-shell .app-content > .min-h-screen > div > .text-center.mb-8 > h1 {
+    font-size: 23px !important;
+  }
+}
