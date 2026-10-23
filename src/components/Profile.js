@@ -9,6 +9,7 @@ import { doc, getDoc, collection, getDocs, onSnapshot } from "firebase/firestore
 import {
   ArrowLeftOnRectangleIcon,
   ChartBarIcon,
+  RocketLaunchIcon,
 } from "@heroicons/react/24/outline";
 
 /**
