@@ -1378,3 +1378,11 @@ input:focus, select:focus, textarea:focus {
   .history-pagination-controls > div { justify-content: space-between; width: 100%; }
   .history-page-count { min-width: 70px; }
 }
+
+
+
+.history-section-count {
+  display: inline-grid; place-items: center; min-width: 25px; height: 25px; margin-left: 5px;
+  padding: 0 7px; border-radius: 8px; border: 1px solid rgba(148,163,184,.16);
+  background: rgba(255,255,255,.035); color: #bec8d9; font-size: 10px; font-weight: 800;
+}
