@@ -23,7 +23,9 @@ import {
   FunnelIcon, 
   CalendarIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from "@heroicons/react/24/outline";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
@@ -36,6 +38,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+
+const PAGE_SIZE = 10;
 
 const History = () => {
   const { user } = useAuth();
@@ -51,6 +55,9 @@ const History = () => {
 
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [buyPage, setBuyPage] = useState(1);
+  const [sellPage, setSellPage] = useState(1);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [operationToDelete, setOperationToDelete] = useState(null);
@@ -423,23 +430,46 @@ const History = () => {
     [operations, filters]
   );
 
-  const buyOperations = filteredOperations.filter(op => op.operation_type === 'Compra');
-  const sellOperations = filteredOperations.filter(op => op.operation_type === 'Venta');
+  const sortedOperations = useMemo(() => {
+    const sorted = [...filteredOperations];
+    sorted.sort((a, b) => {
+      const dateA = getOperationDate(a.timestamp)?.getTime();
+      const dateB = getOperationDate(b.timestamp)?.getTime();
+      if (dateA === undefined && dateB === undefined) return 0;
+      if (dateA === undefined) return 1;
+      if (dateB === undefined) return -1;
+      return sortOrder === "oldest" ? dateA - dateB : dateB - dateA;
+    });
+    return sorted;
+  }, [filteredOperations, sortOrder]);
 
-  const renderOperations = (ops) => {
+  useEffect(() => {
+    setBuyPage(1);
+    setSellPage(1);
+  }, [filters, sortOrder]);
+
+  const buyOperations = sortedOperations.filter(op => op.operation_type === 'Compra');
+  const sellOperations = sortedOperations.filter(op => op.operation_type === 'Venta');
+
+  const renderOperations = (ops, currentPage, setPage, operationLabel) => {
     if (ops.length === 0) {
       return (
-        <div className="text-center py-12">
+        <div className="history-empty-state text-center py-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-500/10 rounded-2xl mb-4">
             <DocumentArrowDownIcon className="h-8 w-8 text-purple-400" />
           </div>
-          <h3 className="text-xl text-gray-300 mb-2">No hay operaciones registradas</h3>
-          <p className="text-gray-500">Tus operaciones aparecerán aquí una vez que las registres</p>
+          <h3 className="text-xl text-gray-300 mb-2">No hay {operationLabel}</h3>
+          <p className="text-gray-500">Las operaciones que registres aparecerán aquí.</p>
         </div>
       );
     }
-    
-    return ops.map((operation, index) => (
+
+    const totalPages = Math.max(1, Math.ceil(ops.length / PAGE_SIZE));
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const visibleOperations = ops.slice(startIndex, startIndex + PAGE_SIZE);
+
+    return <>
+      {visibleOperations.map((operation, index) => (
       <Card
         key={operation.id || index}
         className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -557,7 +587,22 @@ const History = () => {
           )}
         </CardContent>
       </Card>
-    ));
+      ))}
+      {ops.length > PAGE_SIZE && (
+        <div className="history-pagination-controls">
+          <span>Mostrando {startIndex + 1}–{Math.min(startIndex + PAGE_SIZE, ops.length)} de {ops.length}</span>
+          <div>
+            <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage((page) => Math.max(1, page - 1))} aria-label={`Página anterior de ${operationLabel}`}>
+              <ChevronLeftIcon className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+            <span className="history-page-count">Página {currentPage} de {totalPages}</span>
+            <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage((page) => Math.min(totalPages, page + 1))} aria-label={`Página siguiente de ${operationLabel}`}>
+              Siguiente <ChevronRightIcon className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </>;
   };
 
   // ---------- NUEVO: Función para obtener estilos según el tipo de diálogo ----------
@@ -611,7 +656,7 @@ const History = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label id="history-crypto-label" htmlFor="history-crypto" className="text-gray-300 font-medium">Criptomoneda</Label>
                 <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value === "__all__" ? "" : value }))}>
@@ -659,6 +704,19 @@ const History = () => {
                         {exchange}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label id="history-sort-label" htmlFor="history-sort" className="text-gray-300 font-medium">Ordenar por fecha</Label>
+                <Select value={sortOrder} onValueChange={setSortOrder}>
+                  <SelectTrigger id="history-sort" aria-labelledby="history-sort-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectValue placeholder="Elegir orden" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    <SelectItem value="newest">Más recientes primero</SelectItem>
+                    <SelectItem value="oldest">Más antiguas primero</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -755,7 +813,7 @@ const History = () => {
                 Compras
               </h2>
               <div className="grid gap-4">
-                {renderOperations(buyOperations)}
+                {renderOperations(buyOperations, buyPage, setBuyPage, "compras registradas")}
               </div>
             </div>
 
@@ -765,7 +823,7 @@ const History = () => {
                 Ventas
               </h2>
               <div className="grid gap-4">
-                {renderOperations(sellOperations)}
+                {renderOperations(sellOperations, sellPage, setSellPage, "ventas registradas")}
               </div>
             </div>
           </div>
