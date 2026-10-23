@@ -278,8 +278,6 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
               <span className="ml-2">Google</span>
             </button>
           </div>
-        </div>
-
         </div>}
 
         {mode === 'login' && <div className="mt-5 text-center relative z-10"><button type="button" onClick={() => { setError(''); setSuccess(''); onSwitchMode('forgot'); }} className="text-sm text-purple-300 hover:text-purple-200 underline underline-offset-4">¿Olvidaste tu contraseña?</button></div>}
