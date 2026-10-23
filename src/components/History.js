@@ -452,6 +452,14 @@ const History = () => {
   const buyOperations = sortedOperations.filter(op => op.operation_type === 'Compra');
   const sellOperations = sortedOperations.filter(op => op.operation_type === 'Venta');
 
+  // Si se elimina la última operación de la página actual, no dejar la vista en una página vacía.
+  useEffect(() => {
+    const buyTotalPages = Math.max(1, Math.ceil(buyOperations.length / PAGE_SIZE));
+    const sellTotalPages = Math.max(1, Math.ceil(sellOperations.length / PAGE_SIZE));
+    setBuyPage((page) => Math.min(page, buyTotalPages));
+    setSellPage((page) => Math.min(page, sellTotalPages));
+  }, [buyOperations.length, sellOperations.length]);
+
   const renderOperations = (ops, currentPage, setPage, operationLabel) => {
     if (ops.length === 0) {
       return (
