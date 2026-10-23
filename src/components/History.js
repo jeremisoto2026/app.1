@@ -460,6 +460,10 @@ const History = () => {
     setSellPage((page) => Math.min(page, sellTotalPages));
   }, [buyOperations.length, sellOperations.length]);
 
+  const hasActiveFilters = Boolean(
+    filters.crypto || filters.fiat || filters.exchange || filters.search.trim()
+  );
+
   const renderOperations = (ops, currentPage, setPage, operationLabel) => {
     if (ops.length === 0) {
       return (
@@ -467,8 +471,23 @@ const History = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-500/10 rounded-2xl mb-4">
             <DocumentArrowDownIcon className="h-8 w-8 text-purple-400" />
           </div>
-          <h3 className="text-xl text-gray-300 mb-2">No hay {operationLabel}</h3>
-          <p className="text-gray-500">Las operaciones que registres aparecerán aquí.</p>
+          <h3 className="text-xl text-gray-300 mb-2">
+            {hasActiveFilters ? "No hay resultados para estos filtros" : `Todavía no hay ${operationLabel}`}
+          </h3>
+          <p className="text-gray-500">
+            {hasActiveFilters
+              ? "Prueba con otros criterios o limpia los filtros para volver a ver el historial."
+              : "Las operaciones que registres aparecerán aquí."}
+          </p>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="dashboard-text-action mt-4"
+              onClick={() => setFilters({ crypto: "", fiat: "", exchange: "", search: "" })}
+            >
+              <ArrowPathIcon className="h-4 w-4" /> Limpiar filtros
+            </button>
+          )}
         </div>
       );
     }
