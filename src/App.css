@@ -1248,7 +1248,7 @@ input:focus, select:focus, textarea:focus {
 .jjx-auth-modal input::placeholder { color: #69778e !important; }
 .jjx-auth-modal button { border-radius: 10px; }
 .jjx-auth-modal button:hover { box-shadow: 0 8px 22px rgba(99,102,241,.15); }
-.app-shell .min-h-screen.bg-black { min-height: auto !important; background: transparent !important; }
+.app-shell .app-content > .min-h-screen.bg-black:not(.flex) { min-height: auto !important; background: transparent !important; }
 .app-shell .bg-gradient-to-r[class*="from-indigo-800"] {
   background: linear-gradient(115deg, rgba(77,72,150,.68), rgba(31,72,120,.52)) !important;
   border: 1px solid rgba(148,163,184,.18);
