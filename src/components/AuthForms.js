@@ -103,8 +103,8 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-xl flex items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-black rounded-3xl p-6 sm:p-10 w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto relative border border-purple-500/30 shadow-2xl shadow-purple-500/10">
+    <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-xl flex items-start sm:items-center justify-center p-4 z-50 overflow-y-auto jjx-auth-overlay">
+      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-black rounded-3xl p-6 sm:p-10 w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto relative border border-purple-500/30 shadow-2xl shadow-purple-500/10 jjx-auth-modal">
         {/* Elementos decorativos de fondo */}
         <div className="absolute -top-20 -right-20 w-60 h-60 bg-purple-600/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl"></div>
