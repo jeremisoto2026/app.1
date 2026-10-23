@@ -14,6 +14,7 @@ import {
   FaChartLine,
   FaCheck,
   FaFileAlt,
+  FaLock,
   FaMoneyBillWave,
   FaShieldAlt,
   FaSignInAlt,
