@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { act } from "react-dom/test-utils";
-import Profile from "./Profile";
 
 jest.mock("../contexts/AuthContext", () => {
   const user = {
@@ -33,17 +32,19 @@ jest.mock("firebase/firestore", () => ({
   getDocs: jest.fn(async () => ({ size: 2 })),
   onSnapshot: jest.fn((_ref, onNext) => {
     onNext({ exists: () => true, data: () => ({ exportsUsed: 0 }) });
-    return jest.fn();
+    return () => {};
   }),
 }));
 
 describe("Profile", () => {
+  let Profile;
   let container;
   let root;
   let consoleError;
 
   beforeAll(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    Profile = require("./Profile").default;
   });
 
   afterAll(() => {
