@@ -14,6 +14,27 @@ import {
   FaRocket
 } from 'react-icons/fa';
 
+const getAuthErrorMessage = (error) => {
+  const messages = {
+    "auth/email-already-in-use": "Ese correo ya tiene una cuenta. Inicia sesión.",
+    "auth/invalid-email": "Introduce un correo electrónico válido.",
+    "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
+    "auth/invalid-credential": "El correo o la contraseña no son correctos.",
+    "auth/user-not-found": "No hay una cuenta con ese correo.",
+    "auth/wrong-password": "El correo o la contraseña no son correctos.",
+    "auth/too-many-requests": "Se han realizado demasiados intentos. Espera un momento y vuelve a intentarlo.",
+    "auth/network-request-failed": "No se pudo conectar. Comprueba tu conexión a internet.",
+    "auth/popup-closed-by-user": "Cerraste la ventana de Google antes de completar el acceso.",
+    "auth/cancelled-popup-request": "La solicitud de acceso con Google se canceló.",
+    "auth/account-exists-with-different-credential": "Este correo ya está asociado a otro método de acceso.",
+    "auth/operation-not-allowed": "Este método de acceso no está habilitado en Firebase Authentication. Activa Correo/contraseña o Google en la configuración del proyecto.",
+    "auth/admin-restricted-operation": "El registro público de nuevas cuentas está deshabilitado en Firebase Authentication. Actívalo para permitir que otras personas se registren.",
+    "auth/invalid-api-key": "La configuración de Firebase no es válida. Contacta con soporte.",
+    "auth/unauthorized-domain": "Este dominio no está autorizado para iniciar sesión. Añade el dominio de la aplicación en Firebase Authentication → Configuración → Dominios autorizados.",
+  };
+  return messages[error?.code] || "No se pudo completar el acceso. Revisa los datos e inténtalo de nuevo.";
+};
+
 const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   const { signUp, signIn, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
@@ -27,10 +48,11 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -39,14 +61,21 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
     setLoading(true);
 
     try {
+      const email = formData.email.trim();
       if (mode === 'register') {
-        await signUp(formData.email, formData.password, formData.firstName, formData.lastName);
+        const firstName = formData.firstName.trim();
+        const lastName = formData.lastName.trim();
+        if (!firstName || !lastName) {
+          setError("Introduce tu nombre y tus apellidos.");
+          return;
+        }
+        await signUp(email, formData.password, firstName, lastName);
       } else {
-        await signIn(formData.email, formData.password);
+        await signIn(email, formData.password);
       }
       onClose();
     } catch (error) {
-      setError(error.message);
+      setError(getAuthErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -60,7 +89,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
       await signInWithGoogle();
       onClose();
     } catch (error) {
-      setError(error.message);
+      setError(getAuthErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -77,15 +106,17 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-black rounded-3xl p-10 w-full max-w-lg relative border border-purple-500/30 shadow-2xl shadow-purple-500/10 overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-xl flex items-start sm:items-center justify-center p-4 z-50 overflow-y-auto jjx-auth-overlay">
+      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-black rounded-3xl p-6 sm:p-10 w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto relative border border-purple-500/30 shadow-2xl shadow-purple-500/10 jjx-auth-modal">
         {/* Elementos decorativos de fondo */}
         <div className="absolute -top-20 -right-20 w-60 h-60 bg-purple-600/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl"></div>
         
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-6 right-6 text-gray-400 hover:text-purple-400 text-xl transition-all duration-300 p-2 rounded-full hover:bg-purple-500/10 z-10"
+          aria-label="Cerrar formulario"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-400 hover:text-purple-400 text-xl transition-all duration-300 p-2 rounded-full hover:bg-purple-500/10 z-10"
         >
           <FaTimes />
         </button>
@@ -103,12 +134,12 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
           </div>
           
           <h3 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mb-3">
-            {mode === 'register' ? 'Acceso Élite' : 'Experiencia Premium'}
+            {mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión'}
           </h3>
           <p className="text-gray-400 text-lg">
             {mode === 'register' 
-              ? 'Desbloquea herramientas profesionales de trading' 
-              : 'Accede a tu dashboard de inversión'}
+              ? 'Crea una cuenta para registrar y consultar tus operaciones.' 
+              : 'Inicia sesión para acceder a tu historial y tus resultados.'}
           </p>
         </div>
 
@@ -130,7 +161,9 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
                 </div>
                 <input
                   type="text"
+                  aria-label="Nombre"
                   name="firstName"
+                  autoComplete="given-name"
                   placeholder="Nombre"
                   value={formData.firstName}
                   onChange={handleChange}
@@ -141,8 +174,10 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
               <div className="relative">
                 <input
                   type="text"
+                  aria-label="Apellidos"
                   name="lastName"
-                  placeholder="Apellido"
+                  autoComplete="family-name"
+                  placeholder="Apellidos"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
@@ -158,7 +193,9 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             </div>
             <input
               type="email"
+              aria-label="Correo electrónico"
               name="email"
+              autoComplete="email"
               placeholder="Correo electrónico"
               value={formData.email}
               onChange={handleChange}
@@ -174,6 +211,8 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             <input
               type={showPassword ? "text" : "password"}
               name="password"
+              aria-label="Contraseña"
+              autoComplete={mode === "register" ? "new-password" : "current-password"}
               placeholder="Contraseña"
               value={formData.password}
               onChange={handleChange}
@@ -183,6 +222,8 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             <button
               type="button"
               onClick={togglePasswordVisibility}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-pressed={showPassword}
               className="absolute inset-y-0 right-0 pr-4 flex items-center text-purple-400/70 hover:text-purple-300 transition-colors duration-200"
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -200,7 +241,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
                 <>
-                  {mode === 'register' ? 'Crear Cuenta Premium' : 'Acceder a la Plataforma'}
+                  {mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión'}
                   <FaRocket className="text-cyan-300" />
                 </>
               )}
@@ -220,6 +261,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
 
           <div className="mt-6 flex justify-center">
             <button
+              type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
               className="flex items-center justify-center p-4 bg-gray-900/60 hover:bg-gray-800/60 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 disabled:opacity-50 group backdrop-blur-sm"
@@ -233,9 +275,10 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
         <div className="mt-8 text-center relative z-10">
           <p className="text-gray-400 text-sm">
             {mode === 'register' 
-              ? '¿Ya eres miembro de la élite? ' 
-              : '¿Listo para unirte a la élite? '}
+              ? '¿Ya tienes una cuenta? ' 
+              : '¿Todavía no tienes una cuenta? '}
             <button 
+              type="button"
               onClick={handleSwitchMode}
               className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 hover:from-purple-300 hover:to-blue-300 font-medium transition-all duration-300"
             >

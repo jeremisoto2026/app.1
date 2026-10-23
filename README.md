@@ -1,70 +1,70 @@
-# Getting Started with Create React App
+# JJXCAPITAL
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicación web para registrar operaciones manuales de compra y venta de criptomonedas, calcular el beneficio realizado con el coste de compra conocido y consultar el historial.
 
-## Available Scripts
+## Funciones disponibles
 
-In the project directory, you can run:
+- Registro manual de compras y ventas con cantidades, moneda de cotización, tasa de cambio y comisiones.
+- Resumen de beneficio realizado por moneda de cotización.
+- Método FIFO para emparejar ventas con compras registradas.
+- Simuladores P2P y de arbitraje. Son estimaciones manuales: no envían órdenes.
+- Historial filtrable y exportación CSV ordenada cronológicamente.
+- Navegación adaptable a escritorio y móvil.
+- Acceso mediante correo/contraseña o Google.
 
-### `npm start`
+## Funciones retiradas o no habilitadas
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- La interfaz ya no ofrece conexión de una cuenta de Binance mediante API.
+- No hay pasarela de pago ni contratación de suscripciones habilitada.
+- Las notificaciones push no están habilitadas en esta versión.
+- Se retiró el seguimiento de analítica de terceros que venía en la plantilla; no se inicializa PostHog desde la página.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+**Nota sobre el backend:** esta rama solo modifica `app.1`. Si existe un servicio de Binance API desplegado por separado (por ejemplo, en Railway), estos cambios del frontend no lo apagan ni eliminan las credenciales que estén guardadas allí. Para deshabilitar también ese servicio se necesita un cambio y un despliegue independiente. Si alguna API key ya se conectó y quieres dejar de usarla, revócala desde la gestión de API de Binance.
 
-### `npm test`
+## Reglas de cálculo
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- En una compra, el importe en la moneda de cotización es el coste y la comisión indicada se resta de la cantidad de cripto recibida.
+- En una venta, la comisión indicada se resta del importe recibido en la moneda de cotización.
+- El beneficio se calcula por par de criptomoneda/moneda de cotización mediante FIFO, solo sobre cantidades cuyo coste de adquisición consta en el historial.
+- Las ganancias se muestran con el código de moneda correspondiente (por ejemplo, `USD`, `USDT`, `USDC`, `EUR` o `VES`). No se suman monedas diferentes como si fueran equivalentes.
+- La aplicación conserva el nombre técnico histórico `fiat` en los documentos, pero ese campo representa la moneda de cotización: puede ser una moneda tradicional (EUR, USD, VES) o una stablecoin (USDT, USDC).
+- Las ventas que exceden la cripto comprada registrada no se cuentan como ventas totalmente cerradas para la tasa de éxito.
+- Las operaciones antiguas de Firestore no se migran ni reescriben automáticamente. Si a un registro histórico le faltan fechas, cantidades, coste o comisiones, los datos originales deben revisarse por separado.
 
-### `npm run build`
+## Desarrollo y validación
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Requisitos: Node.js y npm.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm install --legacy-peer-deps
+npm test -- --watchAll=false --runInBand
+npm run build
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+La compilación solo genera la carpeta `build`; no publica automáticamente la aplicación.
 
-### `npm run eject`
+## Configuración y seguridad
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+La autenticación y los datos se gestionan con Firebase. Esta rama incluye una configuración de reglas base en `firestore.rules` y `firebase.json`:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- Cada usuario autenticado solo puede leer su propio documento `users/{uid}` y la subcolección `users/{uid}/operations`.
+- No se permite enumerar perfiles de usuarios.
+- El alta del perfil exige el plan `free`; el cliente no puede cambiar por su cuenta el plan ni la fecha de creación de la cuenta.
+- Cualquier ruta de Firestore no contemplada queda denegada.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+**Importante:** añadir estos archivos al repositorio no cambia las reglas activas en Firebase. Antes de desplegarlas, compáralas con las reglas actuales de la consola y prueba al menos dos cuentas distintas: cada cuenta debe poder leer y escribir sus operaciones, pero no acceder al perfil ni a las operaciones de la otra. La publicación de reglas es independiente del despliegue de Vercel y puede bloquear funciones de otra aplicación si el mismo proyecto de Firebase se comparte con otros clientes.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Una vez revisadas y probadas con el proyecto correcto, se pueden desplegar explícitamente con `firebase deploy --only firestore:rules --project jjxcapital-2` usando Firebase CLI autenticado. **No se han desplegado desde esta PR.** No se deben guardar claves de cuentas de servicio, tokens ni secretos de Firebase en el frontend o en GitHub.
 
-## Learn More
+La configuración cliente del SDK de Firebase está diseñada para ser visible; la seguridad real depende de reglas restrictivas, autenticación y restricciones adecuadas de las API.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Diseño y experiencia de usuario
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- Portada responsive con una jerarquía visual más clara, llamadas a la acción concisas y una vista previa ilustrativa que no presenta cifras ficticias como si fueran datos reales.
+- Identidad visual consistente para el espacio de trabajo: fondos oscuros sobrios, acentos violeta/azul, superficies con contraste y controles de formulario unificados.
+- Resumen financiero orientado a datos reales, estados vacíos explícitos, flujos de trabajo recomendados y accesos rápidos al registro y al historial.
+- Formularios de autenticación y edición adaptables a pantallas pequeñas, con foco de teclado visible y soporte para la preferencia de movimiento reducido.
+- Desde el historial se pueden editar las cantidades, el par de monedas, la plataforma y las comisiones de una operación. La edición vuelve a calcular importes derivados y conserva la fecha original; cambiar importes puede alterar el beneficio FIFO de ventas posteriores. El historial también permite ordenar por fecha, limpiar filtros, consultar recuentos y navegar por páginas de diez operaciones; la paginación se ajusta al eliminar registros.
+- Metadatos de navegador actualizados y tipografía basada en fuentes del sistema para evitar una solicitud de fuente externa innecesaria.
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+La interfaz no promete beneficios, no ejecuta órdenes de trading y no sustituye la verificación de los registros financieros. Antes de publicar se deben validar visualmente los principales flujos con una sesión real y probar los permisos de Firebase con cuentas separadas.

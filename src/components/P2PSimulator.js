@@ -23,16 +23,29 @@ const P2PSimulator = () => {
   const [loading, setLoading] = useState(false);
 
   const cryptos = ['USDT', 'BTC', 'ETH', 'BNB', 'USDC'];
-  const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
+  const fiats = ['EUR', 'USD', 'USDT', 'USDC', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
   const operationTypes = ['Venta', 'Compra'];
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData((previous) => {
+      const next = { ...previous, [field]: value };
+
+      // La misma cifra puede representar cripto o fiat según la operación y el par.
+      if (field === "operation_type" && value !== previous.operation_type) {
+        next.amount = "";
+        next.exchange_rate = "";
+      } else if (field === "crypto" && value !== previous.crypto) {
+        next.exchange_rate = "";
+        if (previous.operation_type === "Venta") next.amount = "";
+      } else if (field === "fiat" && value !== previous.fiat) {
+        next.exchange_rate = "";
+        if (previous.operation_type === "Compra") next.amount = "";
+      }
+
+      return next;
+    });
     if (result) setResult(null);
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleSimulate = async (e) => {
@@ -43,16 +56,28 @@ const P2PSimulator = () => {
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
-      setError(`Por favor completa todos los campos requeridos: ${missingFields.join(', ')}`);
+      const fieldLabels = {
+        crypto: "criptomoneda",
+        fiat: "moneda de cotización",
+        operation_type: "tipo de operación",
+        amount: "cantidad",
+        exchange_rate: "tasa de cambio",
+      };
+      const missingLabels = missingFields.map((field) => fieldLabels[field] || field);
+      setError(`Completa estos campos obligatorios: ${missingLabels.join(", ")}.`);
       return;
     }
 
-    const amount = parseFloat(formData.amount);
-    const exchangeRate = parseFloat(formData.exchange_rate);
-    const feePercent = parseFloat(formData.fee) || 0;
+    const amount = Number(formData.amount);
+    const exchangeRate = Number(formData.exchange_rate);
+    const feePercent = formData.fee === '' ? 0 : Number(formData.fee);
 
-    if (amount <= 0 || exchangeRate <= 0) {
-      setError('Los montos y tasas de cambio deben ser mayores a 0');
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+      setError('Las cantidades y la tasa de cambio deben ser números mayores que 0');
+      return;
+    }
+    if (!Number.isFinite(feePercent) || feePercent < 0 || feePercent >= 100) {
+      setError('La comisión debe ser un porcentaje entre 0 y menos de 100');
       return;
     }
 
@@ -60,74 +85,18 @@ const P2PSimulator = () => {
       setLoading(true);
       setError('');
 
-      // --- Nueva lógica: la comisión SIEMPRE será cobrada en la cripto seleccionada ---
-      // Mantendremos las mismas etiquetas del UI:
-      // - "Cantidad Enviada": lo que el usuario entrega (crypto si Venta, fiat si Compra)
-      // - "Cantidad Recibida (Bruta)": valor bruto antes de aplicar comisión (fiat para Venta, crypto para Compra)
-      // - "Comisión": se muestra y calcula siempre en la criptomoneda seleccionada
-      // - "Cantidad Neta": cantidad final (en la unidad que la UI ya mostraba: fiat para Venta, crypto para Compra)
-      let amount_sent, amount_received, fee_amount, net_amount;
-
-      if (formData.operation_type === 'Venta') {
-        // Usuario vende cripto → entrega 'amount' en CRIPTO y recibe fiat
-        amount_sent = amount; // en cripto
-        // bruto fiat (antes de comisión)
-        amount_received = amount * exchangeRate; // en fiat
-
-        // comisión en cripto (porcentaje sobre la cantidad enviada en cripto)
-        fee_amount = (amount * feePercent) / 100; // en cripto
-
-        // cantidad neta en cripto (cripto - comisión en cripto)
-        const net_crypto = amount - fee_amount; // en cripto
-
-        // cantidad neta en fiat (lo que realmente recibe el usuario en fiat después de cobrar comisión en cripto)
-        net_amount = net_crypto * exchangeRate; // en fiat (UI espera net en fiat para 'Venta')
-        
-        // guardamos también valores auxiliares si los quieres usar en UI (por compatibilidad)
-        setResult({
-          crypto: formData.crypto,
-          fiat: formData.fiat,
-          operation_type: formData.operation_type,
-          exchange_rate: exchangeRate,
-          fee: feePercent,
-          amount, // amount original (cripto)
-          amount_sent, // crypto
-          amount_received, // bruto fiat
-          fee_amount, // crypto
-          net_amount, // fiat (para mostrar en UI donde net se muestra en fiat para Venta)
-          // Proporcionamos también net_crypto por si quieres usarlo en otro lugar
-          net_crypto
-        });
-      } else {
-        // Compra: usuario entrega fiat (amount) y recibe cripto
-        amount_sent = amount; // en fiat
-        // bruto crypto antes de comisión
-        amount_received = amount / exchangeRate; // en crypto
-
-        // comisión en cripto (porcentaje sobre la cantidad bruta recibida en cripto)
-        fee_amount = (amount_received * feePercent) / 100; // en cripto
-
-        // cantidad neta en cripto (cripto bruto - comisión en cripto)
-        net_amount = amount_received - fee_amount; // en crypto (UI espera net en crypto para 'Compra')
-
-        setResult({
-          crypto: formData.crypto,
-          fiat: formData.fiat,
-          operation_type: formData.operation_type,
-          exchange_rate: exchangeRate,
-          fee: feePercent,
-          amount, // amount original (fiat)
-          amount_sent, // fiat
-          amount_received, // bruto crypto
-          fee_amount, // crypto
-          net_amount // crypto
-        });
-      }
-
-      // Nota: no eliminé la importación de simulateP2P en caso de que la uses en otro flujo.
+      const simulationResult = simulateP2P({
+        crypto: formData.crypto,
+        fiat: formData.fiat,
+        operation_type: formData.operation_type,
+        amount,
+        exchange_rate: exchangeRate,
+        fee: feePercent,
+      });
+      setResult(simulationResult);
     } catch (err) {
-      console.error('Error in P2P simulation:', err);
-      setError('Error al realizar la simulación. Por favor intenta de nuevo.');
+      console.error('Error en el simulador P2P:', err);
+      setError(err.message || 'Error al realizar la simulación. Revisa los importes y la comisión.');
     } finally {
       setLoading(false);
     }
@@ -158,7 +127,7 @@ const P2PSimulator = () => {
             Simulador P2P
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Simula operaciones peer-to-peer y calcula ganancias/pérdidas en tiempo real con nuestra tecnología avanzada
+            Calcula las cantidades brutas y netas tras la comisión. Para conocer la ganancia real, también necesitas el coste al que adquiriste la criptomoneda.
           </p>
         </div>
 
@@ -170,7 +139,7 @@ const P2PSimulator = () => {
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <ChartBarIcon className="h-5 w-5 text-purple-400" />
                 </div>
-                Configuración de Simulación
+                Configuración de la simulación
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
@@ -184,7 +153,7 @@ const P2PSimulator = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Crypto */}
                   <div className="space-y-2">
-                    <Label htmlFor="crypto" className="text-gray-300 font-medium">
+                    <Label id="p2p-crypto-label" htmlFor="p2p-crypto" className="text-gray-300 font-medium">
                       Criptomoneda <span className="text-red-400">*</span>
                     </Label>
                     <Select 
@@ -192,8 +161,8 @@ const P2PSimulator = () => {
                       onValueChange={(value) => handleInputChange('crypto', value)}
                       disabled={loading}
                     >
-                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
-                        <SelectValue placeholder="Seleccionar crypto" />
+                      <SelectTrigger id="p2p-crypto" aria-labelledby="p2p-crypto-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
+                        <SelectValue placeholder="Seleccionar criptomoneda" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                         {cryptos.map(crypto => (
@@ -207,16 +176,16 @@ const P2PSimulator = () => {
 
                   {/* Fiat */}
                   <div className="space-y-2">
-                    <Label htmlFor="fiat" className="text-gray-300 font-medium">
-                      Moneda Fiat <span className="text-red-400">*</span>
+                    <Label id="p2p-fiat-label" htmlFor="p2p-fiat" className="text-gray-300 font-medium">
+                      Moneda de cotización <span className="text-red-400">*</span>
                     </Label>
                     <Select 
                       value={formData.fiat} 
                       onValueChange={(value) => handleInputChange('fiat', value)}
                       disabled={loading}
                     >
-                      <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
-                        <SelectValue placeholder="Seleccionar fiat" />
+                      <SelectTrigger id="p2p-fiat" aria-labelledby="p2p-fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
+                        <SelectValue placeholder="Seleccionar moneda de cotización" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                         {fiats.map(fiat => (
@@ -231,15 +200,15 @@ const P2PSimulator = () => {
 
                 {/* Operation Type */}
                 <div className="space-y-2">
-                  <Label htmlFor="operation_type" className="text-gray-300 font-medium">
-                    Tipo de Operación <span className="text-red-400">*</span>
+                  <Label id="p2p-operation-type-label" htmlFor="p2p-operation-type" className="text-gray-300 font-medium">
+                    Tipo de operación <span className="text-red-400">*</span>
                   </Label>
                   <Select 
                     value={formData.operation_type} 
                     onValueChange={(value) => handleInputChange('operation_type', value)}
                     disabled={loading}
                   >
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
+                    <SelectTrigger id="p2p-operation-type" aria-labelledby="p2p-operation-type-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl disabled:opacity-50">
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -257,11 +226,16 @@ const P2PSimulator = () => {
                   {/* Amount */}
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="text-gray-300 font-medium">
-                      Cantidad <span className="text-red-400">*</span>
+                      {formData.operation_type === 'Venta'
+                        ? 'Cantidad de criptomoneda que vendes'
+                        : formData.operation_type === 'Compra'
+                          ? 'Importe en moneda de cotización que inviertes'
+                          : 'Cantidad'} <span className="text-red-400">*</span>
                     </Label>
                     <Input
                       id="amount"
                       type="number"
+                      min="0"
                       step="0.00000001"
                       placeholder="0.00000000"
                       value={formData.amount}
@@ -274,11 +248,12 @@ const P2PSimulator = () => {
                   {/* Exchange Rate */}
                   <div className="space-y-2">
                     <Label htmlFor="exchange_rate" className="text-gray-300 font-medium">
-                      Tasa de Cambio <span className="text-red-400">*</span>
+                      Tasa de cambio <span className="text-red-400">*</span>
                     </Label>
                     <Input
                       id="exchange_rate"
                       type="number"
+                      min="0"
                       step="0.01"
                       placeholder="0.00"
                       value={formData.exchange_rate}
@@ -286,6 +261,9 @@ const P2PSimulator = () => {
                       className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl disabled:opacity-50"
                       disabled={loading}
                     />
+                    <p className="text-xs text-gray-500">
+                      Indica cuántas unidades de {formData.fiat || 'moneda de cotización'} equivalen a 1 {formData.crypto || 'unidad de cripto'}.
+                    </p>
                   </div>
                 </div>
 
@@ -297,6 +275,8 @@ const P2PSimulator = () => {
                   <Input
                     id="fee"
                     type="number"
+                    min="0"
+                    max="99.99"
                     step="0.01"
                     placeholder="0.00"
                     value={formData.fee}
@@ -329,6 +309,8 @@ const P2PSimulator = () => {
                     type="button"
                     onClick={resetForm}
                     variant="outline"
+                    aria-label="Limpiar formulario"
+                    title="Limpiar formulario"
                     className="border-purple-500/30 text-gray-300 hover:bg-gray-700/50 h-11 rounded-xl disabled:opacity-50"
                     disabled={loading}
                   >
@@ -346,7 +328,7 @@ const P2PSimulator = () => {
                 <div className="p-2 bg-blue-500/10 rounded-lg">
                   <ChartBarIcon className="h-5 w-5 text-blue-400" />
                 </div>
-                Resultados de Simulación
+                Resultados de la simulación
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
@@ -374,7 +356,7 @@ const P2PSimulator = () => {
                 <div className="space-y-6">
                   {/* Operation Summary */}
                   <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                    <h4 className="text-white font-medium mb-4 text-lg">Resumen de Operación</h4>
+                    <h4 className="text-white font-medium mb-4 text-lg">Resumen de la operación</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center">
                         <span className="text-gray-400">Tipo:</span>
@@ -387,22 +369,22 @@ const P2PSimulator = () => {
                         <span className="text-white ml-2 font-medium">{result.crypto}/{result.fiat}</span>
                       </div>
                       <div className="flex items-center">
-                        <span className="text-gray-400">Tasa:</span>
+                        <span className="text-gray-400">Tasa de cambio:</span>
                         <span className="text-white ml-2 font-medium">{result.exchange_rate}</span>
                       </div>
                       <div className="flex items-center">
                         <span className="text-gray-400">Comisión:</span>
-                        <span className="text-white ml-2 font-medium">{result.fee}% en {result.crypto}</span>
+                        <span className="text-white ml-2 font-medium">{result.fee}% en {result.fee_currency || result.crypto}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Calculation Details */}
                   <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                    <h4 className="text-white font-medium mb-4 text-lg">Detalles del Cálculo</h4>
+                    <h4 className="text-white font-medium mb-4 text-lg">Detalles del cálculo</h4>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Cantidad Enviada:</span>
+                        <span className="text-gray-400">Cantidad enviada:</span>
                         <span className="text-white font-medium">
                           {result.amount_sent !== undefined
                             ? (result.operation_type === 'Venta'
@@ -412,7 +394,7 @@ const P2PSimulator = () => {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Cantidad Recibida (Bruta):</span>
+                        <span className="text-gray-400">Cantidad recibida (bruta):</span>
                         <span className="text-white font-medium">
                           {result.amount_received !== undefined
                             ? (result.operation_type === 'Venta'
@@ -431,7 +413,7 @@ const P2PSimulator = () => {
                       </div>
                       <div className="border-t border-purple-500/20 pt-4">
                         <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">Cantidad Neta:</span>
+                          <span className="text-white font-medium">Cantidad neta:</span>
                           <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-lg px-3 py-1 rounded-lg">
                             {result.net_amount !== undefined
                               ? (result.operation_type === 'Venta'
@@ -444,23 +426,16 @@ const P2PSimulator = () => {
                     </div>
                   </div>
 
-                  {/* Profitability Indicator */}
-                  <div className={`rounded-xl p-5 border ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'bg-green-900/20 border-green-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                  {/* A positive conversion amount is not the same as a trading profit. */}
+                  <div className="rounded-xl p-5 border bg-blue-900/20 border-blue-500/30">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                        <span className={`text-2xl ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? '📈' : '📉'}
-                        </span>
+                      <div className="p-2 rounded-lg bg-blue-500/20">
+                        <span className="text-2xl text-blue-400">ℹ️</span>
                       </div>
                       <div>
-                        <h4 className={`font-medium text-lg ${ (typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(typeof result.net_amount === 'number' ? result.net_amount : 0) > 0 ? 'Operación Rentable' : 'Operación con Pérdida'}
-                        </h4>
+                        <h4 className="font-medium text-lg text-blue-300">Conversión calculada</h4>
                         <p className="text-gray-400 text-sm">
-                          {result.operation_type === 'Venta' 
-                            ? 'Vendiendo criptomonedas por moneda fiat'
-                            : 'Comprando criptomonedas con moneda fiat'
-                          }
+                          El importe neto refleja la comisión, no el beneficio. Para calcular ganancias o pérdidas, registra también el coste de compra y la venta correspondiente.
                         </p>
                       </div>
                     </div>

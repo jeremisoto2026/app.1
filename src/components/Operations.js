@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { saveOperation } from '../services/database';
+import { calculateOperationAmounts } from '../utils/financialCalculations';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -8,9 +9,9 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
-import { PlusCircleIcon, ArrowPathIcon, DocumentTextIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { PlusCircleIcon, DocumentTextIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
-const Operations = ({ onOperationSaved }) => {
+const Operations = () => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     order_id: '',
@@ -30,22 +31,39 @@ const Operations = ({ onOperationSaved }) => {
   const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin'];
   const operationTypes = ['Venta', 'Compra'];
   const cryptos = ['USDT', 'BTC', 'ETH', 'BNB', 'USDC'];
-  const fiats = ['EUR', 'USD', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
+  const fiats = ['EUR', 'USD', 'USDT', 'USDC', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    if (error) setError('');
-    if (success) setSuccess('');
+    setFormData((previous) => {
+      const next = { ...previous, [field]: value };
+
+      // Evita reutilizar cantidades o comisiones calculadas con otra operación/unidad.
+      if (field === "operation_type" && value !== previous.operation_type) {
+        next.crypto_amount = "";
+        next.fiat_amount = "";
+        next.exchange_rate = "";
+        next.fee = "0";
+      } else if (field === "crypto" && value !== previous.crypto) {
+        next.crypto_amount = "";
+        next.exchange_rate = "";
+        if (previous.operation_type === "Compra") next.fee = "0";
+      } else if (field === "fiat" && value !== previous.fiat) {
+        next.fiat_amount = "";
+        next.exchange_rate = "";
+        if (previous.operation_type === "Venta") next.fee = "0";
+      }
+
+      return next;
+    });
+    if (error) setError("");
+    if (success) setSuccess("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!user) {
-      setError('Debes iniciar sesión para crear operaciones');
+      setError('Inicia sesión para registrar una operación.');
       return;
     }
 
@@ -58,27 +76,33 @@ const Operations = ({ onOperationSaved }) => {
     }
     
     if (missingFields.length > 0) {
-      setError(`Por favor completa todos los campos requeridos: ${missingFields.join(', ')}`);
+      const fieldLabels = {
+        exchange: "plataforma",
+        operation_type: "tipo de operación",
+        crypto: "criptomoneda",
+        fiat: "moneda de cotización",
+        exchange_rate: "tasa de cambio",
+        crypto_amount: "cantidad en cripto",
+        fiat_amount: "importe en moneda de cotización",
+      };
+      const missingLabels = [...new Set(missingFields)].map((field) => fieldLabels[field] || field);
+      setError(`Completa estos campos obligatorios: ${missingLabels.join(", ")}.`);
       return;
     }
 
-    const exchangeRate = parseFloat(formData.exchange_rate);
-    const fee = parseFloat(formData.fee) || 0;
-    
-    if (exchangeRate <= 0 || parseFloat(formData[amountField]) <= 0) {
-      setError('Los montos y tasas de cambio deben ser mayores a 0');
+    let calculatedAmounts;
+    try {
+      calculatedAmounts = calculateOperationAmounts({
+        operation_type: formData.operation_type,
+        amount: formData[amountField],
+        exchange_rate: formData.exchange_rate,
+        fee: formData.fee,
+        crypto: formData.crypto,
+        fiat: formData.fiat,
+      });
+    } catch (calculationError) {
+      setError(calculationError.message || 'Revisa la cantidad, la tasa y la comisión.');
       return;
-    }
-
-    let cryptoAmount = 0;
-    let fiatAmount = 0;
-
-    if (formData.operation_type === 'Venta') {
-      cryptoAmount = parseFloat(formData.crypto_amount);
-      fiatAmount = (cryptoAmount * exchangeRate) - fee;
-    } else {
-      fiatAmount = parseFloat(formData.fiat_amount);
-      cryptoAmount = (fiatAmount / exchangeRate) - fee;
     }
 
     try {
@@ -91,17 +115,14 @@ const Operations = ({ onOperationSaved }) => {
         operation_type: formData.operation_type,
         crypto: formData.crypto,
         fiat: formData.fiat,
-        crypto_amount: cryptoAmount,
-        fiat_amount: fiatAmount,
-        exchange_rate: exchangeRate,
-        fee: fee,
-        profit: 0,
+        ...calculatedAmounts,
+        // La ganancia real solo se conoce al emparejar una venta con su coste de compra (FIFO).
         timestamp: new Date()
       };
 
       await saveOperation(user.uid, operationData);
       
-      setSuccess('¡Operación guardada exitosamente!');
+      setSuccess('La operación se ha guardado correctamente.');
       
       setFormData({
         order_id: '',
@@ -115,32 +136,35 @@ const Operations = ({ onOperationSaved }) => {
         fee: '0'
       });
 
-      if (onOperationSaved) {
-        onOperationSaved();
-      }
-
     } catch (err) {
-      console.error('Error saving operation:', err);
-      setError('Error al guardar la operación. Por favor intenta de nuevo.');
+      console.error('Error al guardar la operación:', err);
+      setError('Error al guardar la operación. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
   };
 
-  let previewAmountCrypto = 0;
-  let previewAmountFiat = 0;
-  const previewFee = parseFloat(formData.fee) || 0;
+  let previewAmountCrypto = null;
+  let previewAmountFiat = null;
+  const previewFee = formData.fee === '' ? 0 : Number(formData.fee);
+  const previewFeeCurrency = formData.operation_type === 'Venta' ? formData.fiat : formData.crypto;
 
-  if (formData.operation_type === 'Venta') {
-    const cryptoInput = parseFloat(formData.crypto_amount) || 0;
-    const rateInput = parseFloat(formData.exchange_rate) || 0;
-    previewAmountCrypto = cryptoInput;
-    previewAmountFiat = (cryptoInput * rateInput) - previewFee;
-  } else if (formData.operation_type === 'Compra') {
-    const fiatInput = parseFloat(formData.fiat_amount) || 0;
-    const rateInput = parseFloat(formData.exchange_rate) || 0;
-    previewAmountFiat = fiatInput;
-    previewAmountCrypto = (fiatInput / rateInput) - previewFee;
+  try {
+    if (formData.operation_type) {
+      const previewInput = formData.operation_type === 'Venta' ? formData.crypto_amount : formData.fiat_amount;
+      const preview = calculateOperationAmounts({
+        operation_type: formData.operation_type,
+        amount: previewInput,
+        exchange_rate: formData.exchange_rate,
+        fee: formData.fee,
+        crypto: formData.crypto,
+        fiat: formData.fiat,
+      });
+      previewAmountCrypto = preview.crypto_amount;
+      previewAmountFiat = preview.fiat_amount;
+    }
+  } catch {
+    // Un formulario incompleto no debe mostrar importes calculados que parecen válidos.
   }
 
   return (
@@ -151,10 +175,13 @@ const Operations = ({ onOperationSaved }) => {
             <PlusCircleIcon className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-            Nueva Operación
+            Nueva operación
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Registra tus operaciones de trading y mantén un seguimiento detallado de tu actividad
+            Registra tus compras y ventas, y mantén un historial de importes y comisiones
+          </p>
+          <p className="text-xs text-gray-500 max-w-2xl mx-auto mt-3">
+            Registro manual: no se conecta a Binance ni se envían órdenes mediante API. Elegir Binance como plataforma solo etiqueta la operación que introduces.
           </p>
         </div>
 
@@ -183,11 +210,12 @@ const Operations = ({ onOperationSaved }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="order_id" className="text-gray-300 font-medium">
-                    Número de Orden (Opcional)
+                    Número de orden (opcional)
                   </Label>
                   <Input
                     id="order_id"
                     type="text"
+                    autoComplete="off"
                     placeholder="ID de la orden"
                     value={formData.order_id}
                     onChange={(e) => handleInputChange('order_id', e.target.value)}
@@ -197,12 +225,12 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="exchange" className="text-gray-300 font-medium">
-                    Exchange <span className="text-red-400">*</span>
+                  <Label id="exchange-label" htmlFor="exchange" className="text-gray-300 font-medium">
+                    Plataforma <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.exchange} onValueChange={(value) => handleInputChange('exchange', value)} disabled={loading}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Selecciona exchange" />
+                    <SelectTrigger id="exchange" aria-labelledby="exchange-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                      <SelectValue placeholder="Selecciona plataforma" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {exchanges.map(exchange => (
@@ -215,11 +243,11 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="operation_type" className="text-gray-300 font-medium">
-                    Tipo de Operación <span className="text-red-400">*</span>
+                  <Label id="operation_type-label" htmlFor="operation_type" className="text-gray-300 font-medium">
+                    Tipo de operación <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)} disabled={loading}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectTrigger id="operation_type" aria-labelledby="operation_type-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona tipo" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
@@ -233,12 +261,12 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="crypto" className="text-gray-300 font-medium">
+                  <Label id="crypto-label" htmlFor="crypto" className="text-gray-300 font-medium">
                     Criptomoneda <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.crypto} onValueChange={(value) => handleInputChange('crypto', value)} disabled={loading}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Selecciona crypto" />
+                    <SelectTrigger id="crypto" aria-labelledby="crypto-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                      <SelectValue placeholder="Selecciona criptomoneda" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {cryptos.map(crypto => (
@@ -251,12 +279,12 @@ const Operations = ({ onOperationSaved }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fiat" className="text-gray-300 font-medium">
-                    Moneda Fiat <span className="text-red-400">*</span>
+                  <Label id="fiat-label" htmlFor="fiat" className="text-gray-300 font-medium">
+                    Moneda de cotización <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)} disabled={loading}>
-                    <SelectTrigger className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Selecciona fiat" />
+                    <SelectTrigger id="fiat" aria-labelledby="fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                      <SelectValue placeholder="Selecciona moneda de cotización" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {fiats.map(fiat => (
@@ -270,11 +298,12 @@ const Operations = ({ onOperationSaved }) => {
 
                 <div className="space-y-2">
                   <Label htmlFor="crypto_amount" className="text-gray-300 font-medium">
-                    Cantidad Cripto {formData.operation_type === 'Venta' && <span className="text-red-400">*</span>}
+                    Cantidad en cripto {formData.operation_type === 'Venta' && <span className="text-red-400">*</span>}
                   </Label>
                   <Input
                     id="crypto_amount"
                     type="number"
+                    min="0"
                     step="0.00000001"
                     placeholder="0.00000000"
                     value={formData.crypto_amount}
@@ -286,11 +315,12 @@ const Operations = ({ onOperationSaved }) => {
 
                 <div className="space-y-2">
                   <Label htmlFor="fiat_amount" className="text-gray-300 font-medium">
-                    Cantidad Fiat {formData.operation_type === 'Compra' && <span className="text-red-400">*</span>}
+                    Importe en moneda de cotización {formData.operation_type === 'Compra' && <span className="text-red-400">*</span>}
                   </Label>
                   <Input
                     id="fiat_amount"
                     type="number"
+                    min="0"
                     step="0.01"
                     placeholder="0.00"
                     value={formData.fiat_amount}
@@ -302,11 +332,12 @@ const Operations = ({ onOperationSaved }) => {
 
                 <div className="space-y-2">
                   <Label htmlFor="exchange_rate" className="text-gray-300 font-medium">
-                    Tasa de Cambio <span className="text-red-400">*</span>
+                    Tasa de cambio <span className="text-red-400">*</span>
                   </Label>
                   <Input
                     id="exchange_rate"
                     type="number"
+                    min="0"
                     step="0.01"
                     placeholder="0.00"
                     value={formData.exchange_rate}
@@ -318,12 +349,20 @@ const Operations = ({ onOperationSaved }) => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="fee" className="text-gray-300 font-medium">
-                    Comisión
+                    Comisión ({formData.operation_type === 'Venta' ? (formData.fiat || 'moneda de cotización') : (formData.crypto || 'cripto')})
                   </Label>
+                  <p className="text-xs text-gray-500">
+                    {formData.operation_type === 'Venta'
+                      ? 'Introduce la comisión en la moneda de cotización; se resta del importe recibido.'
+                      : formData.operation_type === 'Compra'
+                        ? 'Introduce la comisión como cantidad cripto; se resta de la cripto recibida.'
+                        : 'La comisión es un importe fijo, no un porcentaje. La unidad depende de si compras o vendes.'}
+                  </p>
                   <Input
                     id="fee"
                     type="number"
-                    step="0.01"
+                    min="0"
+                    step={formData.operation_type === 'Compra' ? '0.00000001' : '0.01'}
                     placeholder="0.00"
                     value={formData.fee}
                     onChange={(e) => handleInputChange('fee', e.target.value)}
@@ -339,26 +378,26 @@ const Operations = ({ onOperationSaved }) => {
                     <div className="p-2 bg-blue-500/10 rounded-lg">
                       <CurrencyDollarIcon className="h-4 w-4 text-blue-400" />
                     </div>
-                    Previsión de Operación
+                    Previsión de la operación
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Cantidad Cripto:</span>
+                    <span className="text-gray-400">Cantidad en cripto:</span>
                     <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                      {previewAmountCrypto.toFixed(8)} {formData.crypto}
+                      {Number.isFinite(previewAmountCrypto) ? previewAmountCrypto.toFixed(8) + ' ' + (formData.crypto || '') : '—'}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Cantidad Fiat:</span>
+                    <span className="text-gray-400">Importe en moneda de cotización:</span>
                     <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                      {previewAmountFiat.toFixed(2)} {formData.fiat}
+                      {Number.isFinite(previewAmountFiat) ? previewAmountFiat.toFixed(2) + ' ' + (formData.fiat || '') : '—'}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Comisión:</span>
                     <Badge className="bg-gray-700 text-gray-300 border-gray-600">
-                      {previewFee.toFixed(8)} {formData.crypto || "Cripto"}
+                      {Number.isFinite(previewFee) ? previewFee.toFixed(formData.operation_type === 'Venta' ? 2 : 8) : '0.00'} {previewFeeCurrency || 'unidad'}
                     </Badge>
                   </div>
                 </CardContent>
@@ -377,7 +416,7 @@ const Operations = ({ onOperationSaved }) => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <PlusCircleIcon className="h-5 w-5" />
-                    Guardar Operación
+                    Guardar operación
                   </div>
                 )}
               </Button>

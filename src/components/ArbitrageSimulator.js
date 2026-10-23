@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { calculateCryptoArbitrage } from "../utils/financialCalculations";
 import {
   Card,
   CardHeader,
@@ -17,44 +18,8 @@ import {
 } from "./ui/select";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
-import { CalculatorIcon, ArrowPathIcon, TrashIcon, ChartBarIcon, BoltIcon } from "@heroicons/react/24/outline";
+import { CalculatorIcon, TrashIcon, ChartBarIcon, BoltIcon } from "@heroicons/react/24/outline";
 
-// Función de cálculo para la ganancia en criptomonedas
-const calculateCryptoArbitrage = (data) => {
-  const { amount, buy_price, sell_price, buy_fee, sell_fee } = data;
-  
-  // Convertimos todos los valores a números flotantes
-  const initial_investment = parseFloat(amount);
-  const sell_price_num = parseFloat(sell_price);
-  const buy_price_num = parseFloat(buy_price);
-  const buy_fee_num = parseFloat(buy_fee) / 100;
-  const sell_fee_num = parseFloat(sell_fee) / 100;
-
-  // Paso 1: Venta
-  const result1 = initial_investment * sell_price_num;
-
-  // Paso 2: Restar la comisión de venta
-  const result2 = result1 - (result1 * sell_fee_num);
-
-  // Paso 3: Comprar
-  const result3 = result2 / buy_price_num;
-
-  // Paso 4: Restar la comisión de compra
-  const final_amount = result3 - (result3 * buy_fee_num);
-  
-  // Ganancia en criptomoneda
-  const crypto_profit = final_amount - initial_investment;
-  
-  // Porcentaje de ganancia
-  const profit_percentage = (crypto_profit / initial_investment) * 100;
-
-  return {
-    investment: initial_investment,
-    revenue: final_amount,
-    profit: crypto_profit,
-    profit_percentage: profit_percentage,
-  };
-};
 
 const ArbitrageSimulator = () => {
   const [formData, setFormData] = useState({
@@ -72,38 +37,52 @@ const ArbitrageSimulator = () => {
   const [loading, setLoading] = useState(false);
 
   const cryptos = ["USDT", "USDC", "ETH", "BTC", "SOL", "BNB"];
-  const fiatCurrencies = ["USD", "EUR", "VES", "COP", "MXN", "CLP", "ARS", "BRL"];
+  const fiatCurrencies = ["USD", "USDT", "USDC", "EUR", "VES", "COP", "MXN", "CLP", "ARS", "BRL"];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    setFormData((previous) => ({ ...previous, [name]: value }));
+    // No mostrar como vigente un resultado calculado con valores anteriores.
+    setResult(null);
+    setError(null);
   };
 
   const handleSelectChange = (name, value) => {
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    setFormData((previous) => {
+      const next = { ...previous, [name]: value };
+      // Los precios dependen tanto del activo como de la moneda de cotización.
+      if (name === "crypto" && value !== previous.crypto) {
+        next.amount = "";
+        next.buy_price = "";
+        next.sell_price = "";
+      } else if (name === "fiat_currency" && value !== previous.fiat_currency) {
+        next.buy_price = "";
+        next.sell_price = "";
+      }
+      return next;
+    });
+    setResult(null);
+    setError(null);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
 
     const { amount, buy_price, sell_price, crypto, fiat_currency } = formData;
     if (!amount || !buy_price || !sell_price || !crypto || !fiat_currency) {
-      setError("Por favor, completa todos los campos obligatorios.");
+      setError("Completa todos los campos obligatorios.");
       setResult(null);
       setLoading(false);
       return;
     }
 
     try {
-      // Simular pequeña demora para mostrar estado de carga
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       const calculatedResult = calculateCryptoArbitrage(formData); 
       setResult(calculatedResult);
       setError(null);
     } catch (err) {
-      setError("Error al calcular el arbitraje. Revisa los valores.");
+      setError(err.message || "Error al calcular el arbitraje. Comprueba los importes y las comisiones.");
       setResult(null);
     } finally {
       setLoading(false);
@@ -132,10 +111,10 @@ const ArbitrageSimulator = () => {
             <BoltIcon className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-            Simulador de Arbitraje
+            Simulador de arbitraje
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Calcula oportunidades de arbitraje entre diferentes exchanges y maximiza tus ganancias
+            Simula vender tu cripto al precio de venta y recomprarla al precio de compra. El resultado muestra cuánta cripto ganas o pierdes después de ambas comisiones.
           </p>
         </div>
         
@@ -145,14 +124,14 @@ const ArbitrageSimulator = () => {
               <div className="p-2 bg-purple-500/10 rounded-lg">
                 <ChartBarIcon className="h-5 w-5 text-purple-400" />
               </div>
-              Configuración de Arbitraje
+              Configuración del arbitraje
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="crypto" className="text-gray-300 font-medium">
+                  <Label id="arb-crypto-label" htmlFor="arb-crypto" className="text-gray-300 font-medium">
                     Criptomoneda <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Select
@@ -161,8 +140,8 @@ const ArbitrageSimulator = () => {
                     onValueChange={(value) => handleSelectChange("crypto", value)}
                     disabled={loading}
                   >
-                    <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Seleccionar crypto" />
+                    <SelectTrigger id="arb-crypto" aria-labelledby="arb-crypto-label" className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                      <SelectValue placeholder="Seleccionar criptomoneda" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {cryptos.map((c) => (
@@ -179,7 +158,9 @@ const ArbitrageSimulator = () => {
                   </Label>
                   <Input
                     type="number"
+                    id="amount"
                     step="0.000001"
+                    min="0"
                     name="amount"
                     value={formData.amount}
                     onChange={handleChange}
@@ -190,14 +171,19 @@ const ArbitrageSimulator = () => {
                 </div>
               </div>
 
+              <p className="text-xs text-gray-500">
+                Los precios se expresan en {formData.fiat_currency || "la moneda de cotización"} por cada unidad de {formData.crypto || "cripto"}.
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="buy_price" className="text-gray-300 font-medium">
-                    Precio de Compra <span className="text-red-400 ml-1">*</span>
+                    Precio de Compra (recompra) <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Input
                     type="number"
+                    id="buy_price"
                     step="0.01"
+                    min="0"
                     name="buy_price"
                     value={formData.buy_price}
                     onChange={handleChange}
@@ -208,11 +194,13 @@ const ArbitrageSimulator = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sell_price" className="text-gray-300 font-medium">
-                    Precio de Venta <span className="text-red-400 ml-1">*</span>
+                    Precio de Venta (venta inicial) <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Input
                     type="number"
+                    id="sell_price"
                     step="0.01"
+                    min="0"
                     name="sell_price"
                     value={formData.sell_price}
                     onChange={handleChange}
@@ -225,8 +213,8 @@ const ArbitrageSimulator = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fiat_currency" className="text-gray-300 font-medium">
-                    Moneda Fiat <span className="text-red-400 ml-1">*</span>
+                  <Label id="arb-fiat-label" htmlFor="arb-fiat" className="text-gray-300 font-medium">
+                    Moneda de cotización <span className="text-red-400 ml-1">*</span>
                   </Label>
                   <Select
                     name="fiat_currency"
@@ -234,8 +222,8 @@ const ArbitrageSimulator = () => {
                     onValueChange={(value) => handleSelectChange("fiat_currency", value)}
                     disabled={loading}
                   >
-                    <SelectTrigger className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Seleccionar" />
+                    <SelectTrigger id="arb-fiat" aria-labelledby="arb-fiat-label" className="w-full bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                      <SelectValue placeholder="Seleccionar moneda de cotización" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
                       {fiatCurrencies.map((f) => (
@@ -250,10 +238,13 @@ const ArbitrageSimulator = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="buy_fee" className="text-gray-300 font-medium">Comisión Compra (%)</Label>
+                  <Label htmlFor="buy_fee" className="text-gray-300 font-medium">Comisión de compra (%)</Label>
                   <Input
                     type="number"
+                    id="buy_fee"
                     step="0.01"
+                    min="0"
+                    max="99.99"
                     name="buy_fee"
                     value={formData.buy_fee}
                     onChange={handleChange}
@@ -263,10 +254,13 @@ const ArbitrageSimulator = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sell_fee" className="text-gray-300 font-medium">Comisión Venta (%)</Label>
+                  <Label htmlFor="sell_fee" className="text-gray-300 font-medium">Comisión de venta (%)</Label>
                   <Input
                     type="number"
+                    id="sell_fee"
                     step="0.01"
+                    min="0"
+                    max="99.99"
                     name="sell_fee"
                     value={formData.sell_fee}
                     onChange={handleChange}
@@ -305,6 +299,8 @@ const ArbitrageSimulator = () => {
                   type="button"
                   onClick={handleClear}
                   variant="outline"
+                  aria-label="Limpiar formulario de arbitraje"
+                  title="Limpiar formulario"
                   className="border-purple-500/30 text-gray-300 hover:bg-gray-700/50 h-11 rounded-xl"
                   disabled={loading}
                 >
@@ -334,13 +330,13 @@ const ArbitrageSimulator = () => {
                 <div className="p-2 bg-blue-500/10 rounded-lg">
                   <ChartBarIcon className="h-5 w-5 text-blue-400" />
                 </div>
-                Resultados del Arbitraje
+                Resultados del arbitraje
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                  <h4 className="text-white font-medium mb-4 text-lg">Resumen de la Operación</h4>
+                  <h4 className="text-white font-medium mb-4 text-lg">Resumen de la operación</h4>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Criptomoneda:</span>
@@ -349,37 +345,55 @@ const ArbitrageSimulator = () => {
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Moneda Fiat:</span>
+                      <span className="text-gray-400">Moneda de cotización:</span>
                       <span className="text-white font-medium">{formData.fiat_currency}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Comisión Compra:</span>
-                      <span className="text-white font-medium">{formData.buy_fee}%</span>
+                      <span className="text-gray-400">Comisión de compra:</span>
+                      <span className="text-white font-medium">{formData.buy_fee}% en cripto</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Comisión Venta:</span>
-                      <span className="text-white font-medium">{formData.sell_fee}%</span>
+                      <span className="text-gray-400">Comisión de venta:</span>
+                      <span className="text-white font-medium">{formData.sell_fee}% en moneda de cotización</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                  <h4 className="text-white font-medium mb-4 text-lg">Resultados Financieros</h4>
+                  <h4 className="text-white font-medium mb-4 text-lg">Resultados financieros</h4>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Inversión Inicial:</span>
+                      <span className="text-gray-400">Cripto inicial:</span>
                       <span className="text-white font-medium">
                         {result.investment.toFixed(8)} {formData.crypto}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Retorno Final:</span>
+                      <span className="text-gray-400">Cripto final tras recomprar:</span>
                       <span className="text-white font-medium">
                         {result.revenue.toFixed(8)} {formData.crypto}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Ganancia/Pérdida:</span>
+                      <span className="text-gray-400">Venta neta en moneda de cotización:</span>
+                      <span className="text-white font-medium">
+                        {result.net_fiat_proceeds.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.fiat_currency}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Comisión de venta:</span>
+                      <span className="text-white font-medium">
+                        {result.sell_fee_fiat.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.fiat_currency}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Comisión de compra:</span>
+                      <span className="text-white font-medium">
+                        {result.buy_fee_crypto.toFixed(8)} {formData.crypto}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Ganancia/Pérdida en {formData.crypto}:</span>
                       <Badge className={`text-lg font-semibold ${
                         result.profit > 0 
                           ? "bg-green-500/20 text-green-400 border-green-500/30" 
@@ -388,9 +402,18 @@ const ArbitrageSimulator = () => {
                         {result.profit > 0 ? "+" : ""}{result.profit.toFixed(8)} {formData.crypto}
                       </Badge>
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Equivalente estimado al precio de recompra:</span>
+                      <span className={`font-medium ${result.profit_fiat_equivalent > 0 ? "text-green-400" : result.profit_fiat_equivalent < 0 ? "text-red-400" : "text-white"}`}>
+                        {result.profit_fiat_equivalent.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.fiat_currency}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Es una valoración estimada de la diferencia en cripto al precio de recompra; no es dinero fiat ya cobrado.
+                    </p>
                     <div className="border-t border-purple-500/20 pt-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-white font-medium">Rentabilidad:</span>
+                        <span className="text-white font-medium">Rentabilidad sobre cripto inicial:</span>
                         <Badge className={`text-lg font-semibold ${
                           result.profit_percentage > 0 
                             ? "bg-gradient-to-r from-green-500 to-green-600 text-white" 

@@ -2,8 +2,6 @@
 import { 
   collection, 
   addDoc, 
-  query, 
-  orderBy, 
   getDocs, 
   serverTimestamp,
   doc,
@@ -12,6 +10,8 @@ import {
   deleteDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { calculateDashboardMetrics, calculateCryptoArbitrage, getOperationDate } from "../utils/financialCalculations";
+import { simulateP2P as runP2PSimulation } from "../utils/simulations";
 
 // --- Operations CRUD ---
 
@@ -47,16 +47,19 @@ export const deleteOperation = async (userId, operationId) => {
 export const getUserOperations = async (userId) => {
   try {
     const userOperationsCollection = collection(db, "users", userId, "operations");
-    const q = query(
-      userOperationsCollection,
-      orderBy("timestamp", "desc")
-    );
-    
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    const querySnapshot = await getDocs(userOperationsCollection);
+    const operations = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
+
+    operations.sort((a, b) => {
+      const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+      const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+      return dateB - dateA;
+    });
+
+    return operations;
   } catch (error) {
     console.error("Error getting user operations:", error);
     throw error;
@@ -64,50 +67,23 @@ export const getUserOperations = async (userId) => {
 };
 
 // --- Dashboard stats calculation ---
-
+// Profit is expressed per quote-currency code and calculated from FIFO-matched sales.
+// It is intentionally not exposed as one "USDT/USD" number when the underlying
+// operations may be denominated in EUR, USD, VES, USDT, USDC, or other currencies.
 export const getDashboardStats = async (userId) => {
   try {
     const operations = await getUserOperations(userId);
-    
-    if (!operations.length) {
-      return {
-        total_operations: 0,
-        total_profit_usdt: 0.0,
-        total_profit_usd: 0.0,
-        best_operation: null,
-        worst_operation: null,
-        monthly_profit: 0.0,
-        success_rate: 0.0
-      };
-    }
+    const metrics = calculateDashboardMetrics(operations);
 
-    let totalCryptoBought = 0;
-    let totalCryptoSold = 0;
-    
-    operations.forEach(op => {
-      const cryptoAmount = parseFloat(op.crypto_amount);
-      if (isNaN(cryptoAmount)) return;
-
-      if (op.operation_type === 'Venta') {
-        totalCryptoSold += cryptoAmount;
-      } else if (op.operation_type === 'Compra') {
-        totalCryptoBought += cryptoAmount;
-      }
-    });
-
-    const totalProfitUsdt = totalCryptoBought - totalCryptoSold;
-    const totalOperations = operations.length;
-    
-    const successRate = totalProfitUsdt > 0 ? 100 : 0;
-    
     return {
-      total_operations: totalOperations,
-      total_profit_usdt: totalProfitUsdt,
-      total_profit_usd: totalProfitUsdt,
-      best_operation: null,
-      worst_operation: null,
-      monthly_profit: totalProfitUsdt,
-      success_rate: successRate
+      total_operations: metrics.totalOperations,
+      profit_by_currency: metrics.profitByCurrency,
+      monthly_profit_by_currency: metrics.monthlyProfitByCurrency,
+      best_operation_by_currency: metrics.bestOperationByCurrency,
+      worst_operation_by_currency: metrics.worstOperationByCurrency,
+      closed_sales: metrics.closedSales,
+      winning_sales: metrics.winningSales,
+      success_rate: metrics.successRate,
     };
   } catch (error) {
     console.error("Error getting dashboard stats:", error);
@@ -115,69 +91,24 @@ export const getDashboardStats = async (userId) => {
   }
 };
 
-// --- P2P Simulation (client-side calculation) ---
-
+// --- P2P Simulation (shared calculation) ---
 export const simulateP2P = (simulationData) => {
   try {
-    const { operation_type, amount, exchange_rate, fee = 0 } = simulationData;
-    
-    if (operation_type === "Venta") {
-      const grossFiat = amount * exchange_rate;
-      const netFiat = grossFiat - fee;
-      
-      return {
-        operation_type,
-        crypto: simulationData.crypto,
-        fiat: simulationData.fiat,
-        amount_sent: amount,
-        amount_received: grossFiat,
-        fee: fee,
-        net_amount: netFiat,
-        exchange_rate
-      };
-    } else {
-      const grossCrypto = amount / exchange_rate;
-      const netCrypto = grossCrypto - fee;
-      
-      return {
-        operation_type,
-        crypto: simulationData.crypto,
-        fiat: simulationData.fiat,
-        amount_sent: amount,
-        amount_received: grossCrypto,
-        fee: fee,
-        net_amount: netCrypto,
-        exchange_rate
-      };
-    }
+    return runP2PSimulation(simulationData);
   } catch (error) {
     console.error("Error in P2P simulation:", error);
     throw error;
   }
 };
 
-// --- Arbitrage Calculation (client-side calculation) ---
-
+// --- Arbitrage Calculation (shared calculation) ---
 export const simulateArbitrage = (arbitrageData) => {
   try {
-    const { amount, buy_price, sell_price, buy_fee = 0, sell_fee = 0 } = arbitrageData;
-    
-    const investment = amount * buy_price + buy_fee;
-    const revenue = amount * sell_price - sell_fee;
-    
-    const totalFees = buy_fee + sell_fee;
-    const profit = revenue - investment;
-    const profitPercentage = investment > 0 ? (profit / investment) * 100 : 0;
-    
     return {
       buy_exchange: arbitrageData.buy_exchange,
       sell_exchange: arbitrageData.sell_exchange,
       crypto: arbitrageData.crypto,
-      investment,
-      revenue,
-      total_fees: totalFees,
-      profit,
-      profit_percentage: profitPercentage
+      ...calculateCryptoArbitrage(arbitrageData),
     };
   } catch (error) {
     console.error("Error in arbitrage simulation:", error);
