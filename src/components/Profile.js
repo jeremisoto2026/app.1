@@ -200,7 +200,8 @@ export default function Profile() {
   const photoURL = asText(profileData.photoURL) || asText(user?.photoURL);
   const plan = asText(profileData.plan, "free").toLowerCase();
   const planLabel = plan === "free" ? "Plan gratuito" : plan.charAt(0).toUpperCase() + plan.slice(1);
-  const operations = Number.isFinite(operationCount) ? operationCount : 0;
+  const operationsAvailable = Number.isFinite(operationCount);
+  const operations = operationsAvailable ? operationCount : "—";
   const exports = Number.isFinite(exportCount) ? exportCount : countFromProfile(profileData);
   const memberSince = formatDate(profileData.createdAt, user?.metadata?.creationTime);
 
@@ -238,10 +239,24 @@ export default function Profile() {
         {profileError && <div role="status" className="rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-100">{profileError}</div>}
         {actionError && <div role="alert" className="rounded-xl border border-rose-400/20 bg-rose-400/5 px-4 py-3 text-sm text-rose-200">{actionError}</div>}
 
-        <section aria-label="Resumen de cuenta" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <MetricCard label="Operaciones registradas" value={operations} caption="Compras y ventas guardadas" icon={ChartBarIcon} />
-          <MetricCard label="Exportaciones realizadas" value={exports} caption="Archivos de historial generados" icon={SparklesIcon} />
-          <MetricCard label="Estado de la cuenta" value="Activa" caption="Acceso protegido por tu sesión" icon={ShieldCheckIcon} />
+        <section aria-labelledby="profile-usage-heading" className="space-y-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 id="profile-usage-heading" className="text-lg font-semibold tracking-tight text-white">Uso de tu cuenta</h2>
+              <p className="mt-1 text-sm text-slate-400">Información de uso disponible para tu sesión.</p>
+            </div>
+            <span className="text-xs text-slate-500">Datos de tu cuenta · No compartidos</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <MetricCard
+              label="Operaciones registradas"
+              value={operations}
+              caption={operationsAvailable ? "Compras y ventas guardadas" : "No se pudo consultar el historial"}
+              icon={ChartBarIcon}
+            />
+            <MetricCard label="Exportaciones realizadas" value={exports} caption="Archivos de historial generados" icon={SparklesIcon} />
+            <MetricCard label="Estado de la cuenta" value="Activa" caption="Acceso protegido por tu sesión" icon={ShieldCheckIcon} />
+          </div>
         </section>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_0.8fr]">
@@ -257,11 +272,24 @@ export default function Profile() {
               <div className="jjx-inset"><p className="jjx-field-label">Nombre</p><p className="mt-2 break-words text-sm text-slate-100">{firstName}</p></div>
               <div className="jjx-inset"><p className="jjx-field-label">Apellidos</p><p className="mt-2 break-words text-sm text-slate-100">{asText(profileData.apellido) || "No indicados"}</p></div>
               <div className="jjx-inset sm:col-span-2"><p className="jjx-field-label"><EnvelopeIcon className="mr-1 inline h-4 w-4" /> Correo electrónico</p><p className="mt-2 break-all text-sm text-slate-100">{asText(profileData.email, asText(user?.email, "No disponible"))}</p></div>
-              <div className="jjx-inset sm:col-span-2"><p className="jjx-field-label">Suscripción</p><p className="mt-2 text-sm text-slate-100">{planLabel}</p><p className="mt-1 text-xs text-slate-500">La contratación y los pagos todavía no están habilitados.</p></div>
             </div>
           </section>
 
           <aside className="space-y-6">
+            <section className="jjx-panel p-6">
+              <div className="flex items-center gap-3">
+                <span className="jjx-icon-chip"><SparklesIcon className="h-5 w-5" /></span>
+                <h2 className="text-lg font-semibold text-white">Suscripciones</h2>
+              </div>
+              <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
+                <div>
+                  <p className="text-sm font-semibold text-white">{planLabel}</p>
+                  <p className="mt-1 text-xs text-slate-400">Funciones básicas de registro y análisis.</p>
+                </div>
+                <span className="jjx-status"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Activa</span>
+              </div>
+              <p className="mt-4 text-xs leading-5 text-slate-500">La contratación de planes de pago y las suscripciones todavía no están habilitadas.</p>
+            </section>
             <section className="jjx-panel p-6">
               <div className="flex items-center gap-3">
                 <span className="jjx-icon-chip"><ShieldCheckIcon className="h-5 w-5" /></span>
