@@ -46,3 +46,14 @@ La compilación solo genera la carpeta `build`; no publica automáticamente la a
 ## Configuración y seguridad
 
 La autenticación y los datos se gestionan con Firebase; revisa que las reglas de Firestore permitan a cada usuario leer y escribir solo sus propios documentos y operaciones. La configuración cliente de Firebase es pública por diseño, pero las claves privadas y secretos nunca deben incluirse en código frontend ni en el repositorio.
+
+## Diseño y experiencia de usuario
+
+- Portada responsive con una jerarquía visual más clara, llamadas a la acción concisas y una vista previa ilustrativa que no presenta cifras ficticias como si fueran datos reales.
+- Identidad visual consistente para el espacio de trabajo: fondos oscuros sobrios, acentos violeta/azul, superficies con contraste y controles de formulario unificados.
+- Resumen financiero orientado a datos reales, estados vacíos explícitos, flujos de trabajo recomendados y accesos rápidos al registro y al historial.
+- Formularios de autenticación y edición adaptables a pantallas pequeñas, con foco de teclado visible y soporte para la preferencia de movimiento reducido.
+- Desde el historial se pueden editar las cantidades, el par de monedas, la plataforma y las comisiones de una operación. La edición vuelve a calcular importes derivados y conserva la fecha original; cambiar importes puede alterar el beneficio FIFO de ventas posteriores.
+- Metadatos de navegador actualizados y tipografía basada en fuentes del sistema para evitar una solicitud de fuente externa innecesaria.
+
+La interfaz no promete beneficios, no ejecuta órdenes de trading y no sustituye la verificación de los registros financieros. Antes de publicar se deben validar visualmente los principales flujos con una sesión real y probar los permisos de Firebase con cuentas separadas.
