@@ -3,7 +3,6 @@ import {
   ChartBarIcon,
   ArrowsRightLeftIcon,
   BoltIcon,
-  ClockIcon,
   DocumentTextIcon,
   ClockIcon,
   UserCircleIcon,
