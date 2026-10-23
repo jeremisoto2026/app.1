@@ -14,9 +14,7 @@ import {
   FaChartLine,
   FaCheck,
   FaFileAlt,
-  FaLock,
   FaMoneyBillWave,
-  FaRocket,
   FaShieldAlt,
   FaSignInAlt,
 } from "react-icons/fa";
@@ -258,7 +256,7 @@ const MainApp = () => {
               <span className="landing-brand-copy"><strong>JJXCAPITAL</strong><small>CONTROL · ANÁLISIS · CLARIDAD</small></span>
             </a>
             <p>Herramienta de organización y simulación financiera. No constituye asesoramiento de inversión.</p>
-            <a href="mailto:soporte@jjxcapital.com">Contactar con soporte</a>
+            <a href="mailto:soportejjxcapital@gmail.com">Contactar con soporte</a>
           </footer>
         </main>
 
