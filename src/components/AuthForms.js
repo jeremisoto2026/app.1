@@ -27,7 +27,10 @@ const getAuthErrorMessage = (error) => {
     "auth/popup-closed-by-user": "Cerraste la ventana de Google antes de completar el acceso.",
     "auth/cancelled-popup-request": "La solicitud de acceso con Google se canceló.",
     "auth/account-exists-with-different-credential": "Este correo ya está asociado a otro método de acceso.",
-    "auth/unauthorized-domain": "Este dominio no está autorizado para iniciar sesión con Google.",
+    "auth/operation-not-allowed": "Este método de acceso no está habilitado en Firebase Authentication. Activa Correo/contraseña o Google en la configuración del proyecto.",
+    "auth/admin-restricted-operation": "El registro público de nuevas cuentas está deshabilitado en Firebase Authentication. Actívalo para permitir que otras personas se registren.",
+    "auth/invalid-api-key": "La configuración de Firebase no es válida. Contacta con soporte.",
+    "auth/unauthorized-domain": "Este dominio no está autorizado para iniciar sesión. Añade el dominio de la aplicación en Firebase Authentication → Configuración → Dominios autorizados.",
   };
   return messages[error?.code] || "No se pudo completar el acceso. Revisa los datos e inténtalo de nuevo.";
 };
