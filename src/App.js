@@ -5,6 +5,7 @@ import NavigationBar from "./components/NavigationBar";
 import Dashboard from "./components/Dashboard";
 import P2PSimulator from "./components/P2PSimulator";
 import ArbitrageSimulator from "./components/ArbitrageSimulator";
+import ArbitrageSessions from "./components/ArbitrageSessions";
 import Operations from "./components/Operations";
 import History from "./components/History";
 import Profile from "./components/Profile";
@@ -286,6 +287,7 @@ const MainApp = () => {
           )}
           {activeTab === "p2p" && <P2PSimulator />}
           {activeTab === "arbitrage" && <ArbitrageSimulator />}
+          {activeTab === "sessions" && <ArbitrageSessions />}
           {activeTab === "operations" && <Operations />}
           {activeTab === "history" && <History />}
           {activeTab === "profile" && <Profile />}
