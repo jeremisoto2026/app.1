@@ -10,6 +10,7 @@ import {
   ChartBarSquareIcon,
   CheckCircleIcon,
   ClockIcon,
+  BoltIcon,
   CurrencyDollarIcon,
   DocumentPlusIcon,
   ShieldCheckIcon,
@@ -25,9 +26,10 @@ const emptyMetrics = {
   winningSales: 0,
 };
 
-const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
+const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbitrages }) => {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState(emptyMetrics);
+  const [activeArbitrages, setActiveArbitrages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -37,6 +39,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
     const fetchDashboard = async () => {
       if (!user) {
         setMetrics(emptyMetrics);
+        setActiveArbitrages(0);
         setError("");
         setLoading(false);
         return;
@@ -51,7 +54,18 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
           ...operationDoc.data(),
         }));
         const calculated = calculateDashboardMetrics(operations);
-        if (!cancelled) setMetrics(calculated);
+        let activeCount = 0;
+        try {
+          const sessionsSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
+          activeCount = sessionsSnapshot.docs.filter(sessionDoc => sessionDoc.data().status === "active").length;
+        } catch (sessionsError) {
+          // El fallo de lectura de sesiones no debe ocultar las métricas financieras que sí cargaron.
+          console.warn("No se pudo contar los arbitrajes activos:", sessionsError);
+        }
+        if (!cancelled) {
+          setMetrics(calculated);
+          setActiveArbitrages(activeCount);
+        }
       } catch (loadError) {
         console.error("Error al cargar el resumen:", loadError);
         if (!cancelled) setError("No se ha podido cargar el resumen. Comprueba tu conexión y vuelve a intentarlo.");
@@ -197,6 +211,16 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
             </strong>
             <p>{metrics.closedSales ? `${metrics.winningSales || 0} ventas cerradas con resultado positivo` : "Se calculará al registrar ventas cerradas"}</p>
             <span className="metric-card-foot"><ShieldCheckIcon aria-hidden="true" /> No representa una garantía futura</span>
+          </article>
+
+          <article className="dashboard-metric-card">
+            <div className="metric-card-heading">
+              <span>Arbitrajes en curso</span>
+              <span className="metric-icon metric-icon-purple"><BoltIcon aria-hidden="true" /></span>
+            </div>
+            <strong className="metric-primary-value">{activeArbitrages}</strong>
+            <p>Espacios de trabajo aún abiertos</p>
+            <button type="button" className="dashboard-text-action mt-2" onClick={onOpenArbitrages}>Gestionar arbitrajes <ArrowRightIcon aria-hidden="true" /></button>
           </article>
         </section>
 

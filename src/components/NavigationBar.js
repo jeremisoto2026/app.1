@@ -13,7 +13,7 @@ const NavigationBar = ({ activeTab, onTabChange }) => {
     { id: "dashboard", icon: ChartBarIcon, label: "Resumen", mobileLabel: "Inicio" },
     { id: "p2p", icon: ArrowsRightLeftIcon, label: "Simulador P2P", mobileLabel: "P2P" },
     { id: "arbitrage", icon: BoltIcon, label: "Arbitraje", mobileLabel: "Arbit." },
-    { id: "sessions", icon: ArrowsRightLeftIcon, label: "Sesiones", mobileLabel: "Ses." },
+    { id: "sessions", icon: BoltIcon, label: "Arbitrajes", mobileLabel: "Arbit." },
     { id: "operations", icon: DocumentTextIcon, label: "Operaciones", mobileLabel: "Oper." },
     { id: "history", icon: ClockIcon, label: "Historial", mobileLabel: "Hist." },
     { id: "profile", icon: UserCircleIcon, label: "Perfil", mobileLabel: "Perfil" },

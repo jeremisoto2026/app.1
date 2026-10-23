@@ -45,6 +45,8 @@ const PAGE_SIZE = 10;
 const History = () => {
   const { user } = useAuth();
   const [operations, setOperations] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [sessionFilter, setSessionFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [filters, setFilters] = useState({
@@ -94,6 +96,7 @@ const History = () => {
     const fetchOperations = async () => {
       if (!user) {
         setOperations([]);
+        setSessions([]);
         setFetchError("");
         setLoading(false);
         return;
@@ -109,6 +112,12 @@ const History = () => {
           id: operationDoc.id,
           ...operationDoc.data(),
         }));
+        try {
+          const sessionSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
+          if (!cancelled) setSessions(sessionSnapshot.docs.map(sessionDoc => ({ id: sessionDoc.id, ...sessionDoc.data() })));
+        } catch (sessionError) {
+          console.warn("No se pudieron cargar los nombres de arbitraje en el historial:", sessionError);
+        }
         data.sort((a, b) => {
           const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
           const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
@@ -426,9 +435,15 @@ const History = () => {
     return [...new Set(operations.map((op) => op[field]).filter(Boolean))];
   };
 
+  const sessionScopedOperations = useMemo(() => {
+    if (sessionFilter === "all") return operations;
+    if (sessionFilter === "__legacy__") return operations.filter(operation => !operation.sessionId);
+    return operations.filter(operation => operation.sessionId === sessionFilter);
+  }, [operations, sessionFilter]);
+
   const filteredOperations = useMemo(
-    () => filterOperations(operations, filters),
-    [operations, filters]
+    () => filterOperations(sessionScopedOperations, filters),
+    [sessionScopedOperations, filters]
   );
 
   const sortedOperations = useMemo(() => {
@@ -447,7 +462,7 @@ const History = () => {
   useEffect(() => {
     setBuyPage(1);
     setSellPage(1);
-  }, [filters, sortOrder]);
+  }, [filters, sortOrder, sessionFilter]);
 
   const buyOperations = sortedOperations.filter(op => op.operation_type === 'Compra');
   const sellOperations = sortedOperations.filter(op => op.operation_type === 'Venta');
@@ -461,7 +476,7 @@ const History = () => {
   }, [buyOperations.length, sellOperations.length]);
 
   const hasActiveFilters = Boolean(
-    filters.crypto || filters.fiat || filters.exchange || filters.search.trim()
+    filters.crypto || filters.fiat || filters.exchange || filters.search.trim() || sessionFilter !== "all"
   );
 
   const renderOperations = (ops, currentPage, setPage, operationLabel) => {
@@ -483,7 +498,7 @@ const History = () => {
             <button
               type="button"
               className="dashboard-text-action mt-4"
-              onClick={() => setFilters({ crypto: "", fiat: "", exchange: "", search: "" })}
+              onClick={() => { setFilters({ crypto: "", fiat: "", exchange: "", search: "" }); setSessionFilter("all"); }}
             >
               <ArrowPathIcon className="h-4 w-4" /> Limpiar filtros
             </button>
@@ -688,6 +703,7 @@ const History = () => {
                 variant="outline"
                 onClick={() => {
                   setFilters({ crypto: "", fiat: "", exchange: "", search: "" });
+                  setSessionFilter("all");
                   setSortOrder("newest");
                   setBuyPage(1);
                   setSellPage(1);
@@ -701,6 +717,19 @@ const History = () => {
           </CardHeader>
           <CardContent className="p-0">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label id="history-session-label" htmlFor="history-session" className="text-gray-300 font-medium">Arbitraje</Label>
+                <Select value={sessionFilter} onValueChange={setSessionFilter}>
+                  <SelectTrigger id="history-session" aria-labelledby="history-session-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectValue placeholder="Todos los arbitrajes" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    <SelectItem value="all">Todos los arbitrajes</SelectItem>
+                    {sessions.map(session => <SelectItem key={session.id} value={session.id}>{session.name} ({session.fiat || "EUR"} / {session.crypto || "USDT"})</SelectItem>)}
+                    <SelectItem value="__legacy__">Operaciones antiguas sin arbitraje</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label id="history-crypto-label" htmlFor="history-crypto" className="text-gray-300 font-medium">Criptomoneda</Label>
                 <Select value={filters.crypto || "__all__"} onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value === "__all__" ? "" : value }))}>

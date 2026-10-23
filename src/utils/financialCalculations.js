@@ -155,7 +155,10 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
     );
 
   datedOperations.forEach((operation) => {
-    const pairKey = `${operation._cryptoCode}/${operation._fiatCode}`;
+    // An arbitraje es una unidad contable aislada. Las operaciones antiguas sin sessionId
+    // se siguen agrupando entre sí para no perder su historial previo.
+    const sessionKey = operation.sessionId || "__legacy__";
+    const pairKey = sessionKey + "::" + operation._cryptoCode + "/" + operation._fiatCode;
     if (!inventoryByPair.has(pairKey)) inventoryByPair.set(pairKey, []);
     const lots = inventoryByPair.get(pairKey);
 

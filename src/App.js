@@ -62,6 +62,7 @@ const MainApp = () => {
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedSessionId, setSelectedSessionId] = useState("");
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -283,12 +284,16 @@ const MainApp = () => {
               onOpenProfile={() => handleTabChange("profile")}
               onOpenOperations={() => handleTabChange("operations")}
               onOpenHistory={() => handleTabChange("history")}
+              onOpenArbitrages={() => handleTabChange("sessions")}
             />
           )}
           {activeTab === "p2p" && <P2PSimulator />}
           {activeTab === "arbitrage" && <ArbitrageSimulator />}
-          {activeTab === "sessions" && <ArbitrageSessions />}
-          {activeTab === "operations" && <Operations />}
+          {activeTab === "sessions" && <ArbitrageSessions onOpenOperations={(sessionId) => {
+            setSelectedSessionId(sessionId);
+            handleTabChange("operations");
+          }} />}
+          {activeTab === "operations" && <Operations initialSessionId={selectedSessionId} onOpenArbitrages={() => handleTabChange("sessions")} />}
           {activeTab === "history" && <History />}
           {activeTab === "profile" && <Profile />}
         </SectionErrorBoundary>
