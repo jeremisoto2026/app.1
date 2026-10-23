@@ -210,6 +210,13 @@ describe("calculateCryptoArbitrage", () => {
     expect(result.profit_percentage).toBeCloseTo(7.811, 8);
   });
 
+  test("rejects arbitrage calculations that overflow the finite numeric range", () => {
+    expect(() => calculateCryptoArbitrage({
+      amount: 1e308, buy_price: 1, sell_price: 1e308,
+      buy_fee: 0, sell_fee: 0, crypto: "BTC", fiat_currency: "EUR",
+    })).toThrow(/demasiado grandes o pequeños/i);
+  });
+
   test("rejects using the same asset as the quote currency", () => {
     expect(() => calculateCryptoArbitrage({
       amount: 1,

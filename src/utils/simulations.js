@@ -7,6 +7,19 @@ const toNumber = (value) => {
   return Number.isFinite(n) ? n : NaN;
 };
 
+const assertFiniteSimulationResult = (result) => {
+  const computedValues = [result.amount_received, result.fee_amount, result.net_crypto, result.net_amount, result.exchange_rate];
+  if (
+    computedValues.some((value) => !Number.isFinite(value)) ||
+    result.amount_received <= 0 ||
+    result.net_crypto <= 0 ||
+    result.net_amount <= 0
+  ) {
+    throw new Error("Los importes son demasiado grandes o pequeños para calcularse correctamente. Reduce la cantidad o ajusta la tasa.");
+  }
+  return result;
+};
+
 export function simulateP2P({ crypto, fiat, operation_type, amount, exchange_rate, fee = 0 }) {
   const quantity = toNumber(amount);
   const rate = toNumber(exchange_rate);
@@ -38,7 +51,7 @@ export function simulateP2P({ crypto, fiat, operation_type, amount, exchange_rat
     const grossFiat = quantity * rate;
     const netFiat = netCrypto * rate;
 
-    return {
+    return assertFiniteSimulationResult({
       crypto,
       fiat,
       operation_type,
@@ -51,7 +64,7 @@ export function simulateP2P({ crypto, fiat, operation_type, amount, exchange_rat
       net_crypto: netCrypto,
       net_amount: netFiat,
       exchange_rate: rate,
-    };
+    });
   }
 
   // Se envía fiat; la comisión se descuenta de la cripto recibida.
@@ -59,7 +72,7 @@ export function simulateP2P({ crypto, fiat, operation_type, amount, exchange_rat
   const feeAmount = grossCrypto * feePercent / 100;
   const netCrypto = grossCrypto - feeAmount;
 
-  return {
+  return assertFiniteSimulationResult({
     crypto,
     fiat,
     operation_type,
@@ -72,5 +85,5 @@ export function simulateP2P({ crypto, fiat, operation_type, amount, exchange_rat
     net_crypto: netCrypto,
     net_amount: netCrypto,
     exchange_rate: rate,
-  };
+  });
 }

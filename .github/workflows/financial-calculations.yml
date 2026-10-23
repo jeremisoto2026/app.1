@@ -11,10 +11,12 @@ permissions:
 on:
   push:
     branches:
+      - main
       - fix/financial-calculations
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   test-and-build:

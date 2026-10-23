@@ -45,6 +45,18 @@ describe("simulateP2P", () => {
     })).toThrow(/deben ser distintas/i);
   });
 
+  test("rejects calculations that overflow the finite numeric range", () => {
+    expect(() => simulateP2P({
+      crypto: "USDT", fiat: "EUR", operation_type: "Venta",
+      amount: 1e308, exchange_rate: 10, fee: 0,
+    })).toThrow(/demasiado grandes o pequeños/i);
+
+    expect(() => simulateP2P({
+      crypto: "USDT", fiat: "EUR", operation_type: "Compra",
+      amount: 1e308, exchange_rate: 1e-308, fee: 0,
+    })).toThrow(/demasiado grandes o pequeños/i);
+  });
+
   test("rejects invalid inputs and impossible fees", () => {
     expect(() => simulateP2P({
       crypto: "USDT",
