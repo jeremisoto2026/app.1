@@ -36,6 +36,8 @@ jest.mock("firebase/firestore", () => ({
   }),
 }));
 
+const firestoreMocks = jest.requireMock("firebase/firestore");
+
 describe("Profile", () => {
   let Profile;
   let container;
@@ -53,6 +55,25 @@ describe("Profile", () => {
 
   beforeEach(() => {
     consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    firestoreMocks.getDoc.mockReset();
+    firestoreMocks.getDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        nombre: "Persona",
+        apellido: "Prueba",
+        email: "persona@example.com",
+        plan: "free",
+        exportsUsed: 0,
+        createdAt: { toDate: () => new Date("2024-01-01T00:00:00.000Z") },
+      }),
+    });
+    firestoreMocks.getDocs.mockReset();
+    firestoreMocks.getDocs.mockResolvedValue({ size: 2 });
+    firestoreMocks.onSnapshot.mockReset();
+    firestoreMocks.onSnapshot.mockImplementation((_ref, onNext) => {
+      onNext({ exists: () => true, data: () => ({ exportsUsed: 0 }) });
+      return () => {};
+    });
     container = document.createElement("div");
     document.body.appendChild(container);
     act(() => {
@@ -73,7 +94,21 @@ describe("Profile", () => {
 
     expect(container.textContent).toContain("Información del perfil");
     expect(container.textContent).toContain("Uso de tu cuenta");
+    expect(container.textContent).toContain("Operaciones registradas");
+    expect(container.textContent).toContain("2");
     expect(container.textContent).toContain("Suscripciones");
     expect(container.textContent).toContain("Contactar con soporte");
+  });
+
+  test("keeps the profile visible when the operation counter cannot load", async () => {
+    firestoreMocks.getDocs.mockRejectedValueOnce(new Error("Permission denied"));
+
+    await act(async () => {
+      root.render(<Profile />);
+    });
+
+    expect(container.textContent).toContain("Información del perfil");
+    expect(container.textContent).toContain("No se pudo consultar el historial");
+    expect(container.textContent).toContain("Suscripciones");
   });
 });
