@@ -1258,3 +1258,54 @@ input:focus, select:focus, textarea:focus {
   .dashboard-metric-card { padding: 12px; }
   .metric-primary-value { font-size: 23px; }
 }
+
+
+
+/* Auth modal and remaining workspace details. */
+.jjx-auth-overlay { background: rgba(4,7,14,.82) !important; backdrop-filter: blur(14px) !important; }
+.jjx-auth-modal {
+  border: 1px solid rgba(148,163,184,.21) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(150deg, #121b2d, #0b111e 76%) !important;
+  box-shadow: 0 35px 100px rgba(0,0,0,.55) !important;
+}
+.jjx-auth-modal h3 { font-size: clamp(26px,4vw,34px) !important; letter-spacing: -.05em; }
+.jjx-auth-modal form { gap: 17px !important; }
+.jjx-auth-modal input:not([type="checkbox"]):not([type="radio"]) {
+  min-height: 45px;
+  border-radius: 10px !important;
+  border-color: rgba(148,163,184,.23) !important;
+  background: #0b1220 !important;
+  color: #eef2fa !important;
+}
+.jjx-auth-modal input::placeholder { color: #69778e !important; }
+.jjx-auth-modal button { border-radius: 10px; }
+.jjx-auth-modal button:hover { box-shadow: 0 8px 22px rgba(99,102,241,.15); }
+.app-shell .min-h-screen.bg-black { min-height: auto !important; background: transparent !important; }
+.app-shell .bg-gradient-to-r[class*="from-indigo-800"] {
+  background: linear-gradient(115deg, rgba(77,72,150,.68), rgba(31,72,120,.52)) !important;
+  border: 1px solid rgba(148,163,184,.18);
+}
+.app-shell [class*="rounded-3xl"][class*="bg-gradient-to-br"][class*="from-purple-600"] {
+  box-shadow: 0 10px 26px rgba(72,83,185,.13);
+}
+.app-shell [role="dialog"] {
+  border-color: rgba(129,140,248,.25) !important;
+  background: linear-gradient(145deg,#141d2e,#0d1422) !important;
+}
+.app-shell table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.app-shell th { color: #b9c4d6; font-weight: 700; }
+.app-shell td, .app-shell th { border-color: rgba(148,163,184,.12); }
+.app-shell ::-webkit-scrollbar-thumb { background: #4c548d; }
+.app-shell ::-webkit-scrollbar-thumb:hover { background: #686cc0; }
+@media (max-width: 767px) {
+  .app-shell nav[aria-label="Navegación principal"] {
+    bottom: max(9px, env(safe-area-inset-bottom)) !important;
+    width: calc(100% - 18px) !important;
+    border-radius: 17px !important;
+  }
+  .app-shell nav[aria-label="Navegación principal"] > div { gap: 2px !important; padding: 6px !important; }
+  .app-shell nav[aria-label="Navegación principal"] button { padding: 8px 2px !important; border-radius: 10px !important; }
+  .app-shell nav[aria-label="Navegación principal"] button svg { width: 19px; height: 19px; }
+  .app-shell nav[aria-label="Navegación principal"] button span.truncate { font-size: 9px; letter-spacing: -.02em; }
+}
