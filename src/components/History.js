@@ -829,6 +829,7 @@ const History = () => {
               <h2 className="text-2xl font-bold text-green-400 mb-4 flex items-center">
                 <div className="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
                 Compras
+                <span className="history-section-count" aria-label={`${buyOperations.length} compras`}>{buyOperations.length}</span>
               </h2>
               <div className="grid gap-4">
                 {renderOperations(buyOperations, buyPage, setBuyPage, "compras registradas")}
@@ -839,6 +840,7 @@ const History = () => {
               <h2 className="text-2xl font-bold text-red-400 mb-4 flex items-center">
                 <div className="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
                 Ventas
+                <span className="history-section-count" aria-label={`${sellOperations.length} ventas`}>{sellOperations.length}</span>
               </h2>
               <div className="grid gap-4">
                 {renderOperations(sellOperations, sellPage, setSellPage, "ventas registradas")}
