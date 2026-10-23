@@ -25,7 +25,8 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
@@ -648,18 +649,34 @@ const History = () => {
         {/* Filtros */}
         <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
           <CardHeader className="p-0 mb-6 border-b border-purple-500/10 pb-4">
-            <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-lg">
-                <FunnelIcon className="h-5 w-5 text-purple-400" />
-              </div>
-              Filtros y búsqueda
-            </CardTitle>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <FunnelIcon className="h-5 w-5 text-purple-400" />
+                </div>
+                Filtros y búsqueda
+              </CardTitle>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setFilters({ crypto: "", fiat: "", exchange: "", search: "" });
+                  setSortOrder("newest");
+                  setBuyPage(1);
+                  setSellPage(1);
+                }}
+                className="h-9 rounded-lg bg-transparent border-purple-500/20 text-gray-300 hover:text-white"
+              >
+                <ArrowPathIcon className="h-4 w-4 mr-2" />
+                Limpiar filtros
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label id="history-crypto-label" htmlFor="history-crypto" className="text-gray-300 font-medium">Criptomoneda</Label>
-                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value === "__all__" ? "" : value }))}>
+                <Select value={filters.crypto || "__all__"} onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value === "__all__" ? "" : value }))}>
                   <SelectTrigger id="history-crypto" aria-labelledby="history-crypto-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las criptomonedas" />
                   </SelectTrigger>
@@ -676,7 +693,7 @@ const History = () => {
 
               <div className="space-y-2">
                 <Label id="history-fiat-label" htmlFor="history-fiat" className="text-gray-300 font-medium">Moneda de cotización</Label>
-                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, fiat: value === "__all__" ? "" : value }))}>
+                <Select value={filters.fiat || "__all__"} onValueChange={(value) => setFilters((previous) => ({ ...previous, fiat: value === "__all__" ? "" : value }))}>
                   <SelectTrigger id="history-fiat" aria-labelledby="history-fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las monedas de cotización" />
                   </SelectTrigger>
@@ -693,7 +710,7 @@ const History = () => {
 
               <div className="space-y-2">
                 <Label id="history-exchange-label" htmlFor="history-exchange" className="text-gray-300 font-medium">Plataforma</Label>
-                <Select onValueChange={(value) => setFilters((previous) => ({ ...previous, exchange: value === "__all__" ? "" : value }))}>
+                <Select value={filters.exchange || "__all__"} onValueChange={(value) => setFilters((previous) => ({ ...previous, exchange: value === "__all__" ? "" : value }))}>
                   <SelectTrigger id="history-exchange" aria-labelledby="history-exchange-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Todas las plataformas" />
                   </SelectTrigger>
@@ -729,6 +746,7 @@ const History = () => {
                     id="history-search"
                     aria-label="Buscar operaciones"
                     placeholder="Buscar por orden, criptomoneda o plataforma..."
+                    value={filters.search}
                     onChange={(e) => setFilters((previous) => ({ ...previous, search: e.target.value }))}
                     className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl pl-10"
                   />
