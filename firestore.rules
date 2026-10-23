@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function validUserCreate(userId) {
+      return request.resource.data.keys().hasAll([
+          'uid', 'email', 'plan', 'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'nombre', 'apellido', 'photoURL',
+          'plan', 'exportsUsed', 'createdAt', 'usage', 'preferences'
+        ])
+        && request.resource.data.uid == userId
+        && request.resource.data.plan == 'free';
+    }
+
+    function validUserUpdate(userId) {
+      return request.resource.data.get('uid', userId) == userId
+        && request.resource.data.get('plan', resource.data.get('plan', null))
+          == resource.data.get('plan', null)
+        && request.resource.data.get('createdAt', resource.data.get('createdAt', null))
+          == resource.data.get('createdAt', null)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'uid', 'email', 'nombre', 'apellido', 'photoURL',
+          'exportsUsed', 'usage', 'preferences'
+        ]);
+    }
+
+    match /users/{userId} {
+      // Cada usuario puede leer su propio perfil, pero no enumerar otros perfiles.
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && validUserCreate(userId);
+      allow update: if isOwner(userId) && validUserUpdate(userId);
+      // La aplicación no ofrece eliminación de cuenta desde el perfil.
+      allow delete: if false;
+
+      match /operations/{operationId} {
+        // Las compras y ventas son privadas y solo accesibles por su propietario.
+        allow read, create, update, delete: if isOwner(userId);
+      }
+    }
+
+    // Denegar de forma predeterminada cualquier otra colección o documento.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
