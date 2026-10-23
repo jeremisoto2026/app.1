@@ -8,6 +8,7 @@ import ArbitrageSimulator from "./components/ArbitrageSimulator";
 import Operations from "./components/Operations";
 import History from "./components/History";
 import Profile from "./components/Profile";
+import SectionErrorBoundary from "./components/SectionErrorBoundary";
 import {
   FaArrowRight,
   FaCalculator,
@@ -98,7 +99,7 @@ const MainApp = () => {
             </span>
           </a>
           <div className="landing-header-actions">
-            <span className="landing-header-note"><span className="status-dot" /> Espacio de trabajo personal</span>
+            <span className="landing-header-note"><span className="status-dot" /> Acceso público · cuenta propia</span>
             <button className="landing-button landing-button-quiet" type="button" onClick={() => openAuth("login")}>
               <FaSignInAlt aria-hidden="true" />
               Iniciar sesión
@@ -275,18 +276,20 @@ const MainApp = () => {
   return (
     <div className="app-shell">
       <main className="app-content">
-        {activeTab === "dashboard" && (
-          <Dashboard
-            onOpenProfile={() => handleTabChange("profile")}
-            onOpenOperations={() => handleTabChange("operations")}
-            onOpenHistory={() => handleTabChange("history")}
-          />
-        )}
-        {activeTab === "p2p" && <P2PSimulator />}
-        {activeTab === "arbitrage" && <ArbitrageSimulator />}
-        {activeTab === "operations" && <Operations />}
-        {activeTab === "history" && <History />}
-        {activeTab === "profile" && <Profile />}
+        <SectionErrorBoundary key={activeTab} onReturn={() => handleTabChange("dashboard")}>
+          {activeTab === "dashboard" && (
+            <Dashboard
+              onOpenProfile={() => handleTabChange("profile")}
+              onOpenOperations={() => handleTabChange("operations")}
+              onOpenHistory={() => handleTabChange("history")}
+            />
+          )}
+          {activeTab === "p2p" && <P2PSimulator />}
+          {activeTab === "arbitrage" && <ArbitrageSimulator />}
+          {activeTab === "operations" && <Operations />}
+          {activeTab === "history" && <History />}
+          {activeTab === "profile" && <Profile />}
+        </SectionErrorBoundary>
       </main>
       <NavigationBar activeTab={activeTab} onTabChange={handleTabChange} />
       {showAuth && (
