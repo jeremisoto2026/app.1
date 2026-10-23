@@ -1,347 +1,271 @@
-import React, { useState, useEffect } from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import AuthForms from './components/AuthForms';
-import NavigationBar from './components/NavigationBar';
-import Dashboard from './components/Dashboard';
-import P2PSimulator from './components/P2PSimulator';
-import ArbitrageSimulator from './components/ArbitrageSimulator';
-import Operations from './components/Operations';
-import History from './components/History';
-import Profile from './components/Profile';
-import { FaSignInAlt, FaRocket, FaChartLine, FaLock, FaCheck, FaFileAlt, FaCalculator, FaMoneyBillWave, FaArrowRight } from 'react-icons/fa';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import AuthForms from "./components/AuthForms";
+import NavigationBar from "./components/NavigationBar";
+import Dashboard from "./components/Dashboard";
+import P2PSimulator from "./components/P2PSimulator";
+import ArbitrageSimulator from "./components/ArbitrageSimulator";
+import Operations from "./components/Operations";
+import History from "./components/History";
+import Profile from "./components/Profile";
+import {
+  FaArrowRight,
+  FaCalculator,
+  FaChartLine,
+  FaCheck,
+  FaFileAlt,
+  FaLock,
+  FaMoneyBillWave,
+  FaRocket,
+  FaShieldAlt,
+  FaSignInAlt,
+} from "react-icons/fa";
+import "./App.css";
 
+const features = [
+  {
+    number: "01",
+    icon: FaMoneyBillWave,
+    title: "Operaciones bajo control",
+    description:
+      "Registra compras y ventas con cantidades, precios, plataforma y comisiones claramente identificados.",
+    tag: "REGISTRO MANUAL",
+  },
+  {
+    number: "02",
+    icon: FaChartLine,
+    title: "Resultados comprensibles",
+    description:
+      "Consulta el beneficio realizado por moneda y separa los importes en USD, USDT, EUR y otras divisas.",
+    tag: "CÁLCULO FIFO",
+  },
+  {
+    number: "03",
+    icon: FaCalculator,
+    title: "Simula antes de actuar",
+    description:
+      "Evalúa operaciones P2P y escenarios de arbitraje con sus comisiones, sin ejecutar órdenes.",
+    tag: "SIMULACIÓN",
+  },
+  {
+    number: "04",
+    icon: FaFileAlt,
+    title: "Historial exportable",
+    description:
+      "Busca, filtra y descarga tus registros para revisarlos o analizarlos en una hoja de cálculo.",
+    tag: "EXPORTACIÓN CSV",
+  },
+];
 
 const MainApp = () => {
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleShowAuth = (mode) => {
-    setShowAuth(mode);
-  };
-
-  const handleCloseAuth = () => {
-    setShowAuth(null);
-  };
-
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    // Evita que la nueva pantalla se abra en el scroll que dejó la pestaña anterior.
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  };
-
   useEffect(() => {
-    // Tras cerrar sesión, la siguiente sesión siempre empieza en el resumen.
     if (!user) setActiveTab("dashboard");
   }, [user?.uid]);
 
-  const premiumFeatures = [
-    {
-      icon: <FaMoneyBillWave className="text-5xl" />,
-      title: "Registro de operaciones P2P",
-      description: "Registra manualmente compras y ventas, con cantidades, tasas de cambio y comisiones.",
-      benefits: ["Registro manual", "Importes claros", "Comisiones identificadas", "Historial de operaciones"],
-      gradient: "from-purple-600 to-blue-600",
-      stats: ["REGISTRO", "MANUAL", ""]
-    },
-    {
-      icon: <FaCalculator className="text-5xl" />,
-      title: "Simulador de arbitraje",
-      description: "Compara un precio de venta con un precio de recompra y estima el resultado tras las comisiones.",
-      benefits: ["Precio de venta", "Precio de recompra", "Comisiones incluidas", "Resultado en cripto"],
-      gradient: "from-blue-600 to-cyan-600",
-      stats: ["SIMULACIÓN", "", ""]
-    },
-    {
-      icon: <FaFileAlt className="text-5xl" />,
-      title: "Exportación del historial",
-      description: "Descarga las operaciones en un archivo CSV para revisarlas o trabajarlas en una hoja de cálculo.",
-      benefits: ["Exportación CSV", "Filtro por fechas", "Datos descargables", "Orden cronológico"],
-      gradient: "from-cyan-600 to-purple-600",
-      stats: ["CSV", "HISTORIAL", ""]
-    },
-    {
-      icon: <FaChartLine className="text-5xl" />,
-      title: "Resumen de resultados",
-      description: "Consulta las operaciones registradas, el beneficio realizado por moneda y la tasa de éxito.",
-      benefits: ["Total de operaciones", "Beneficio por moneda", "Tasa de éxito", "Últimos 30 días"],
-      gradient: "from-purple-600 to-pink-600",
-      stats: ["FIFO", "COSTE CONOCIDO", ""]
-    }
-  ];
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
 
-  const problemSolutions = [
-    {
-      target: "PARA QUIEN OPERA",
-      problem: "Arbitrar requiere controlar cantidades, precios y comisiones.",
-      solution: "Registra las operaciones y consulta sus importes y costes.",
-      icon: "🎯",
-      color: "from-purple-600 to-blue-600"
-    },
-    {
-      target: "PARA QUIEN ANALIZA",
-      problem: "A menudo hay que revisar muchas operaciones después de ejecutarlas.",
-      solution: "Filtra el historial y exporta los registros a CSV.",
-      icon: "📊",
-      color: "from-blue-600 to-cyan-600"
-    },
-    {
-      target: "PARA QUIEN ORGANIZA",
-      problem: "Las cantidades deben revisarse en su unidad correcta.",
-      solution: "Consulta cada importe con el código de moneda correspondiente.",
-      icon: "🧾",
-      color: "from-cyan-600 to-purple-600"
-    }
-  ];
-
-  const eliteStats = [
-    { value: "P2P", label: "Registro de operaciones", sublabel: "Compras y ventas" },
-    { value: "FIFO", label: "Cálculo de beneficio", sublabel: "Con coste de compra conocido" },
-    { value: "CSV", label: "Exportación", sublabel: "Historial descargable" },
-    { value: "USD · EUR · VES", label: "Monedas separadas", sublabel: "Y otras monedas, siempre separadas" }
-  ];
+  const openAuth = (mode) => setShowAuth(mode);
+  const closeAuth = () => setShowAuth(null);
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black relative overflow-hidden">
-        {/* Enhanced Background Effects */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-purple-900/40 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 w-full h-96 bg-gradient-to-t from-blue-900/40 to-transparent"></div>
-          
-          {/* Floating Orbs */}
-          <div className="absolute top-20 left-10 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
-          <div className="absolute bottom-20 left-1/3 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl animate-pulse delay-4000"></div>
-          
-          {/* Animated Grid */}
-          <div className="absolute inset-0 opacity-[0.02]">
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(124,58,237,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(124,58,237,0.1)_1px,transparent_1px)] bg-[size:6rem_6rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]"></div>
-          </div>
-
-          {/* Floating Particles */}
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full animate-float"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 10}s`,
-                animationDuration: `${20 + Math.random() * 10}s`
-              }}
-            />
-          ))}
+      <div className="jjx-landing">
+        <div className="landing-atmosphere" aria-hidden="true">
+          <span className="landing-orb landing-orb-one" />
+          <span className="landing-orb landing-orb-two" />
+          <span className="landing-grid" />
         </div>
 
-        {/* Premium Header - SIN BOTÓN DEMO */}
-        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled ? 'bg-black/90 backdrop-blur-2xl border-b border-purple-500/30 py-3' : 'bg-transparent py-6'
-        }`}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex items-center justify-center"> {/* Centrado */}
-              {/* Logo */}
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-purple-500/40">
-                  <span className="text-2xl">⚡</span>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                    JJXCAPITAL
-                  </h1>
-                  <p className="text-xs text-gray-400">Gestión de operaciones P2P</p>
-                </div>
-              </div>
-            </div>
+        <header className={\`landing-header \${scrolled ? "landing-header-scrolled" : ""}\`}>
+          <a className="landing-brand" href="#inicio" aria-label="JJXCAPITAL, inicio">
+            <span className="landing-brand-mark" aria-hidden="true">J</span>
+            <span className="landing-brand-copy">
+              <strong>JJXCAPITAL</strong>
+              <small>CONTROL · ANÁLISIS · CLARIDAD</small>
+            </span>
+          </a>
+          <div className="landing-header-actions">
+            <span className="landing-header-note"><span className="status-dot" /> Espacio de trabajo personal</span>
+            <button className="landing-button landing-button-quiet" type="button" onClick={() => openAuth("login")}>
+              <FaSignInAlt aria-hidden="true" />
+              Iniciar sesión
+            </button>
           </div>
         </header>
 
-        {/* Main Content */}
-        <div className="relative z-10 min-h-screen flex items-center justify-center pt-24 pb-20 px-4">
-          <div className="max-w-7xl mx-auto w-full">
-            
-            {/* Hero Section */}
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-600 rounded-3xl mb-8 shadow-2xl shadow-purple-500/40 animate-pulse-glow">
-                <span className="text-6xl">⚡</span>
+        <main id="inicio" className="landing-main">
+          <section className="landing-hero">
+            <div className="landing-hero-copy">
+              <div className="landing-eyebrow">
+                <span className="eyebrow-line" />
+                GESTIÓN DE OPERACIONES CRIPTO
               </div>
-              
-              <h1 className="text-7xl lg:text-8xl font-black bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mb-4 tracking-tighter leading-none">
-                JJXCAPITAL
+              <h1>
+                Tus operaciones.
+                <br />
+                <span>Tu visión.</span>
+                <br />
+                Todo en orden.
               </h1>
-              
-              <h2 className="text-4xl lg:text-5xl text-white font-light mb-6 max-w-4xl mx-auto leading-tight">
-                Plataforma para{' '}
-                <span className="text-blue-400 font-bold">Gestión de operaciones P2P</span>
-              </h2>
-              
-              <p className="text-2xl lg:text-3xl text-gray-300 font-light mb-12 max-w-5xl mx-auto leading-relaxed">
-                Registra tus compras y ventas, consulta tu historial y calcula los resultados con las cantidades y comisiones que introduces.
+              <p className="landing-lead">
+                Una forma más clara de registrar, revisar y analizar tus operaciones P2P y escenarios de arbitraje.
+                Sin ruido. Con los datos en su moneda correcta.
               </p>
-            </div>
 
-            {/* Auth Buttons Section - POSICIONADO ARRIBA DE LAS TARJETAS */}
-            <div className="text-center mb-16">
-              <div className="bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-3xl p-8 border-2 border-purple-500/30 backdrop-blur-sm mb-8">
-                <h3 className="text-3xl font-bold text-white mb-6">
-                  Comienza tu <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">recorrido profesional</span>
-                </h3>
-                
-                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-4">
-                  <button 
-                    onClick={() => handleShowAuth('register')} aria-label="Abrir registro"
-                    className="group relative bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-black text-lg py-5 px-12 rounded-2xl transition-all duration-300 shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 transform hover:scale-105 flex items-center gap-4"
-                  >
-                    <FaRocket className="text-xl animate-bounce" />
-                    <span>REGÍSTRATE GRATIS</span>
-                    <FaArrowRight className="text-lg group-hover:translate-x-1 transition-transform duration-300" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
-                  </button>
-
-                  <button 
-                    onClick={() => handleShowAuth('login')} aria-label="Abrir inicio de sesión"
-                    className="group bg-transparent hover:bg-white/10 text-white font-semibold text-lg py-5 px-12 rounded-2xl transition-all duration-300 border-2 border-purple-500/40 hover:border-purple-500/60 backdrop-blur-sm flex items-center gap-4"
-                  >
-                    <FaSignInAlt className="text-xl" />
-                    <span>INICIAR SESIÓN</span>
-                  </button>
-                </div>
-                
-                <p className="text-gray-400 text-sm">
-                  ✅ <span className="text-green-400">Crea tu cuenta y empieza</span> • Sin tarjetas de crédito • Acceso inmediato
-                </p>
-              </div>
-            </div>
-
-            {/* Problem Solutions Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
-              {problemSolutions.map((solution, index) => (
-                <div key={index} className={`bg-gradient-to-br ${solution.color} rounded-3xl p-8 border-2 border-white/10 backdrop-blur-sm transform hover:scale-105 transition-all duration-500 group relative overflow-hidden`}>
-                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative z-10">
-                    <div className="text-5xl mb-4">{solution.icon}</div>
-                    <h3 className="text-2xl font-bold text-white mb-4">{solution.target}</h3>
-                    <p className="text-gray-200 mb-3 text-lg">
-                      {solution.problem}
-                    </p>
-                    <p className="text-white font-semibold text-lg bg-black/30 px-3 py-2 rounded-lg">
-                      {solution.solution}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Premium Features Grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-16">
-              {premiumFeatures.map((feature, index) => (
-                <div 
-                  key={index}
-                  className="group relative bg-gradient-to-br from-gray-900/80 to-black/80 rounded-3xl p-8 border-2 border-purple-500/20 hover:border-purple-400/40 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20 backdrop-blur-sm"
+              <div className="landing-hero-actions">
+                <button
+                  className="landing-button landing-button-primary"
+                  type="button"
+                  onClick={() => openAuth("register")}
+                  aria-label="Crear una cuenta gratis"
                 >
-                  {/* Animated Gradient Border */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-                  
-                  {/* Stats Badge */}
-                  <div className="absolute -top-3 -right-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl px-4 py-2 text-white font-bold text-sm shadow-2xl">
-                    {feature.stats[0]} {feature.stats[1]}
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="relative z-10">
-                    <div className="flex items-start gap-6 mb-6">
-                      <div className="p-4 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                        {feature.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-black text-white mb-3">{feature.title}</h3>
-                        <p className="text-gray-300 text-lg leading-relaxed mb-4">{feature.description}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Benefits */}
-                    <div className="grid grid-cols-2 gap-3">
-                      {feature.benefits.map((benefit, benefitIndex) => (
-                        <span key={benefitIndex} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-xl text-sm text-purple-300 border border-purple-400/20">
-                          <FaCheck className="text-purple-400 text-xs" />
-                          {benefit}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Elite Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-              {eliteStats.map((stat, index) => (
-                <div key={index} className="text-center bg-gradient-to-br from-gray-900/50 to-black/50 rounded-3xl p-6 border border-purple-500/20 backdrop-blur-sm transform hover:scale-105 transition-all duration-500 group">
-                  <div className={`${String(stat.value).length > 8 ? "text-xl lg:text-2xl" : "text-4xl lg:text-5xl"} font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2` }>
-                    {stat.value}
-                  </div>
-                  <div className="text-lg font-bold text-white mb-1">{stat.label}</div>
-                  <div className="text-sm text-gray-400">{stat.sublabel}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Final CTA */}
-            <div className="text-center">
-              <div className="bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-cyan-600/10 rounded-3xl p-12 border-2 border-purple-500/30 backdrop-blur-sm">
-                <h2 className="text-4xl font-black text-white mb-6">
-                  ¿Listo para <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">organizar tus operaciones P2P</span>?
-                </h2>
-                <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                  Organiza compras y ventas, consulta resultados registrados y exporta el historial.
-                </p>
-                
-                <button 
-                  onClick={() => handleShowAuth('register')} aria-label="Crear una cuenta gratis"
-                  className="group relative bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-black text-lg py-5 px-16 rounded-2xl transition-all duration-300 shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 transform hover:scale-105 mx-auto"
+                  Crear cuenta gratis
+                  <FaArrowRight aria-hidden="true" />
+                </button>
+                <button
+                  className="landing-button landing-button-secondary"
+                  type="button"
+                  onClick={() => openAuth("login")}
                 >
-                  <div className="flex items-center justify-center gap-4">
-                    <FaRocket className="text-xl" />
-                    <span>COMENZAR GRATIS</span>
-                  </div>
+                  Ya tengo una cuenta
                 </button>
               </div>
 
-              {/* Security Badges */}
-              <div className="flex flex-wrap justify-center items-center gap-6 text-base text-gray-400 mt-12">
-                <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-purple-500/20">
-                  <FaLock className="text-purple-400 text-xl" />
-                  <span>Inicio de sesión con Firebase</span>
-                </div>
-                <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-blue-500/20">
-                  <FaFileAlt className="text-blue-400 text-xl" />
-                  <span>Historial y exportación CSV</span>
-                </div>
-                <div className="flex items-center gap-3 bg-black/40 px-5 py-3 rounded-2xl border border-cyan-500/20">
-                  <FaArrowRight className="text-cyan-400 text-xl" />
-                  <span>Soporte por correo</span>
-                </div>
+              <div className="landing-assurances">
+                <span><FaCheck aria-hidden="true" /> Registro manual y transparente</span>
+                <span><FaCheck aria-hidden="true" /> Sin órdenes automáticas</span>
+                <span><FaCheck aria-hidden="true" /> Historial descargable</span>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Auth Modal */}
+            <div className="landing-preview-wrap">
+              <div className="landing-preview-glow" aria-hidden="true" />
+              <section className="landing-preview" aria-label="Vista previa del panel de la aplicación">
+                <div className="preview-topbar">
+                  <div className="preview-brand">
+                    <span className="preview-brand-mark">J</span>
+                    <span><strong>JJXCAPITAL</strong><small>RESUMEN DE CUENTA</small></span>
+                  </div>
+                  <span className="preview-pill"><span className="status-dot" /> Vista previa</span>
+                </div>
+                <div className="preview-welcome">
+                  <div>
+                    <span className="preview-overline">TU ACTIVIDAD, DE UN VISTAZO</span>
+                    <h2>Panel financiero</h2>
+                    <p>Una vista organizada de tus registros.</p>
+                  </div>
+                  <span className="preview-spark" aria-hidden="true"><FaChartLine /></span>
+                </div>
+                <div className="preview-metrics">
+                  <div className="preview-metric preview-metric-featured">
+                    <span>Beneficio realizado</span>
+                    <strong>—</strong>
+                    <small>Por moneda · cálculo FIFO</small>
+                  </div>
+                  <div className="preview-metric">
+                    <span>Operaciones</span>
+                    <strong>—</strong>
+                    <small>Registros guardados</small>
+                  </div>
+                </div>
+                <div className="preview-section-heading">
+                  <span>ÁREAS DE TRABAJO</span>
+                  <span>04 módulos</span>
+                </div>
+                <div className="preview-module-list">
+                  <div className="preview-module"><span className="module-icon module-purple"><FaMoneyBillWave /></span><span><strong>Operaciones</strong><small>Compras y ventas</small></span><FaArrowRight className="module-arrow" /></div>
+                  <div className="preview-module"><span className="module-icon module-blue"><FaCalculator /></span><span><strong>Simuladores</strong><small>P2P y arbitraje</small></span><FaArrowRight className="module-arrow" /></div>
+                  <div className="preview-module"><span className="module-icon module-teal"><FaChartLine /></span><span><strong>Historial</strong><small>Filtros y exportación</small></span><FaArrowRight className="module-arrow" /></div>
+                </div>
+                <p className="preview-disclaimer">Vista ilustrativa · No representa datos de una cuenta real</p>
+              </section>
+              <div className="landing-preview-caption"><span className="caption-lock"><FaLock aria-hidden="true" /></span> Diseñado para mantener cada operación clara y trazable.</div>
+            </div>
+          </section>
+
+          <section className="landing-principles" aria-label="Principios de JJXCAPITAL">
+            <div className="principle-item">
+              <span className="principle-number">01</span>
+              <div><strong>Claridad financiera</strong><p>USD, USDT y EUR no se mezclan como si fueran la misma moneda.</p></div>
+            </div>
+            <div className="principle-item">
+              <span className="principle-number">02</span>
+              <div><strong>Decisiones informadas</strong><p>Simula resultados y revisa las comisiones antes de sacar conclusiones.</p></div>
+            </div>
+            <div className="principle-item">
+              <span className="principle-number">03</span>
+              <div><strong>Control de tus datos</strong><p>Consulta tus registros y exporta el historial cuando lo necesites.</p></div>
+            </div>
+          </section>
+
+          <section className="landing-features" id="funciones">
+            <div className="landing-section-heading">
+              <span className="landing-eyebrow"><span className="eyebrow-line" /> TODO LO ESENCIAL, BIEN ORGANIZADO</span>
+              <h2>Herramientas para trabajar<br /><span>con más perspectiva.</span></h2>
+              <p>Funciones concretas para entender tus operaciones, sin prometer automatizaciones ni resultados que la plataforma no ofrece.</p>
+            </div>
+            <div className="landing-feature-grid">
+              {features.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <article className="landing-feature-card" key={feature.number}>
+                    <div className="feature-card-top">
+                      <span className="feature-icon"><Icon aria-hidden="true" /></span>
+                      <span className="feature-number">{feature.number}</span>
+                    </div>
+                    <span className="feature-tag">{feature.tag}</span>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                    <span className="feature-bottom-line" aria-hidden="true" />
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="landing-cta">
+            <div className="cta-emblem"><FaShieldAlt aria-hidden="true" /></div>
+            <div className="cta-copy">
+              <span className="landing-eyebrow"><span className="eyebrow-line" /> EMPIEZA CON ORDEN</span>
+              <h2>Todo empieza con<br /><span>un buen registro.</span></h2>
+              <p>Crea tu cuenta y organiza tus operaciones desde un espacio de trabajo claro y accesible.</p>
+            </div>
+            <div className="cta-actions">
+              <button className="landing-button landing-button-primary" type="button" onClick={() => openAuth("register")}>
+                Crear cuenta gratis <FaArrowRight aria-hidden="true" />
+              </button>
+              <span>Sin conexión de trading automática ni envío de órdenes.</span>
+            </div>
+          </section>
+
+          <footer className="landing-footer">
+            <a className="landing-brand landing-brand-footer" href="#inicio" aria-label="Volver al inicio de JJXCAPITAL">
+              <span className="landing-brand-mark">J</span>
+              <span className="landing-brand-copy"><strong>JJXCAPITAL</strong><small>CONTROL · ANÁLISIS · CLARIDAD</small></span>
+            </a>
+            <p>Herramienta de organización y simulación financiera. No constituye asesoramiento de inversión.</p>
+            <a href="mailto:soporte@jjxcapital.com">Contactar con soporte</a>
+          </footer>
+        </main>
+
         {showAuth && (
-          <AuthForms 
-            mode={showAuth} 
-            onClose={handleCloseAuth}
+          <AuthForms
+            mode={showAuth}
+            onClose={closeAuth}
             onSwitchMode={(newMode) => setShowAuth(newMode)}
           />
         )}
@@ -349,24 +273,27 @@ const MainApp = () => {
     );
   }
 
-  // Render para usuarios autenticados
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black text-white">
-      <main className="pb-24 pt-4 md:pb-6 md:pt-20">
-        {activeTab === 'dashboard' && <Dashboard onOpenProfile={() => handleTabChange('profile')} />}
-        {activeTab === 'p2p' && <P2PSimulator />}
-        {activeTab === 'arbitrage' && <ArbitrageSimulator />}
-        {activeTab === 'operations' && <Operations />}
-        {activeTab === 'history' && <History />}
-        {activeTab === 'profile' && <Profile />}
+    <div className="app-shell">
+      <main className="app-content">
+        {activeTab === "dashboard" && (
+          <Dashboard
+            onOpenProfile={() => handleTabChange("profile")}
+            onOpenOperations={() => handleTabChange("operations")}
+            onOpenHistory={() => handleTabChange("history")}
+          />
+        )}
+        {activeTab === "p2p" && <P2PSimulator />}
+        {activeTab === "arbitrage" && <ArbitrageSimulator />}
+        {activeTab === "operations" && <Operations />}
+        {activeTab === "history" && <History />}
+        {activeTab === "profile" && <Profile />}
       </main>
-
       <NavigationBar activeTab={activeTab} onTabChange={handleTabChange} />
-
       {showAuth && (
-        <AuthForms 
-          mode={showAuth} 
-          onClose={handleCloseAuth}
+        <AuthForms
+          mode={showAuth}
+          onClose={closeAuth}
           onSwitchMode={(newMode) => setShowAuth(newMode)}
         />
       )}
