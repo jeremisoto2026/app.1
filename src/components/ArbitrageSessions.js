@@ -174,7 +174,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       item.fiat_amount ?? "", item.fee ?? "", formatDate(item.timestamp),
     ]);
     const csv = serializeCsv(headers, rows, [0, 1, 2, 3, 4, 5, 6, 11]);
-    const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" }));
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = "JJXCAPITAL-arbitraje-" + selectedSession.name.replace(/[^a-z0-9_-]/gi, "-") + ".csv";

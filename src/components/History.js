@@ -521,6 +521,7 @@ const History = () => {
           <div className="flex justify-between items-center">
             <div className="flex-1">
               <span className="text-purple-400 font-semibold">Orden #{operation.order_id || "N/A"}</span>
+                {operation.sessionName && <span className="mt-1 block text-xs text-gray-500">Arbitraje: {operation.sessionName}</span>}
             </div>
             <div className="flex items-center gap-2">
               <Badge className={operation.operation_type === 'Compra' 
@@ -716,7 +717,7 @@ const History = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label id="history-session-label" htmlFor="history-session" className="text-gray-300 font-medium">Arbitraje</Label>
                 <Select value={sessionFilter} onValueChange={setSessionFilter}>
