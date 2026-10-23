@@ -1309,3 +1309,28 @@ input:focus, select:focus, textarea:focus {
   .app-shell nav[aria-label="Navegación principal"] button svg { width: 19px; height: 19px; }
   .app-shell nav[aria-label="Navegación principal"] button span.truncate { font-size: 9px; letter-spacing: -.02em; }
 }
+
+
+
+.jjx-edit-dialog {
+  max-height: min(90vh, 850px);
+  overflow-y: auto;
+  border-color: rgba(129,140,248,.26) !important;
+  background: linear-gradient(145deg,#141d2e,#0d1422) !important;
+  box-shadow: 0 32px 100px rgba(0,0,0,.5) !important;
+}
+.jjx-edit-dialog label { color: #c5cede; font-size: 12px; font-weight: 650; }
+.jjx-edit-dialog input:not([type="checkbox"]):not([type="radio"]),
+.jjx-edit-dialog button[role="combobox"] {
+  min-height: 41px;
+  border-radius: 9px;
+  border-color: rgba(148,163,184,.22) !important;
+  background: #0b1220 !important;
+  color: #eef2fa !important;
+}
+.jjx-edit-dialog button:hover { box-shadow: none; transform: none; }
+@media (max-width: 640px) {
+  .jjx-edit-dialog { width: calc(100% - 20px) !important; max-width: none !important; padding: 17px !important; }
+  .jjx-edit-dialog [data-radix-dialog-footer] { flex-direction: column-reverse; }
+  .jjx-edit-dialog [data-radix-dialog-footer] button { width: 100%; }
+}
