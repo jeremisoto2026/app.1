@@ -53,7 +53,7 @@ La autenticación y los datos se gestionan con Firebase; revisa que las reglas d
 - Identidad visual consistente para el espacio de trabajo: fondos oscuros sobrios, acentos violeta/azul, superficies con contraste y controles de formulario unificados.
 - Resumen financiero orientado a datos reales, estados vacíos explícitos, flujos de trabajo recomendados y accesos rápidos al registro y al historial.
 - Formularios de autenticación y edición adaptables a pantallas pequeñas, con foco de teclado visible y soporte para la preferencia de movimiento reducido.
-- Desde el historial se pueden editar las cantidades, el par de monedas, la plataforma y las comisiones de una operación. La edición vuelve a calcular importes derivados y conserva la fecha original; cambiar importes puede alterar el beneficio FIFO de ventas posteriores.
+- Desde el historial se pueden editar las cantidades, el par de monedas, la plataforma y las comisiones de una operación. La edición vuelve a calcular importes derivados y conserva la fecha original; cambiar importes puede alterar el beneficio FIFO de ventas posteriores. El historial también permite ordenar por fecha, limpiar filtros, consultar recuentos y navegar por páginas de diez operaciones; la paginación se ajusta al eliminar registros.
 - Metadatos de navegador actualizados y tipografía basada en fuentes del sistema para evitar una solicitud de fuente externa innecesaria.
 
 La interfaz no promete beneficios, no ejecuta órdenes de trading y no sustituye la verificación de los registros financieros. Antes de publicar se deben validar visualmente los principales flujos con una sesión real y probar los permisos de Firebase con cuentas separadas.
