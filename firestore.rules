@@ -39,6 +39,11 @@ service cloud.firestore {
       // La aplicación no ofrece eliminación de cuenta desde el perfil.
       allow delete: if false;
 
+      match /sessions/{sessionId} {
+        // Las sesiones de arbitraje son privadas y solo accesibles por su propietario.
+        allow read, create, update, delete: if isOwner(userId);
+      }
+
       match /operations/{operationId} {
         // Las compras y ventas son privadas y solo accesibles por su propietario.
         allow read, create, update, delete: if isOwner(userId);
