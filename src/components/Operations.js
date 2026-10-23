@@ -49,8 +49,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
         const active = records.filter(item => item.status === 'active');
         if (!cancelled) {
           setSessions(records);
-          const next = active.find(item => item.id === initialSessionId) ||
-            active.find(item => item.id === selectedSessionId) || active[0];
+          const next = active.find(item => item.id === initialSessionId) || active[0];
           setSelectedSessionId(next?.id || '');
         }
       } catch (loadError) {
