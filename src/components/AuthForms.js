@@ -36,7 +36,7 @@ const getAuthErrorMessage = (error) => {
 };
 
 const AuthForms = ({ mode, onClose, onSwitchMode }) => {
-  const { signUp, signIn, signInWithGoogle } = useAuth();
+  const { signUp, signIn, signInWithGoogle, resetPassword } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -44,6 +44,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -58,10 +59,16 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const email = formData.email.trim();
+      if (mode === 'forgot') {
+        await resetPassword(email);
+        setSuccess('Si existe una cuenta asociada a ese correo, recibirás un mensaje con los pasos para restablecer tu contraseña. Revisa también la carpeta de spam.');
+        return;
+      }
       if (mode === 'register') {
         const firstName = formData.firstName.trim();
         const lastName = formData.lastName.trim();
@@ -134,15 +141,16 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
           </div>
           
           <h3 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mb-3">
-            {mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión'}
+            {mode === 'register' ? 'Crear cuenta' : mode === 'forgot' ? 'Restablecer contraseña' : 'Iniciar sesión'}
           </h3>
           <p className="text-gray-400 text-lg">
             {mode === 'register' 
               ? 'Crea una cuenta para registrar y consultar tus operaciones.' 
-              : 'Inicia sesión para acceder a tu historial y tus resultados.'}
+              : mode === 'forgot' ? 'Te enviaremos instrucciones para recuperar el acceso a tu cuenta.' : 'Inicia sesión para acceder a tu historial y tus resultados.'}
           </p>
         </div>
 
+        {success && <div role="status" className="bg-emerald-900/30 text-emerald-200 p-4 rounded-xl mb-6 text-sm border border-emerald-700/50 relative z-10">{success}</div>}
         {error && (
           <div className="bg-gradient-to-r from-red-900/50 to-red-800/30 text-red-200 p-4 rounded-xl mb-8 text-sm border border-red-700/50 backdrop-blur-sm relative z-10">
             <div className="flex items-center">
@@ -204,7 +212,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             />
           </div>
           
-          <div className="relative">
+          {mode !== 'forgot' && <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <FaLock className="text-purple-400/70" />
             </div>
@@ -228,7 +236,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
-          </div>
+          </div>}
 
           <button
             type="submit"
@@ -241,7 +249,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
                 <>
-                  {mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión'}
+                  {mode === 'register' ? 'Crear cuenta' : mode === 'forgot' ? 'Enviar instrucciones' : 'Iniciar sesión'}
                   <FaRocket className="text-cyan-300" />
                 </>
               )}
@@ -249,7 +257,7 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
           </button>
         </form>
 
-        <div className="mt-10 relative z-10">
+        {mode !== 'forgot' && <div className="mt-10 relative z-10">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-purple-500/20"></div>
@@ -272,17 +280,21 @@ const AuthForms = ({ mode, onClose, onSwitchMode }) => {
           </div>
         </div>
 
+        </div>}
+
+        {mode === 'login' && <div className="mt-5 text-center relative z-10"><button type="button" onClick={() => { setError(''); setSuccess(''); onSwitchMode('forgot'); }} className="text-sm text-purple-300 hover:text-purple-200 underline underline-offset-4">¿Olvidaste tu contraseña?</button></div>}
+
         <div className="mt-8 text-center relative z-10">
           <p className="text-gray-400 text-sm">
-            {mode === 'register' 
+            {mode === 'forgot' ? '¿Recordaste tu contraseña? ' : mode === 'register' 
               ? '¿Ya tienes una cuenta? ' 
               : '¿Todavía no tienes una cuenta? '}
             <button 
               type="button"
-              onClick={handleSwitchMode}
+              onClick={() => { setError(''); setSuccess(''); mode === 'forgot' ? onSwitchMode('login') : handleSwitchMode(); }}
               className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 hover:from-purple-300 hover:to-blue-300 font-medium transition-all duration-300"
             >
-              {mode === 'register' ? 'Acceder' : 'Crear cuenta'}
+              {mode === 'forgot' ? 'Volver al inicio de sesión' : mode === 'register' ? 'Acceder' : 'Crear cuenta'}
             </button>
           </p>
         </div>
