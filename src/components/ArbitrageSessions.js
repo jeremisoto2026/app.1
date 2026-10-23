@@ -35,7 +35,7 @@ export default function ArbitrageSessions() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { loadSessions(); }, [user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadSessions(); }, [user?.uid]);
 
   const selectedSession = sessions.find(item => item.id === selected);
   const stats = useMemo(() => {
