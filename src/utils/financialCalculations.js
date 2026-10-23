@@ -289,6 +289,18 @@ export const calculateCryptoArbitrage = ({
   const finalCrypto = grossCryptoRepurchased - buyFeeCrypto;
   const cryptoProfit = finalCrypto - quantity;
   const profitPercentage = (cryptoProfit / quantity) * 100;
+  const profitFiatEquivalent = cryptoProfit * buyPrice;
+  const computedValues = [
+    grossFiatProceeds, sellFeeFiat, netFiatProceeds, grossCryptoRepurchased,
+    buyFeeCrypto, finalCrypto, cryptoProfit, profitPercentage, profitFiatEquivalent,
+  ];
+  if (
+    computedValues.some((value) => !Number.isFinite(value)) ||
+    grossFiatProceeds <= 0 || netFiatProceeds <= 0 ||
+    grossCryptoRepurchased <= 0 || finalCrypto <= 0
+  ) {
+    throw new Error("Los importes son demasiado grandes o pequeños para calcularse correctamente. Reduce la cantidad o ajusta los precios.");
+  }
 
   return {
     investment: quantity,
@@ -299,7 +311,7 @@ export const calculateCryptoArbitrage = ({
     gross_crypto_repurchased: grossCryptoRepurchased,
     buy_fee_crypto: buyFeeCrypto,
     profit: cryptoProfit,
-    profit_fiat_equivalent: cryptoProfit * buyPrice,
+    profit_fiat_equivalent: profitFiatEquivalent,
     profit_percentage: profitPercentage,
   };
 };
