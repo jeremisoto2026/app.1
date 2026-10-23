@@ -256,12 +256,12 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #FFD700;
+  background: #4c548d;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #E6C200;
+  background: #686cc0;
 }
 
 /* Input focus styles */
@@ -278,7 +278,7 @@ button {
 
 button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 5px 15px rgba(99, 102, 241, 0.14);
 }
 
 button:active {
