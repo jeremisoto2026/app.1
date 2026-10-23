@@ -88,7 +88,7 @@ const MainApp = () => {
           <span className="landing-grid" />
         </div>
 
-        <header className={\`landing-header \${scrolled ? "landing-header-scrolled" : ""}\`}>
+        <header className={`landing-header ${scrolled ? "landing-header-scrolled" : ""}`}>
           <a className="landing-brand" href="#inicio" aria-label="JJXCAPITAL, inicio">
             <span className="landing-brand-mark" aria-hidden="true">J</span>
             <span className="landing-brand-copy">
