@@ -83,7 +83,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
-    return \`\${formatted} \${currency}\`;
+    return `${formatted} ${currency}`;
   };
 
   if (loading) {
@@ -136,7 +136,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
             <h1>Tu actividad, <span>bajo control.</span></h1>
             <p>
               {user?.displayName
-                ? \`Hola, \${user.displayName.split(" ")[0]}. Aquí tienes el estado de tus operaciones.\`
+                ? `Hola, ${user.displayName.split(" ")[0]}. Aquí tienes el estado de tus operaciones.`
                 : "Consulta tus registros y resultados desde un solo lugar."}
             </p>
           </div>
@@ -193,9 +193,9 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
               <span className="metric-icon metric-icon-blue"><ArrowTrendingUpIcon aria-hidden="true" /></span>
             </div>
             <strong className="metric-primary-value">
-              {metrics.closedSales ? \`\${metrics.successRate.toFixed(1)}%\` : "—"}
+              {metrics.closedSales ? `${metrics.successRate.toFixed(1)}%` : "—"}
             </strong>
-            <p>{metrics.closedSales ? \`\${metrics.winningSales || 0} ventas cerradas con resultado positivo\` : "Se calculará al registrar ventas cerradas"}</p>
+            <p>{metrics.closedSales ? `${metrics.winningSales || 0} ventas cerradas con resultado positivo` : "Se calculará al registrar ventas cerradas"}</p>
             <span className="metric-card-foot"><ShieldCheckIcon aria-hidden="true" /> No representa una garantía futura</span>
           </article>
         </section>
@@ -221,10 +221,10 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
                         {formatAmount(amount, currency)}
                       </strong>
                     </div>
-                    <div className="monthly-profit-track" aria-label={\`Magnitud relativa del resultado en \${currency}\`}>
+                    <div className="monthly-profit-track" aria-label={`Magnitud relativa del resultado en ${currency}`}>
                       <span
                         className={amount < 0 ? "monthly-profit-bar monthly-profit-bar-negative" : "monthly-profit-bar"}
-                        style={{ width: \`\${Math.max(3, Math.abs(amount) / monthlyScale * 100)}%\` }}
+                        style={{ width: `${Math.max(3, Math.abs(amount) / monthlyScale * 100)}%` }}
                       />
                     </div>
                   </div>
