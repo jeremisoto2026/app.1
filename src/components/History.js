@@ -12,11 +12,12 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
-import { calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
+import { calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
 import { serializeCsv } from "../utils/csv";
 import { filterOperations } from "../utils/operationFilters";
 import { 
   TrashIcon, 
+  PencilSquareIcon,
   DocumentArrowDownIcon, 
   MagnifyingGlassIcon, 
   FunnelIcon, 
@@ -53,6 +54,14 @@ const History = () => {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [operationToDelete, setOperationToDelete] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [operationToEdit, setOperationToEdit] = useState(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editData, setEditData] = useState({
+    order_id: "", exchange: "", operation_type: "", crypto: "", fiat: "",
+    amount: "", exchange_rate: "", fee: "0",
+  });
 
   // Calcular cada venta con el historial completo, no solo con el filtro visual,
   // porque una compra anterior puede ser el coste de adquisición de una venta.
@@ -125,6 +134,83 @@ const History = () => {
       icon: type === 'warning' ? ExclamationTriangleIcon : InformationCircleIcon
     });
     setIsExportDialogOpen(true);
+  };
+
+  const openEditDialog = (operation) => {
+    setOperationToEdit(operation);
+    setEditData({
+      order_id: operation.order_id || "",
+      exchange: operation.exchange || "",
+      operation_type: operation.operation_type || "",
+      crypto: operation.crypto || "",
+      fiat: operation.fiat || "",
+      amount: operation.operation_type === "Venta"
+        ? (operation.crypto_amount ?? "")
+        : (operation.fiat_amount ?? ""),
+      exchange_rate: operation.exchange_rate ?? "",
+      fee: operation.fee ?? "0",
+    });
+    setEditError("");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditFieldChange = (field, value) => {
+    setEditData((previous) => {
+      const next = { ...previous, [field]: value };
+      if (["operation_type", "crypto", "fiat"].includes(field) && value !== previous[field]) {
+        // No reaprovechar importes que pertenecían a otra unidad o par de monedas.
+        next.amount = "";
+        next.exchange_rate = "";
+        next.fee = "0";
+      }
+      return next;
+    });
+    setEditError("");
+  };
+
+  const handleSaveEdit = async (event) => {
+    event.preventDefault();
+    if (!user || !operationToEdit?.id) return;
+
+    try {
+      setIsSavingEdit(true);
+      setEditError("");
+      if (!editData.exchange || !editData.operation_type || !editData.crypto || !editData.fiat) {
+        throw new Error("Completa la plataforma, el tipo de operación y ambas monedas.");
+      }
+      const calculatedAmounts = calculateOperationAmounts({
+        operation_type: editData.operation_type,
+        amount: editData.amount,
+        exchange_rate: editData.exchange_rate,
+        fee: editData.fee,
+        crypto: editData.crypto,
+        fiat: editData.fiat,
+      });
+      const updates = {
+        order_id: editData.order_id.trim(),
+        exchange: editData.exchange,
+        operation_type: editData.operation_type,
+        crypto: editData.crypto,
+        fiat: editData.fiat,
+        ...calculatedAmounts,
+      };
+
+      await updateDoc(doc(db, "users", user.uid, "operations", operationToEdit.id), updates);
+      setOperations((previous) => previous.map((operation) =>
+        operation.id === operationToEdit.id ? { ...operation, ...updates } : operation
+      ));
+      setIsEditDialogOpen(false);
+      setOperationToEdit(null);
+      showExportDialog(
+        "info",
+        "Operación actualizada",
+        "Los importes y la comisión se han guardado. El beneficio se vuelve a calcular usando el historial completo y la fecha original de la operación."
+      );
+    } catch (error) {
+      setEditError(error.message || "No se pudo actualizar la operación. Inténtalo de nuevo.");
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   const confirmDelete = (operationId) => {
@@ -369,6 +455,17 @@ const History = () => {
                 : "bg-red-500/20 text-red-400 border-red-500/30"}>
                 {operation.operation_type || "N/A"}
               </Badge>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => openEditDialog(operation)}
+                aria-label={`Editar operación ${operation.order_id || operation.id}`}
+                title="Editar operación"
+                className="hover:bg-indigo-500/10 text-indigo-300 rounded-xl"
+              >
+                <PencilSquareIcon className="h-4 w-4" />
+              </Button>
               <Button
                 type="button"
                 variant="ghost"
@@ -675,6 +772,86 @@ const History = () => {
         )}
       </div>
       
+      {/* Edición de una operación. La fecha original se conserva para no alterar el orden FIFO. */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) setEditError("");
+      }}>
+        <DialogContent className="jjx-edit-dialog sm:max-w-[620px] bg-gradient-to-br from-gray-900 to-gray-800 border border-purple-500/20 rounded-2xl text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-white">Editar operación</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Cambiar importes o monedas puede modificar el beneficio FIFO. Se conservará la fecha original.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveEdit} className="space-y-4">
+            {editError && <div role="alert" className="rounded-lg border border-red-500/30 bg-red-900/20 p-3 text-sm text-red-200">{editError}</div>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-order-id">Número de orden</Label>
+                <Input id="edit-order-id" value={editData.order_id} onChange={(event) => handleEditFieldChange("order_id", event.target.value)} autoComplete="off" />
+              </div>
+              <div className="space-y-2">
+                <Label id="edit-exchange-label" htmlFor="edit-exchange">Plataforma *</Label>
+                <Select value={editData.exchange} onValueChange={(value) => handleEditFieldChange("exchange", value)}>
+                  <SelectTrigger id="edit-exchange" aria-labelledby="edit-exchange-label"><SelectValue placeholder="Seleccionar plataforma" /></SelectTrigger>
+                  <SelectContent>
+                    {[...new Set(["Binance", "Bybit", "OKX", "KuCoin", editData.exchange].filter(Boolean))].map((exchange) => <SelectItem key={exchange} value={exchange}>{exchange}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label id="edit-type-label" htmlFor="edit-type">Tipo de operación *</Label>
+                <Select value={editData.operation_type} onValueChange={(value) => handleEditFieldChange("operation_type", value)}>
+                  <SelectTrigger id="edit-type" aria-labelledby="edit-type-label"><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Compra">Compra</SelectItem>
+                    <SelectItem value="Venta">Venta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label id="edit-crypto-label" htmlFor="edit-crypto">Criptomoneda *</Label>
+                <Select value={editData.crypto} onValueChange={(value) => handleEditFieldChange("crypto", value)}>
+                  <SelectTrigger id="edit-crypto" aria-labelledby="edit-crypto-label"><SelectValue placeholder="Seleccionar cripto" /></SelectTrigger>
+                  <SelectContent>
+                    {[...new Set(["USDT", "BTC", "ETH", "BNB", "USDC", editData.crypto].filter(Boolean))].map((crypto) => <SelectItem key={crypto} value={crypto}>{crypto}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label id="edit-fiat-label" htmlFor="edit-fiat">Moneda de cotización *</Label>
+                <Select value={editData.fiat} onValueChange={(value) => handleEditFieldChange("fiat", value)}>
+                  <SelectTrigger id="edit-fiat" aria-labelledby="edit-fiat-label"><SelectValue placeholder="Seleccionar moneda" /></SelectTrigger>
+                  <SelectContent>
+                    {[...new Set(["EUR", "USD", "USDT", "USDC", "VES", "MXN", "COP", "ARS", "BRL", editData.fiat].filter(Boolean))].map((currency) => <SelectItem key={currency} value={currency}>{currency}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-amount">{editData.operation_type === "Venta" ? "Cantidad vendida en cripto *" : "Importe de compra *"}</Label>
+                <Input id="edit-amount" type="number" min="0" step="any" value={editData.amount} onChange={(event) => handleEditFieldChange("amount", event.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-rate">Tasa de cambio *</Label>
+                <Input id="edit-rate" type="number" min="0" step="any" value={editData.exchange_rate} onChange={(event) => handleEditFieldChange("exchange_rate", event.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-fee">Comisión ({editData.operation_type === "Venta" ? editData.fiat || "moneda de cotización" : editData.crypto || "cripto"})</Label>
+                <Input id="edit-fee" type="number" min="0" step="any" value={editData.fee} onChange={(event) => handleEditFieldChange("fee", event.target.value)} />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">La comisión se introduce en la unidad indicada, no como porcentaje. La fecha histórica no se modifica.</p>
+            <DialogFooter className="flex gap-3">
+              <Button type="button" variant="outline" disabled={isSavingEdit} onClick={() => setIsEditDialogOpen(false)} className="flex-1">Cancelar</Button>
+              <Button type="submit" disabled={isSavingEdit} className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                {isSavingEdit ? "Guardando..." : "Guardar cambios"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Diálogo de confirmación de eliminación */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px] bg-gradient-to-br from-gray-900 to-gray-800 border border-purple-500/20 rounded-2xl text-white">
