@@ -334,40 +334,9 @@ button:active {
   animation: bounce 1s infinite;
 }
 
-/* Mobile responsive adjustments */
+/* Mobile responsive baseline: each screen defines its own responsive type scale. */
 @media (max-width: 768px) {
-  body {
-    font-size: 14px;
-  }
-  
-  h1 {
-    font-size: 2.5rem !important;
-  }
-  
-  h2 {
-    font-size: 2rem !important;
-  }
-  
-  h3 {
-    font-size: 1.5rem !important;
-  }
-  
-  .text-6xl {
-    font-size: 3rem !important;
-  }
-  
-  .text-4xl {
-    font-size: 2rem !important;
-  }
-  
-  /* Ajustes para animaciones en móviles */
-  .animate-float {
-    animation-duration: 8s;
-  }
-  
-  .animate-pulse-glow {
-    animation-duration: 3s;
-  }
+  body { font-size: 14px; }
 }
 
 /* Custom utility classes */
