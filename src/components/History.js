@@ -80,6 +80,21 @@ const History = () => {
     [operations]
   );
   const realizedProfitByOperation = financialMetrics.realizedProfitByOperation || {};
+  const sessionResults = useMemo(() => sessions.map(session => {
+    const sessionOperations = operations.filter(operation => operation.sessionId === session.id);
+    const initialCapital = Number(session.initialCapital) || 0;
+    const isCryptoBase = session.initialCapitalType === "crypto";
+    const profit = isCryptoBase
+      ? sessionOperations.reduce((sum, operation) => sum + (operation.operation_type === "Compra" ? 1 : operation.operation_type === "Venta" ? -1 : 0) * (Number(operation.crypto_amount) || 0), 0)
+      : (calculateDashboardMetrics(sessionOperations).profitByCurrency?.[session.fiat] || 0);
+    return {
+      ...session,
+      profit,
+      roi: initialCapital > 0 ? profit / initialCapital * 100 : 0,
+      baseCurrency: session.initialCapitalCurrency || (isCryptoBase ? session.crypto : session.fiat) || (isCryptoBase ? "USDT" : "EUR"),
+      isCryptoBase,
+    };
+  }), [sessions, operations]);
 
   // ---------- NUEVO: estados para diálogos personalizados ----------
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -673,6 +688,30 @@ const History = () => {
             Consulta y organiza tus operaciones de compra y venta en un solo lugar
           </p>
         </div>
+
+        {sessionResults.length > 0 && (
+          <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
+            <CardHeader className="p-0 mb-4">
+              <CardTitle className="text-xl font-bold text-white">Resultado por arbitraje</CardTitle>
+              <p className="text-sm text-gray-400">El beneficio y el ROI se muestran en la moneda base con la que se inició cada ciclo.</p>
+            </CardHeader>
+            <CardContent className="p-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {sessionResults.map(session => (
+                <div key={session.id} className="rounded-xl border border-purple-500/15 bg-gray-950/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-white">{session.name}</p>
+                      <p className="mt-1 text-xs text-gray-500">Capital inicial: {formatCurrency(session.initialCapital, session.baseCurrency)}</p>
+                    </div>
+                    <Badge className={session.status === "active" ? "bg-emerald-500/10 text-emerald-300" : "bg-gray-700 text-gray-300"}>{session.status === "active" ? "Activo" : "Cerrado"}</Badge>
+                  </div>
+                  <p className={`mt-3 text-xl font-bold ${session.profit > 0 ? "text-green-400" : session.profit < 0 ? "text-red-400" : "text-white"}`}>{formatCurrency(session.profit, session.baseCurrency)}</p>
+                  <p className="mt-1 text-xs text-gray-400">Beneficio / pérdida · ROI {session.roi.toFixed(2)}%</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filtros */}
         <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
