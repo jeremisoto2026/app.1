@@ -15,9 +15,9 @@ export default function UnifiedSimulator() {
   const [startWith, setStartWith] = useState("fiat");
   const [crypto, setCrypto] = useState("USDT");
   const [fiat, setFiat] = useState("EUR");
-  const [capital, setCapital] = useState("100");
-  const [buyPrice, setBuyPrice] = useState("0.92");
-  const [sellPrice, setSellPrice] = useState("0.95");
+  const [capital, setCapital] = useState("");
+  const [buyPrice, setBuyPrice] = useState("");
+  const [sellPrice, setSellPrice] = useState("");
   const [buyFee, setBuyFee] = useState("0");
   const [sellFee, setSellFee] = useState("0");
   const [source, setSource] = useState("Binance");
