@@ -72,7 +72,8 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       .filter(item => item.operation_type === type)
       .reduce((total, item) => total + (Number.isFinite(Number(item[field])) ? Number(item[field]) : 0), 0);
     const initialCapital = Number(selectedSession.initialCapital) || 0;
-    const profit = calculations.profitByCurrency?.[selectedSession.fiat] || 0;
+    const startsWithCrypto = selectedSession.initialCapitalType === "crypto";
+    const profitFiat = calculations.profitByCurrency?.[selectedSession.fiat] || 0;
     const profitCrypto = sessionOperations
       .filter(item => item.operation_type === "Venta")
       .reduce((total, item) => {
@@ -82,15 +83,17 @@ export default function ArbitrageSessions({ onOpenOperations }) {
           ? total + realized.profit / rate
           : total;
       }, 0);
+    const netCryptoChange = add("Compra", "crypto_amount") - add("Venta", "crypto_amount");
+    const profit = startsWithCrypto ? netCryptoChange : profitFiat;
     return {
       profit,
-      profitCrypto,
+      profitCrypto: startsWithCrypto ? netCryptoChange : profitCrypto,
       buyFiat: add("Compra", "fiat_amount"),
       sellFiat: add("Venta", "fiat_amount"),
       buyCrypto: add("Compra", "crypto_amount"),
       sellCrypto: add("Venta", "crypto_amount"),
-      fiatBalance: initialCapital + add("Venta", "fiat_amount") - add("Compra", "fiat_amount"),
-      cryptoBalance: add("Compra", "crypto_amount") - add("Venta", "crypto_amount"),
+      fiatBalance: (startsWithCrypto ? 0 : initialCapital) + add("Venta", "fiat_amount") - add("Compra", "fiat_amount"),
+      cryptoBalance: (startsWithCrypto ? initialCapital : 0) + netCryptoChange,
       percentage: initialCapital > 0 ? profit / initialCapital * 100 : 0,
       count: sessionOperations.length,
     };
@@ -100,7 +103,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     event.preventDefault();
     if (!user?.uid) return;
     const initialCapital = Number(draft.initialCapital);
-    if (!Number.isFinite(initialCapital) || initialCapital <= 0 || draft.crypto === draft.fiat) {
+    if (!Number.isFinite(initialCapital) || initialCapital <= 0) {
       setError("Introduce un capital inicial mayor que cero y selecciona dos monedas diferentes.");
       return;
     }
@@ -113,12 +116,14 @@ export default function ArbitrageSessions({ onOpenOperations }) {
         strategy: draft.strategy,
         fiat: draft.fiat,
         crypto: draft.crypto,
+        initialCapitalType: draft.initialCapitalType,
+        initialCapitalCurrency: draft.initialCapitalType === "crypto" ? draft.crypto : draft.fiat,
         initialCapital,
         status: "active",
         createdAt: serverTimestamp(),
         closedAt: null,
       });
-      setDraft({ name: "", strategy: "Comercio P2P", fiat: "EUR", crypto: "USDT", initialCapital: "100" });
+      setDraft({ name: "", strategy: "Comercio P2P", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT", initialCapital: "100" });
       setShowCreate(false);
       setSelected(created.id);
       await loadData();
