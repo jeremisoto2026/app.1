@@ -5,6 +5,7 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   signOut as firebaseSignOut,
   updateProfile
@@ -75,6 +76,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resetPassword = async (email) => {
+    const normalizedEmail = String(email || "").trim();
+    if (!normalizedEmail) throw new Error("Introduce tu correo electrónico.");
+    return sendPasswordResetEmail(auth, normalizedEmail);
+  };
+
   // 🔹 Inicio de sesión con Google
   const signInWithGoogle = async () => {
     try {
@@ -131,6 +138,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     signUp,
     signIn,
+    resetPassword,
     signInWithGoogle,
     signOut
   };

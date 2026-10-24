@@ -3,8 +3,8 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AuthForms from "./components/AuthForms";
 import NavigationBar from "./components/NavigationBar";
 import Dashboard from "./components/Dashboard";
-import P2PSimulator from "./components/P2PSimulator";
-import ArbitrageSimulator from "./components/ArbitrageSimulator";
+import UnifiedSimulator from "./components/UnifiedSimulator";
+import ArbitrageSessions from "./components/ArbitrageSessions";
 import Operations from "./components/Operations";
 import History from "./components/History";
 import Profile from "./components/Profile";
@@ -53,7 +53,7 @@ const features = [
     title: "Historial exportable",
     description:
       "Busca, filtra y descarga tus registros para revisarlos o analizarlos en una hoja de cálculo.",
-    tag: "EXPORTACIÓN CSV",
+    tag: "EXPORTACIÓN EXCEL",
   },
 ];
 
@@ -61,6 +61,7 @@ const MainApp = () => {
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedSessionId, setSelectedSessionId] = useState("");
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -282,11 +283,15 @@ const MainApp = () => {
               onOpenProfile={() => handleTabChange("profile")}
               onOpenOperations={() => handleTabChange("operations")}
               onOpenHistory={() => handleTabChange("history")}
+              onOpenArbitrages={() => handleTabChange("sessions")}
             />
           )}
-          {activeTab === "p2p" && <P2PSimulator />}
-          {activeTab === "arbitrage" && <ArbitrageSimulator />}
-          {activeTab === "operations" && <Operations />}
+          {activeTab === "simulator" && <UnifiedSimulator />}
+          {activeTab === "sessions" && <ArbitrageSessions onOpenOperations={(sessionId) => {
+            setSelectedSessionId(sessionId);
+            handleTabChange("operations");
+          }} />}
+          {activeTab === "operations" && <Operations initialSessionId={selectedSessionId} onOpenArbitrages={() => handleTabChange("sessions")} />}
           {activeTab === "history" && <History />}
           {activeTab === "profile" && <Profile />}
         </SectionErrorBoundary>

@@ -114,6 +114,21 @@ describe("calculateDashboardMetrics", () => {
     expect(result.realizedProfitByOperation["sale-2"].fullyMatched).toBe(true);
   });
 
+  test("never matches a sale with inventory from a different arbitrage session", () => {
+    const operations = [
+      operation({ id: "session-a-buy", sessionId: "session-a", operation_type: "Compra", crypto_amount: 10, fiat_amount: 100 }),
+      operation({ id: "session-b-sale", sessionId: "session-b", operation_type: "Venta", crypto_amount: 2, fiat_amount: 30, timestamp: new Date("2026-10-02T12:00:00.000Z") }),
+      operation({ id: "session-a-sale", sessionId: "session-a", operation_type: "Venta", crypto_amount: 2, fiat_amount: 24, timestamp: new Date("2026-10-03T12:00:00.000Z") }),
+    ];
+
+    const result = calculateDashboardMetrics(operations, new Date("2026-10-22T12:00:00.000Z"));
+    expect(result.realizedProfitByOperation["session-b-sale"].matchedQuantity).toBe(0);
+    expect(result.realizedProfitByOperation["session-a-sale"].matchedQuantity).toBeCloseTo(2, 8);
+    expect(result.realizedProfitByOperation["session-a-sale"].profit).toBeCloseTo(4, 8);
+    expect(result.profitByCurrency.EUR).toBeCloseTo(4, 8);
+    expect(result.closedSales).toBe(1);
+  });
+
   test("keeps fiat currencies separate instead of adding unlike amounts", () => {
     const operations = [
       operation({ operation_type: "Compra", crypto: "BTC", fiat: "EUR", crypto_amount: 1, fiat_amount: 100 }),

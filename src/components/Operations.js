@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
 import { saveOperation } from '../services/database';
 import { calculateOperationAmounts } from '../utils/financialCalculations';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -11,7 +13,7 @@ import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
 import { PlusCircleIcon, DocumentTextIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
-const Operations = () => {
+const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     order_id: '',
@@ -27,6 +29,58 @@ const Operations = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [sessions, setSessions] = useState([]);
+  const [selectedSessionId, setSelectedSessionId] = useState(initialSessionId);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadSessions = async () => {
+      if (!user?.uid) {
+        setSessions([]);
+        setSelectedSessionId('');
+        setSessionsLoading(false);
+        return;
+      }
+      setSessionsLoading(true);
+      try {
+        const snapshot = await getDocs(collection(db, 'users', user.uid, 'sessions'));
+        const records = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+        const active = records.filter(item => item.status === 'active');
+        if (!cancelled) {
+          setSessions(records);
+          const next = active.find(item => item.id === initialSessionId) || active[0];
+          setSelectedSessionId(next?.id || '');
+        }
+      } catch (loadError) {
+        console.error('Error al cargar los arbitrajes para Operaciones:', loadError);
+        if (!cancelled) setError('No se pudieron cargar tus arbitrajes. Comprueba las reglas de Firestore.');
+      } finally {
+        if (!cancelled) setSessionsLoading(false);
+      }
+    };
+    loadSessions();
+    return () => { cancelled = true; };
+  }, [user?.uid, initialSessionId]);
+
+  const activeSessions = sessions.filter(item => item.status === 'active');
+  const selectedSession = activeSessions.find(item => item.id === selectedSessionId);
+
+  useEffect(() => {
+    if (!selectedSession) return;
+    setFormData(previous => ({
+      ...previous,
+      crypto: selectedSession.crypto || 'USDT',
+      fiat: selectedSession.fiat || 'EUR',
+      operation_type: selectedSession.initialCapitalType === 'crypto' ? 'Venta' : 'Compra',
+      crypto_amount: '',
+      fiat_amount: '',
+      exchange_rate: '',
+      fee: '0',
+    }));
+    setError('');
+    setSuccess('');
+  }, [selectedSession?.id, selectedSession?.crypto, selectedSession?.fiat]);
 
   const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin'];
   const operationTypes = ['Venta', 'Compra'];
@@ -64,6 +118,11 @@ const Operations = () => {
     
     if (!user) {
       setError('Inicia sesión para registrar una operación.');
+      return;
+    }
+
+    if (!selectedSession || selectedSession.status !== 'active') {
+      setError('Selecciona un arbitraje activo antes de registrar una compra o venta.');
       return;
     }
 
@@ -115,6 +174,9 @@ const Operations = () => {
         operation_type: formData.operation_type,
         crypto: formData.crypto,
         fiat: formData.fiat,
+        sessionId: selectedSession.id,
+        sessionName: selectedSession.name,
+        arbitrageType: selectedSession.strategy || 'Comercio P2P',
         ...calculatedAmounts,
         // La ganancia real solo se conoce al emparejar una venta con su coste de compra (FIFO).
         timestamp: new Date()
@@ -128,8 +190,8 @@ const Operations = () => {
         order_id: '',
         exchange: '',
         operation_type: '',
-        crypto: '',
-        fiat: '',
+        crypto: selectedSession.crypto || 'USDT',
+        fiat: selectedSession.fiat || 'EUR',
         crypto_amount: '',
         fiat_amount: '',
         exchange_rate: '',
@@ -167,6 +229,23 @@ const Operations = () => {
     // Un formulario incompleto no debe mostrar importes calculados que parecen válidos.
   }
 
+  if (sessionsLoading) {
+    return <div className="min-h-screen bg-gray-950 p-10 text-center text-gray-300" role="status">Cargando arbitrajes…</div>;
+  }
+
+  if (!activeSessions.length) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black p-4 pt-24 md:p-8">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-purple-500/20 bg-gray-900 p-8 text-center">
+          <h1 className="text-3xl font-bold text-white">Operaciones</h1>
+          <p className="mx-auto mt-3 max-w-xl text-gray-400">Primero crea un arbitraje. Las compras y ventas se guardarán dentro de ese espacio y no se mezclarán con otros pares de monedas.</p>
+          {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}
+          <button type="button" onClick={onOpenArbitrages} className="mt-6 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-3 font-medium text-white">Crear mi primer arbitraje</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-black p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
@@ -183,6 +262,14 @@ const Operations = () => {
           <p className="text-xs text-gray-500 max-w-2xl mx-auto mt-3">
             Registro manual: no se conecta a Binance ni se envían órdenes mediante API. Elegir Binance como plataforma solo etiqueta la operación que introduces.
           </p>
+        </div>
+
+        <div className="mb-6 rounded-2xl border border-purple-500/20 bg-gray-900/80 p-4">
+          <label htmlFor="active-arbitrage" className="mb-2 block text-sm font-medium text-gray-300">Arbitraje al que pertenece esta operación</label>
+          <select id="active-arbitrage" value={selectedSessionId} onChange={event => setSelectedSessionId(event.target.value)} className="h-11 w-full rounded-xl border border-purple-500/30 bg-gray-800 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-400">
+            {activeSessions.map(item => <option key={item.id} value={item.id}>{item.name} · {item.fiat || 'EUR'} / {item.crypto || 'USDT'}</option>)}
+          </select>
+          <p className="mt-2 text-xs text-gray-500">Esta compra o venta solo afectará a las cuentas, el saldo y el beneficio del arbitraje seleccionado.</p>
         </div>
 
         <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl">
@@ -205,6 +292,14 @@ const Operations = () => {
                 <Alert className="border-green-500/30 bg-green-900/20 text-green-400 rounded-xl">
                   <AlertDescription>{success}</AlertDescription>
                 </Alert>
+              )}
+
+              {selectedSession && (
+                <div className="rounded-xl border border-purple-500/20 bg-purple-950/30 px-4 py-3 text-sm text-gray-300">
+                  {selectedSession.initialCapitalType === 'crypto'
+                    ? <>Este arbitraje empieza con <strong>{selectedSession.initialCapital} {selectedSession.crypto}</strong>. El flujo habitual es vender esa cripto para obtener {selectedSession.fiat} y después recomprarla para cerrar el ciclo. La rentabilidad se medirá en {selectedSession.crypto}.</>
+                    : <>Este arbitraje empieza con <strong>{selectedSession.initialCapital} {selectedSession.fiat}</strong>. El flujo habitual es comprar {selectedSession.crypto} y venderla después para recuperar fiat. La rentabilidad se medirá en {selectedSession.fiat}.</>}
+                </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -264,12 +359,12 @@ const Operations = () => {
                   <Label id="crypto-label" htmlFor="crypto" className="text-gray-300 font-medium">
                     Criptomoneda <span className="text-red-400">*</span>
                   </Label>
-                  <Select value={formData.crypto} onValueChange={(value) => handleInputChange('crypto', value)} disabled={loading}>
+                  <Select value={formData.crypto} onValueChange={(value) => handleInputChange('crypto', value)} disabled={loading || Boolean(selectedSession)}>
                     <SelectTrigger id="crypto" aria-labelledby="crypto-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona criptomoneda" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
-                      {cryptos.map(crypto => (
+                      {[...new Set([...cryptos, selectedSession?.crypto].filter(Boolean))].map(crypto => (
                         <SelectItem key={crypto} value={crypto} className="rounded-lg focus:bg-purple-500/10">
                           {crypto}
                         </SelectItem>
@@ -282,12 +377,12 @@ const Operations = () => {
                   <Label id="fiat-label" htmlFor="fiat" className="text-gray-300 font-medium">
                     Moneda de cotización <span className="text-red-400">*</span>
                   </Label>
-                  <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)} disabled={loading}>
+                  <Select value={formData.fiat} onValueChange={(value) => handleInputChange('fiat', value)} disabled={loading || Boolean(selectedSession)}>
                     <SelectTrigger id="fiat" aria-labelledby="fiat-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona moneda de cotización" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
-                      {fiats.map(fiat => (
+                      {[...new Set([...fiats, selectedSession?.fiat].filter(Boolean))].map(fiat => (
                         <SelectItem key={fiat} value={fiat} className="rounded-lg focus:bg-purple-500/10">
                           {fiat}
                         </SelectItem>
