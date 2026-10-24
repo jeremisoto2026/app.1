@@ -38,8 +38,7 @@ describe("NavigationBar", () => {
 
     const expectedTabs = [
       ["Resumen", "dashboard"],
-      ["Simulador P2P", "p2p"],
-      ["Simulador arbitraje", "arbitrage"],
+      ["Simulador", "simulator"],
       ["Arbitrajes", "sessions"],
       ["Operaciones", "operations"],
       ["Historial", "history"],
