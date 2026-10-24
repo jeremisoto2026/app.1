@@ -73,8 +73,18 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       .reduce((total, item) => total + (Number.isFinite(Number(item[field])) ? Number(item[field]) : 0), 0);
     const initialCapital = Number(selectedSession.initialCapital) || 0;
     const profit = calculations.profitByCurrency?.[selectedSession.fiat] || 0;
+    const profitCrypto = sessionOperations
+      .filter(item => item.operation_type === "Venta")
+      .reduce((total, item) => {
+        const realized = calculations.realizedProfitByOperation?.[item.id];
+        const rate = Number(item.exchange_rate);
+        return realized && Number.isFinite(rate) && rate > 0
+          ? total + realized.profit / rate
+          : total;
+      }, 0);
     return {
       profit,
+      profitCrypto,
       buyFiat: add("Compra", "fiat_amount"),
       sellFiat: add("Venta", "fiat_amount"),
       buyCrypto: add("Compra", "crypto_amount"),
@@ -313,6 +323,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
                 <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
                   <div className="jjx-inset"><p className="jjx-field-label">Capital inicial</p><p className="mt-2 text-lg font-semibold text-white">{money(selectedSession.initialCapital, selectedSession.fiat || "EUR")}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Beneficio realizado</p><p className={"mt-2 text-lg font-semibold " + (stats.profit >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profit, selectedSession.fiat || "EUR")}</p><p className="mt-1 text-xs text-slate-500">FIFO · ventas emparejadas</p></div>
+                  <div className="jjx-inset"><p className="jjx-field-label">Beneficio equivalente en cripto</p><p className={"mt-2 text-lg font-semibold " + (stats.profitCrypto >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profitCrypto, selectedSession.crypto || "USDT")}</p><p className="mt-1 text-xs text-slate-500">Estimado al precio de cada venta</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Saldo fiat estimado</p><p className={"mt-2 text-lg font-semibold " + (stats.fiatBalance >= 0 ? "text-white" : "text-rose-300")}>{money(stats.fiatBalance, selectedSession.fiat || "EUR")}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Cripto neta</p><p className="mt-2 text-lg font-semibold text-white">{money(stats.cryptoBalance, selectedSession.crypto || "USDT")}</p></div>
                 </div>
