@@ -320,7 +320,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
                     <button type="button" disabled={saving || stats.count > 0} onClick={removeSession} aria-label="Eliminar arbitraje vacío" title={stats.count > 0 ? "Un arbitraje con movimientos se conserva en el historial" : "Eliminar arbitraje vacío"} className="jjx-button-secondary disabled:cursor-not-allowed disabled:opacity-40"><TrashIcon className="h-4 w-4" /></button>
                   </div>
                 </div>
-                <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+                <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-5">
                   <div className="jjx-inset"><p className="jjx-field-label">Capital inicial</p><p className="mt-2 text-lg font-semibold text-white">{money(selectedSession.initialCapital, selectedSession.fiat || "EUR")}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Beneficio realizado</p><p className={"mt-2 text-lg font-semibold " + (stats.profit >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profit, selectedSession.fiat || "EUR")}</p><p className="mt-1 text-xs text-slate-500">FIFO · ventas emparejadas</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Beneficio equivalente en cripto</p><p className={"mt-2 text-lg font-semibold " + (stats.profitCrypto >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profitCrypto, selectedSession.crypto || "USDT")}</p><p className="mt-1 text-xs text-slate-500">Estimado al precio de cada venta</p></div>
