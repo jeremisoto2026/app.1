@@ -3,8 +3,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AuthForms from "./components/AuthForms";
 import NavigationBar from "./components/NavigationBar";
 import Dashboard from "./components/Dashboard";
-import P2PSimulator from "./components/P2PSimulator";
-import ArbitrageSimulator from "./components/ArbitrageSimulator";
+import UnifiedSimulator from "./components/UnifiedSimulator";
 import ArbitrageSessions from "./components/ArbitrageSessions";
 import Operations from "./components/Operations";
 import History from "./components/History";
@@ -287,8 +286,7 @@ const MainApp = () => {
               onOpenArbitrages={() => handleTabChange("sessions")}
             />
           )}
-          {activeTab === "p2p" && <P2PSimulator />}
-          {activeTab === "arbitrage" && <ArbitrageSimulator />}
+          {activeTab === "simulator" && <UnifiedSimulator />}
           {activeTab === "sessions" && <ArbitrageSessions onOpenOperations={(sessionId) => {
             setSelectedSessionId(sessionId);
             handleTabChange("operations");
