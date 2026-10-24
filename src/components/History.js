@@ -249,7 +249,7 @@ const History = () => {
     }
   };
 
-  const exportToCSV = (data) => {
+  const exportToExcel = (data) => {
     if (!Array.isArray(data) || data.length === 0) {
       return false;
     }
@@ -372,7 +372,7 @@ const History = () => {
       return;
     }
 
-    const exported = exportToCSV(dataToExport);
+    const exported = exportToExcel(dataToExport);
 
     if (!exported) {
       return;
@@ -843,7 +843,7 @@ const History = () => {
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-11 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20"
               >
                 <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-                Exportar CSV
+                Exportar Excel
               </Button>
             </div>
           </CardContent>
