@@ -72,6 +72,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       ...previous,
       crypto: selectedSession.crypto || 'USDT',
       fiat: selectedSession.fiat || 'EUR',
+      operation_type: selectedSession.initialCapitalType === 'crypto' ? 'Venta' : 'Compra',
       crypto_amount: '',
       fiat_amount: '',
       exchange_rate: '',
@@ -291,6 +292,14 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                 <Alert className="border-green-500/30 bg-green-900/20 text-green-400 rounded-xl">
                   <AlertDescription>{success}</AlertDescription>
                 </Alert>
+              )}
+
+              {selectedSession && (
+                <div className="rounded-xl border border-purple-500/20 bg-purple-950/30 px-4 py-3 text-sm text-gray-300">
+                  {selectedSession.initialCapitalType === 'crypto'
+                    ? <>Este arbitraje empieza con <strong>{selectedSession.initialCapital} {selectedSession.crypto}</strong>. El flujo habitual es vender esa cripto para obtener {selectedSession.fiat} y después recomprarla para cerrar el ciclo. La rentabilidad se medirá en {selectedSession.crypto}.</>
+                    : <>Este arbitraje empieza con <strong>{selectedSession.initialCapital} {selectedSession.fiat}</strong>. El flujo habitual es comprar {selectedSession.crypto} y venderla después para recuperar fiat. La rentabilidad se medirá en {selectedSession.fiat}.</>}
+                </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
