@@ -13,7 +13,7 @@ import {
 } from "./ui/select";
 import { db } from "../firebase";
 import { calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
-import { serializeCsv } from "../utils/csv";
+import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { filterOperations } from "../utils/operationFilters";
 import { 
   TrashIcon, 
@@ -318,27 +318,12 @@ const History = () => {
 
       // Las columnas textuales son seguras frente a fórmulas; las columnas
       // numéricas conservan sus valores, incluidos los beneficios negativos.
-      const csvContent = serializeCsv(headers, rows, [0, 1, 2, 3, 4, 6, 10, 15, 16, 17]);
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-        return true;
-      } else {
-        showExportDialog('error', 'Error del navegador', 'Tu navegador no permite descargar archivos desde esta página.');
-        return false;
-      }
+      const excelXml = buildExcelXml(headers, rows);
+      downloadExcelXml(`historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.xls`, excelXml);
+      return true;
     } catch (err) {
-      console.error("Error al generar el CSV:", err);
-      showExportDialog('error', 'Error', 'Ocurrió un error al generar el CSV.');
+      console.error("Error al generar el Excel:", err);
+      showExportDialog('error', 'Error', 'Ocurrió un error al generar el archivo de Excel.');
       return false;
     }
   };
