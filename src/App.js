@@ -53,7 +53,7 @@ const features = [
     title: "Historial exportable",
     description:
       "Busca, filtra y descarga tus registros para revisarlos o analizarlos en una hoja de cálculo.",
-    tag: "EXPORTACIÓN CSV",
+    tag: "EXPORTACIÓN EXCEL",
   },
 ];
 
