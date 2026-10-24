@@ -2,7 +2,6 @@ import React from "react";
 import {
   ChartBarIcon,
   ArrowsRightLeftIcon,
-  BoltIcon,
   DocumentTextIcon,
   ClockIcon,
   UserCircleIcon,
@@ -11,8 +10,7 @@ import {
 const NavigationBar = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: "dashboard", icon: ChartBarIcon, label: "Resumen", mobileLabel: "Inicio" },
-    { id: "p2p", icon: ArrowsRightLeftIcon, label: "Simulador P2P", mobileLabel: "P2P" },
-    { id: "arbitrage", icon: BoltIcon, label: "Simulador arbitraje", mobileLabel: "Sim. arb." },
+    { id: "simulator", icon: ArrowsRightLeftIcon, label: "Simulador", mobileLabel: "Simular" },
     { id: "sessions", icon: BoltIcon, label: "Arbitrajes", mobileLabel: "Arbit." },
     { id: "operations", icon: DocumentTextIcon, label: "Operaciones", mobileLabel: "Oper." },
     { id: "history", icon: ClockIcon, label: "Historial", mobileLabel: "Hist." },
