@@ -4,11 +4,11 @@ import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowDownTrayIcon, PlusIcon, CheckCircleIcon, PlayIcon, TrashIcon, BoltIcon, DocumentPlusIcon } from "@heroicons/react/24/outline";
 import { calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
-import { serializeCsv } from "../utils/csv";
+import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 
 const FIAT_CURRENCIES = ["EUR", "USD", "VES", "COP", "ARS", "MXN", "BRL", "PEN", "CLP", "GBP"];
 const CRYPTO_CURRENCIES = ["USDT", "USDC", "BTC", "ETH", "BNB", "DAI"];
-const ARBITRAGE_TYPES = ["Comercio P2P", "P2P entre plataformas", "Conversión entre divisas"];
+const ARBITRAGE_TYPES = ["Comercio P2P", "P2P entre plataformas"];
 const money = (value, currency) => new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 8 }).format(Number.isFinite(Number(value)) ? Number(value) : 0) + " " + currency;
 const formatDate = (value) => {
   const date = getOperationDate(value);
@@ -173,15 +173,8 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       item.operation_type || "", item.exchange || "", item.crypto_amount ?? "", item.exchange_rate ?? "",
       item.fiat_amount ?? "", item.fee ?? "", formatDate(item.timestamp),
     ]);
-    const csv = serializeCsv(headers, rows, [0, 1, 2, 3, 4, 5, 6, 11]);
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "JJXCAPITAL-arbitraje-" + selectedSession.name.replace(/[^a-z0-9_-]/gi, "-") + ".csv";
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+    const excelXml = buildExcelXml(headers, rows);
+    downloadExcelXml("JJXCAPITAL-arbitraje-" + selectedSession.name.replace(/[^a-z0-9_-]/gi, "-") + ".xls", excelXml);
   };
 
   const renderOperationTable = (items, type) => (
