@@ -233,8 +233,11 @@ describe("calculateArbitrageSessionResult", () => {
       { crypto: "BTC", fiat: "EUR", operation_type: "Compra", crypto_amount: 1.1, fiat_amount: 99, timestamp: new Date("2026-10-02T12:00:00.000Z") },
     ];
 
-    expect(calculateArbitrageSessionResult(session, operations)).toMatchObject({
-      profit: 0.1, initialCapital: 1, roi: 10, baseCurrency: "BTC", isCryptoBase: true, operationCount: 2,
+    const result = calculateArbitrageSessionResult(session, operations);
+    expect(result.profit).toBeCloseTo(0.1, 8);
+    expect(result.roi).toBeCloseTo(10, 8);
+    expect(result).toMatchObject({
+      initialCapital: 1, baseCurrency: "BTC", isCryptoBase: true, operationCount: 2,
     });
   });
 
