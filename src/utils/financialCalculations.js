@@ -249,7 +249,47 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
   };
 };
 
- 
+
+// Shared session-level accounting keeps the detail screen and history ROI consistent.
+// Operations with a different asset pair are excluded so unlike currencies are never
+// mixed into a session result, even if an old/editable record contains inconsistent data.
+export const calculateArbitrageSessionResult = (session = {}, operations = []) => {
+  const initialCapital = toFiniteNumber(session.initialCapital);
+  const isCryptoBase = session.initialCapitalType === "crypto";
+  const cryptoCode = normalizeCurrency(session.crypto);
+  const fiatCode = normalizeCurrency(session.fiat);
+  const baseCurrency = normalizeCurrency(session.initialCapitalCurrency) ||
+    (isCryptoBase ? cryptoCode : fiatCode) || (isCryptoBase ? "USDT" : "EUR");
+  const matchingOperations = (Array.isArray(operations) ? operations : []).filter((operation) => {
+    const operationCrypto = normalizeCurrency(operation.crypto);
+    const operationFiat = normalizeCurrency(operation.fiat);
+    return (!cryptoCode || operationCrypto === cryptoCode) &&
+      (!fiatCode || operationFiat === fiatCode);
+  });
+
+  let profit = 0;
+  if (isCryptoBase) {
+    profit = matchingOperations.reduce((total, operation) => {
+      const quantity = toFiniteNumber(operation.crypto_amount);
+      if (!Number.isFinite(quantity) || quantity <= 0) return total;
+      if (operation.operation_type === "Compra") return total + quantity;
+      if (operation.operation_type === "Venta") return total - quantity;
+      return total;
+    }, 0);
+  } else {
+    profit = calculateDashboardMetrics(matchingOperations).profitByCurrency?.[fiatCode] || 0;
+  }
+
+  return {
+    profit,
+    initialCapital: Number.isFinite(initialCapital) ? initialCapital : 0,
+    roi: Number.isFinite(initialCapital) && initialCapital > 0 ? (profit / initialCapital) * 100 : 0,
+    baseCurrency,
+    isCryptoBase,
+    operationCount: matchingOperations.length,
+  };
+};
+
 export const calculateCryptoArbitrage = ({
   amount,
   buy_price,
