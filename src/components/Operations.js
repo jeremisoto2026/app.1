@@ -84,8 +84,9 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
 
   const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin'];
   const operationTypes = ['Venta', 'Compra'];
-  const cryptos = ['USDT', 'BTC', 'ETH', 'BNB', 'USDC'];
-  const fiats = ['EUR', 'USD', 'USDT', 'USDC', 'VES', 'MXN', 'COP', 'ARS', 'BRL'];
+  // Deben coincidir con las monedas permitidas al crear una sesión de arbitraje.
+  const cryptos = ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'DAI'];
+  const fiats = ['EUR', 'USD', 'VES', 'COP', 'ARS', 'MXN', 'BRL', 'PEN', 'CLP', 'GBP'];
 
   const handleInputChange = (field, value) => {
     setFormData((previous) => {
