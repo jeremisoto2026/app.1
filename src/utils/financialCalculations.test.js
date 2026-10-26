@@ -1,5 +1,6 @@
 import {
   calculateCryptoArbitrage,
+  calculateArbitrageSessionResult,
   calculateDashboardMetrics,
   calculateOperationAmounts,
 } from "./financialCalculations";
@@ -206,6 +207,42 @@ test("keeps USD dollars and USDT stablecoin profits in separate totals", () => {
   const result = calculateDashboardMetrics(operations, new Date("2026-10-22T12:00:00.000Z"));
   expect(result.profitByCurrency).toEqual({ USD: 10, USDT: 10 });
   expect(result.profitByCurrency.USD).not.toBe(result.profitByCurrency.USDT * 2);
+});
+
+
+describe("calculateArbitrageSessionResult", () => {
+  const date = new Date("2026-10-01T12:00:00.000Z");
+
+  test("calculates fiat-base profit and ROI using only the session asset pair", () => {
+    const session = { fiat: "EUR", crypto: "USDT", initialCapitalType: "fiat", initialCapitalCurrency: "EUR", initialCapital: 100 };
+    const operations = [
+      { id: "buy", crypto: "USDT", fiat: "EUR", operation_type: "Compra", crypto_amount: 10, fiat_amount: 100, timestamp: date },
+      { id: "sell", crypto: "USDT", fiat: "EUR", operation_type: "Venta", crypto_amount: 10, fiat_amount: 110, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+      { id: "other-pair", crypto: "USDC", fiat: "EUR", operation_type: "Venta", crypto_amount: 100, fiat_amount: 1000, timestamp: new Date("2026-10-03T12:00:00.000Z") },
+    ];
+
+    expect(calculateArbitrageSessionResult(session, operations)).toMatchObject({
+      profit: 10, initialCapital: 100, roi: 10, baseCurrency: "EUR", isCryptoBase: false, operationCount: 2,
+    });
+  });
+
+  test("calculates crypto-base profit and ROI in crypto units", () => {
+    const session = { fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1 };
+    const operations = [
+      { crypto: "BTC", fiat: "EUR", operation_type: "Venta", crypto_amount: 1, fiat_amount: 100, timestamp: date },
+      { crypto: "BTC", fiat: "EUR", operation_type: "Compra", crypto_amount: 1.1, fiat_amount: 99, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+    ];
+
+    expect(calculateArbitrageSessionResult(session, operations)).toMatchObject({
+      profit: 0.1, initialCapital: 1, roi: 10, baseCurrency: "BTC", isCryptoBase: true, operationCount: 2,
+    });
+  });
+
+  test("returns zero ROI for an invalid initial capital", () => {
+    expect(calculateArbitrageSessionResult({ fiat: "EUR", crypto: "USDT", initialCapital: 0 }, [])).toMatchObject({
+      profit: 0, initialCapital: 0, roi: 0, baseCurrency: "EUR", isCryptoBase: false,
+    });
+  });
 });
 
 describe("calculateCryptoArbitrage", () => {
