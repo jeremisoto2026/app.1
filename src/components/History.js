@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
-import { calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
+import { calculateArbitrageSessionResult, calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
 import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { filterOperations } from "../utils/operationFilters";
 import { 
@@ -82,17 +82,9 @@ const History = () => {
   const realizedProfitByOperation = financialMetrics.realizedProfitByOperation || {};
   const sessionResults = useMemo(() => sessions.map(session => {
     const sessionOperations = operations.filter(operation => operation.sessionId === session.id);
-    const initialCapital = Number(session.initialCapital) || 0;
-    const isCryptoBase = session.initialCapitalType === "crypto";
-    const profit = isCryptoBase
-      ? sessionOperations.reduce((sum, operation) => sum + (operation.operation_type === "Compra" ? 1 : operation.operation_type === "Venta" ? -1 : 0) * (Number(operation.crypto_amount) || 0), 0)
-      : (calculateDashboardMetrics(sessionOperations).profitByCurrency?.[session.fiat] || 0);
     return {
       ...session,
-      profit,
-      roi: initialCapital > 0 ? profit / initialCapital * 100 : 0,
-      baseCurrency: session.initialCapitalCurrency || (isCryptoBase ? session.crypto : session.fiat) || (isCryptoBase ? "USDT" : "EUR"),
-      isCryptoBase,
+      ...calculateArbitrageSessionResult(session, sessionOperations),
     };
   }), [sessions, operations]);
 
@@ -210,6 +202,17 @@ const History = () => {
       if (!editData.exchange || !editData.operation_type || !editData.crypto || !editData.fiat) {
         throw new Error("Completa la plataforma, el tipo de operación y ambas monedas.");
       }
+      const linkedSession = operationToEdit.sessionId
+        ? sessions.find(session => session.id === operationToEdit.sessionId)
+        : null;
+      if (linkedSession) {
+        const pairChanged =
+          (linkedSession.crypto && String(editData.crypto).toUpperCase() !== String(linkedSession.crypto).toUpperCase()) ||
+          (linkedSession.fiat && String(editData.fiat).toUpperCase() !== String(linkedSession.fiat).toUpperCase());
+        if (pairChanged) {
+          throw new Error("Esta operación pertenece a un arbitraje con un par de monedas fijo. Para mantener el ROI correcto, no puedes cambiar sus monedas.");
+        }
+      }
       const calculatedAmounts = calculateOperationAmounts({
         operation_type: editData.operation_type,
         amount: editData.amount,
@@ -288,7 +291,7 @@ const History = () => {
       const rows = sortedData.map(op => {
         const hasCryptoAmount = op.crypto_amount !== null && op.crypto_amount !== undefined && op.crypto_amount !== "";
         const cryptoAmount = Number(op.crypto_amount);
-        const formattedCryptoAmount = hasCryptoAmount && Number.isFinite(cryptoAmount) ? cryptoAmount.toFixed(8) : "";
+        const formattedCryptoAmount = hasCryptoAmount && Number.isFinite(cryptoAmount) ? cryptoAmount : "";
         const realization = op.operation_type === "Venta" ? realizedProfitByOperation[op.id] : null;
         const knownProfit = realization && realization.matchedQuantity > 0;
         const costCoverage = op.operation_type !== "Venta"
@@ -311,20 +314,20 @@ const History = () => {
           op.fiat || "",
           op.fiat_amount === null || op.fiat_amount === undefined || op.fiat_amount === ""
             ? ""
-            : Number.isFinite(Number(op.fiat_amount)) ? Number(op.fiat_amount).toFixed(2) : "",
+            : Number.isFinite(Number(op.fiat_amount)) ? Number(op.fiat_amount) : "",
           op.exchange_rate === null || op.exchange_rate === undefined || op.exchange_rate === ""
             ? ""
-            : Number.isFinite(Number(op.exchange_rate)) ? String(op.exchange_rate) : "",
+            : Number.isFinite(Number(op.exchange_rate)) ? Number(op.exchange_rate) : "",
           op.fee === null || op.fee === undefined || op.fee === ""
             ? ""
-            : Number.isFinite(Number(op.fee)) ? String(Number(op.fee)) : "",
+            : Number.isFinite(Number(op.fee)) ? Number(op.fee) : "",
           op.fee === null || op.fee === undefined || op.fee === ""
             ? ""
             : op.fee_currency || (op.operation_type === "Venta" ? op.fiat : op.crypto) || "",
-          knownProfit ? realization.matchedQuantity.toFixed(8) : "",
-          knownProfit ? realization.matchedProceeds.toFixed(2) : "",
-          knownProfit ? realization.matchedCost.toFixed(2) : "",
-          knownProfit ? realization.profit.toFixed(2) : "",
+          knownProfit ? realization.matchedQuantity : "",
+          knownProfit ? realization.matchedProceeds : "",
+          knownProfit ? realization.matchedCost : "",
+          knownProfit ? realization.profit : "",
           knownProfit ? realization.currency : "",
           costCoverage,
           formatDateForCSV(op.timestamp),
