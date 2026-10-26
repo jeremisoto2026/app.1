@@ -3,7 +3,7 @@ import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowDownTrayIcon, PlusIcon, CheckCircleIcon, PlayIcon, TrashIcon, BoltIcon, DocumentPlusIcon } from "@heroicons/react/24/outline";
-import { calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
+import { calculateArbitrageSessionResult, calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
 import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 
 const FIAT_CURRENCIES = ["EUR", "USD", "VES", "COP", "ARS", "MXN", "BRL", "PEN", "CLP", "GBP"];
@@ -24,7 +24,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selected, setSelected] = useState("");
-  const [draft, setDraft] = useState({ name: "", strategy: "Comercio P2P", fiat: "EUR", crypto: "USDT", initialCapital: "100" });
+  const [draft, setDraft] = useState({ name: "", strategy: "Comercio P2P", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT", initialCapital: "100" });
 
   const loadData = async () => {
     if (!user?.uid) {
@@ -66,15 +66,22 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     [operations, selectedSession]
   );
   const stats = useMemo(() => {
-    if (!selectedSession) return { profit: 0, buyFiat: 0, sellFiat: 0, buyCrypto: 0, sellCrypto: 0, fiatBalance: 0, cryptoBalance: 0, percentage: 0, count: 0 };
-    const calculations = calculateDashboardMetrics(sessionOperations);
-    const add = (type, field) => sessionOperations
+    if (!selectedSession) return { profit: 0, profitCrypto: 0, buyFiat: 0, sellFiat: 0, buyCrypto: 0, sellCrypto: 0, fiatBalance: 0, cryptoBalance: 0, percentage: 0, baseCurrency: "EUR", count: 0 };
+    const accountingOperations = sessionOperations.filter(item =>
+      (!selectedSession.crypto || String(item.crypto || "").toUpperCase() === String(selectedSession.crypto).toUpperCase()) &&
+      (!selectedSession.fiat || String(item.fiat || "").toUpperCase() === String(selectedSession.fiat).toUpperCase())
+    );
+    const calculations = calculateDashboardMetrics(accountingOperations);
+    const sessionResult = calculateArbitrageSessionResult(selectedSession, accountingOperations);
+    const add = (type, field) => accountingOperations
       .filter(item => item.operation_type === type)
-      .reduce((total, item) => total + (Number.isFinite(Number(item[field])) ? Number(item[field]) : 0), 0);
+      .reduce((total, item) => {
+        const value = Number(item[field]);
+        return total + (Number.isFinite(value) ? value : 0);
+      }, 0);
     const initialCapital = Number(selectedSession.initialCapital) || 0;
-    const startsWithCrypto = selectedSession.initialCapitalType === "crypto";
-    const profitFiat = calculations.profitByCurrency?.[selectedSession.fiat] || 0;
-    const profitCrypto = sessionOperations
+    const startsWithCrypto = sessionResult.isCryptoBase;
+    const profitCrypto = accountingOperations
       .filter(item => item.operation_type === "Venta")
       .reduce((total, item) => {
         const realized = calculations.realizedProfitByOperation?.[item.id];
@@ -84,27 +91,31 @@ export default function ArbitrageSessions({ onOpenOperations }) {
           : total;
       }, 0);
     const netCryptoChange = add("Compra", "crypto_amount") - add("Venta", "crypto_amount");
-    const profit = startsWithCrypto ? netCryptoChange : profitFiat;
     return {
-      profit,
-      profitCrypto: startsWithCrypto ? netCryptoChange : profitCrypto,
+      profit: sessionResult.profit,
+      profitCrypto: startsWithCrypto ? sessionResult.profit : profitCrypto,
       buyFiat: add("Compra", "fiat_amount"),
       sellFiat: add("Venta", "fiat_amount"),
       buyCrypto: add("Compra", "crypto_amount"),
       sellCrypto: add("Venta", "crypto_amount"),
       fiatBalance: (startsWithCrypto ? 0 : initialCapital) + add("Venta", "fiat_amount") - add("Compra", "fiat_amount"),
       cryptoBalance: (startsWithCrypto ? initialCapital : 0) + netCryptoChange,
-      percentage: initialCapital > 0 ? profit / initialCapital * 100 : 0,
+      percentage: sessionResult.roi,
+      baseCurrency: sessionResult.baseCurrency,
       count: sessionOperations.length,
     };
-  }, [selectedSession, sessionOperations]);
+
 
   const createSession = async (event) => {
     event.preventDefault();
     if (!user?.uid) return;
     const initialCapital = Number(draft.initialCapital);
+    if (!["fiat", "crypto"].includes(draft.initialCapitalType) || !FIAT_CURRENCIES.includes(draft.fiat) || !CRYPTO_CURRENCIES.includes(draft.crypto)) {
+      setError("Selecciona una moneda base, una divisa fiat y una criptomoneda válidas.");
+      return;
+    }
     if (!Number.isFinite(initialCapital) || initialCapital <= 0) {
-      setError("Introduce un capital inicial mayor que cero y selecciona dos monedas diferentes.");
+      setError("Introduce un capital inicial mayor que cero.");
       return;
     }
     const name = draft.name.trim() || (draft.fiat + " / " + draft.crypto + " · " + new Date().toLocaleDateString("es-ES"));
@@ -254,30 +265,30 @@ export default function ArbitrageSessions({ onOpenOperations }) {
             </select>
           </label>
           <label className="text-sm text-slate-300">Iniciar arbitraje con
-            <select value={draft.initialCapitalType} onChange={e => setDraft(v => ({ ...v, initialCapitalType: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+            <select value={draft.initialCapitalType} onChange={e => setDraft(v => ({ ...v, initialCapitalType: e.target.value, initialCapital: "" }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
               <option value="fiat">Moneda Fiat</option>
               <option value="crypto">Criptomoneda</option>
             </select>
           </label>
           {draft.initialCapitalType === "fiat" ? <>
             <label className="text-sm text-slate-300">Moneda inicial (Fiat)
-              <select value={draft.fiat} onChange={e => setDraft(v => ({ ...v, fiat: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+              <select value={draft.fiat} onChange={e => setDraft(v => ({ ...v, fiat: e.target.value, initialCapital: v.initialCapitalType === "fiat" ? "" : v.initialCapital }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
                 {FIAT_CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
               </select>
             </label>
             <label className="text-sm text-slate-300">Cripto a operar
-              <select value={draft.crypto} onChange={e => setDraft(v => ({ ...v, crypto: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+              <select value={draft.crypto} onChange={e => setDraft(v => ({ ...v, crypto: e.target.value, initialCapital: v.initialCapitalType === "crypto" ? "" : v.initialCapital }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
                 {CRYPTO_CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
               </select>
             </label>
           </> : <>
             <label className="text-sm text-slate-300">Moneda inicial (Cripto)
-              <select value={draft.crypto} onChange={e => setDraft(v => ({ ...v, crypto: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+              <select value={draft.crypto} onChange={e => setDraft(v => ({ ...v, crypto: e.target.value, initialCapital: v.initialCapitalType === "crypto" ? "" : v.initialCapital }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
                 {CRYPTO_CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
               </select>
             </label>
             <label className="text-sm text-slate-300">Fiat para las operaciones
-              <select value={draft.fiat} onChange={e => setDraft(v => ({ ...v, fiat: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+              <select value={draft.fiat} onChange={e => setDraft(v => ({ ...v, fiat: e.target.value, initialCapital: v.initialCapitalType === "fiat" ? "" : v.initialCapital }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
                 {FIAT_CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
               </select>
             </label>
@@ -337,7 +348,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedSession.status === "active" && <button type="button" onClick={() => onOpenOperations?.(selectedSession.id)} className="jjx-button-primary"><DocumentPlusIcon className="h-4 w-4" /> Registrar compra/venta</button>}
-                    <button type="button" onClick={exportSession} className="jjx-button-secondary"><ArrowDownTrayIcon className="h-4 w-4" /> Exportar CSV</button>
+                    <button type="button" onClick={exportSession} className="jjx-button-secondary"><ArrowDownTrayIcon className="h-4 w-4" /> Exportar Excel</button>
                     {selectedSession.status === "active"
                       ? <button type="button" disabled={saving} onClick={() => setSessionStatus("closed")} className="jjx-button-secondary"><CheckCircleIcon className="h-4 w-4" /> Terminar</button>
                       : <button type="button" disabled={saving} onClick={() => setSessionStatus("active")} className="jjx-button-secondary"><PlayIcon className="h-4 w-4" /> Reabrir</button>}
@@ -345,8 +356,8 @@ export default function ArbitrageSessions({ onOpenOperations }) {
                   </div>
                 </div>
                 <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-5">
-                  <div className="jjx-inset"><p className="jjx-field-label">Capital inicial</p><p className="mt-2 text-lg font-semibold text-white">{money(selectedSession.initialCapital, selectedSession.initialCapitalCurrency || selectedSession.fiat || "EUR")}</p></div>
-                  <div className="jjx-inset"><p className="jjx-field-label">Beneficio / pérdida en moneda base</p><p className={"mt-2 text-lg font-semibold " + (stats.profit >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profit, selectedSession.initialCapitalCurrency || selectedSession.fiat || "EUR")}</p><p className="mt-1 text-xs text-slate-500">{selectedSession.initialCapitalType === "crypto" ? "Saldo cripto neto frente al capital inicial" : "FIFO · ventas emparejadas"}</p></div>
+                  <div className="jjx-inset"><p className="jjx-field-label">Capital inicial</p><p className="mt-2 text-lg font-semibold text-white">{money(selectedSession.initialCapital, stats.baseCurrency || selectedSession.initialCapitalCurrency || selectedSession.fiat || "EUR")}</p></div>
+                  <div className="jjx-inset"><p className="jjx-field-label">Beneficio / pérdida en moneda base</p><p className={"mt-2 text-lg font-semibold " + (stats.profit >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profit, stats.baseCurrency || selectedSession.initialCapitalCurrency || selectedSession.fiat || "EUR")}</p><p className="mt-1 text-xs text-slate-500">{selectedSession.initialCapitalType === "crypto" ? "Saldo cripto neto frente al capital inicial" : "FIFO · ventas emparejadas"}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Beneficio equivalente en cripto</p><p className={"mt-2 text-lg font-semibold " + (stats.profitCrypto >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profitCrypto, selectedSession.crypto || "USDT")}</p><p className="mt-1 text-xs text-slate-500">{selectedSession.initialCapitalType === "crypto" ? "Beneficio en la moneda base" : "Equivalencia estimada"}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Saldo fiat estimado</p><p className={"mt-2 text-lg font-semibold " + (stats.fiatBalance >= 0 ? "text-white" : "text-rose-300")}>{money(stats.fiatBalance, selectedSession.fiat || "EUR")}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Cripto neta</p><p className="mt-2 text-lg font-semibold text-white">{money(stats.cryptoBalance, selectedSession.crypto || "USDT")}</p></div>
