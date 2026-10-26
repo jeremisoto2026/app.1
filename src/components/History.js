@@ -205,12 +205,20 @@ const History = () => {
       const linkedSession = operationToEdit.sessionId
         ? sessions.find(session => session.id === operationToEdit.sessionId)
         : null;
-      if (linkedSession) {
-        const pairChanged =
-          (linkedSession.crypto && String(editData.crypto).toUpperCase() !== String(linkedSession.crypto).toUpperCase()) ||
-          (linkedSession.fiat && String(editData.fiat).toUpperCase() !== String(linkedSession.fiat).toUpperCase());
-        if (pairChanged) {
-          throw new Error("Esta operación pertenece a un arbitraje con un par de monedas fijo. Para mantener el ROI correcto, no puedes cambiar sus monedas.");
+      if (operationToEdit.sessionId) {
+        const pairChangedFromOperation =
+          String(editData.crypto).toUpperCase() !== String(operationToEdit.crypto || "").toUpperCase() ||
+          String(editData.fiat).toUpperCase() !== String(operationToEdit.fiat || "").toUpperCase();
+        if (!linkedSession && pairChangedFromOperation) {
+          throw new Error("No se pudo verificar el arbitraje de esta operación. No cambies sus monedas hasta que se puedan cargar los datos de la sesión.");
+        }
+        if (linkedSession) {
+          const pairChanged =
+            (linkedSession.crypto && String(editData.crypto).toUpperCase() !== String(linkedSession.crypto).toUpperCase()) ||
+            (linkedSession.fiat && String(editData.fiat).toUpperCase() !== String(linkedSession.fiat).toUpperCase());
+          if (pairChanged) {
+            throw new Error("Esta operación pertenece a un arbitraje con un par de monedas fijo. Para mantener el ROI correcto, no puedes cambiar sus monedas.");
+          }
         }
       }
       const calculatedAmounts = calculateOperationAmounts({
@@ -420,11 +428,12 @@ const History = () => {
     if (value === null || value === undefined || value === "") return "—";
     const amount = Number(value);
     if (!Number.isFinite(amount)) return "—";
+    const currencyCode = String(currency || "").trim().toUpperCase();
+    const supportsCryptoPrecision = ["BTC", "ETH", "BNB", "USDT", "USDC", "DAI", "SOL", "XRP", "LTC"].includes(currencyCode);
     const formatted = new Intl.NumberFormat("es-ES", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      maximumFractionDigits: supportsCryptoPrecision ? 8 : 2,
     }).format(amount);
-    const currencyCode = String(currency || "").trim().toUpperCase();
     // Mostrar siempre el código evita confundir USD con USDT u otras monedas con símbolo $.
     return currencyCode ? formatted + " " + currencyCode : formatted + " (moneda no especificada)";
   };
