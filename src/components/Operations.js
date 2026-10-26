@@ -80,7 +80,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
     }));
     setError('');
     setSuccess('');
-  }, [selectedSession?.id, selectedSession?.crypto, selectedSession?.fiat]);
+  }, [selectedSession?.id, selectedSession?.crypto, selectedSession?.fiat, selectedSession?.initialCapitalType]);
 
   const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin'];
   const operationTypes = ['Venta', 'Compra'];
@@ -189,7 +189,8 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       setFormData({
         order_id: '',
         exchange: '',
-        operation_type: '',
+        // Facilita continuar el ciclo: tras comprar, sugerir vender y viceversa.
+        operation_type: formData.operation_type === 'Compra' ? 'Venta' : 'Compra',
         crypto: selectedSession.crypto || 'USDT',
         fiat: selectedSession.fiat || 'EUR',
         crypto_amount: '',
