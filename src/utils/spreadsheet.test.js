@@ -14,4 +14,10 @@ describe("Excel SpreadsheetML export", () => {
     expect(xml).toContain('<Worksheet ss:Name="Historial">');
     expect(xml).toContain('<Style ss:ID="Header">');
   });
+  test("exports finite numeric values as numeric Excel cells", () => {
+    const xml = buildExcelXml(["Cantidad", "Beneficio"], [[1.25, -0.5]]);
+    expect(xml).toContain('<Data ss:Type="Number">1.25</Data>');
+    expect(xml).toContain('<Data ss:Type="Number">-0.5</Data>');
+  });
+
 });
