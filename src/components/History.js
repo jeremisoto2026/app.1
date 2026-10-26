@@ -49,6 +49,7 @@ const History = () => {
   const [sessionFilter, setSessionFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [sessionsFetchWarning, setSessionsFetchWarning] = useState("");
   const [filters, setFilters] = useState({
     crypto: "",
     fiat: "",
@@ -105,12 +106,14 @@ const History = () => {
         setOperations([]);
         setSessions([]);
         setFetchError("");
+        setSessionsFetchWarning("");
         setLoading(false);
         return;
       }
 
       setLoading(true);
       setFetchError("");
+      setSessionsFetchWarning("");
 
       try {
         // Incluye operaciones antiguas sin fecha y las ordena de forma fiable en cliente.
@@ -124,6 +127,9 @@ const History = () => {
           if (!cancelled) setSessions(sessionSnapshot.docs.map(sessionDoc => ({ id: sessionDoc.id, ...sessionDoc.data() })));
         } catch (sessionError) {
           console.warn("No se pudieron cargar los nombres de arbitraje en el historial:", sessionError);
+          if (!cancelled) {
+            setSessionsFetchWarning("No se pudieron cargar los arbitrajes. Los movimientos siguen visibles, pero sus resúmenes y filtros por sesión pueden estar incompletos. Comprueba las reglas de Firestore.");
+          }
         }
         data.sort((a, b) => {
           const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
@@ -903,6 +909,11 @@ const History = () => {
         {fetchError && (
           <div role="alert" className="rounded-xl border border-red-500/30 bg-red-900/20 p-4 text-red-200">
             {fetchError}
+          </div>
+        )}
+        {sessionsFetchWarning && (
+          <div role="status" className="rounded-xl border border-amber-500/30 bg-amber-900/10 p-4 text-amber-100">
+            {sessionsFetchWarning}
           </div>
         )}
 
