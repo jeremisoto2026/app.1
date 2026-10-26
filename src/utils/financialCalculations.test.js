@@ -214,11 +214,12 @@ describe("calculateArbitrageSessionResult", () => {
   const date = new Date("2026-10-01T12:00:00.000Z");
 
   test("calculates fiat-base profit and ROI using only the session asset pair", () => {
-    const session = { fiat: "EUR", crypto: "USDT", initialCapitalType: "fiat", initialCapitalCurrency: "EUR", initialCapital: 100 };
+    const session = { id: "session-a", fiat: "EUR", crypto: "USDT", initialCapitalType: "fiat", initialCapitalCurrency: "EUR", initialCapital: 100 };
     const operations = [
-      { id: "buy", crypto: "USDT", fiat: "EUR", operation_type: "Compra", crypto_amount: 10, fiat_amount: 100, timestamp: date },
-      { id: "sell", crypto: "USDT", fiat: "EUR", operation_type: "Venta", crypto_amount: 10, fiat_amount: 110, timestamp: new Date("2026-10-02T12:00:00.000Z") },
-      { id: "other-pair", crypto: "USDC", fiat: "EUR", operation_type: "Venta", crypto_amount: 100, fiat_amount: 1000, timestamp: new Date("2026-10-03T12:00:00.000Z") },
+      { id: "buy", sessionId: "session-a", crypto: "USDT", fiat: "EUR", operation_type: "Compra", crypto_amount: 10, fiat_amount: 100, timestamp: date },
+      { id: "sell", sessionId: "session-a", crypto: "USDT", fiat: "EUR", operation_type: "Venta", crypto_amount: 10, fiat_amount: 110, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+      { id: "other-pair", sessionId: "session-a", crypto: "USDC", fiat: "EUR", operation_type: "Venta", crypto_amount: 100, fiat_amount: 1000, timestamp: new Date("2026-10-03T12:00:00.000Z") },
+      { id: "other-session", sessionId: "session-b", crypto: "USDT", fiat: "EUR", operation_type: "Venta", crypto_amount: 10, fiat_amount: 130, timestamp: new Date("2026-10-04T12:00:00.000Z") },
     ];
 
     expect(calculateArbitrageSessionResult(session, operations)).toMatchObject({
@@ -227,10 +228,10 @@ describe("calculateArbitrageSessionResult", () => {
   });
 
   test("calculates crypto-base profit and ROI in crypto units", () => {
-    const session = { fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1 };
+    const session = { id: "crypto-session", fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1 };
     const operations = [
-      { crypto: "BTC", fiat: "EUR", operation_type: "Venta", crypto_amount: 1, fiat_amount: 100, timestamp: date },
-      { crypto: "BTC", fiat: "EUR", operation_type: "Compra", crypto_amount: 1.1, fiat_amount: 99, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+      { sessionId: "crypto-session", crypto: "BTC", fiat: "EUR", operation_type: "Venta", crypto_amount: 1, fiat_amount: 100, timestamp: date },
+      { sessionId: "crypto-session", crypto: "BTC", fiat: "EUR", operation_type: "Compra", crypto_amount: 1.1, fiat_amount: 99, timestamp: new Date("2026-10-02T12:00:00.000Z") },
     ];
 
     const result = calculateArbitrageSessionResult(session, operations);
