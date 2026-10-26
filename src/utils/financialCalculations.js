@@ -261,6 +261,9 @@ export const calculateArbitrageSessionResult = (session = {}, operations = []) =
   const baseCurrency = normalizeCurrency(session.initialCapitalCurrency) ||
     (isCryptoBase ? cryptoCode : fiatCode) || (isCryptoBase ? "USDT" : "EUR");
   const matchingOperations = (Array.isArray(operations) ? operations : []).filter((operation) => {
+    // If a caller passes a global operation list, never include another session
+    // merely because it uses the same pair of currencies.
+    if (session.id && operation.sessionId !== session.id) return false;
     const operationCrypto = normalizeCurrency(operation.crypto);
     const operationFiat = normalizeCurrency(operation.fiat);
     return (!cryptoCode || operationCrypto === cryptoCode) &&
