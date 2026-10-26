@@ -32,6 +32,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
   const [activeArbitrages, setActiveArbitrages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sessionsWarning, setSessionsWarning] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -41,12 +42,14 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
         setMetrics(emptyMetrics);
         setActiveArbitrages(0);
         setError("");
+        setSessionsWarning("");
         setLoading(false);
         return;
       }
 
       setLoading(true);
       setError("");
+      setSessionsWarning("");
       try {
         const snapshot = await getDocs(collection(db, "users", user.uid, "operations"));
         const operations = snapshot.docs.map((operationDoc) => ({
@@ -61,6 +64,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
         } catch (sessionsError) {
           // El fallo de lectura de sesiones no debe ocultar las métricas financieras que sí cargaron.
           console.warn("No se pudo contar los arbitrajes activos:", sessionsError);
+          if (!cancelled) setSessionsWarning("No se pudieron cargar los arbitrajes activos. Comprueba las reglas de Firestore; las cifras de tus operaciones siguen visibles, pero este contador puede ser incompleto.");
         }
         if (!cancelled) {
           setMetrics(calculated);
@@ -126,6 +130,11 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
+        {sessionsWarning && (
+          <div role="status" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-900/10 p-4 text-sm text-amber-100">
+            {sessionsWarning}
+          </div>
+        )}
         <header className="dashboard-topbar">
           <div className="dashboard-brand">
             <span className="dashboard-brand-mark" aria-hidden="true">J</span>
