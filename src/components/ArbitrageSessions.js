@@ -104,7 +104,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       baseCurrency: sessionResult.baseCurrency,
       count: sessionOperations.length,
     };
-
+  }, [selectedSession, sessionOperations]);
 
   const createSession = async (event) => {
     event.preventDefault();
