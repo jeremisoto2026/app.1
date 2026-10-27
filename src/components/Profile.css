@@ -325,7 +325,7 @@
 
 .profile-card-heading { display: flex; align-items: center; gap: 12px; }
 .profile-body-copy { margin-top: 15px; color: #8b99ad; font-size: 11px; line-height: 1.8; }
-.profile-account-grid {
+.profile-support-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
   align-items: start;
@@ -620,4 +620,50 @@
 @media (max-width: 700px) {
   .payment-history-scroll { max-height: 320px; }
   .payment-history-tools { align-items: flex-start; }
+}
+
+.profile-account-section {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(96, 165, 250, .055), transparent 50%),
+    linear-gradient(145deg, rgba(17, 25, 41, .97), rgba(11, 17, 29, .99));
+}
+.profile-account-section > .profile-card-heading {
+  align-items: flex-start;
+}
+.profile-account-section > .profile-card-heading > div {
+  min-width: 0;
+}
+.profile-account-section > .profile-card-heading .jjx-eyebrow {
+  display: inline-block;
+  margin-bottom: 5px;
+}
+.profile-account-section .profile-details-grid {
+  margin-top: 20px;
+}
+.profile-account-section .jjx-inset {
+  min-width: 0;
+  min-height: 76px;
+  padding: 15px 16px;
+  border: 1px solid rgba(148, 163, 184, .12);
+  border-radius: 12px;
+  background: rgba(4, 9, 18, .24);
+}
+.profile-account-section .jjx-field-label {
+  color: #8290a7;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.profile-support-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@media (min-width: 760px) {
+  .profile-support-grid .profile-help-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
