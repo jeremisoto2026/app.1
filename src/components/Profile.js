@@ -367,13 +367,19 @@ export default function Profile() {
   const photoURL = asText(profileData.photoURL) || asText(user?.photoURL);
   const proActive = isProSubscriptionActive(profileData);
   const planLabel = proActive ? "Pro activo" : "Plan gratuito";
-  const operationsAvailable = Number.isFinite(operationCount);
-  const operations = operationsAvailable ? operationCount : "—";
+  const storedOrderCount = Number(profileData.ordersUsed);
+  const storedMovementCount = Number(profileData.movementsUsed);
+  const hasStoredOrderCount = Number.isFinite(storedOrderCount) && storedOrderCount >= 0;
+  const hasStoredMovementCount = Number.isFinite(storedMovementCount) && storedMovementCount >= 0;
+  const ordersAvailable = Number.isFinite(orderCount) || hasStoredOrderCount;
+  const operationsAvailable = Number.isFinite(operationCount) || hasStoredMovementCount;
+  const ordersUsed = Math.max(Number.isFinite(orderCount) ? orderCount : 0, hasStoredOrderCount ? storedOrderCount : 0);
+  const movementsUsed = Math.max(Number.isFinite(operationCount) ? operationCount : 0, hasStoredMovementCount ? storedMovementCount : 0);
+  const operations = operationsAvailable ? movementsUsed : "—";
   const exports = Number.isFinite(exportCount) ? exportCount : countFromProfile(profileData);
   const memberSince = formatDate(profileData.createdAt, user?.metadata?.creationTime);
-  const ordersAvailable = Number.isFinite(orderCount);
-  const orderUsage = ordersAvailable ? getLimitProgress(orderCount, FREE_PLAN_LIMITS.orders) : null;
-  const movementUsage = operationsAvailable ? getLimitProgress(operationCount, FREE_PLAN_LIMITS.movements) : null;
+  const orderUsage = ordersAvailable ? getLimitProgress(ordersUsed, FREE_PLAN_LIMITS.orders) : null;
+  const movementUsage = operationsAvailable ? getLimitProgress(movementsUsed, FREE_PLAN_LIMITS.movements) : null;
   const exportUsage = getLimitProgress(exports, FREE_PLAN_LIMITS.exports);
   const currentExpiryLabel = proActive ? formatPaymentDate(profileData.subscriptionExpiresAt) : "";
 
@@ -456,7 +462,7 @@ export default function Profile() {
                 <p className="text-sm font-semibold text-slate-200">Órdenes / arbitrajes</p>
                 <span className="text-xs text-slate-500">{proActive ? "Sin límite" : "300 máximo"}</span>
               </div>
-              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitado" : ordersAvailable ? orderCount : "—"}</p>
+              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitado" : ordersAvailable ? ordersUsed : "—"}</p>
               {!proActive && <p className="mt-1 text-xs text-slate-400">{ordersAvailable ? `de ${FREE_PLAN_LIMITS.orders} · ${orderUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
               {!proActive && <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" style={{ width: `${orderUsage?.percent || 0}%` }} /></div>}
               {proActive && <p className="mt-1 text-xs text-emerald-300">Sin límite durante tu suscripción</p>}
