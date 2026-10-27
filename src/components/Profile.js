@@ -753,7 +753,18 @@ export default function Profile() {
                 <div><h2>¿Necesitas ayuda?</h2><p>Estamos aquí para ayudarte.</p></div>
               </div>
               <p className="profile-body-copy">Contacta con soporte si tienes problemas para acceder a tu cuenta o registrar una operación.</p>
-              <a href="mailto:soportejjxcapital@gmail.com" className="jjx-button-secondary mt-5 w-full justify-center">Contactar con soporte</a>
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=soportejjxcapital%40gmail.com&su=Soporte%20JJXCAPITAL"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Abrir un correo nuevo en Gmail"
+                className="jjx-button-secondary mt-5 w-full justify-center"
+              >
+                Contactar con soporte
+              </a>
+              <p className="mt-2 text-center text-xs leading-5 text-slate-500">
+                Se abrirá un borrador de correo en una pestaña nueva.
+              </p>
             </section>
           </aside>
         </section>
