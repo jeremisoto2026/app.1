@@ -434,7 +434,7 @@ export default function Profile() {
           <div className="profile-section-heading">
             <div>
               <span className="jjx-eyebrow">TIPO DE PLAN ACTUAL</span>
-              <h2 id="profile-usage-heading">{proActive ? "JJXCAPITAL Pro · Acceso ilimitado" : "Uso y límites de tu cuenta"}</h2>
+              <h2 id="profile-usage-heading">{proActive ? "JJXCAPITAL Pro · Acceso ilimitado" : "Uso de tu cuenta y límites"}</h2>
               <p>{proActive
                 ? "Todas las funciones están ilimitadas hasta " + currentExpiryLabel + "."
                 : "Consulta tu consumo y el número de acciones que todavía tienes disponibles."}</p>
