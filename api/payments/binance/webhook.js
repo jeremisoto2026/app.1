@@ -7,8 +7,6 @@ const {
   errorResponse,
 } = require("../../../lib/payments");
 
-module.exports.config = { api: { bodyParser: false } };
-
 async function readRawBody(req) {
   if (Buffer.isBuffer(req.body)) return req.body.toString("utf8");
   if (typeof req.body === "string") return req.body;
@@ -155,3 +153,5 @@ module.exports = async function binancePayWebhook(req, res) {
     return errorResponse(res, error);
   }
 };
+
+module.exports.config = { api: { bodyParser: false } };
