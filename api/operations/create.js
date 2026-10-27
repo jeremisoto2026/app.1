@@ -7,6 +7,7 @@ const {
   getDocument,
   countDocuments,
   commitWrites,
+  createWrite,
   documentName,
   toFields,
   errorResponse,
@@ -73,7 +74,9 @@ module.exports = async function createOperation(req, res) {
     }
 
     const operationsPath = userPath + "/operations";
-    const currentMovements = await countDocuments(operationsPath, 151);
+    const storedMovements = Number(profile.data.movementsUsed);
+    const savedMovements = Number.isFinite(storedMovements) && storedMovements >= 0 ? storedMovements : 0;
+    const currentMovements = Math.max(savedMovements, await countDocuments(operationsPath, 151));
     assertPlanAllows(profile.data, "movements", currentMovements);
 
     const id = crypto.randomUUID().replace(/-/g, "");
@@ -95,10 +98,14 @@ module.exports = async function createOperation(req, res) {
       timestamp,
     };
 
-    await commitWrites([{
-      update: { name: documentName(operationsPath + "/" + id), fields: toFields(operation) },
-      currentDocument: { exists: false },
-    }]);
+    await commitWrites([
+      {
+        update: { name: documentName(operationsPath + "/" + id), fields: toFields(operation) },
+        currentDocument: { exists: false },
+      },
+      createWrite(userPath, { movementsUsed: currentMovements + 1 },
+        profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
+    ]);
 
     return sendJson(res, 201, {
       operation: { ...operation, id, timestamp: timestamp.toISOString() },
