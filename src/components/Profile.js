@@ -529,7 +529,8 @@ export default function Profile() {
                       <div>
                         <p className="text-sm font-semibold text-white">Binance Pay</p>
                         <p className="mt-1 text-xs text-slate-400">Checkout oficial · 15 USDT</p>
-                        <p className="mt-1 text-[11px] text-slate-500">ID de cuenta facilitado: 807678814</p>
+                        <p className="mt-1 text-[11px] text-slate-500">ID de referencia: 807678814</p>
+                        <p className="mt-2 max-w-sm text-[11px] leading-5 text-slate-500">El ID por sí solo no crea una orden. El checkout automático requiere una cuenta Binance Pay Merchant y sus credenciales API en Vercel.</p>
                       </div>
                       <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">Requiere credenciales</span>
                     </div>
