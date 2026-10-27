@@ -12,11 +12,13 @@ service cloud.firestore {
         ])
         && request.resource.data.keys().hasOnly([
           'uid', 'email', 'nombre', 'apellido', 'photoURL',
-          'plan', 'exportsUsed', 'createdAt', 'preferences'
+          'plan', 'exportsUsed', 'ordersUsed', 'movementsUsed', 'createdAt', 'preferences'
         ])
         && request.resource.data.uid == userId
         && request.resource.data.plan == 'free'
-        && request.resource.data.get('exportsUsed', 0) == 0;
+        && request.resource.data.get('exportsUsed', 0) == 0
+        && request.resource.data.get('ordersUsed', 0) == 0
+        && request.resource.data.get('movementsUsed', 0) == 0;
     }
 
     function validUserUpdate(userId) {
