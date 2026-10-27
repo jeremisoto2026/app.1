@@ -202,7 +202,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
 
     } catch (err) {
       console.error('Error al guardar la operación:', err);
-      setError('Error al guardar la operación. Inténtalo de nuevo.');
+      setError(err?.message || 'Error al guardar la operación. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
