@@ -400,7 +400,7 @@ export default function Profile() {
                   <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-white">USDT en blockchain</p>
+                        <p className="text-sm font-semibold text-white">Blockchain Pay · USDT</p>
                         <p className="mt-1 text-xs text-slate-400">Importe previsto: 15 USDT</p>
                       </div>
                       <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">Red por confirmar</span>
