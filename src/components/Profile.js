@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { collection, doc, getDoc, getDocs, onSnapshot } from "firebase/firestore";
 import { FREE_PLAN_LIMITS, getProfileExportCount, getLimitProgress, isProSubscriptionActive } from "../utils/planLimits";
-import { getEffectivePaymentStatus } from "../utils/paymentStatus";
+import { getEffectivePaymentStatus, getVisiblePaymentHistory } from "../utils/paymentStatus";
 import {
   ArrowLeftOnRectangleIcon,
   ChartBarIcon,
@@ -55,6 +55,7 @@ export default function Profile() {
   const [copyFeedback, setCopyFeedback] = useState("");
   const [payments, setPayments] = useState([]);
   const [paymentStatusNow, setPaymentStatusNow] = useState(() => Date.now());
+  const [showExpiredPayments, setShowExpiredPayments] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [paymentAction, setPaymentAction] = useState("");
   const [paymentActionLoading, setPaymentActionLoading] = useState(false);
@@ -376,6 +377,10 @@ export default function Profile() {
   const movementUsage = operationsAvailable ? getLimitProgress(movementsUsed, FREE_PLAN_LIMITS.movements) : null;
   const exportUsage = getLimitProgress(exports, FREE_PLAN_LIMITS.exports);
   const currentExpiryLabel = proActive ? formatPaymentDate(profileData.subscriptionExpiresAt) : "";
+  const expiredPaymentCount = payments.filter(
+    (payment) => getEffectivePaymentStatus(payment, paymentStatusNow) === "expired"
+  ).length;
+  const visiblePayments = getVisiblePaymentHistory(payments, paymentStatusNow, showExpiredPayments);
 
   return (
     <div className="jjx-page profile-page min-h-screen px-4 py-6 sm:px-6 lg:px-8">
@@ -658,11 +663,26 @@ export default function Profile() {
                     <p className="mt-1 text-xs text-slate-500">Las órdenes tienen 30 minutos de validez; si transferiste dentro del plazo, aún puedes verificar el pago después.</p>
                   </div>
                 </div>
-                <div className="mt-5 overflow-hidden rounded-xl border border-white/[0.08]">
-                  {payments.length ? (
-                    <div className="divide-y divide-white/[0.07]">
-                      {payments.map((payment) => (
-                        <div key={payment.id || payment.paymentId} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
+                {expiredPaymentCount > 0 && (
+                  <div className="payment-history-tools">
+                    <span>{showExpiredPayments ? "Mostrando también órdenes caducadas" : `${expiredPaymentCount} ${expiredPaymentCount === 1 ? "orden caducada oculta" : "órdenes caducadas ocultas"}`}</span>
+                    <button
+                      type="button"
+                      className="payment-history-toggle"
+                      onClick={() => setShowExpiredPayments((visible) => !visible)}
+                      aria-expanded={showExpiredPayments}
+                    >
+                      {showExpiredPayments ? "Ocultar caducados" : `Ver caducados (${expiredPaymentCount})`}
+                    </button>
+                  </div>
+                )}
+                <div className="payment-history-scroll mt-4 rounded-xl border border-white/[0.08]">
+                  {visiblePayments.length ? (
+                    <div className="payment-history-list divide-y divide-white/[0.07]">
+                      {visiblePayments.map((payment) => {
+                        const effectiveStatus = getEffectivePaymentStatus(payment, paymentStatusNow);
+                        return (
+                        <div key={payment.id || payment.paymentId} className="payment-history-row flex flex-col gap-2 p-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-white">
                               {payment.provider === "binance_pay" ? "Binance Pay" : "USDT · BNB Smart Chain (BEP20)"}
@@ -675,20 +695,21 @@ export default function Profile() {
                             {payment.transactionId && <p className="mt-2 break-all text-[10px] text-slate-500">Referencia: {payment.transactionId}</p>}
                           </div>
                           <span className={"inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold " + (
-                            getEffectivePaymentStatus(payment, paymentStatusNow) === "paid"
+                            effectiveStatus === "paid"
                               ? "border-emerald-300/20 bg-emerald-300/5 text-emerald-200"
-                              : ["failed", "expired"].includes(getEffectivePaymentStatus(payment, paymentStatusNow))
+                              : ["failed", "expired"].includes(effectiveStatus)
                                 ? "border-rose-300/20 bg-rose-300/5 text-rose-200"
                                 : "border-amber-300/20 bg-amber-300/5 text-amber-100"
-                          )}>{paymentStatusLabel(getEffectivePaymentStatus(payment, paymentStatusNow))}</span>
+                          )}>{paymentStatusLabel(effectiveStatus)}</span>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="px-4 py-8 text-center">
                       <CreditCardIcon className="mx-auto h-7 w-7 text-slate-600" aria-hidden="true" />
-                      <p className="mt-3 text-sm font-medium text-slate-300">Todavía no hay pagos registrados</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">Cuando crees una orden de pago, aparecerá aquí su importe y estado.</p>
+                      <p className="mt-3 text-sm font-medium text-slate-300">{payments.length > 0 && expiredPaymentCount > 0 && !showExpiredPayments ? "No hay pagos activos o confirmados" : "Todavía no hay pagos registrados"}</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">{payments.length > 0 && expiredPaymentCount > 0 && !showExpiredPayments ? "Las órdenes caducadas se han ocultado para mantener el historial compacto. Puedes mostrarlas con el botón de arriba." : "Cuando crees una orden de pago, aparecerá aquí su importe y estado."}</p>
                     </div>
                   )}
                 </div>
