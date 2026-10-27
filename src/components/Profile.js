@@ -460,7 +460,7 @@ export default function Profile() {
             <article className="profile-usage-card jjx-panel p-5">
               <div className="profile-usage-card-heading">
                 <span className="profile-usage-icon profile-usage-icon-movements"><ChartBarIcon className="h-5 w-5" aria-hidden="true" /></span>
-                <div><p>Movimientos</p><span>{proActive ? "Sin límite" : "Máximo 150"}</span></div>
+                <div><p>Movimientos registrados</p><span>{proActive ? "Sin límite" : "150 máximo"}</span></div>
               </div>
               <p className="profile-usage-value">{proActive ? "Ilimitado" : operationsAvailable ? movementsUsed : "—"}</p>
               {!proActive && <p className="profile-usage-caption">{operationsAvailable ? `de ${FREE_PLAN_LIMITS.movements} · ${movementUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
