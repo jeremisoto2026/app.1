@@ -366,7 +366,6 @@ export default function Profile() {
   const fullName = [firstName, asText(profileData.apellido)].filter(Boolean).join(" ");
   const photoURL = asText(profileData.photoURL) || asText(user?.photoURL);
   const proActive = isProSubscriptionActive(profileData);
-  const plan = proActive ? "pro" : "free";
   const planLabel = proActive ? "Pro activo" : "Plan gratuito";
   const operationsAvailable = Number.isFinite(operationCount);
   const operations = operationsAvailable ? operationCount : "—";
@@ -536,8 +535,8 @@ export default function Profile() {
                         <ShieldCheckIcon className="h-4 w-4" aria-hidden="true" />
                         <span className="text-xs font-medium">Facturación</span>
                       </div>
-                      <p className="mt-2 text-lg font-semibold tracking-tight text-white">Sin activar</p>
-                      <p className="mt-1 text-xs text-slate-500">No hay pagos conectados</p>
+                      <p className="mt-2 text-lg font-semibold tracking-tight text-white">{proActive ? "Pro activo" : "Sin activar"}</p>
+                      <p className="mt-1 text-xs text-slate-500">{proActive ? "Vence: " + currentExpiryLabel : "No hay una suscripción activa"}</p>
                     </div>
                   </div>
                   <p className="mt-4 text-xs leading-5 text-slate-500">Los límites comerciales todavía no están configurados. Por eso mostramos el uso actual sin inventar cuotas ni contadores máximos.</p>
