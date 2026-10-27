@@ -29,13 +29,12 @@ Antes de activar los pagos, confirma en tu propia wallet que la dirección de re
 
 ### Binance Pay Merchant
 
-- BINANCE_PAY_API_KEY: API identity key del portal de Binance Pay Merchant.
+- BINANCE_PAY_CERTIFICATE_SN: API identity key que Binance Pay emite para autenticar las solicitudes API.
 - BINANCE_PAY_SECRET_KEY: secret key asociada a esa API identity key.
-- BINANCE_PAY_CERTIFICATE_SN: serial/identificador de certificado que Binance requiere al firmar las llamadas de API.
 - BINANCE_PAY_WEBHOOK_CERTIFICATE_SN: serial de la clave pública que firma los webhooks entrantes.
 - BINANCE_PAY_WEBHOOK_PUBLIC_KEY: clave pública PEM de Binance Pay para verificar la firma de los webhooks entrantes.
 
-El ID numérico de Binance Pay 807678814 no sustituye estas credenciales. Debes tener acceso a Binance Pay Merchant y a su API de órdenes. En el portal de Merchant puedes consultar el endpoint de certificados POST /binancepay/openapi/certificates; configura la clave pública y su serial correspondientes al webhook. El serial del webhook se guarda por separado del serial de las llamadas de API.
+El código usa el endpoint oficial documentado POST /binancepay/openapi/v2/order y el esquema de orden V2. Binance describe el campo BinancePay-Certificate-SN como la API identity key; no necesitas una variable duplicada para el mismo dato. El ID numérico de Binance Pay 807678814 sirve como dato de recepción, pero no sustituye las credenciales de Merchant. Debes tener acceso a Binance Pay Merchant y a su API de órdenes. En el portal de Merchant puedes consultar el endpoint de certificados POST /binancepay/openapi/certificates; configura la clave pública y su serial correspondientes al webhook. El serial del webhook se guarda por separado del serial usado en las solicitudes API.
 
 ## 2. URL de webhook de Binance Pay
 
