@@ -436,6 +436,31 @@ export default function Profile() {
         {profileError && <div role="status" className="profile-alert profile-alert-warning">{profileError}</div>}
         {actionError && <div role="alert" className="profile-alert profile-alert-error">{actionError}</div>}
 
+        <section className="profile-account-section profile-surface jjx-panel p-6 sm:p-7" aria-labelledby="profile-account-heading">
+          <div className="profile-card-heading">
+            <span className="jjx-icon-chip"><UserCircleIcon className="h-5 w-5" aria-hidden="true" /></span>
+            <div>
+              <span className="jjx-eyebrow">DATOS PERSONALES</span>
+              <h2 id="profile-account-heading">Información del perfil</h2>
+              <p>Datos de contacto asociados a tu cuenta JJXCAPITAL.</p>
+            </div>
+          </div>
+          <div className="profile-details-grid">
+            <div className="jjx-inset">
+              <p className="jjx-field-label">Nombre</p>
+              <p className="mt-2 break-words text-sm text-slate-100">{firstName}</p>
+            </div>
+            <div className="jjx-inset">
+              <p className="jjx-field-label">Apellidos</p>
+              <p className="mt-2 break-words text-sm text-slate-100">{asText(profileData.apellido) || "No indicados"}</p>
+            </div>
+            <div className="jjx-inset profile-email-field">
+              <p className="jjx-field-label"><EnvelopeIcon className="mr-1 inline h-4 w-4" /> Correo electrónico</p>
+              <p className="mt-2 break-all text-sm text-slate-100">{asText(profileData.email, asText(user?.email, "No disponible"))}</p>
+            </div>
+          </div>
+        </section>
+
         <section aria-labelledby="profile-usage-heading" className="profile-section space-y-4">
           <div className="profile-section-heading">
             <div>
@@ -723,22 +748,7 @@ export default function Profile() {
           </div>
         </section>
 
-        <section className="profile-account-grid" aria-label="Datos de cuenta y ayuda">
-          <section className="profile-surface jjx-panel p-6 sm:p-7">
-            <div className="profile-card-heading">
-              <span className="jjx-icon-chip"><UserCircleIcon className="h-5 w-5" aria-hidden="true" /></span>
-              <div>
-                <h2>Información del perfil</h2>
-                <p>Datos asociados a tu cuenta.</p>
-              </div>
-            </div>
-            <div className="profile-details-grid">
-              <div className="jjx-inset"><p className="jjx-field-label">Nombre</p><p className="mt-2 break-words text-sm text-slate-100">{firstName}</p></div>
-              <div className="jjx-inset"><p className="jjx-field-label">Apellidos</p><p className="mt-2 break-words text-sm text-slate-100">{asText(profileData.apellido) || "No indicados"}</p></div>
-              <div className="jjx-inset profile-email-field"><p className="jjx-field-label"><EnvelopeIcon className="mr-1 inline h-4 w-4" /> Correo electrónico</p><p className="mt-2 break-all text-sm text-slate-100">{asText(profileData.email, asText(user?.email, "No disponible"))}</p></div>
-            </div>
-          </section>
-
+        <section className="profile-support-grid" aria-label="Privacidad y ayuda">
           <aside className="profile-help-stack">
             <section className="profile-surface jjx-panel p-6">
               <div className="profile-card-heading">
