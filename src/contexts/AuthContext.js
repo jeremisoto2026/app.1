@@ -55,7 +55,9 @@ export const AuthProvider = ({ children }) => {
         apellido: lastName,
         photoURL: result.user.photoURL || "",
         plan: "free",          // 👈 solo plan, sin role
-        exportsUsed: 0,        // 👈 contador inicial
+        exportsUsed: 0,        // contador inicial de exportaciones
+        ordersUsed: 0,
+        movementsUsed: 0,
         createdAt: serverTimestamp()
       });
 
@@ -112,6 +114,8 @@ export const AuthProvider = ({ children }) => {
           photoURL: result.user.photoURL || "",
           plan: "free",
           exportsUsed: 0,
+          ordersUsed: 0,
+          movementsUsed: 0,
           createdAt: serverTimestamp(),
         });
       }
