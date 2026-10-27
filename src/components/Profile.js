@@ -421,6 +421,13 @@ export default function Profile() {
 
             <section className="jjx-panel p-6">
               <div className="flex items-center gap-3">
+                <span className="jjx-icon-chip"><ShieldCheckIcon className="h-5 w-5" /></span>
+                <h2 className="text-lg font-semibold text-white">Privacidad y acceso</h2>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-slate-400">Tu historial está separado del de otras cuentas. No compartas tu contraseña y cierra la sesión si utilizas un equipo compartido.</p>
+            </section>
+            <section className="jjx-panel p-6">
+              <div className="flex items-center gap-3">
                 <span className="jjx-icon-chip"><LifebuoyIcon className="h-5 w-5" /></span>
                 <h2 className="text-lg font-semibold text-white">¿Necesitas ayuda?</h2>
               </div>
