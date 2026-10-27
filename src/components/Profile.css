@@ -544,3 +544,80 @@
   .blockchain-amount-value-wrap { gap: 7px; }
   .blockchain-amount-currency { font-size: 12px; }
 }
+
+/* Compact, scrollable payment history */
+.payment-history-scroll {
+  max-height: 360px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(139, 149, 172, .38) transparent;
+  scrollbar-width: thin;
+  background: rgba(4, 9, 18, .24);
+}
+.payment-history-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+.payment-history-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.payment-history-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(139, 149, 172, .34);
+  background-clip: padding-box;
+}
+.payment-history-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(167, 139, 250, .6);
+  background-clip: padding-box;
+}
+.payment-history-list {
+  min-width: 0;
+}
+.payment-history-row {
+  min-width: 0;
+  background: rgba(255, 255, 255, .008);
+}
+.payment-history-row:hover {
+  background: rgba(139, 92, 246, .035);
+}
+.payment-history-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 9px 11px;
+  border: 1px solid rgba(148, 163, 184, .11);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .018);
+}
+.payment-history-tools > span {
+  color: #8290a7;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.payment-history-toggle {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid rgba(167, 139, 250, .23);
+  border-radius: 9px;
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, .07);
+  font-size: 10px;
+  font-weight: 750;
+  transition: border-color .18s ease, background .18s ease;
+}
+.payment-history-toggle:hover {
+  border-color: rgba(196, 181, 253, .45);
+  background: rgba(139, 92, 246, .13);
+}
+.payment-history-toggle:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .payment-history-scroll { max-height: 320px; }
+  .payment-history-tools { align-items: flex-start; }
+}
