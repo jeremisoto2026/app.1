@@ -96,7 +96,9 @@ describe("Profile", () => {
     expect(container.textContent).toContain("Uso de tu cuenta");
     expect(container.textContent).toContain("Operaciones registradas");
     expect(container.textContent).toContain("2");
-    expect(container.textContent).toContain("Suscripciones");
+    expect(container.textContent).toContain("Planes y facturación");
+    expect(container.textContent).toContain("Métodos de pago");
+    expect(container.textContent).toContain("Historial de pagos");
     expect(container.textContent).toContain("Contactar con soporte");
   });
 
@@ -109,6 +111,8 @@ describe("Profile", () => {
 
     expect(container.textContent).toContain("Información del perfil");
     expect(container.textContent).toContain("No se pudo consultar el historial");
-    expect(container.textContent).toContain("Suscripciones");
+    expect(container.textContent).toContain("Planes y facturación");
+    expect(container.textContent).toContain("Métodos de pago");
+    expect(container.textContent).toContain("Historial de pagos");
   });
 });
