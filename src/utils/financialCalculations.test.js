@@ -2,6 +2,7 @@ import {
   calculateCryptoArbitrage,
   calculateArbitrageSessionResult,
   calculateDashboardMetrics,
+  calculateDashboardSummaryMetrics,
   calculateOperationAmounts,
 } from "./financialCalculations";
 
@@ -246,6 +247,29 @@ describe("calculateArbitrageSessionResult", () => {
     expect(calculateArbitrageSessionResult({ fiat: "EUR", crypto: "USDT", initialCapital: 0 }, [])).toMatchObject({
       profit: 0, initialCapital: 0, roi: 0, baseCurrency: "EUR", isCryptoBase: false,
     });
+  });
+});
+
+
+describe("calculateDashboardSummaryMetrics", () => {
+  test("includes crypto-start session profit in crypto units without mixing it into fiat FIFO", () => {
+    const operations = [
+      { id: "crypto-sale", sessionId: "crypto-session", crypto: "BTC", fiat: "EUR", operation_type: "Venta", crypto_amount: 1, fiat_amount: 100, timestamp: new Date("2026-10-01T12:00:00.000Z") },
+      { id: "crypto-buy", sessionId: "crypto-session", crypto: "BTC", fiat: "EUR", operation_type: "Compra", crypto_amount: 1.1, fiat_amount: 99, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+      { id: "fiat-buy", sessionId: "fiat-session", crypto: "USDT", fiat: "EUR", operation_type: "Compra", crypto_amount: 10, fiat_amount: 100, timestamp: new Date("2026-10-01T12:00:00.000Z") },
+      { id: "fiat-sale", sessionId: "fiat-session", crypto: "USDT", fiat: "EUR", operation_type: "Venta", crypto_amount: 10, fiat_amount: 110, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+    ];
+    const sessions = [
+      { id: "crypto-session", fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1 },
+      { id: "fiat-session", fiat: "EUR", crypto: "USDT", initialCapitalType: "fiat", initialCapitalCurrency: "EUR", initialCapital: 100 },
+    ];
+
+    const result = calculateDashboardSummaryMetrics(operations, sessions, new Date("2026-10-22T12:00:00.000Z"));
+
+    expect(result.profitByCurrency.BTC).toBeCloseTo(0.1, 8);
+    expect(result.profitByCurrency.EUR).toBeCloseTo(10, 8);
+    expect(result.totalOperations).toBe(4);
+    expect(result.closedSales).toBe(1);
   });
 });
 
