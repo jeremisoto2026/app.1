@@ -611,7 +611,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-white">Blockchain Pay · USDT BEP20</p>
-                        <p className="mt-1 text-xs text-slate-400">Precio base: 15 USDT; la orden muestra el importe exacto a enviar</p>
+                        <p className="mt-1 text-xs text-slate-400">Precio base: 15 USDT + fracción identificadora inferior a 0,01 USDT. Envía el total exacto de la orden.</p>
                       </div>
                       <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">BNB Smart Chain</span>
                     </div>
@@ -656,7 +656,7 @@ export default function Profile() {
                               Copiar importe exacto
                             </button>
                             <p className="mt-3 rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-center text-sm font-extrabold leading-5 text-rose-100">
-                              No envíes 15 USDT exactos. Debes enviar el importe completo de arriba, con todos sus decimales.
+                              No envíes 15 USDT exactos si el total de arriba es distinto. Copia el importe completo, con todos sus decimales.
                             </p>
                           </div>
                           <p className="break-all font-mono text-[10px] text-slate-400">Orden: {blockchainInvoice.paymentId}</p>
