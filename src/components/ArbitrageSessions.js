@@ -122,18 +122,27 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setSaving(true);
     setError("");
     try {
-      const created = await addDoc(collection(db, "users", user.uid, "sessions"), {
-        name,
-        strategy: draft.strategy,
-        fiat: draft.fiat,
-        crypto: draft.crypto,
-        initialCapitalType: draft.initialCapitalType,
-        initialCapitalCurrency: draft.initialCapitalType === "crypto" ? draft.crypto : draft.fiat,
-        initialCapital,
-        status: "active",
-        createdAt: serverTimestamp(),
-        closedAt: null,
+      const token = await user.getIdToken();
+      const response = await fetch("/api/sessions/create", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          strategy: draft.strategy,
+          fiat: draft.fiat,
+          crypto: draft.crypto,
+          initialCapitalType: draft.initialCapitalType,
+          initialCapital,
+        }),
       });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.session?.id) {
+        throw new Error(payload.error || "No se pudo crear el arbitraje.");
+      }
+      const created = payload.session;
       setDraft({ name: "", strategy: "Comercio P2P", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT", initialCapital: "100" });
       setShowCreate(false);
       setSelected(created.id);
@@ -141,9 +150,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       setSelected(created.id);
     } catch (saveError) {
       console.error("Error creating arbitrage:", saveError);
-      setError(saveError?.code === "permission-denied"
-        ? "No se pudo crear el arbitraje porque Firebase denegó el permiso. Despliega las reglas de Firestore actualizadas y vuelve a intentarlo."
-        : "No se pudo crear el arbitraje. Comprueba la conexión y las reglas de Firestore.");
+      setError(saveError?.message || "No se pudo crear el arbitraje. Comprueba la conexión e inténtalo de nuevo.");
     } finally {
       setSaving(false);
     }
@@ -190,17 +197,34 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     }
   };
 
-  const exportSession = () => {
-    if (!selectedSession) return;
-    const headers = ["Arbitraje", "Estado", "Tipo", "Cripto", "Fiat", "Movimiento", "Plataforma", "Cantidad cripto", "Precio", "Importe fiat", "Comisión", "Fecha"];
-    const rows = sessionOperations.map(item => [
-      selectedSession.name, selectedSession.status, selectedSession.strategy || "Comercio P2P",
-      item.crypto || selectedSession.crypto, item.fiat || selectedSession.fiat,
-      item.operation_type || "", item.exchange || "", item.crypto_amount ?? "", item.exchange_rate ?? "",
-      item.fiat_amount ?? "", item.fee ?? "", formatDate(item.timestamp),
-    ]);
-    const excelXml = buildExcelXml(headers, rows);
-    downloadExcelXml("JJXCAPITAL-arbitraje-" + selectedSession.name.replace(/[^a-z0-9_-]/gi, "-") + ".xls", excelXml);
+  const exportSession = async () => {
+    if (!selectedSession || !user?.getIdToken || saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/usage/record-export", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "arbitrage_session" }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "No se puede exportar con el plan actual.");
+
+      const headers = ["Arbitraje", "Estado", "Tipo", "Cripto", "Fiat", "Movimiento", "Plataforma", "Cantidad cripto", "Precio", "Importe fiat", "Comisión", "Fecha"];
+      const rows = sessionOperations.map(item => [
+        selectedSession.name, selectedSession.status, selectedSession.strategy || "Comercio P2P",
+        item.crypto || selectedSession.crypto, item.fiat || selectedSession.fiat,
+        item.operation_type || "", item.exchange || "", item.crypto_amount ?? "", item.exchange_rate ?? "",
+        item.fiat_amount ?? "", item.fee ?? "", formatDate(item.timestamp),
+      ]);
+      const excelXml = buildExcelXml(headers, rows);
+      downloadExcelXml("JJXCAPITAL-arbitraje-" + selectedSession.name.replace(/[^a-z0-9_-]/gi, "-") + ".xls", excelXml);
+    } catch (exportError) {
+      setError(exportError?.message || "No se pudo exportar el arbitraje.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderOperationTable = (items, type) => (
