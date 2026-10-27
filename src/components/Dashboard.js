@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { calculateDashboardSummaryMetrics } from "../utils/financialCalculations";
+import { isProSubscriptionActive } from "../utils/planLimits";
 import {
   ArrowDownTrayIcon,
   ArrowRightIcon,
@@ -33,6 +34,29 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sessionsWarning, setSessionsWarning] = useState("");
+  const [hasActivePro, setHasActivePro] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.uid) {
+      setHasActivePro(null);
+      return () => { cancelled = true; };
+    }
+
+    setHasActivePro(null);
+    getDoc(doc(db, "users", user.uid))
+      .then((snapshot) => {
+        if (cancelled) return;
+        setHasActivePro(isProSubscriptionActive(snapshot.exists() ? snapshot.data() : {}));
+      })
+      .catch((profileError) => {
+        console.warn("No se pudo comprobar el plan para el resumen:", profileError);
+        if (!cancelled) setHasActivePro(null);
+      });
+
+    return () => { cancelled = true; };
+  }, [user?.uid]);
 
   useEffect(() => {
     let cancelled = false;
@@ -237,6 +261,36 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
             <button type="button" className="dashboard-text-action mt-2" onClick={onOpenArbitrages}>Gestionar arbitrajes <ArrowRightIcon aria-hidden="true" /></button>
           </article>
         </section>
+
+        {hasActivePro === false && (
+          <section className="dashboard-pro-promo" aria-labelledby="dashboard-pro-promo-heading">
+            <div className="dashboard-pro-promo-glow" aria-hidden="true" />
+            <div className="dashboard-pro-promo-main">
+              <span className="dashboard-pro-promo-kicker"><span /> JJXCAPITAL PRO</span>
+              <h2 id="dashboard-pro-promo-heading">Tus análisis, sin límites de uso</h2>
+              <p>Amplía tu espacio de trabajo y gestiona más arbitrajes desde una sola cuenta.</p>
+              <div className="dashboard-pro-promo-benefits">
+                <span><BoltIcon aria-hidden="true" /> Arbitrajes ilimitados</span>
+                <span><ChartBarSquareIcon aria-hidden="true" /> Movimientos ilimitados</span>
+                <span><ArrowDownTrayIcon aria-hidden="true" /> Exportaciones ilimitadas</span>
+              </div>
+            </div>
+            <div className="dashboard-pro-promo-offer">
+              <div className="dashboard-pro-promo-price">
+                <strong>15 USDT</strong>
+                <span>por 30 días</span>
+              </div>
+              <button
+                type="button"
+                className="dashboard-action dashboard-action-primary"
+                onClick={onOpenProfile}
+              >
+                Ver plan Pro <ArrowRightIcon aria-hidden="true" />
+              </button>
+              <small>Se activa al confirmar el pago.</small>
+            </div>
+          </section>
+        )}
 
         <section className="dashboard-lower-grid">
           <article className="dashboard-panel">
