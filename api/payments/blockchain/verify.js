@@ -71,7 +71,8 @@ module.exports = async function verifyBlockchainPayment(req, res) {
     }
     if (constants.tokenContract !== BSC_USDT_CONTRACT || constants.chainId !== 56 ||
         !Number.isSafeInteger(constants.amountUnits8) ||
-        constants.amountUnits8 < 1500000001 || constants.amountUnits8 > 1500999999 ||
+        constants.amountUnits8 < 1500010000 || constants.amountUnits8 > 1500990000 ||
+        constants.amountUnits8 % 10000 !== 0 ||
         Math.round(constants.amount * 100000000) !== constants.amountUnits8) {
       throw new HttpError(503, "La orden no coincide con la configuración de USDT BEP20 esperada.");
     }
@@ -143,7 +144,7 @@ module.exports = async function verifyBlockchainPayment(req, res) {
     const expectedUnits = BigInt(String(constants.amountUnits8)) *
       (10n ** BigInt(USDT_DECIMALS - fractionalDigits));
     if (!transferCount || receivedUnits !== expectedUnits) {
-      throw new HttpError(400, "No se ha encontrado una transferencia exacta de 15 USDT del contrato BEP20 configurado a la dirección de recepción. Revisa la red, el token, el importe y el destinatario.");
+      throw new HttpError(400, "No se ha encontrado una transferencia por el importe exacto de esta orden (con cuatro decimales) del contrato USDT BEP20 configurado a la dirección de recepción. Revisa la red, el token, el importe y el destinatario.");
     }
 
     const userDocument = await getDocument(userPath);
