@@ -9,7 +9,7 @@ import {
   updateDoc,
   deleteDoc
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 import { calculateDashboardMetrics, calculateCryptoArbitrage, getOperationDate } from "../utils/financialCalculations";
 import { simulateP2P as runP2PSimulation } from "../utils/simulations";
 
@@ -17,16 +17,22 @@ import { simulateP2P as runP2PSimulation } from "../utils/simulations";
 
 export const saveOperation = async (userId, operationData) => {
   try {
-    const userOperationsCollection = collection(db, "users", userId, "operations");
-
-    const docRef = await addDoc(userOperationsCollection, {
-      ...operationData,
-      timestamp: serverTimestamp(),
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== userId) {
+      throw new Error("Tu sesión no está disponible. Vuelve a iniciar sesión.");
+    }
+    const token = await currentUser.getIdToken();
+    const response = await fetch("/api/operations/create", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ operationData }),
     });
-
-    // Leer el documento recién creado con los datos finales (incluido el timestamp real)
-    const newDoc = await getDoc(docRef);
-    return { id: docRef.id, ...newDoc.data() };
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "No se pudo guardar el movimiento.");
+    return payload.operation;
   } catch (error) {
     console.error("Error saving operation:", error);
     throw error;
