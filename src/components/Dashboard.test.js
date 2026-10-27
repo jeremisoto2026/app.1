@@ -36,6 +36,16 @@ jest.mock("../utils/financialCalculations", () => ({
 }));
 
 const firestoreMocks = jest.requireMock("firebase/firestore");
+const financialMocks = jest.requireMock("../utils/financialCalculations");
+
+const emptySummaryMetrics = {
+  totalOperations: 0,
+  profitByCurrency: {},
+  monthlyProfitByCurrency: {},
+  successRate: 0,
+  closedSales: 0,
+  winningSales: 0,
+};
 
 describe("Dashboard Pro promotion", () => {
   let Dashboard;
@@ -52,6 +62,8 @@ describe("Dashboard Pro promotion", () => {
   });
 
   beforeEach(() => {
+    financialMocks.calculateDashboardSummaryMetrics.mockReset();
+    financialMocks.calculateDashboardSummaryMetrics.mockReturnValue(emptySummaryMetrics);
     firestoreMocks.getDocs.mockReset();
     firestoreMocks.getDocs.mockResolvedValue({ docs: [] });
     firestoreMocks.getDoc.mockReset();
