@@ -48,6 +48,13 @@ service cloud.firestore {
         // Las compras y ventas son privadas y solo accesibles por su propietario.
         allow read, create, update, delete: if isOwner(userId);
       }
+
+      match /payments/{paymentId} {
+        // El usuario solo puede consultar su propio historial de pagos.
+        // Las órdenes y su estado solo pueden escribirlas las funciones de servidor.
+        allow read: if isOwner(userId);
+        allow create, update, delete: if false;
+      }
     }
 
     // Denegar de forma predeterminada cualquier otra colección o documento.
