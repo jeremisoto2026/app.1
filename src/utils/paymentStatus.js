@@ -22,3 +22,13 @@ export const getEffectivePaymentStatus = (payment = {}, now = Date.now()) => {
   if (Number.isFinite(expiresAt) && now >= expiresAt) return "expired";
   return status || "pending";
 };
+
+/**
+ * Expired orders are hidden in the compact history by default, but remain
+ * stored and can be revealed on demand for audit/support purposes.
+ */
+export const getVisiblePaymentHistory = (payments = [], now = Date.now(), showExpired = false) => {
+  const history = Array.isArray(payments) ? payments : [];
+  if (showExpired) return history;
+  return history.filter((payment) => getEffectivePaymentStatus(payment, now) !== "expired");
+};
