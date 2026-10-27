@@ -51,8 +51,11 @@ module.exports = async function verifyBlockchainPayment(req, res) {
     if (paymentDocument.data.status !== "pending") {
       throw new HttpError(409, "Esta orden ya no está disponible. Crea una nueva orden.");
     }
-    if (!paymentDocument.data.expiresAt || Date.parse(paymentDocument.data.expiresAt) < Date.now()) {
-      throw new HttpError(410, "La orden ha caducado. Crea una nueva orden antes de enviar el pago.");
+    const invoiceCreatedAt = Date.parse(paymentDocument.data.createdAt || "");
+    const invoiceExpiresAt = Date.parse(paymentDocument.data.expiresAt || "");
+    if (!Number.isFinite(invoiceCreatedAt) || !Number.isFinite(invoiceExpiresAt) ||
+        invoiceExpiresAt <= invoiceCreatedAt) {
+      throw new HttpError(409, "La orden no contiene una ventana de pago válida. Crea una nueva orden.");
     }
 
     const constants = {
@@ -95,6 +98,15 @@ module.exports = async function verifyBlockchainPayment(req, res) {
     }
     if (!receipt.blockNumber) {
       throw new HttpError(409, "La transacción todavía no está incluida en un bloque confirmado.");
+    }
+
+    const transactionBlock = await rpc("eth_getBlockByNumber", [receipt.blockNumber, false]);
+    const blockTimestampSeconds = Number.parseInt(transactionBlock?.timestamp || "", 16);
+    const blockTimestampMs = blockTimestampSeconds * 1000;
+    if (!Number.isFinite(blockTimestampMs) ||
+        blockTimestampMs < invoiceCreatedAt ||
+        blockTimestampMs > invoiceExpiresAt) {
+      throw new HttpError(410, "La transferencia se incluyó fuera del periodo de validez de esta orden. Contacta con soporte para revisar el ingreso.");
     }
 
     const [chainIdHex, currentBlockHex] = await Promise.all([
