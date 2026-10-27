@@ -259,7 +259,7 @@ const MainApp = () => {
               <span className="landing-brand-copy"><strong>JJXCAPITAL</strong><small>CONTROL · ANÁLISIS · CLARIDAD</small></span>
             </a>
             <p>Herramienta de organización y simulación financiera. No constituye asesoramiento de inversión.</p>
-            <a href="mailto:soportejjxcapital@gmail.com">Contactar con soporte</a>
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=soportejjxcapital@gmail.com" target="_blank" rel="noopener noreferrer">Contactar con soporte</a>
           </footer>
         </main>
 
