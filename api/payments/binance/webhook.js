@@ -5,7 +5,7 @@ const {
   getDocument,
   activateProWithPayment,
   errorResponse,
-} = require("../../_lib/payments");
+} = require("../../../lib/payments");
 
 module.exports.config = { api: { bodyParser: false } };
 
