@@ -66,6 +66,14 @@ export default function Profile() {
   const [exportCount, setExportCount] = useState(null);
   const [retry, setRetry] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState("");
+  const [payments, setPayments] = useState([]);
+  const [historyError, setHistoryError] = useState("");
+  const [paymentAction, setPaymentAction] = useState("");
+  const [paymentActionLoading, setPaymentActionLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const [blockchainInvoice, setBlockchainInvoice] = useState(null);
+  const [blockchainTxHash, setBlockchainTxHash] = useState("");
 
   const copyPaymentDetail = async (value, label) => {
     try {
@@ -78,6 +86,132 @@ export default function Profile() {
     } catch (error) {
       console.error("No se pudo copiar el dato de pago:", error);
       setCopyFeedback("No se pudo copiar automáticamente. Selecciona el dato y cópialo manualmente.");
+    }
+  };
+
+  const callPaymentApi = async (path, payload) => {
+    if (!user?.getIdToken) throw new Error("Vuelve a iniciar sesión para realizar esta acción.");
+    const token = await user.getIdToken();
+    const response = await fetch(path, {
+      method: payload === undefined ? "GET" : "POST",
+      headers: {
+        Authorization: "Bearer " + token,
+        ...(payload === undefined ? {} : { "Content-Type": "application/json" }),
+      },
+      ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "No se pudo completar la solicitud de pago.");
+    return data;
+  };
+
+  const loadPaymentHistory = async () => {
+    if (!user?.uid) {
+      setPayments([]);
+      return;
+    }
+    try {
+      const data = await callPaymentApi("/api/payments/history");
+      setPayments(Array.isArray(data.payments) ? data.payments : []);
+      setHistoryError("");
+    } catch (error) {
+      console.warn("No se pudo cargar el historial de pagos:", error);
+      setHistoryError("El historial de pagos estará disponible cuando se configure el acceso seguro del servidor.");
+    }
+  };
+
+  const startBinancePay = async () => {
+    setPaymentActionLoading(true);
+    setPaymentAction("binance");
+    setPaymentError("");
+    setPaymentMessage("");
+    try {
+      const data = await callPaymentApi("/api/payments/binance/create-order", {});
+      if (!data.checkoutUrl || !/^https:\/\/pay\.binance\.com\//i.test(data.checkoutUrl)) {
+        throw new Error("Binance Pay no devolvió un enlace de pago seguro.");
+      }
+      window.location.assign(data.checkoutUrl);
+    } catch (error) {
+      setPaymentError(error.message || "No se pudo iniciar el pago con Binance Pay.");
+    } finally {
+      setPaymentActionLoading(false);
+      setPaymentAction("");
+    }
+  };
+
+  const createBlockchainInvoice = async () => {
+    setPaymentActionLoading(true);
+    setPaymentAction("bep20");
+    setPaymentError("");
+    setPaymentMessage("");
+    try {
+      const data = await callPaymentApi("/api/payments/blockchain/create-invoice", {});
+      setBlockchainInvoice(data);
+      setBlockchainTxHash("");
+      setPaymentMessage("Orden creada. Envía exactamente 15 USDT por BNB Smart Chain (BEP20), espera las confirmaciones e introduce el TxID.");
+      await loadPaymentHistory();
+    } catch (error) {
+      setPaymentError(error.message || "No se pudo crear la orden BEP20.");
+    } finally {
+      setPaymentActionLoading(false);
+      setPaymentAction("");
+    }
+  };
+
+  const verifyBlockchainPayment = async (event) => {
+    event.preventDefault();
+    if (!blockchainInvoice?.paymentId) {
+      setPaymentError("Primero crea una orden de pago BEP20.");
+      return;
+    }
+    if (!/^0x[a-fA-F0-9]{64}$/.test(blockchainTxHash.trim())) {
+      setPaymentError("Introduce un TxID válido de 66 caracteres que empiece por 0x.");
+      return;
+    }
+    setPaymentActionLoading(true);
+    setPaymentAction("verify");
+    setPaymentError("");
+    setPaymentMessage("");
+    try {
+      const data = await callPaymentApi("/api/payments/blockchain/verify", {
+        paymentId: blockchainInvoice.paymentId,
+        txHash: blockchainTxHash.trim(),
+      });
+      setProfileData((previous) => previous ? {
+        ...previous,
+        plan: "pro",
+        subscriptionStatus: "active",
+        subscriptionExpiresAt: data.expiresAt || previous.subscriptionExpiresAt,
+      } : previous);
+      setPaymentMessage(data.message || "Pago confirmado. JJXCAPITAL Pro está activo.");
+      setBlockchainInvoice(null);
+      setBlockchainTxHash("");
+      await loadPaymentHistory();
+    } catch (error) {
+      setPaymentError(error.message || "No se pudo verificar la transacción.");
+    } finally {
+      setPaymentActionLoading(false);
+      setPaymentAction("");
+    }
+  };
+
+  const paymentStatusLabel = (status) => ({
+    paid: "Pagado",
+    pending: "Pendiente",
+    expired: "Caducado",
+    failed: "Fallido",
+  }[String(status || "").toLowerCase()] || "En revisión");
+
+  const formatPaymentDate = (value) => {
+    try {
+      const date = value?.toDate ? value.toDate() : value ? new Date(value) : null;
+      if (!date || Number.isNaN(date.getTime())) return "Fecha pendiente";
+      return new Intl.DateTimeFormat("es-ES", {
+        day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      }).format(date);
+    } catch {
+      return "Fecha pendiente";
     }
   };
 
@@ -120,6 +254,8 @@ export default function Profile() {
         console.error("No se pudo contar el historial:", error);
         if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de operaciones.");
       }
+
+      await loadPaymentHistory();
 
       if (!cancelled) {
         // Firestore puede contener campos heredados con tipos distintos; el render solo usa texto seguro.
