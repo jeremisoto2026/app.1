@@ -27,7 +27,7 @@ module.exports = async function binancePayWebhook(req, res) {
     const nonce = String(req.headers["binancepay-nonce"] || "");
     const signature = String(req.headers["binancepay-signature"] || "");
     const certificateSn = String(req.headers["binancepay-certificate-sn"] || "");
-    const expectedSn = String(process.env.BINANCE_PAY_WEBHOOK_CERTIFICATE_SN || process.env.BINANCE_PAY_CERTIFICATE_SN || "");
+    const expectedSn = String(process.env.BINANCE_PAY_WEBHOOK_CERTIFICATE_SN || "");
     const publicKey = String(process.env.BINANCE_PAY_WEBHOOK_PUBLIC_KEY || "").replace(/\\n/g, "\n");
 
     if (!timestamp || !nonce || !signature || !certificateSn || !publicKey) {
