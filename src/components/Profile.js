@@ -18,6 +18,8 @@ import {
   CheckCircleIcon,
   BoltIcon,
   LockClosedIcon,
+  ClipboardDocumentIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
 const asText = (value, fallback = "") => {
@@ -560,22 +562,38 @@ export default function Profile() {
                     {blockchainInvoice && (
                       <form onSubmit={verifyBlockchainPayment} className="mt-4 space-y-3 rounded-xl border border-violet-300/20 bg-violet-300/[0.04] p-4">
                         <div className="space-y-3">
-                          <div className="rounded-xl border-2 border-amber-300/80 bg-amber-300/[0.10] p-4 shadow-lg shadow-amber-500/10">
-                            <p className="text-center text-xs font-extrabold uppercase tracking-widest text-amber-200">Importe exacto que debes enviar</p>
-                            <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(4)} USDT`} className="mt-3 break-all text-center font-mono text-3xl font-black tracking-tight text-white sm:text-4xl">
-                              {Number(blockchainInvoice.amount).toFixed(4)}
-                            </p>
-                            <p className="mt-1 text-center text-xl font-extrabold text-amber-100">USDT</p>
+                          <div className="blockchain-amount-card">
+                            <div className="blockchain-amount-heading">
+                              <span className="blockchain-amount-icon" aria-hidden="true">
+                                <ShieldCheckIcon className="h-4 w-4" />
+                              </span>
+                              <div className="blockchain-amount-heading-copy">
+                                <p>Importe exacto que debes enviar</p>
+                                <span>Importe de esta orden</span>
+                              </div>
+                              <span className="blockchain-amount-required">Obligatorio</span>
+                            </div>
+
+                            <div className="blockchain-amount-value-wrap">
+                              <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(4)} USDT`} className="blockchain-amount-value">
+                                {Number(blockchainInvoice.amount).toFixed(4)}
+                              </p>
+                              <span className="blockchain-amount-currency">USDT</span>
+                            </div>
+
                             <button
                               type="button"
                               onClick={() => copyPaymentDetail(Number(blockchainInvoice.amount).toFixed(4), "Importe exacto")}
-                              className="jjx-button-secondary mt-4 w-full justify-center border-amber-200/40 font-bold text-white"
+                              className="blockchain-copy-amount-button"
                             >
+                              <ClipboardDocumentIcon className="h-4 w-4" aria-hidden="true" />
                               Copiar importe exacto
                             </button>
-                            <p className="mt-3 rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-center text-sm font-extrabold leading-5 text-rose-100">
-                              No envíes 15 USDT exactos si el total de arriba es distinto. Envía exactamente el importe que ves arriba, con sus cuatro decimales.
-                            </p>
+
+                            <div className="blockchain-amount-warning" role="note">
+                              <ExclamationTriangleIcon className="blockchain-amount-warning-icon h-4 w-4" aria-hidden="true" />
+                              <p><strong>Importante:</strong> no envíes 15 USDT exactos si el total de arriba es distinto. Envía exactamente el importe que aparece, con sus cuatro decimales.</p>
+                            </div>
                           </div>
                           <p className="break-all font-mono text-[10px] text-slate-400">Orden: {blockchainInvoice.paymentId}</p>
                           <p className="text-sm font-semibold text-slate-300">Red obligatoria: BNB Smart Chain (BEP20)</p>
