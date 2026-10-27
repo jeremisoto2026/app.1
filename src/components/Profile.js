@@ -549,15 +549,15 @@ export default function Profile() {
                       <p className="mt-1 text-xs text-slate-500">{proActive ? "Vence: " + currentExpiryLabel : "No hay una suscripción activa"}</p>
                     </div>
                   </div>
-                  <p className="mt-4 text-xs leading-5 text-slate-500">Los límites comerciales todavía no están configurados. Por eso mostramos el uso actual sin inventar cuotas ni contadores máximos.</p>
+                  <p className="mt-4 text-xs leading-5 text-slate-500">Los contadores se comprueban en el servidor. Los datos e historial se conservan aunque cambies de plan.</p>
                 </div>
               </section>
 
               <section className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label="Planes disponibles">
                 <article className="jjx-panel p-5 sm:p-6">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="jjx-eyebrow">PLAN ACTUAL</span>
-                    <span className="rounded-full border border-emerald-300/20 bg-emerald-300/5 px-2.5 py-1 text-[10px] font-bold text-emerald-200">ACTIVO</span>
+                    <span className="jjx-eyebrow">{proActive ? "PLAN DISPONIBLE" : "PLAN ACTUAL"}</span>
+                    <span className={"rounded-full border px-2.5 py-1 text-[10px] font-bold " + (proActive ? "border-white/10 bg-white/5 text-slate-300" : "border-emerald-300/20 bg-emerald-300/5 text-emerald-200")}>{proActive ? "DISPONIBLE" : "ACTIVO"}</span>
                   </div>
                   <h3 className="mt-4 text-xl font-semibold text-white">Gratuito</h3>
                   <p className="mt-1 text-3xl font-semibold tracking-tight text-white">0 € <span className="text-xs font-medium text-slate-500">/ siempre</span></p>
@@ -567,11 +567,11 @@ export default function Profile() {
                     <li className="flex items-start gap-2"><CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /> Registro de operaciones y arbitrajes</li>
                     <li className="flex items-start gap-2"><CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /> Historial disponible en la aplicación</li>
                   </ul>
-                  <div className="mt-6 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2.5 text-center text-xs font-semibold text-slate-400">Ya estás usando este plan</div>
+                  <div className="mt-6 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2.5 text-center text-xs font-semibold text-slate-400">{proActive ? "Podrás volver a este plan cuando termine la suscripción Pro." : "Ya estás usando este plan"}</div>
                 </article>
 
                 <article className="relative overflow-hidden rounded-2xl border border-violet-400/30 bg-gradient-to-b from-violet-500/[0.10] to-slate-950/60 p-5 sm:p-6">
-                  <div className="absolute right-0 top-0 rounded-bl-xl border-b border-l border-violet-300/20 bg-violet-300/10 px-3 py-1.5 text-[10px] font-bold tracking-wide text-violet-200">EN PREPARACIÓN</div>
+                  <div className={"absolute right-0 top-0 rounded-bl-xl border-b border-l px-3 py-1.5 text-[10px] font-bold tracking-wide " + (proActive ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" : "border-violet-300/20 bg-violet-300/10 text-violet-200")}>{proActive ? "PLAN ACTIVO" : "PLAN PREMIUM"}</div>
                   <span className="jjx-eyebrow">PLAN AMPLIADO</span>
                   <h3 className="mt-4 text-xl font-semibold text-white">JJXCAPITAL Pro</h3>
                   <p className="mt-1 text-3xl font-semibold tracking-tight text-white">15 USDT <span className="text-xs font-medium text-slate-500">/ 30 días</span></p>
@@ -581,7 +581,7 @@ export default function Profile() {
                     <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Movimientos y exportaciones ilimitados</li>
                     <li className="flex items-start gap-2"><ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Acceso ilimitado durante 30 días desde la confirmación</li>
                   </ul>
-                  <button type="button" disabled className="jjx-button-primary mt-6 w-full justify-center opacity-60" title="No pagues todavía: la verificación automática aún no está configurada">Pagos en preparación</button>
+                  <button type="button" disabled className="jjx-button-primary mt-6 w-full justify-center opacity-60" title={proActive ? "Tu suscripción ya está activa" : "La activación se habilita tras confirmar el pago en el servidor"}>{proActive ? "Pro activo · vence " + currentExpiryLabel : "Pago de Pro en preparación"}</button>
                 </article>
               </section>
             </div>
