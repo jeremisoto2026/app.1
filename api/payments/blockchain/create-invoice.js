@@ -10,7 +10,7 @@ const {
   getPaymentConstants,
   PAYMENT_DURATION_MS,
   errorResponse,
-} = require("../../_lib/payments");
+} = require("../../../lib/payments");
 
 module.exports = async function createBlockchainInvoice(req, res) {
   if (!requirePost(req, res)) return;
