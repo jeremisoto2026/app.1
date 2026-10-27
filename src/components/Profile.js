@@ -148,7 +148,7 @@ export default function Profile() {
       const data = await callPaymentApi("/api/payments/blockchain/create-invoice", {});
       setBlockchainInvoice(data);
       setBlockchainTxHash("");
-      setPaymentMessage("Orden creada. Envía exactamente 15 USDT por BNB Smart Chain (BEP20), espera las confirmaciones e introduce el TxID.");
+      setPaymentMessage("Orden creada. Envía el importe exacto que aparece abajo por BNB Smart Chain (BEP20), espera las confirmaciones e introduce el TxID.");
       await loadPaymentHistory();
     } catch (error) {
       setPaymentError(error.message || "No se pudo crear la orden BEP20.");
@@ -303,7 +303,15 @@ export default function Profile() {
     const unsubscribe = onSnapshot(
       userRef,
       (snapshot) => {
-        if (snapshot.exists()) setExportCount(countFromProfile(snapshot.data()));
+        if (!snapshot.exists()) return;
+        const data = snapshot.data();
+        setExportCount(countFromProfile(data));
+        setProfileData((previous) => previous ? {
+          ...previous,
+          plan: asText(data.plan, previous.plan || "free"),
+          subscriptionStatus: asText(data.subscriptionStatus, previous.subscriptionStatus || ""),
+          subscriptionExpiresAt: data.subscriptionExpiresAt || previous.subscriptionExpiresAt || null,
+        } : previous);
       },
       (error) => {
         // Un error de contador no debe tumbar ni ocultar toda la pantalla.
@@ -539,7 +547,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-white">Blockchain Pay · USDT BEP20</p>
-                        <p className="mt-1 text-xs text-slate-400">Importe exacto: 15 USDT</p>
+                        <p className="mt-1 text-xs text-slate-400">Precio base: 15 USD; importe BEP20 exacto en la orden</p>
                       </div>
                       <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">BNB Smart Chain</span>
                     </div>
@@ -572,7 +580,7 @@ export default function Profile() {
                         <div>
                           <p className="text-sm font-semibold text-white">Orden de pago creada</p>
                           <p className="mt-1 break-all font-mono text-[10px] text-slate-400">Orden: {blockchainInvoice.paymentId}</p>
-                          <p className="mt-1 text-xs text-slate-400">Importe: {blockchainInvoice.amount} {blockchainInvoice.currency} · Red: BNB Smart Chain (BEP20)</p>
+                          <p className="mt-1 text-xs text-slate-400">Importe exacto: {Number(blockchainInvoice.amount).toFixed(8)} {blockchainInvoice.currency} · Red: BNB Smart Chain (BEP20)</p>
                           <p className="mt-1 text-xs text-slate-500">Caduca: {formatPaymentDate(blockchainInvoice.expiresAt)}</p>
                         </div>
                         <label htmlFor="blockchain-tx-id" className="block text-xs font-semibold text-slate-300">TxID de la transferencia</label>
@@ -588,7 +596,7 @@ export default function Profile() {
                           onChange={(event) => setBlockchainTxHash(event.target.value.trim())}
                           className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-3 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
                         />
-                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar el pago, pega aquí el hash de la transacción. El servidor comprobará contrato, destinatario, importe y al menos 12 confirmaciones.</p>
+                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar el importe exacto, pega aquí el hash. La orden incluye una pequeña fracción identificadora (menos de 0,01 USDT) para evitar que otra cuenta pueda reclamar la misma transferencia; el servidor comprobará contrato, destinatario, importe y 12 confirmaciones.</p>
                         <button type="submit" disabled={paymentActionLoading} className="jjx-button-primary w-full justify-center">
                           {paymentAction === "verify" ? "Verificando en blockchain…" : "Verificar transferencia automáticamente"}
                         </button>
