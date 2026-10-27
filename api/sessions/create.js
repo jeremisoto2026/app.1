@@ -7,6 +7,7 @@ const {
   getDocument,
   countDocuments,
   commitWrites,
+  createWrite,
   documentName,
   toFields,
   errorResponse,
@@ -41,7 +42,9 @@ module.exports = async function createSession(req, res) {
     }
 
     const sessionsPath = userPath + "/sessions";
-    const currentOrders = await countDocuments(sessionsPath, 301);
+    const storedOrders = Number(profile.data.ordersUsed);
+    const savedOrders = Number.isFinite(storedOrders) && storedOrders >= 0 ? storedOrders : 0;
+    const currentOrders = Math.max(savedOrders, await countDocuments(sessionsPath, 301));
     assertPlanAllows(profile.data, "orders", currentOrders);
 
     const id = crypto.randomUUID().replace(/-/g, "");
@@ -59,10 +62,14 @@ module.exports = async function createSession(req, res) {
       closedAt: null,
     };
 
-    await commitWrites([{
-      update: { name: documentName(sessionsPath + "/" + id), fields: toFields(session) },
-      currentDocument: { exists: false },
-    }]);
+    await commitWrites([
+      {
+        update: { name: documentName(sessionsPath + "/" + id), fields: toFields(session) },
+        currentDocument: { exists: false },
+      },
+      createWrite(userPath, { ordersUsed: currentOrders + 1 },
+        profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
+    ]);
 
     return sendJson(res, 201, {
       session: { ...session, id, createdAt: createdAt.toISOString() },
