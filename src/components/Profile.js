@@ -454,7 +454,7 @@ export default function Profile() {
             <article className="jjx-panel p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-slate-200">Órdenes / arbitrajes</p>
-                <span className="text-xs text-slate-500">300 máximo</span>
+                <span className="text-xs text-slate-500">{proActive ? "Sin límite" : "300 máximo"}</span>
               </div>
               <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitado" : ordersAvailable ? orderCount : "—"}</p>
               {!proActive && <p className="mt-1 text-xs text-slate-400">{ordersAvailable ? `de ${FREE_PLAN_LIMITS.orders} · ${orderUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
@@ -465,7 +465,7 @@ export default function Profile() {
             <article className="jjx-panel p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-slate-200">Movimientos</p>
-                <span className="text-xs text-slate-500">150 máximo</span>
+                <span className="text-xs text-slate-500">{proActive ? "Sin límite" : "150 máximo"}</span>
               </div>
               <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitado" : operationsAvailable ? operationCount : "—"}</p>
               {!proActive && <p className="mt-1 text-xs text-slate-400">{operationsAvailable ? `de ${FREE_PLAN_LIMITS.movements} · ${movementUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
@@ -476,7 +476,7 @@ export default function Profile() {
             <article className="jjx-panel p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-slate-200">Exportaciones</p>
-                <span className="text-xs text-slate-500">50 máximo</span>
+                <span className="text-xs text-slate-500">{proActive ? "Sin límite" : "50 máximo"}</span>
               </div>
               <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitadas" : exports}</p>
               {!proActive && <p className="mt-1 text-xs text-slate-400">{`de ${FREE_PLAN_LIMITS.exports} · ${exportUsage.remaining} disponibles`}</p>}
