@@ -1,9 +1,7 @@
 // Database service using Firestore
 import { 
   collection, 
-  addDoc, 
   getDocs, 
-  serverTimestamp,
   doc,
   getDoc,
   updateDoc,
