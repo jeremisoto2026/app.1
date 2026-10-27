@@ -612,7 +612,7 @@ export default function Profile() {
 
                 <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-300/15 bg-amber-300/[0.04] p-3">
                   <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
-                  <p className="text-xs leading-5 text-slate-400">La verificación no confía solo en el TxID: consulta la blockchain y exige el token, la red, el destinatario y el importe exactos antes de activar Pro. Para aceptar pagos reales faltan las credenciales seguras de Firebase y Binance Pay en Vercel.</p>
+                  <p className="text-xs leading-5 text-slate-400">La verificación no confía solo en el TxID: consulta la blockchain y exige el token, la red, el destinatario, el importe exacto y 12 confirmaciones antes de activar Pro. Para habilitar pagos reales, configura las credenciales seguras de Firebase y Binance Pay en Vercel y registra el webhook del comercio.</p>
                 </div>
               </section>
 
