@@ -207,12 +207,12 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
 
           <article className="dashboard-metric-card">
             <div className="metric-card-heading">
-              <span>Ventas cerradas</span>
+              <span>Operaciones cerradas</span>
               <span className="metric-icon metric-icon-teal"><CheckCircleIcon aria-hidden="true" /></span>
             </div>
             <strong className="metric-primary-value">{metrics.closedSales}</strong>
-            <p>Ventas con coste de compra cubierto</p>
-            <span className="metric-card-foot"><ClockIcon aria-hidden="true" /> No incluye ventas parcialmente cubiertas</span>
+            <p>Ventas cubiertas y arbitrajes cripto terminados</p>
+            <span className="metric-card-foot"><ClockIcon aria-hidden="true" /> Excluye sesiones abiertas y ciclos incompletos</span>
           </article>
 
           <article className="dashboard-metric-card">
@@ -223,7 +223,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
             <strong className="metric-primary-value">
               {metrics.closedSales ? `${metrics.successRate.toFixed(1)}%` : "—"}
             </strong>
-            <p>{metrics.closedSales ? `${metrics.winningSales || 0} ventas cerradas con resultado positivo` : "Se calculará al registrar ventas cerradas"}</p>
+            <p>{metrics.closedSales ? `${metrics.winningSales || 0} operaciones cerradas con resultado positivo` : "Se calculará al cerrar ventas cubiertas o terminar ciclos cripto"}</p>
             <span className="metric-card-foot"><ShieldCheckIcon aria-hidden="true" /> No representa una garantía futura</span>
           </article>
 
