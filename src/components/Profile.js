@@ -314,6 +314,10 @@ export default function Profile() {
           plan: asText(data.plan, previous.plan || "free"),
           subscriptionStatus: asText(data.subscriptionStatus, previous.subscriptionStatus || ""),
           subscriptionExpiresAt: data.subscriptionExpiresAt || previous.subscriptionExpiresAt || null,
+          ordersUsed: data.ordersUsed === undefined ? previous.ordersUsed : Number(data.ordersUsed),
+          movementsUsed: data.movementsUsed === undefined ? previous.movementsUsed : Number(data.movementsUsed),
+          exportsUsed: data.exportsUsed === undefined ? previous.exportsUsed : Number(data.exportsUsed),
+          usage: data.usage || previous.usage,
         } : previous);
       },
       (error) => {
