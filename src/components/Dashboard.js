@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
-import { calculateDashboardMetrics } from "../utils/financialCalculations";
+import { calculateDashboardSummaryMetrics } from "../utils/financialCalculations";
 import {
   ArrowDownTrayIcon,
   ArrowRightIcon,
@@ -56,16 +56,21 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
           id: operationDoc.id,
           ...operationDoc.data(),
         }));
-        const calculated = calculateDashboardMetrics(operations);
         let activeCount = 0;
+        let sessions = [];
         try {
           const sessionsSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
-          activeCount = sessionsSnapshot.docs.filter(sessionDoc => sessionDoc.data().status === "active").length;
+          sessions = sessionsSnapshot.docs.map((sessionDoc) => ({
+            id: sessionDoc.id,
+            ...sessionDoc.data(),
+          }));
+          activeCount = sessions.filter((session) => session.status === "active").length;
         } catch (sessionsError) {
-          // El fallo de lectura de sesiones no debe ocultar las métricas financieras que sí cargaron.
-          console.warn("No se pudo contar los arbitrajes activos:", sessionsError);
-          if (!cancelled) setSessionsWarning("No se pudieron cargar los arbitrajes activos. Comprueba las reglas de Firestore; las cifras de tus operaciones siguen visibles, pero este contador puede ser incompleto.");
+          // Keep operation-level figures available if session access is denied.
+          console.warn("No se pudieron cargar los arbitrajes del resumen:", sessionsError);
+          if (!cancelled) setSessionsWarning("No se pudieron cargar los arbitrajes. Las métricas de operaciones siguen visibles, pero los resultados de sesiones iniciadas en cripto y el contador de arbitrajes pueden estar incompletos. Comprueba las reglas de Firestore.");
         }
+        const calculated = calculateDashboardSummaryMetrics(operations, sessions);
         if (!cancelled) {
           setMetrics(calculated);
           setActiveArbitrages(activeCount);
@@ -196,8 +201,8 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
                 </strong>
               )) : <strong className="metric-no-data">Sin datos suficientes</strong>}
             </div>
-            <p>Por moneda de cotización · método FIFO</p>
-            <span className="metric-card-foot"><ShieldCheckIcon aria-hidden="true" /> Solo costes de compra conocidos</span>
+            <p>Por unidad de cuenta: fiat o cripto</p>
+            <span className="metric-card-foot"><ShieldCheckIcon aria-hidden="true" /> Fiat por FIFO; cripto según el resultado neto de su sesión</span>
           </article>
 
           <article className="dashboard-metric-card">
