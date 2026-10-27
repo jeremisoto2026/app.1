@@ -99,6 +99,11 @@ describe("Profile", () => {
     expect(container.textContent).toContain("Planes y facturación");
     expect(container.textContent).toContain("Métodos de pago");
     expect(container.textContent).toContain("Historial de pagos");
+    expect(container.textContent).toContain("15 USD");
+    expect(container.textContent).toContain("807678814");
+    expect(container.textContent).toContain("0x4c64b783f1babc0a2fe62f174873f415393c2269");
+    expect(container.textContent).toContain("Red por confirmar");
+    expect(container.textContent).toContain("La verificación automática todavía no está activa.");
     expect(container.textContent).toContain("Contactar con soporte");
   });
 
