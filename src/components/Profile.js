@@ -65,6 +65,21 @@ export default function Profile() {
   const [operationCount, setOperationCount] = useState(null);
   const [exportCount, setExportCount] = useState(null);
   const [retry, setRetry] = useState(0);
+  const [copyFeedback, setCopyFeedback] = useState("");
+
+  const copyPaymentDetail = async (value, label) => {
+    try {
+      if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+        setCopyFeedback("No se pudo copiar automáticamente. Selecciona el dato y cópialo manualmente.");
+        return;
+      }
+      await navigator.clipboard.writeText(value);
+      setCopyFeedback(label + " copiado.");
+    } catch (error) {
+      console.error("No se pudo copiar el dato de pago:", error);
+      setCopyFeedback("No se pudo copiar automáticamente. Selecciona el dato y cópialo manualmente.");
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -340,16 +355,16 @@ export default function Profile() {
 
                 <article className="relative overflow-hidden rounded-2xl border border-violet-400/30 bg-gradient-to-b from-violet-500/[0.10] to-slate-950/60 p-5 sm:p-6">
                   <div className="absolute right-0 top-0 rounded-bl-xl border-b border-l border-violet-300/20 bg-violet-300/10 px-3 py-1.5 text-[10px] font-bold tracking-wide text-violet-200">EN PREPARACIÓN</div>
-                  <span className="jjx-eyebrow">MÁS ADELANTE</span>
+                  <span className="jjx-eyebrow">PLAN AMPLIADO</span>
                   <h3 className="mt-4 text-xl font-semibold text-white">JJXCAPITAL Pro</h3>
-                  <p className="mt-1 text-3xl font-semibold tracking-tight text-white">Precio pendiente</p>
-                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Un plan ampliado, con precio y ventajas que se anunciarán antes de abrir las contrataciones.</p>
+                  <p className="mt-1 text-3xl font-semibold tracking-tight text-white">15 USD <span className="text-xs font-medium text-slate-500">/ mes</span></p>
+                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Precio de referencia mensual, igual al de CriptoExcel. El cobro y la activación se habilitarán cuando termine la integración segura.</p>
                   <ul className="mt-5 space-y-3 text-sm text-slate-300">
-                    <li className="flex items-start gap-2"><BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Límites y ventajas todavía por definir</li>
-                    <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Contratación segura mediante una pasarela externa</li>
-                    <li className="flex items-start gap-2"><ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Activación tras verificar el pago</li>
+                    <li className="flex items-start gap-2"><BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Ventajas y límites definitivos por anunciar</li>
+                    <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Opciones previstas: Binance Pay o USDT en blockchain</li>
+                    <li className="flex items-start gap-2"><ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Activación solo tras confirmar el pago en el servidor</li>
                   </ul>
-                  <button type="button" disabled className="jjx-button-primary mt-6 w-full justify-center opacity-60" title="La contratación estará disponible cuando se configure la pasarela de pago">Próximamente</button>
+                  <button type="button" disabled className="jjx-button-primary mt-6 w-full justify-center opacity-60" title="No pagues todavía: la verificación automática aún no está configurada">Pagos en preparación</button>
                 </article>
               </section>
             </div>
@@ -360,18 +375,48 @@ export default function Profile() {
                   <span className="jjx-icon-chip"><CreditCardIcon className="h-5 w-5" aria-hidden="true" /></span>
                   <div>
                     <h3 id="payment-method-heading" className="text-lg font-semibold text-white">Métodos de pago</h3>
-                    <p className="mt-0.5 text-sm text-slate-400">Pagos y renovaciones</p>
+                    <p className="mt-0.5 text-sm text-slate-400">Precio previsto: 15 USD al mes</p>
                   </div>
                 </div>
-                <div className="mt-5 rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-5 text-center">
-                  <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-violet-300/15 bg-violet-300/5 text-violet-200">
-                    <LockClosedIcon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <p className="mt-3 text-sm font-semibold text-white">Pasarela pendiente de conectar</p>
-                  <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-slate-400">Aún no hay tarjeta ni cuenta de pago asociada. Cuando se habilite la facturación, el pago se realizará en un entorno seguro del proveedor.</p>
-                  <button type="button" disabled className="jjx-button-secondary mt-4 w-full justify-center opacity-60">Añadir método de pago</button>
+
+                <div className="mt-5 space-y-3">
+                  <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">Binance Pay</p>
+                        <p className="mt-1 text-xs text-slate-400">Importe previsto: 15 USDT</p>
+                      </div>
+                      <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">En configuración</span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-slate-500">Binance Pay ID</p>
+                        <p className="mt-1 text-lg font-semibold tracking-wide text-white">807678814</p>
+                      </div>
+                      <button type="button" onClick={() => copyPaymentDetail("807678814", "ID de Binance Pay")} className="jjx-button-secondary">Copiar ID</button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-white">USDT en blockchain</p>
+                        <p className="mt-1 text-xs text-slate-400">Importe previsto: 15 USDT</p>
+                      </div>
+                      <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">Red por confirmar</span>
+                    </div>
+                    <p className="mt-4 text-[10px] uppercase tracking-wide text-slate-500">Dirección de recepción facilitada</p>
+                    <p className="mt-1 break-all font-mono text-xs leading-6 text-slate-200">0x4c64b783f1babc0a2fe62f174873f415393c2269</p>
+                    <button type="button" onClick={() => copyPaymentDetail("0x4c64b783f1babc0a2fe62f174873f415393c2269", "Dirección blockchain")} className="jjx-button-secondary mt-3 w-full justify-center">Copiar dirección</button>
+                    <p className="mt-3 text-xs leading-5 text-amber-100/90">Hay que confirmar la red y el token antes de aceptar transferencias. No envíes fondos hasta que la red de recepción esté verificada.</p>
+                  </div>
+                  {copyFeedback && <p role="status" className="text-xs leading-5 text-slate-300">{copyFeedback}</p>}
                 </div>
-                <p className="mt-4 text-xs leading-5 text-slate-500">No introduzcas datos bancarios en JJXCAPITAL mientras esta integración no esté disponible.</p>
+
+                <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-300/15 bg-amber-300/[0.04] p-3">
+                  <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
+                  <p className="text-xs leading-5 text-slate-400">La verificación automática todavía no está activa. Estos datos se muestran para configurar el checkout; no hagas pagos hasta que se habilite la confirmación en el servidor. Nunca se activará Pro solo por escribir un TxID o pulsar un botón.</p>
+                </div>
               </section>
 
               <section className="jjx-panel p-5 sm:p-6" aria-labelledby="payment-history-heading">
