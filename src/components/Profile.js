@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { collection, doc, getDoc, getDocs, onSnapshot } from "firebase/firestore";
+import { FREE_PLAN_LIMITS, getProfileExportCount, getLimitProgress, isProSubscriptionActive } from "../utils/planLimits";
 import {
   ArrowLeftOnRectangleIcon,
   ChartBarIcon,
@@ -24,15 +25,7 @@ const asText = (value, fallback = "") => {
   return fallback;
 };
 
-const countFromProfile = (data = {}) => {
-  const candidates = [
-    data?.exportsUsed,
-    data?.usage?.exportaciones?.usadas,
-    data?.usage?.exportsUsed,
-    data?.usage?.exportaciones?.exportsUsed,
-  ].map((value) => Number(value)).filter((value) => Number.isFinite(value) && value >= 0);
-  return candidates.length ? Math.max(...candidates) : 0;
-};
+const countFromProfile = getProfileExportCount;
 
 const formatDate = (timestamp, authDate) => {
   try {
@@ -63,6 +56,7 @@ export default function Profile() {
   const [signingOut, setSigningOut] = useState(false);
   const [actionError, setActionError] = useState("");
   const [operationCount, setOperationCount] = useState(null);
+  const [orderCount, setOrderCount] = useState(null);
   const [exportCount, setExportCount] = useState(null);
   const [retry, setRetry] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState("");
@@ -224,6 +218,7 @@ export default function Profile() {
       if (!user?.uid) {
         setProfileData(null);
         setOperationCount(0);
+        setOrderCount(0);
         setLoading(false);
         return;
       }
@@ -252,7 +247,15 @@ export default function Profile() {
         if (!cancelled) setOperationCount(operationsSnapshot.size);
       } catch (error) {
         console.error("No se pudo contar el historial:", error);
-        if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de operaciones.");
+        if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de movimientos.");
+      }
+
+      try {
+        const sessionsSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
+        if (!cancelled) setOrderCount(sessionsSnapshot.size);
+      } catch (error) {
+        console.error("No se pudo contar las órdenes/arbitrajes:", error);
+        if (!cancelled) setOrderCount(null);
       }
 
       await loadPaymentHistory();
@@ -362,12 +365,18 @@ export default function Profile() {
   const firstName = asText(profileData.nombre) || asText(user?.displayName).split(" ")[0] || "Usuario";
   const fullName = [firstName, asText(profileData.apellido)].filter(Boolean).join(" ");
   const photoURL = asText(profileData.photoURL) || asText(user?.photoURL);
-  const plan = asText(profileData.plan, "free").toLowerCase();
-  const planLabel = plan === "free" ? "Plan gratuito" : plan.charAt(0).toUpperCase() + plan.slice(1);
+  const proActive = isProSubscriptionActive(profileData);
+  const plan = proActive ? "pro" : "free";
+  const planLabel = proActive ? "Pro activo" : "Plan gratuito";
   const operationsAvailable = Number.isFinite(operationCount);
   const operations = operationsAvailable ? operationCount : "—";
   const exports = Number.isFinite(exportCount) ? exportCount : countFromProfile(profileData);
   const memberSince = formatDate(profileData.createdAt, user?.metadata?.creationTime);
+  const ordersAvailable = Number.isFinite(orderCount);
+  const orderUsage = ordersAvailable ? getLimitProgress(orderCount, FREE_PLAN_LIMITS.orders) : null;
+  const movementUsage = operationsAvailable ? getLimitProgress(operationCount, FREE_PLAN_LIMITS.movements) : null;
+  const exportUsage = getLimitProgress(exports, FREE_PLAN_LIMITS.exports);
+  const currentExpiryLabel = proActive ? formatPaymentDate(profileData.subscriptionExpiresAt) : "";
 
   return (
     <div className="jjx-page min-h-screen px-4 py-6 sm:px-6 lg:px-8">
@@ -413,13 +422,68 @@ export default function Profile() {
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <MetricCard
-              label="Operaciones registradas"
+              label="Movimientos registrados"
               value={operations}
               caption={operationsAvailable ? "Compras y ventas guardadas" : "No se pudo consultar el historial"}
               icon={ChartBarIcon}
             />
             <MetricCard label="Exportaciones realizadas" value={exports} caption="Archivos de historial generados" icon={SparklesIcon} />
             <MetricCard label="Estado de la cuenta" value="Activa" caption="Acceso protegido por tu sesión" icon={ShieldCheckIcon} />
+          </div>
+        </section>
+
+        <section aria-labelledby="plan-limits-heading" className="space-y-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="jjx-eyebrow">TIPO DE PLAN ACTUAL</span>
+              <h2 id="plan-limits-heading" className="mt-1 text-lg font-semibold tracking-tight text-white">
+                {proActive ? "JJXCAPITAL Pro · Acceso ilimitado" : "Plan gratuito · Límites de uso"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-400">
+                {proActive
+                  ? "Todas las funciones están ilimitadas hasta " + currentExpiryLabel + "."
+                  : "Tu consumo se compara con los límites del plan gratuito. Tus datos e historial se conservan."}
+              </p>
+            </div>
+            <span className="jjx-status">
+              <span className={`h-1.5 w-1.5 rounded-full ${proActive ? "bg-emerald-400" : "bg-slate-400"}`} />
+              {proActive ? "Pro activo" : "Gratuito"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <article className="jjx-panel p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-200">Órdenes / arbitrajes</p>
+                <span className="text-xs text-slate-500">300 máximo</span>
+              </div>
+              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitado" : ordersAvailable ? orderCount : "—"}</p>
+              {!proActive && <p className="mt-1 text-xs text-slate-400">{ordersAvailable ? `de ${FREE_PLAN_LIMITS.orders} · ${orderUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
+              {!proActive && <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" style={{ width: `${orderUsage?.percent || 0}%` }} /></div>}
+              {proActive && <p className="mt-1 text-xs text-emerald-300">Sin límite durante tu suscripción</p>}
+            </article>
+
+            <article className="jjx-panel p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-200">Movimientos</p>
+                <span className="text-xs text-slate-500">150 máximo</span>
+              </div>
+              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitado" : operationsAvailable ? operationCount : "—"}</p>
+              {!proActive && <p className="mt-1 text-xs text-slate-400">{operationsAvailable ? `de ${FREE_PLAN_LIMITS.movements} · ${movementUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
+              {!proActive && <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" style={{ width: `${movementUsage?.percent || 0}%` }} /></div>}
+              {proActive && <p className="mt-1 text-xs text-emerald-300">Sin límite durante tu suscripción</p>}
+            </article>
+
+            <article className="jjx-panel p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-200">Exportaciones</p>
+                <span className="text-xs text-slate-500">50 máximo</span>
+              </div>
+              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitadas" : exports}</p>
+              {!proActive && <p className="mt-1 text-xs text-slate-400">{`de ${FREE_PLAN_LIMITS.exports} · ${exportUsage.remaining} disponibles`}</p>}
+              {!proActive && <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" style={{ width: `${exportUsage.percent}%` }} /></div>}
+              {proActive && <p className="mt-1 text-xs text-emerald-300">Sin límite durante tu suscripción</p>}
+            </article>
           </div>
         </section>
 
@@ -501,12 +565,12 @@ export default function Profile() {
                   <div className="absolute right-0 top-0 rounded-bl-xl border-b border-l border-violet-300/20 bg-violet-300/10 px-3 py-1.5 text-[10px] font-bold tracking-wide text-violet-200">EN PREPARACIÓN</div>
                   <span className="jjx-eyebrow">PLAN AMPLIADO</span>
                   <h3 className="mt-4 text-xl font-semibold text-white">JJXCAPITAL Pro</h3>
-                  <p className="mt-1 text-3xl font-semibold tracking-tight text-white">15 USD <span className="text-xs font-medium text-slate-500">/ mes</span></p>
-                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Precio de referencia mensual, igual al de CriptoExcel. El cobro y la activación se habilitarán cuando termine la integración segura.</p>
+                  <p className="mt-1 text-3xl font-semibold tracking-tight text-white">15 USDT <span className="text-xs font-medium text-slate-500">/ 30 días</span></p>
+                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Pago de 15 USDT por 30 días. Órdenes/arbitrajes, movimientos y exportaciones ilimitados durante la suscripción activa.</p>
                   <ul className="mt-5 space-y-3 text-sm text-slate-300">
-                    <li className="flex items-start gap-2"><BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Ventajas y límites definitivos por anunciar</li>
-                    <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Opciones previstas: Binance Pay o USDT en blockchain</li>
-                    <li className="flex items-start gap-2"><ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Activación solo tras confirmar el pago en el servidor</li>
+                    <li className="flex items-start gap-2"><BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Órdenes y arbitrajes ilimitados</li>
+                    <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Movimientos y exportaciones ilimitados</li>
+                    <li className="flex items-start gap-2"><ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Acceso ilimitado durante 30 días desde la confirmación</li>
                   </ul>
                   <button type="button" disabled className="jjx-button-primary mt-6 w-full justify-center opacity-60" title="No pagues todavía: la verificación automática aún no está configurada">Pagos en preparación</button>
                 </article>
@@ -519,7 +583,7 @@ export default function Profile() {
                   <span className="jjx-icon-chip"><CreditCardIcon className="h-5 w-5" aria-hidden="true" /></span>
                   <div>
                     <h3 id="payment-method-heading" className="text-lg font-semibold text-white">Métodos de pago</h3>
-                    <p className="mt-0.5 text-sm text-slate-400">JJXCAPITAL Pro · 15 USD al mes</p>
+                    <p className="mt-0.5 text-sm text-slate-400">JJXCAPITAL Pro · 15 USDT por 30 días</p>
                   </div>
                 </div>
 
@@ -548,7 +612,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-white">Blockchain Pay · USDT BEP20</p>
-                        <p className="mt-1 text-xs text-slate-400">Precio base: 15 USD; importe BEP20 exacto en la orden</p>
+                        <p className="mt-1 text-xs text-slate-400">Precio base: 15 USDT; la orden muestra el importe exacto a enviar</p>
                       </div>
                       <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">BNB Smart Chain</span>
                     </div>
