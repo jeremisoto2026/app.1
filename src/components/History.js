@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, deleteDoc, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -404,25 +404,32 @@ const History = () => {
       return;
     }
 
-    const exported = exportToExcel(dataToExport);
-
-    if (!exported) {
+    if (!user?.getIdToken) {
+      showExportDialog("error", "Sesión requerida", "Inicia sesión de nuevo para registrar esta exportación.");
       return;
     }
 
-    if (user) {
-      try {
-        const userRef = doc(db, "users", user.uid);
-        // Mantener sincronizados el contador actual y la ruta histórica para
-        // que los perfiles antiguos no pierdan el límite ya consumido.
-        await updateDoc(userRef, {
-          exportsUsed: increment(1),
-          "usage.exportaciones.usadas": increment(1),
-        });
-      } catch (error) {
-        console.error("Error al actualizar el contador de exportaciones:", error);
+    // El servidor comprueba el plan y registra el uso antes de permitir la descarga.
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/usage/record-export", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "operation_history" }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showExportDialog("warning", "Límite del plan alcanzado", payload.error || "No se puede exportar con el plan actual.");
+        return;
       }
+    } catch (error) {
+      console.error("Error al comprobar el límite de exportaciones:", error);
+      showExportDialog("error", "No se pudo autorizar la exportación", "Inténtalo de nuevo. No se ha iniciado la descarga.");
+      return;
     }
+
+    const exported = exportToExcel(dataToExport);
+    if (!exported) return;
   };
   
   const formatDateForCSV = (timestamp) => {
