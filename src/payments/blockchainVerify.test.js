@@ -138,7 +138,10 @@ describe("POST /api/payments/blockchain/verify", () => {
     await verifyBlockchainPayment(req, res);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toMatchObject({
+    const successResponse = payments.sendJson.mock.calls.find(([response, statusCode]) =>
+      response === res && statusCode === 200
+    );
+    expect(successResponse?.[2]).toMatchObject({
       success: true,
       plan: "pro",
       network: "BNB Smart Chain (BEP20)",
