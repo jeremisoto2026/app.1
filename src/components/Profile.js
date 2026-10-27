@@ -511,47 +511,99 @@ export default function Profile() {
                   <span className="jjx-icon-chip"><CreditCardIcon className="h-5 w-5" aria-hidden="true" /></span>
                   <div>
                     <h3 id="payment-method-heading" className="text-lg font-semibold text-white">Métodos de pago</h3>
-                    <p className="mt-0.5 text-sm text-slate-400">Precio previsto: 15 USD al mes</p>
+                    <p className="mt-0.5 text-sm text-slate-400">JJXCAPITAL Pro · 15 USD al mes</p>
                   </div>
                 </div>
 
                 <div className="mt-5 space-y-3">
                   <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-white">Binance Pay</p>
-                        <p className="mt-1 text-xs text-slate-400">Importe previsto: 15 USDT</p>
+                        <p className="mt-1 text-xs text-slate-400">Checkout oficial · 15 USDT</p>
+                        <p className="mt-1 text-[11px] text-slate-500">ID de cuenta facilitado: 807678814</p>
                       </div>
-                      <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">En configuración</span>
+                      <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">Requiere credenciales</span>
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wide text-slate-500">Binance Pay ID</p>
-                        <p className="mt-1 text-lg font-semibold tracking-wide text-white">807678814</p>
-                      </div>
-                      <button type="button" onClick={() => copyPaymentDetail("807678814", "ID de Binance Pay")} className="jjx-button-secondary">Copiar ID</button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={startBinancePay}
+                      disabled={paymentActionLoading}
+                      className="jjx-button-primary mt-4 w-full justify-center"
+                    >
+                      {paymentAction === "binance" ? "Creando orden segura…" : "Pagar con Binance Pay"}
+                    </button>
                   </div>
 
                   <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-white">Blockchain Pay · USDT</p>
-                        <p className="mt-1 text-xs text-slate-400">Importe previsto: 15 USDT</p>
+                        <p className="text-sm font-semibold text-white">Blockchain Pay · USDT BEP20</p>
+                        <p className="mt-1 text-xs text-slate-400">Importe exacto: 15 USDT</p>
                       </div>
-                      <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">Red por confirmar</span>
+                      <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">BNB Smart Chain</span>
                     </div>
-                    <p className="mt-4 text-[10px] uppercase tracking-wide text-slate-500">Dirección de recepción facilitada</p>
-                    <p className="mt-1 break-all font-mono text-xs leading-6 text-slate-200">0x4c64b783f1babc0a2fe62f174873f415393c2269</p>
-                    <button type="button" onClick={() => copyPaymentDetail("0x4c64b783f1babc0a2fe62f174873f415393c2269", "Dirección blockchain")} className="jjx-button-secondary mt-3 w-full justify-center">Copiar dirección</button>
-                    <p className="mt-3 text-xs leading-5 text-amber-100/90">Hay que confirmar la red y el token antes de aceptar transferencias. No envíes fondos hasta que la red de recepción esté verificada.</p>
+                    <p className="mt-4 text-[10px] uppercase tracking-wide text-slate-500">Dirección de recepción</p>
+                    <p className="mt-1 break-all font-mono text-xs leading-6 text-slate-200">{blockchainInvoice?.recipient || "0x4c64b783f1babc0a2fe62f174873f415393c2269"}</p>
+                    <button
+                      type="button"
+                      onClick={() => copyPaymentDetail(blockchainInvoice?.recipient || "0x4c64b783f1babc0a2fe62f174873f415393c2269", "Dirección BEP20")}
+                      className="jjx-button-secondary mt-3 w-full justify-center"
+                    >
+                      Copiar dirección BEP20
+                    </button>
+                    <div className="mt-4 rounded-lg border border-white/[0.07] bg-black/10 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Red obligatoria</p>
+                      <p className="mt-1 text-sm font-semibold text-white">BNB Smart Chain (BEP20) · Chain ID 56</p>
+                      <p className="mt-2 break-all font-mono text-[10px] leading-5 text-slate-400">Contrato configurado: {blockchainInvoice?.tokenContract || "0x55d398326f99059fF775485246999027B3197955"}</p>
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-amber-100/90">Envía solo USDT por BNB Smart Chain (BEP20). No uses ERC20, TRC20 ni otra red. La red y el token deben coincidir exactamente para verificar el pago.</p>
+                    <button
+                      type="button"
+                      onClick={createBlockchainInvoice}
+                      disabled={paymentActionLoading}
+                      className="jjx-button-primary mt-4 w-full justify-center"
+                    >
+                      {paymentAction === "bep20" ? "Creando orden…" : "Crear orden y pagar con BEP20"}
+                    </button>
+
+                    {blockchainInvoice && (
+                      <form onSubmit={verifyBlockchainPayment} className="mt-4 space-y-3 rounded-xl border border-violet-300/20 bg-violet-300/[0.04] p-4">
+                        <div>
+                          <p className="text-sm font-semibold text-white">Orden de pago creada</p>
+                          <p className="mt-1 break-all font-mono text-[10px] text-slate-400">Orden: {blockchainInvoice.paymentId}</p>
+                          <p className="mt-1 text-xs text-slate-400">Importe: {blockchainInvoice.amount} {blockchainInvoice.currency} · Red: BNB Smart Chain (BEP20)</p>
+                          <p className="mt-1 text-xs text-slate-500">Caduca: {formatPaymentDate(blockchainInvoice.expiresAt)}</p>
+                        </div>
+                        <label htmlFor="blockchain-tx-id" className="block text-xs font-semibold text-slate-300">TxID de la transferencia</label>
+                        <input
+                          id="blockchain-tx-id"
+                          type="text"
+                          inputMode="text"
+                          autoComplete="off"
+                          spellCheck="false"
+                          maxLength={66}
+                          placeholder="0x…"
+                          value={blockchainTxHash}
+                          onChange={(event) => setBlockchainTxHash(event.target.value.trim())}
+                          className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-3 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
+                        />
+                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar el pago, pega aquí el hash de la transacción. El servidor comprobará contrato, destinatario, importe y al menos 12 confirmaciones.</p>
+                        <button type="submit" disabled={paymentActionLoading} className="jjx-button-primary w-full justify-center">
+                          {paymentAction === "verify" ? "Verificando en blockchain…" : "Verificar transferencia automáticamente"}
+                        </button>
+                      </form>
+                    )}
                   </div>
+
                   {copyFeedback && <p role="status" className="text-xs leading-5 text-slate-300">{copyFeedback}</p>}
+                  {paymentError && <p role="alert" className="rounded-xl border border-rose-400/20 bg-rose-400/[0.06] p-3 text-xs leading-5 text-rose-200">{paymentError}</p>}
+                  {paymentMessage && <p role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.05] p-3 text-xs leading-5 text-emerald-200">{paymentMessage}</p>}
                 </div>
 
                 <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-300/15 bg-amber-300/[0.04] p-3">
                   <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
-                  <p className="text-xs leading-5 text-slate-400">La verificación automática todavía no está activa. Estos datos se muestran para configurar el checkout; no hagas pagos hasta que se habilite la confirmación en el servidor. Nunca se activará Pro solo por escribir un TxID o pulsar un botón.</p>
+                  <p className="text-xs leading-5 text-slate-400">La verificación no confía solo en el TxID: consulta la blockchain y exige el token, la red, el destinatario y el importe exactos antes de activar Pro. Para aceptar pagos reales faltan las credenciales seguras de Firebase y Binance Pay en Vercel.</p>
                 </div>
               </section>
 
@@ -560,22 +612,48 @@ export default function Profile() {
                   <span className="jjx-icon-chip"><ClockIcon className="h-5 w-5" aria-hidden="true" /></span>
                   <div>
                     <h3 id="payment-history-heading" className="text-lg font-semibold text-white">Historial de pagos</h3>
-                    <p className="mt-0.5 text-sm text-slate-400">Comprobantes y estado de las transacciones</p>
+                    <p className="mt-0.5 text-sm text-slate-400">Órdenes y comprobantes vinculados a tu cuenta</p>
                   </div>
                 </div>
                 <div className="mt-5 overflow-hidden rounded-xl border border-white/[0.08]">
-                  <div className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/[0.08] bg-white/[0.025] px-3 py-2.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    <span>Movimiento</span><span>Estado</span>
-                  </div>
-                  <div className="px-4 py-8 text-center">
-                    <CreditCardIcon className="mx-auto h-7 w-7 text-slate-600" aria-hidden="true" />
-                    <p className="mt-3 text-sm font-medium text-slate-300">Todavía no hay pagos registrados</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">Esta lista mostrará la fecha, el importe, el estado y el comprobante cuando la facturación esté activa.</p>
-                  </div>
+                  {payments.length ? (
+                    <div className="divide-y divide-white/[0.07]">
+                      {payments.map((payment) => (
+                        <div key={payment.id || payment.paymentId} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-white">
+                              {payment.provider === "binance_pay" ? "Binance Pay" : "USDT · BNB Smart Chain (BEP20)"}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-400">{formatPaymentDate(payment.createdAt)}</p>
+                            <p className="mt-1 text-xs text-slate-400">{payment.amount || 15} {payment.currency || "USDT"}</p>
+                            {payment.txHash && (
+                              <a className="mt-2 inline-block break-all text-xs text-violet-300 underline underline-offset-2" href={"https://bscscan.com/tx/" + payment.txHash} target="_blank" rel="noreferrer">Ver transacción en BscScan</a>
+                            )}
+                            {payment.transactionId && <p className="mt-2 break-all text-[10px] text-slate-500">Referencia: {payment.transactionId}</p>}
+                          </div>
+                          <span className={"inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold " + (
+                            payment.status === "paid"
+                              ? "border-emerald-300/20 bg-emerald-300/5 text-emerald-200"
+                              : payment.status === "failed" || payment.status === "expired"
+                                ? "border-rose-300/20 bg-rose-300/5 text-rose-200"
+                                : "border-amber-300/20 bg-amber-300/5 text-amber-100"
+                          )}>{paymentStatusLabel(payment.status)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-8 text-center">
+                      <CreditCardIcon className="mx-auto h-7 w-7 text-slate-600" aria-hidden="true" />
+                      <p className="mt-3 text-sm font-medium text-slate-300">Todavía no hay pagos registrados</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Cuando crees una orden de pago, aparecerá aquí su importe y estado.</p>
+                    </div>
+                  )}
                 </div>
+                {historyError && <p role="status" className="mt-3 text-xs leading-5 text-amber-100/80">{historyError}</p>}
+                <button type="button" onClick={loadPaymentHistory} disabled={paymentActionLoading} className="jjx-button-secondary mt-4 w-full justify-center">Actualizar historial</button>
                 <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-slate-500">
                   <ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  Los pagos confirmados se mostrarán aquí; el navegador no podrá activar un plan por su cuenta.
+                  El historial se actualiza desde el servidor; los usuarios no pueden marcar sus propios pagos como pagados.
                 </div>
               </section>
             </div>
