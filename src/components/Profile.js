@@ -38,17 +38,6 @@ const formatDate = (timestamp, authDate) => {
   }
 };
 
-const MetricCard = ({ label, value, caption, icon: Icon }) => (
-  <div className="jjx-panel p-5">
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-sm text-slate-400">{label}</p>
-      <span className="jjx-icon-chip"><Icon className="h-5 w-5" aria-hidden="true" /></span>
-    </div>
-    <p className="mt-3 text-3xl font-semibold tracking-tight text-white">{value}</p>
-    <p className="mt-1 text-xs text-slate-500">{caption}</p>
-  </div>
-);
-
 export default function Profile() {
   const { user, signOut } = useAuth();
   const [profileData, setProfileData] = useState(null);
@@ -380,7 +369,6 @@ export default function Profile() {
   const operationsAvailable = Number.isFinite(operationCount) || hasStoredMovementCount;
   const ordersUsed = Math.max(Number.isFinite(orderCount) ? orderCount : 0, hasStoredOrderCount ? storedOrderCount : 0);
   const movementsUsed = Math.max(Number.isFinite(operationCount) ? operationCount : 0, hasStoredMovementCount ? storedMovementCount : 0);
-  const operations = operationsAvailable ? movementsUsed : "—";
   const exports = Number.isFinite(exportCount) ? exportCount : countFromProfile(profileData);
   const memberSince = formatDate(profileData.createdAt, user?.metadata?.creationTime);
   const orderUsage = ordersAvailable ? getLimitProgress(ordersUsed, FREE_PLAN_LIMITS.orders) : null;
@@ -662,6 +650,8 @@ export default function Profile() {
                   <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
                   <p className="text-xs leading-5 text-slate-400">La verificación no confía solo en el TxID: consulta la blockchain y exige el token, la red, el destinatario, el importe exacto y 12 confirmaciones antes de activar Pro. Para habilitar pagos reales, configura las credenciales seguras de Firebase y Binance Pay en Vercel y registra el webhook del comercio.</p>
                 </div>
+              </section>
+
             <section className="profile-surface jjx-panel p-5 sm:p-6" aria-labelledby="payment-history-heading">
                 <div className="flex items-center gap-3">
                   <span className="jjx-icon-chip"><ClockIcon className="h-5 w-5" aria-hidden="true" /></span>
