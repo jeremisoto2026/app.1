@@ -123,13 +123,11 @@ module.exports = async function binancePayWebhook(req, res) {
       paymentPath: resolvedPaymentPath,
       paymentDocument,
       paymentUpdate: {
-        ...paymentDocument.data,
         paymentId,
         provider: "binance_pay",
         status: "paid",
         transactionId,
         paidAmount,
-        currency,
         verifiedAt: now,
         updatedAt: now,
       },
