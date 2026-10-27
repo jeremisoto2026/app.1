@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { collection, doc, getDoc, getDocs, onSnapshot } from "firebase/firestore";
 import { FREE_PLAN_LIMITS, getProfileExportCount, getLimitProgress, isProSubscriptionActive } from "../utils/planLimits";
+import { getEffectivePaymentStatus } from "../utils/paymentStatus";
 import {
   ArrowLeftOnRectangleIcon,
   ChartBarIcon,
@@ -53,6 +54,7 @@ export default function Profile() {
   const [retry, setRetry] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState("");
   const [payments, setPayments] = useState([]);
+  const [paymentStatusNow, setPaymentStatusNow] = useState(() => Date.now());
   const [historyError, setHistoryError] = useState("");
   const [paymentAction, setPaymentAction] = useState("");
   const [paymentActionLoading, setPaymentActionLoading] = useState(false);
@@ -60,6 +62,22 @@ export default function Profile() {
   const [paymentMessage, setPaymentMessage] = useState("");
   const [blockchainInvoice, setBlockchainInvoice] = useState(null);
   const [blockchainTxHash, setBlockchainTxHash] = useState("");
+
+  useEffect(() => {
+    const hasActiveExpiringPayment = payments.some((payment) => {
+      const expiresAt = payment?.expiresAt?.toDate
+        ? payment.expiresAt.toDate().getTime()
+        : Date.parse(payment?.expiresAt || "");
+      return String(payment?.status || "").toLowerCase() === "pending" &&
+        Number.isFinite(expiresAt) &&
+        expiresAt > paymentStatusNow;
+    });
+
+    if (!hasActiveExpiringPayment) return undefined;
+
+    const timer = setInterval(() => setPaymentStatusNow(Date.now()), 15000);
+    return () => clearInterval(timer);
+  }, [payments, paymentStatusNow]);
 
   const copyPaymentDetail = async (value, label) => {
     try {
@@ -637,6 +655,7 @@ export default function Profile() {
                   <div>
                     <h3 id="payment-history-heading" className="text-lg font-semibold text-white">Historial de pagos</h3>
                     <p className="mt-0.5 text-sm text-slate-400">Órdenes y comprobantes vinculados a tu cuenta</p>
+                    <p className="mt-1 text-xs text-slate-500">Las órdenes pendientes caducan a los 30 minutos si no se confirma el pago.</p>
                   </div>
                 </div>
                 <div className="mt-5 overflow-hidden rounded-xl border border-white/[0.08]">
@@ -656,12 +675,12 @@ export default function Profile() {
                             {payment.transactionId && <p className="mt-2 break-all text-[10px] text-slate-500">Referencia: {payment.transactionId}</p>}
                           </div>
                           <span className={"inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold " + (
-                            payment.status === "paid"
+                            getEffectivePaymentStatus(payment, paymentStatusNow) === "paid"
                               ? "border-emerald-300/20 bg-emerald-300/5 text-emerald-200"
-                              : payment.status === "failed" || payment.status === "expired"
+                              : ["failed", "expired"].includes(getEffectivePaymentStatus(payment, paymentStatusNow))
                                 ? "border-rose-300/20 bg-rose-300/5 text-rose-200"
                                 : "border-amber-300/20 bg-amber-300/5 text-amber-100"
-                          )}>{paymentStatusLabel(payment.status)}</span>
+                          )}>{paymentStatusLabel(getEffectivePaymentStatus(payment, paymentStatusNow))}</span>
                         </div>
                       ))}
                     </div>
