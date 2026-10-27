@@ -104,7 +104,7 @@ module.exports = async function verifyBlockchainPayment(req, res) {
     const blockTimestampSeconds = Number.parseInt(transactionBlock?.timestamp || "", 16);
     const blockTimestampMs = blockTimestampSeconds * 1000;
     if (!Number.isFinite(blockTimestampMs) ||
-        blockTimestampMs < invoiceCreatedAt ||
+        blockTimestampMs < invoiceCreatedAt - 120_000 ||
         blockTimestampMs > invoiceExpiresAt) {
       throw new HttpError(410, "La transferencia se incluyó fuera del periodo de validez de esta orden. Contacta con soporte para revisar el ingreso.");
     }
