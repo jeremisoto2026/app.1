@@ -50,7 +50,7 @@ La función comprueba la firma RSA, la hora de la notificación, la orden guarda
 
 - POST /api/payments/binance/create-order: crea una orden Merchant de 15 USDT y devuelve el checkout oficial de Binance.
 - POST /api/payments/binance/webhook: valida los webhooks firmados y activa/renueva la suscripción cuando el proveedor confirma el pago.
-- POST /api/payments/blockchain/create-invoice: crea una orden individual BEP20 para la cuenta autenticada.
+- POST /api/payments/blockchain/create-invoice: crea una orden individual BEP20 para la cuenta autenticada con un importe compatible con cuatro decimales.
 - POST /api/payments/blockchain/verify: verifica el TxID contra BNB Smart Chain, exige el token/destinatario/importe de la orden y evita reutilizar la misma transacción.
 - GET /api/payments/history: devuelve únicamente el historial de la cuenta autenticada.
 
