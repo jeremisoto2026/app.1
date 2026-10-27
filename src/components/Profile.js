@@ -11,6 +11,11 @@ import {
   ShieldCheckIcon,
   LifebuoyIcon,
   SparklesIcon,
+  CreditCardIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  BoltIcon,
+  LockClosedIcon,
 } from "@heroicons/react/24/outline";
 
 const asText = (value, fallback = "") => {
@@ -259,6 +264,143 @@ export default function Profile() {
           </div>
         </section>
 
+        <section aria-labelledby="billing-heading" className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="jjx-eyebrow">CUENTA Y SUSCRIPCIÓN</span>
+              <h2 id="billing-heading" className="mt-1 text-xl font-semibold tracking-tight text-white">Planes y facturación</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-400">Consulta tu plan, revisa el uso de tu cuenta y encuentra aquí la información de tus pagos.</p>
+            </div>
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/5 px-3 py-1.5 text-xs font-semibold text-amber-100">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+              Cobros en preparación
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+            <div className="space-y-5">
+              <section className="jjx-panel overflow-hidden" aria-labelledby="current-plan-heading">
+                <div className="h-1 bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400" />
+                <div className="p-5 sm:p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <span className="jjx-eyebrow">TU PLAN ACTUAL</span>
+                      <h3 id="current-plan-heading" className="mt-2 text-2xl font-semibold tracking-tight text-white">{planLabel}</h3>
+                      <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">Tu cuenta puede seguir utilizando las funciones que ya están disponibles. No se realizará ningún cobro desde esta pantalla.</p>
+                    </div>
+                    <span className="jjx-status"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Activo</span>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="jjx-inset">
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <ChartBarIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="text-xs font-medium">Operaciones</span>
+                      </div>
+                      <p className="mt-2 text-2xl font-semibold tracking-tight text-white">{operations}</p>
+                      <p className="mt-1 text-xs text-slate-500">Registros en tu historial</p>
+                    </div>
+                    <div className="jjx-inset">
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <SparklesIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="text-xs font-medium">Exportaciones</span>
+                      </div>
+                      <p className="mt-2 text-2xl font-semibold tracking-tight text-white">{exports}</p>
+                      <p className="mt-1 text-xs text-slate-500">Exportaciones contabilizadas</p>
+                    </div>
+                    <div className="jjx-inset">
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <ShieldCheckIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="text-xs font-medium">Facturación</span>
+                      </div>
+                      <p className="mt-2 text-lg font-semibold tracking-tight text-white">Sin activar</p>
+                      <p className="mt-1 text-xs text-slate-500">No hay pagos conectados</p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-xs leading-5 text-slate-500">Los límites comerciales todavía no están configurados. Por eso mostramos el uso actual sin inventar cuotas ni contadores máximos.</p>
+                </div>
+              </section>
+
+              <section className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label="Planes disponibles">
+                <article className="jjx-panel p-5 sm:p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="jjx-eyebrow">PLAN ACTUAL</span>
+                    <span className="rounded-full border border-emerald-300/20 bg-emerald-300/5 px-2.5 py-1 text-[10px] font-bold text-emerald-200">ACTIVO</span>
+                  </div>
+                  <h3 className="mt-4 text-xl font-semibold text-white">Gratuito</h3>
+                  <p className="mt-1 text-3xl font-semibold tracking-tight text-white">0 € <span className="text-xs font-medium text-slate-500">/ siempre</span></p>
+                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Para registrar, revisar y organizar tus operaciones.</p>
+                  <ul className="mt-5 space-y-3 text-sm text-slate-300">
+                    <li className="flex items-start gap-2"><CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /> Resumen y métricas de actividad</li>
+                    <li className="flex items-start gap-2"><CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /> Registro de operaciones y arbitrajes</li>
+                    <li className="flex items-start gap-2"><CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /> Historial disponible en la aplicación</li>
+                  </ul>
+                  <div className="mt-6 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2.5 text-center text-xs font-semibold text-slate-400">Ya estás usando este plan</div>
+                </article>
+
+                <article className="relative overflow-hidden rounded-2xl border border-violet-400/30 bg-gradient-to-b from-violet-500/[0.10] to-slate-950/60 p-5 sm:p-6">
+                  <div className="absolute right-0 top-0 rounded-bl-xl border-b border-l border-violet-300/20 bg-violet-300/10 px-3 py-1.5 text-[10px] font-bold tracking-wide text-violet-200">EN PREPARACIÓN</div>
+                  <span className="jjx-eyebrow">MÁS ADELANTE</span>
+                  <h3 className="mt-4 text-xl font-semibold text-white">JJXCAPITAL Pro</h3>
+                  <p className="mt-1 text-3xl font-semibold tracking-tight text-white">Precio pendiente</p>
+                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Un plan ampliado, con precio y ventajas que se anunciarán antes de abrir las contrataciones.</p>
+                  <ul className="mt-5 space-y-3 text-sm text-slate-300">
+                    <li className="flex items-start gap-2"><BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Límites y ventajas todavía por definir</li>
+                    <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Contratación segura mediante una pasarela externa</li>
+                    <li className="flex items-start gap-2"><ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Activación tras verificar el pago</li>
+                  </ul>
+                  <button type="button" disabled className="jjx-button-primary mt-6 w-full justify-center opacity-60" title="La contratación estará disponible cuando se configure la pasarela de pago">Próximamente</button>
+                </article>
+              </section>
+            </div>
+
+            <div className="space-y-5">
+              <section className="jjx-panel p-5 sm:p-6" aria-labelledby="payment-method-heading">
+                <div className="flex items-center gap-3">
+                  <span className="jjx-icon-chip"><CreditCardIcon className="h-5 w-5" aria-hidden="true" /></span>
+                  <div>
+                    <h3 id="payment-method-heading" className="text-lg font-semibold text-white">Métodos de pago</h3>
+                    <p className="mt-0.5 text-sm text-slate-400">Pagos y renovaciones</p>
+                  </div>
+                </div>
+                <div className="mt-5 rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-5 text-center">
+                  <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-violet-300/15 bg-violet-300/5 text-violet-200">
+                    <LockClosedIcon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <p className="mt-3 text-sm font-semibold text-white">Pasarela pendiente de conectar</p>
+                  <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-slate-400">Aún no hay tarjeta ni cuenta de pago asociada. Cuando se habilite la facturación, el pago se realizará en un entorno seguro del proveedor.</p>
+                  <button type="button" disabled className="jjx-button-secondary mt-4 w-full justify-center opacity-60">Añadir método de pago</button>
+                </div>
+                <p className="mt-4 text-xs leading-5 text-slate-500">No introduzcas datos bancarios en JJXCAPITAL mientras esta integración no esté disponible.</p>
+              </section>
+
+              <section className="jjx-panel p-5 sm:p-6" aria-labelledby="payment-history-heading">
+                <div className="flex items-center gap-3">
+                  <span className="jjx-icon-chip"><ClockIcon className="h-5 w-5" aria-hidden="true" /></span>
+                  <div>
+                    <h3 id="payment-history-heading" className="text-lg font-semibold text-white">Historial de pagos</h3>
+                    <p className="mt-0.5 text-sm text-slate-400">Comprobantes y estado de las transacciones</p>
+                  </div>
+                </div>
+                <div className="mt-5 overflow-hidden rounded-xl border border-white/[0.08]">
+                  <div className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/[0.08] bg-white/[0.025] px-3 py-2.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    <span>Movimiento</span><span>Estado</span>
+                  </div>
+                  <div className="px-4 py-8 text-center">
+                    <CreditCardIcon className="mx-auto h-7 w-7 text-slate-600" aria-hidden="true" />
+                    <p className="mt-3 text-sm font-medium text-slate-300">Todavía no hay pagos registrados</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">Esta lista mostrará la fecha, el importe, el estado y el comprobante cuando la facturación esté activa.</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-slate-500">
+                  <ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  Los pagos confirmados se mostrarán aquí; el navegador no podrá activar un plan por su cuenta.
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_0.8fr]">
           <section className="jjx-panel p-6 sm:p-8">
             <div className="flex items-center gap-3">
@@ -276,27 +418,7 @@ export default function Profile() {
           </section>
 
           <aside className="space-y-6">
-            <section className="jjx-panel p-6">
-              <div className="flex items-center gap-3">
-                <span className="jjx-icon-chip"><SparklesIcon className="h-5 w-5" /></span>
-                <h2 className="text-lg font-semibold text-white">Suscripciones</h2>
-              </div>
-              <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
-                <div>
-                  <p className="text-sm font-semibold text-white">{planLabel}</p>
-                  <p className="mt-1 text-xs text-slate-400">Funciones básicas de registro y análisis.</p>
-                </div>
-                <span className="jjx-status"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Activa</span>
-              </div>
-              <p className="mt-4 text-xs leading-5 text-slate-500">La contratación de planes de pago y las suscripciones todavía no están habilitadas.</p>
-            </section>
-            <section className="jjx-panel p-6">
-              <div className="flex items-center gap-3">
-                <span className="jjx-icon-chip"><ShieldCheckIcon className="h-5 w-5" /></span>
-                <h2 className="text-lg font-semibold text-white">Privacidad y acceso</h2>
-              </div>
-              <p className="mt-4 text-sm leading-6 text-slate-400">Tu historial está separado del de otras cuentas. No compartas tu contraseña y cierra la sesión si utilizas un equipo compartido.</p>
-            </section>
+
             <section className="jjx-panel p-6">
               <div className="flex items-center gap-3">
                 <span className="jjx-icon-chip"><LifebuoyIcon className="h-5 w-5" /></span>
