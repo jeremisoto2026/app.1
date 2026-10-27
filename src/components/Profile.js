@@ -621,7 +621,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-white">Blockchain Pay · USDT BEP20</p>
-                        <p className="mt-1 text-xs text-slate-400">Precio base: 15 USDT + fracción identificadora inferior a 0,01 USDT. Envía el total exacto de la orden.</p>
+                        <p className="mt-1 text-xs text-slate-400">Precio base: 15 USDT + una fracción identificadora inferior a 0,01 USDT. El importe está limitado a cuatro decimales.</p>
                       </div>
                       <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">BNB Smart Chain</span>
                     </div>
@@ -654,7 +654,7 @@ export default function Profile() {
                         <div className="space-y-3">
                           <div className="rounded-xl border-2 border-amber-300/80 bg-amber-300/[0.10] p-4 shadow-lg shadow-amber-500/10">
                             <p className="text-center text-xs font-extrabold uppercase tracking-widest text-amber-200">Importe exacto que debes enviar</p>
-                            <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(8)} USDT`} className="mt-3 break-all text-center font-mono text-3xl font-black tracking-tight text-white sm:text-4xl">
+                            <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(4)} USDT`} className="mt-3 break-all text-center font-mono text-3xl font-black tracking-tight text-white sm:text-4xl">
                               {Number(blockchainInvoice.amount).toFixed(8)}
                             </p>
                             <p className="mt-1 text-center text-xl font-extrabold text-amber-100">USDT</p>
@@ -666,7 +666,7 @@ export default function Profile() {
                               Copiar importe exacto
                             </button>
                             <p className="mt-3 rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-center text-sm font-extrabold leading-5 text-rose-100">
-                              No envíes 15 USDT exactos si el total de arriba es distinto. Copia el importe completo, con todos sus decimales.
+                              No envíes 15 USDT exactos si el total de arriba es distinto. Envía exactamente el importe que ves arriba, con sus cuatro decimales.
                             </p>
                           </div>
                           <p className="break-all font-mono text-[10px] text-slate-400">Orden: {blockchainInvoice.paymentId}</p>
@@ -686,7 +686,7 @@ export default function Profile() {
                           onChange={(event) => setBlockchainTxHash(event.target.value.trim())}
                           className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-3 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
                         />
-                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar el importe exacto, pega aquí el hash. La orden incluye una pequeña fracción identificadora (menos de 0,01 USDT) para evitar que otra cuenta pueda reclamar la misma transferencia; el servidor comprobará contrato, destinatario, importe y 12 confirmaciones.</p>
+                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar el importe exacto, pega aquí el hash. La orden añade una fracción identificadora de 0,0001 a 0,0099 USDT, compatible con cuatro decimales. El servidor comprobará contrato, destinatario, importe y 12 confirmaciones.</p>
                         <button type="submit" disabled={paymentActionLoading} className="jjx-button-primary w-full justify-center">
                           {paymentAction === "verify" ? "Verificando en blockchain…" : "Verificar transferencia automáticamente"}
                         </button>
