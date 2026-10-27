@@ -1525,3 +1525,154 @@ input:focus, select:focus, textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   .jjx-spinner { animation-duration: 1.8s; }
 }
+
+/* JJXCAPITAL Pro upgrade banner — shown to free-plan accounts in the dashboard */
+.dashboard-pro-promo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: 16px;
+  padding: 23px 25px;
+  border: 1px solid rgba(139, 124, 246, .28);
+  border-radius: 17px;
+  background:
+    linear-gradient(110deg, rgba(47, 42, 91, .62), rgba(14, 23, 40, .97) 53%, rgba(15, 28, 47, .97));
+  box-shadow: 0 14px 35px rgba(3, 6, 18, .18);
+}
+.dashboard-pro-promo-glow {
+  position: absolute;
+  z-index: -1;
+  top: -100px;
+  right: 14%;
+  width: 270px;
+  height: 230px;
+  border-radius: 50%;
+  background: rgba(111, 91, 232, .12);
+  filter: blur(45px);
+  pointer-events: none;
+}
+.dashboard-pro-promo-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.dashboard-pro-promo-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #b8adff;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .15em;
+}
+.dashboard-pro-promo-kicker > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9e90ff;
+  box-shadow: 0 0 0 4px rgba(158, 144, 255, .1);
+}
+.dashboard-pro-promo h2 {
+  margin-top: 9px;
+  color: #f3f4ff;
+  font-size: clamp(18px, 2.2vw, 23px);
+  font-weight: 780;
+  line-height: 1.25;
+  letter-spacing: -.04em;
+}
+.dashboard-pro-promo-main > p {
+  max-width: 660px;
+  margin-top: 6px;
+  color: #9ca9c0;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.dashboard-pro-promo-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 17px;
+  margin-top: 16px;
+}
+.dashboard-pro-promo-benefits span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #c3cce0;
+  font-size: 10px;
+  font-weight: 650;
+}
+.dashboard-pro-promo-benefits svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  color: #a9a0ff;
+}
+.dashboard-pro-promo-offer {
+  display: flex;
+  flex: 0 0 190px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding-left: 23px;
+  border-left: 1px solid rgba(167, 139, 250, .17);
+}
+.dashboard-pro-promo-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+.dashboard-pro-promo-price strong {
+  color: #fff;
+  font-size: 25px;
+  font-weight: 850;
+  letter-spacing: -.045em;
+  line-height: 1.15;
+}
+.dashboard-pro-promo-price span {
+  color: #929fba;
+  font-size: 10px;
+}
+.dashboard-pro-promo-offer .dashboard-action {
+  width: 100%;
+  margin-top: 5px;
+  white-space: nowrap;
+}
+.dashboard-pro-promo-offer small {
+  color: #76859f;
+  font-size: 9px;
+  line-height: 1.5;
+  text-align: center;
+}
+.dashboard-pro-promo .dashboard-action:focus-visible {
+  outline: 2px solid #b4aaff;
+  outline-offset: 3px;
+}
+@media (max-width: 820px) {
+  .dashboard-pro-promo {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 19px;
+    padding: 20px;
+  }
+  .dashboard-pro-promo-offer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, .85fr);
+    align-items: center;
+    gap: 8px 16px;
+    padding: 16px 0 0;
+    border-top: 1px solid rgba(167, 139, 250, .17);
+    border-left: 0;
+  }
+  .dashboard-pro-promo-price { grid-row: span 2; }
+  .dashboard-pro-promo-offer .dashboard-action { margin-top: 0; }
+}
+@media (max-width: 480px) {
+  .dashboard-pro-promo { padding: 17px; border-radius: 14px; }
+  .dashboard-pro-promo-benefits { flex-direction: column; gap: 9px; }
+  .dashboard-pro-promo-offer { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-pro-promo-price { grid-row: auto; }
+}
