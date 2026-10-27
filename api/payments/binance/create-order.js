@@ -28,7 +28,6 @@ module.exports = async function createBinancePayOrder(req, res) {
       merchantTradeNo: paymentId,
       orderAmount: 15,
       currency: "USDT",
-      description: "Suscripción mensual JJXCAPITAL Pro",
       goods: {
         goodsType: "02",
         goodsCategory: "Z000",
