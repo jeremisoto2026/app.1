@@ -105,10 +105,10 @@ describe("Profile", () => {
     expect(container.textContent).toContain("Método de pago");
     expect(container.textContent).toContain("Historial de pagos");
     expect(container.textContent).toContain("15 USDT");
-    expect(container.textContent).toContain("807678814");
+    expect(container.textContent).not.toContain("Pagar con Binance Pay");
     expect(container.textContent).toContain("0x4c64b783f1babc0a2fe62f174873f415393c2269");
     expect(container.textContent).toContain("BNB Smart Chain (BEP20)");
-    expect(container.textContent).toContain("La verificación no confía solo en el TxID");
+    expect(container.textContent).toContain("La verificación consulta la blockchain");
     expect(container.textContent).toContain("Contactar con soporte");
   });
 
