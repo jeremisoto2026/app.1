@@ -445,66 +445,53 @@ export default function Profile() {
         <section aria-labelledby="profile-usage-heading" className="profile-section space-y-4">
           <div className="profile-section-heading">
             <div>
-              <span className="jjx-eyebrow">TU ACTIVIDAD</span>
-              <h2 id="profile-usage-heading">Uso de tu cuenta</h2>
-              <p>Consulta cuánto has utilizado y cuánto te queda en el plan gratuito.</p>
-            </div>
-            <span className="profile-section-aside">Los contadores se actualizan con los datos de tu cuenta.</span>
-          </div>
-          <section aria-labelledby="plan-limits-heading" className="profile-section space-y-4">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
               <span className="jjx-eyebrow">TIPO DE PLAN ACTUAL</span>
-              <h2 id="plan-limits-heading" className="mt-1 text-lg font-semibold tracking-tight text-white">
-                {proActive ? "JJXCAPITAL Pro · Acceso ilimitado" : "Plan gratuito · Límites de uso"}
-              </h2>
-              <p className="mt-1 text-sm text-slate-400">
-                {proActive
-                  ? "Todas las funciones están ilimitadas hasta " + currentExpiryLabel + "."
-                  : "Tu consumo se compara con los límites del plan gratuito. Tus datos e historial se conservan."}
-              </p>
+              <h2 id="profile-usage-heading">{proActive ? "JJXCAPITAL Pro · Acceso ilimitado" : "Uso y límites de tu cuenta"}</h2>
+              <p>{proActive
+                ? "Todas las funciones están ilimitadas hasta " + currentExpiryLabel + "."
+                : "Consulta tu consumo y el número de acciones que todavía tienes disponibles."}</p>
             </div>
-            <span className="jjx-status">
-              <span className={`h-1.5 w-1.5 rounded-full ${proActive ? "bg-emerald-400" : "bg-slate-400"}`} />
+            <span className={`profile-billing-status ${proActive ? "profile-billing-status-active" : "profile-billing-status-free"}`}>
+              <span className="profile-status-dot" />
               {proActive ? "Pro activo" : "Gratuito"}
             </span>
           </div>
 
           <div className="profile-usage-grid grid grid-cols-1 gap-4 md:grid-cols-3">
             <article className="profile-usage-card jjx-panel p-5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-200">Órdenes / arbitrajes</p>
-                <span className="text-xs text-slate-500">{proActive ? "Sin límite" : "300 máximo"}</span>
+              <div className="profile-usage-card-heading">
+                <span className="profile-usage-icon profile-usage-icon-orders"><BoltIcon className="h-5 w-5" aria-hidden="true" /></span>
+                <div><p>Órdenes / arbitrajes</p><span>{proActive ? "Sin límite" : "Máximo 300"}</span></div>
               </div>
-              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitado" : ordersAvailable ? ordersUsed : "—"}</p>
-              {!proActive && <p className="mt-1 text-xs text-slate-400">{ordersAvailable ? `de ${FREE_PLAN_LIMITS.orders} · ${orderUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
-              {!proActive && <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" style={{ width: `${orderUsage?.percent || 0}%` }} /></div>}
-              {proActive && <p className="mt-1 text-xs text-emerald-300">Sin límite durante tu suscripción</p>}
+              <p className="profile-usage-value">{proActive ? "Ilimitado" : ordersAvailable ? ordersUsed : "—"}</p>
+              {!proActive && <p className="profile-usage-caption">{ordersAvailable ? `de ${FREE_PLAN_LIMITS.orders} · ${orderUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
+              {!proActive && <div className="profile-progress-track"><span style={{ width: `${orderUsage?.percent || 0}%` }} /></div>}
+              {proActive && <p className="profile-usage-caption profile-usage-positive">Incluido durante tu suscripción</p>}
             </article>
 
             <article className="profile-usage-card jjx-panel p-5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-200">Movimientos</p>
-                <span className="text-xs text-slate-500">{proActive ? "Sin límite" : "150 máximo"}</span>
+              <div className="profile-usage-card-heading">
+                <span className="profile-usage-icon profile-usage-icon-movements"><ChartBarIcon className="h-5 w-5" aria-hidden="true" /></span>
+                <div><p>Movimientos</p><span>{proActive ? "Sin límite" : "Máximo 150"}</span></div>
               </div>
-              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitado" : operationsAvailable ? operationCount : "—"}</p>
-              {!proActive && <p className="mt-1 text-xs text-slate-400">{operationsAvailable ? `de ${FREE_PLAN_LIMITS.movements} · ${movementUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
-              {!proActive && <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" style={{ width: `${movementUsage?.percent || 0}%` }} /></div>}
-              {proActive && <p className="mt-1 text-xs text-emerald-300">Sin límite durante tu suscripción</p>}
+              <p className="profile-usage-value">{proActive ? "Ilimitado" : operationsAvailable ? movementsUsed : "—"}</p>
+              {!proActive && <p className="profile-usage-caption">{operationsAvailable ? `de ${FREE_PLAN_LIMITS.movements} · ${movementUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
+              {!proActive && <div className="profile-progress-track"><span style={{ width: `${movementUsage?.percent || 0}%` }} /></div>}
+              {proActive && <p className="profile-usage-caption profile-usage-positive">Incluido durante tu suscripción</p>}
             </article>
 
             <article className="profile-usage-card jjx-panel p-5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-200">Exportaciones</p>
-                <span className="text-xs text-slate-500">{proActive ? "Sin límite" : "50 máximo"}</span>
+              <div className="profile-usage-card-heading">
+                <span className="profile-usage-icon profile-usage-icon-exports"><SparklesIcon className="h-5 w-5" aria-hidden="true" /></span>
+                <div><p>Exportaciones</p><span>{proActive ? "Sin límite" : "Máximo 50"}</span></div>
               </div>
-              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{proActive ? "Ilimitadas" : exports}</p>
-              {!proActive && <p className="mt-1 text-xs text-slate-400">{`de ${FREE_PLAN_LIMITS.exports} · ${exportUsage.remaining} disponibles`}</p>}
-              {!proActive && <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" style={{ width: `${exportUsage.percent}%` }} /></div>}
-              {proActive && <p className="mt-1 text-xs text-emerald-300">Sin límite durante tu suscripción</p>}
+              <p className="profile-usage-value">{proActive ? "Ilimitadas" : exports}</p>
+              {!proActive && <p className="profile-usage-caption">{`de ${FREE_PLAN_LIMITS.exports} · ${exportUsage.remaining} disponibles`}</p>}
+              {!proActive && <div className="profile-progress-track"><span style={{ width: `${exportUsage.percent}%` }} /></div>}
+              {proActive && <p className="profile-usage-caption profile-usage-positive">Incluido durante tu suscripción</p>}
             </article>
           </div>
-        </section>
+          <p className="profile-usage-footnote"><ShieldCheckIcon className="h-4 w-4" /> Los contadores se comprueban en el servidor. Tus operaciones e historial se conservan aunque cambies de plan.</p>
         </section>
 
         <section aria-labelledby="billing-heading" className="profile-section space-y-4">
