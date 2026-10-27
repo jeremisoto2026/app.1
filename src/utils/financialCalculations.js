@@ -315,8 +315,8 @@ export const calculateDashboardSummaryMetrics = (operations = [], sessions = [],
   const metrics = calculateDashboardMetrics(fiatAccountingOperations, referenceDate);
   const profitByCurrency = { ...(metrics.profitByCurrency || {}) };
   const monthlyProfitByCurrency = { ...(metrics.monthlyProfitByCurrency || {}) };
-  let completedCryptoSessions = 0;
-  let winningCryptoSessions = 0;
+  let completedCryptoCycles = 0;
+  let winningCryptoCycles = 0;
 
   cryptoSessions.forEach((session) => {
     const result = calculateArbitrageSessionResult(session, allOperations);
@@ -341,38 +341,54 @@ export const calculateDashboardSummaryMetrics = (operations = [], sessions = [],
         (monthlyProfitByCurrency[recentResult.baseCurrency] || 0) + recentResult.profit;
     }
 
-    // A crypto-start session counts as a completed outcome only after the user
-    // marks it finished and it contains at least one valid sale and one purchase.
-    // This prevents open or partial sessions from inflating the success rate.
-    if (session.status !== "closed") return;
+    // In crypto-start sessions, a cycle is completed when one or more valid
+    // sales are followed by one or more valid crypto purchases. The session can
+    // remain active; an unfinished sale without a subsequent buy is not counted.
+    const validSessionOperations = allOperations
+      .map((operation, index) => ({
+        operation,
+        index,
+        date: getOperationDate(operation.timestamp),
+        cryptoAmount: toFiniteNumber(operation.crypto_amount),
+        fiatAmount: toFiniteNumber(operation.fiat_amount),
+      }))
+      .filter(({ operation, date, cryptoAmount, fiatAmount }) =>
+        operation.sessionId === session.id &&
+        normalizeCurrency(operation.crypto) === normalizeCurrency(session.crypto) &&
+        normalizeCurrency(operation.fiat) === normalizeCurrency(session.fiat) &&
+        date &&
+        ["Compra", "Venta"].includes(operation.operation_type) &&
+        Number.isFinite(cryptoAmount) && cryptoAmount > 0 &&
+        Number.isFinite(fiatAmount) && fiatAmount > 0
+      )
+      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.index - b.index);
 
-    const validSessionOperations = allOperations.filter((operation) => {
-      if (
-        operation.sessionId !== session.id ||
-        normalizeCurrency(operation.crypto) !== normalizeCurrency(session.crypto) ||
-        normalizeCurrency(operation.fiat) !== normalizeCurrency(session.fiat) ||
-        !getOperationDate(operation.timestamp) ||
-        !["Compra", "Venta"].includes(operation.operation_type)
-      ) return false;
+    let cycleSellCrypto = 0;
+    let cycleBuyCrypto = 0;
+    const finishCycle = () => {
+      if (cycleSellCrypto > 0 && cycleBuyCrypto > 0) {
+        completedCryptoCycles += 1;
+        if (cycleBuyCrypto - cycleSellCrypto > 1e-10) winningCryptoCycles += 1;
+      }
+      cycleSellCrypto = 0;
+      cycleBuyCrypto = 0;
+    };
 
-      const cryptoAmount = toFiniteNumber(operation.crypto_amount);
-      const fiatAmount = toFiniteNumber(operation.fiat_amount);
-      return Number.isFinite(cryptoAmount) && cryptoAmount > 0 &&
-        Number.isFinite(fiatAmount) && fiatAmount > 0;
+    validSessionOperations.forEach(({ operation, cryptoAmount }) => {
+      if (operation.operation_type === "Venta") {
+        // A new sale starts the next cycle; finalize a previous sale/rebuy pair.
+        if (cycleSellCrypto > 0 && cycleBuyCrypto > 0) finishCycle();
+        cycleSellCrypto += cryptoAmount;
+      } else if (operation.operation_type === "Compra" && cycleSellCrypto > 0) {
+        cycleBuyCrypto += cryptoAmount;
+      }
     });
-    const hasPurchase = validSessionOperations.some((operation) => operation.operation_type === "Compra");
-    const hasSale = validSessionOperations.some((operation) => operation.operation_type === "Venta");
-    if (!hasPurchase || !hasSale) return;
-
-    const completedResult = calculateArbitrageSessionResult(session, validSessionOperations);
-    if (!completedResult.operationCount || !Number.isFinite(completedResult.profit)) return;
-
-    completedCryptoSessions += 1;
-    if (completedResult.profit > 1e-10) winningCryptoSessions += 1;
+    // Also count the latest cycle if its repurchase has already been recorded.
+    finishCycle();
   });
 
-  const closedSales = (metrics.closedSales || 0) + completedCryptoSessions;
-  const winningSales = (metrics.winningSales || 0) + winningCryptoSessions;
+  const closedSales = (metrics.closedSales || 0) + completedCryptoCycles;
+  const winningSales = (metrics.winningSales || 0) + winningCryptoCycles;
   const successRate = closedSales ? (winningSales / closedSales) * 100 : 0;
 
   return {
