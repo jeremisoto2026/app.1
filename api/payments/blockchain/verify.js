@@ -166,7 +166,6 @@ module.exports = async function verifyBlockchainPayment(req, res) {
       paymentPath,
       paymentDocument,
       paymentUpdate: {
-        ...paymentDocument.data,
         ...paymentUpdate,
         paymentId,
         provider: "blockchain_bep20",
