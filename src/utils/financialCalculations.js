@@ -293,6 +293,40 @@ export const calculateArbitrageSessionResult = (session = {}, operations = []) =
   };
 };
 
+
+// Dashboard accounting combines two clearly distinct units:
+// - fiat-start / legacy operations use realized FIFO profit in quote currency;
+// - crypto-start sessions contribute their net result in the initial crypto asset.
+// Crypto-start operations are excluded from FIFO totals to avoid a misleading
+// quote-currency result without a fiat cost basis for the initial crypto capital.
+export const calculateDashboardSummaryMetrics = (operations = [], sessions = [], now = new Date()) => {
+  const allOperations = Array.isArray(operations) ? operations : [];
+  const allSessions = Array.isArray(sessions) ? sessions : [];
+  const cryptoSessions = allSessions.filter((session) =>
+    session && session.id && session.initialCapitalType === "crypto"
+  );
+  const cryptoSessionIds = new Set(cryptoSessions.map((session) => session.id));
+  const fiatAccountingOperations = allOperations.filter(
+    (operation) => !cryptoSessionIds.has(operation.sessionId)
+  );
+
+  const metrics = calculateDashboardMetrics(fiatAccountingOperations, now);
+  const profitByCurrency = { ...(metrics.profitByCurrency || {}) };
+
+  cryptoSessions.forEach((session) => {
+    const result = calculateArbitrageSessionResult(session, allOperations);
+    if (!result.operationCount || !result.baseCurrency || !Number.isFinite(result.profit)) return;
+    profitByCurrency[result.baseCurrency] =
+      (profitByCurrency[result.baseCurrency] || 0) + result.profit;
+  });
+
+  return {
+    ...metrics,
+    totalOperations: allOperations.length,
+    profitByCurrency,
+  };
+};
+
 export const calculateCryptoArbitrage = ({
   amount,
   buy_price,
