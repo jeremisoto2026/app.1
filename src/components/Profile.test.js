@@ -99,9 +99,9 @@ describe("Profile", () => {
     expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
     expect(container.textContent).toContain("TIPO DE PLAN ACTUAL");
     expect(container.textContent).toContain("Órdenes / arbitrajes");
-    expect(container.textContent).toContain("300 máximo");
+    expect(container.textContent).toContain("Máximo 300");
     expect(container.textContent).toContain("150 máximo");
-    expect(container.textContent).toContain("50 máximo");
+    expect(container.textContent).toContain("Máximo 50");
     expect(container.textContent).toContain("Método de pago");
     expect(container.textContent).toContain("Historial de pagos");
     expect(container.textContent).toContain("15 USDT");
