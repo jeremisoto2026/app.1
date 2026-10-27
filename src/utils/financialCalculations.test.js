@@ -260,7 +260,7 @@ describe("calculateDashboardSummaryMetrics", () => {
       { id: "fiat-sale", sessionId: "fiat-session", crypto: "USDT", fiat: "EUR", operation_type: "Venta", crypto_amount: 10, fiat_amount: 110, timestamp: new Date("2026-10-02T12:00:00.000Z") },
     ];
     const sessions = [
-      { id: "crypto-session", fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1 },
+      { id: "crypto-session", fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1, status: "closed" },
       { id: "fiat-session", fiat: "EUR", crypto: "USDT", initialCapitalType: "fiat", initialCapitalCurrency: "EUR", initialCapital: 100 },
     ];
 
@@ -271,7 +271,30 @@ describe("calculateDashboardSummaryMetrics", () => {
     expect(result.monthlyProfitByCurrency.BTC).toBeCloseTo(0.1, 8);
     expect(result.monthlyProfitByCurrency.EUR).toBeCloseTo(10, 8);
     expect(result.totalOperations).toBe(4);
+    expect(result.closedSales).toBe(2);
+    expect(result.winningSales).toBe(2);
+    expect(result.successRate).toBe(100);
+  });
+
+  test("counts only finished crypto sessions with a complete buy/sell cycle in the success rate", () => {
+    const operations = [
+      { id: "loss-sale", sessionId: "crypto-loss", crypto: "BTC", fiat: "EUR", operation_type: "Venta", crypto_amount: 1, fiat_amount: 100, timestamp: new Date("2026-10-01T12:00:00.000Z") },
+      { id: "loss-buy", sessionId: "crypto-loss", crypto: "BTC", fiat: "EUR", operation_type: "Compra", crypto_amount: 0.9, fiat_amount: 99, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+      { id: "open-sale", sessionId: "crypto-open", crypto: "BTC", fiat: "EUR", operation_type: "Venta", crypto_amount: 1, fiat_amount: 100, timestamp: new Date("2026-10-03T12:00:00.000Z") },
+      { id: "open-buy", sessionId: "crypto-open", crypto: "BTC", fiat: "EUR", operation_type: "Compra", crypto_amount: 1.1, fiat_amount: 99, timestamp: new Date("2026-10-04T12:00:00.000Z") },
+      { id: "partial-sale", sessionId: "crypto-partial", crypto: "BTC", fiat: "EUR", operation_type: "Venta", crypto_amount: 1, fiat_amount: 100, timestamp: new Date("2026-10-05T12:00:00.000Z") },
+    ];
+    const sessions = [
+      { id: "crypto-loss", fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1, status: "closed" },
+      { id: "crypto-open", fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1, status: "active" },
+      { id: "crypto-partial", fiat: "EUR", crypto: "BTC", initialCapitalType: "crypto", initialCapitalCurrency: "BTC", initialCapital: 1, status: "closed" },
+    ];
+
+    const result = calculateDashboardSummaryMetrics(operations, sessions, new Date("2026-10-22T12:00:00.000Z"));
+
     expect(result.closedSales).toBe(1);
+    expect(result.winningSales).toBe(0);
+    expect(result.successRate).toBe(0);
   });
 
   test("keeps crypto-session activity older than 30 days out of the recent summary", () => {
