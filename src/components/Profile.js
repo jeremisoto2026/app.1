@@ -104,25 +104,6 @@ export default function Profile() {
     }
   };
 
-  const startBinancePay = async () => {
-    setPaymentActionLoading(true);
-    setPaymentAction("binance");
-    setPaymentError("");
-    setPaymentMessage("");
-    try {
-      const data = await callPaymentApi("/api/payments/binance/create-order", {});
-      if (!data.checkoutUrl || !/^https:\/\/pay\.binance\.com\//i.test(data.checkoutUrl)) {
-        throw new Error("Binance Pay no devolvió un enlace de pago seguro.");
-      }
-      window.location.assign(data.checkoutUrl);
-    } catch (error) {
-      setPaymentError(error.message || "No se pudo iniciar el pago con Binance Pay.");
-    } finally {
-      setPaymentActionLoading(false);
-      setPaymentAction("");
-    }
-  };
-
   const createBlockchainInvoice = async () => {
     setPaymentActionLoading(true);
     setPaymentAction("bep20");
@@ -530,7 +511,7 @@ export default function Profile() {
           <div className="profile-payment-heading">
             <div>
               <h3>Pagos y comprobantes</h3>
-              <p>Selecciona el método disponible y conserva la referencia de cada pago.</p>
+              <p>Paga JJXCAPITAL Pro mediante USDT en BNB Smart Chain (BEP20), con verificación automática.</p>
             </div>
           </div>
           <div className="profile-payment-grid">
@@ -538,36 +519,16 @@ export default function Profile() {
                 <div className="flex items-center gap-3">
                   <span className="jjx-icon-chip"><CreditCardIcon className="h-5 w-5" aria-hidden="true" /></span>
                   <div>
-                    <h3 id="payment-method-heading" className="text-lg font-semibold text-white">Métodos de pago</h3>
+                    <h3 id="payment-method-heading" className="text-lg font-semibold text-white">Método de pago</h3>
                     <p className="mt-0.5 text-sm text-slate-400">JJXCAPITAL Pro · 15 USDT por 30 días</p>
                   </div>
                 </div>
 
                 <div className="mt-5 space-y-3">
-                  <div className="profile-payment-method rounded-xl border p-4">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-white">Binance Pay</p>
-                        <p className="mt-1 text-xs text-slate-400">Checkout oficial · 15 USDT</p>
-                        <p className="mt-1 text-[11px] text-slate-500">ID de referencia: 807678814</p>
-                        <p className="mt-2 max-w-sm text-[11px] leading-5 text-slate-500">El ID por sí solo no crea una orden. El checkout automático requiere una cuenta Binance Pay Merchant y sus credenciales API en Vercel.</p>
-                      </div>
-                      <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">Requiere credenciales</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={startBinancePay}
-                      disabled={paymentActionLoading}
-                      className="jjx-button-primary mt-4 w-full justify-center"
-                    >
-                      {paymentAction === "binance" ? "Creando orden segura…" : "Pagar con Binance Pay"}
-                    </button>
-                  </div>
-
                   <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-white">Blockchain Pay · USDT BEP20</p>
+                        <p className="text-sm font-semibold text-white">USDT por blockchain · BEP20</p>
                         <p className="mt-1 text-xs text-slate-400">Precio base: 15 USDT + una fracción identificadora inferior a 0,01 USDT. El importe está limitado a cuatro decimales.</p>
                       </div>
                       <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">BNB Smart Chain</span>
@@ -648,7 +609,7 @@ export default function Profile() {
 
                 <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-300/15 bg-amber-300/[0.04] p-3">
                   <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
-                  <p className="text-xs leading-5 text-slate-400">La verificación no confía solo en el TxID: consulta la blockchain y exige el token, la red, el destinatario, el importe exacto y 12 confirmaciones antes de activar Pro. Para habilitar pagos reales, configura las credenciales seguras de Firebase y Binance Pay en Vercel y registra el webhook del comercio.</p>
+                  <p className="text-xs leading-5 text-slate-400">La verificación consulta la blockchain y comprueba el token, la red, el destinatario, el importe exacto y las 12 confirmaciones antes de activar Pro.</p>
                 </div>
               </section>
 
