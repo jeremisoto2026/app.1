@@ -29,16 +29,16 @@ module.exports = async function createBinancePayOrder(req, res) {
       orderAmount: 15,
       currency: "USDT",
       description: "Suscripción mensual JJXCAPITAL Pro",
-      goodsDetails: [{
-        goodsType: "01",
-        goodsCategory: "D000",
+      goods: {
+        goodsType: "02",
+        goodsCategory: "Z000",
         referenceGoodsId: "JJXCAPITAL-PRO-MONTHLY",
         goodsName: "JJXCAPITAL Pro",
-        goodsDetail: "Acceso durante un mes a las funciones Pro de JJXCAPITAL",
-      }],
+        goodsDetail: "Suscripción mensual de servicios digitales JJXCAPITAL Pro",
+      },
     };
 
-    const order = await callBinancePay("/binancepay/openapi/v3/order", body);
+    const order = await callBinancePay("/binancepay/openapi/v2/order", body);
     if (!order.checkoutUrl || !order.prepayId) {
       console.error("Binance Pay response missing checkout fields.");
       throw new HttpError(502, "Binance Pay no devolvió un enlace de pago válido.");
