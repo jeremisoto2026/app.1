@@ -94,7 +94,7 @@ describe("Profile", () => {
 
     expect(container.textContent).toContain("Información del perfil");
     expect(container.textContent).toContain("Uso de tu cuenta");
-    expect(container.textContent).toContain("Operaciones registradas");
+    expect(container.textContent).toContain("Movimientos registrados");
     expect(container.textContent).toContain("2");
     expect(container.textContent).toContain("Planes y facturación");
     expect(container.textContent).toContain("TIPO DE PLAN ACTUAL");
