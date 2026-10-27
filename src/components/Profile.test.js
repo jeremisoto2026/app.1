@@ -110,6 +110,14 @@ describe("Profile", () => {
     expect(container.textContent).toContain("BNB Smart Chain (BEP20)");
     expect(container.textContent).toContain("La verificación consulta la blockchain");
     expect(container.textContent).toContain("Contactar con soporte");
+    const supportLink = Array.from(container.querySelectorAll("a")).find(
+      (link) => link.textContent.trim() === "Contactar con soporte"
+    );
+    expect(supportLink).toBeTruthy();
+    expect(supportLink.getAttribute("href")).toContain("https://mail.google.com/mail/?view=cm");
+    expect(supportLink.getAttribute("href")).toContain("to=soportejjxcapital%40gmail.com");
+    expect(supportLink.getAttribute("target")).toBe("_blank");
+    expect(supportLink.getAttribute("rel")).toContain("noopener");
   });
 
   test("keeps the profile visible when the operation counter cannot load", async () => {
