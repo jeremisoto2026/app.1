@@ -34,7 +34,7 @@ Antes de activar los pagos, confirma en tu propia wallet que la dirección de re
 - BINANCE_PAY_WEBHOOK_CERTIFICATE_SN: serial de la clave pública que firma los webhooks entrantes.
 - BINANCE_PAY_WEBHOOK_PUBLIC_KEY: clave pública PEM de Binance Pay para verificar la firma de los webhooks entrantes.
 
-El código usa el endpoint oficial documentado POST /binancepay/openapi/v2/order y el esquema de orden V2. Binance describe el campo BinancePay-Certificate-SN como la API identity key; no necesitas una variable duplicada para el mismo dato. El ID numérico de Binance Pay 807678814 sirve como dato de recepción, pero no sustituye las credenciales de Merchant. Debes tener acceso a Binance Pay Merchant y a su API de órdenes. En el portal de Merchant puedes consultar el endpoint de certificados POST /binancepay/openapi/certificates; configura la clave pública y su serial correspondientes al webhook. El serial del webhook se guarda por separado del serial usado en las solicitudes API.
+El código usa el endpoint oficial documentado POST /binancepay/openapi/v3/order y el esquema goodsDetails de la orden V3. Binance describe el campo BinancePay-Certificate-SN como la API identity key; no necesitas una variable duplicada para el mismo dato. El ID numérico de Binance Pay 807678814 sirve como dato de recepción, pero no sustituye las credenciales de Merchant. Debes tener acceso a Binance Pay Merchant y a su API de órdenes. En el portal de Merchant puedes consultar el endpoint de certificados POST /binancepay/openapi/certificates; configura la clave pública y su serial correspondientes al webhook. El serial del webhook se guarda por separado del serial usado en las solicitudes API.
 
 ## 2. URL de webhook de Binance Pay
 
