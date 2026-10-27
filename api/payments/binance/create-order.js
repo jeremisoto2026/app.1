@@ -5,11 +5,13 @@ const {
   requirePost,
   requireFirebaseUser,
   getDocument,
-  createDocument,
   callBinancePay,
   PAYMENT_DURATION_MS,
+  commitWrites,
+  documentName,
+  toFields,
   errorResponse,
-} = require("../../_lib/payments");
+} = require("../../../lib/payments");
 
 module.exports = async function createBinancePayOrder(req, res) {
   if (!requirePost(req, res)) return;
@@ -60,7 +62,22 @@ module.exports = async function createBinancePayOrder(req, res) {
       createdAt: now,
       expiresAt,
     };
-    await createDocument(userPath + "/payments/" + paymentId, payment);
+    await commitWrites([
+      {
+        update: {
+          name: documentName(userPath + "/payments/" + paymentId),
+          fields: toFields(payment),
+        },
+        currentDocument: { exists: false },
+      },
+      {
+        update: {
+          name: documentName("paymentOrderIndex/" + paymentId),
+          fields: toFields({ uid: claims.sub, paymentId, provider: "binance_pay", createdAt: now }),
+        },
+        currentDocument: { exists: false },
+      },
+    ]);
 
     return sendJson(res, 201, {
       paymentId,
