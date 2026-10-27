@@ -655,7 +655,7 @@ export default function Profile() {
                   <div>
                     <h3 id="payment-history-heading" className="text-lg font-semibold text-white">Historial de pagos</h3>
                     <p className="mt-0.5 text-sm text-slate-400">Órdenes y comprobantes vinculados a tu cuenta</p>
-                    <p className="mt-1 text-xs text-slate-500">Las órdenes pendientes caducan a los 30 minutos si no se confirma el pago.</p>
+                    <p className="mt-1 text-xs text-slate-500">Las órdenes tienen 30 minutos de validez; si transferiste dentro del plazo, aún puedes verificar el pago después.</p>
                   </div>
                 </div>
                 <div className="mt-5 overflow-hidden rounded-xl border border-white/[0.08]">
