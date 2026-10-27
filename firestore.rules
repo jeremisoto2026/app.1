@@ -12,10 +12,11 @@ service cloud.firestore {
         ])
         && request.resource.data.keys().hasOnly([
           'uid', 'email', 'nombre', 'apellido', 'photoURL',
-          'plan', 'exportsUsed', 'createdAt', 'usage', 'preferences'
+          'plan', 'exportsUsed', 'createdAt', 'preferences'
         ])
         && request.resource.data.uid == userId
-        && request.resource.data.plan == 'free';
+        && request.resource.data.plan == 'free'
+        && request.resource.data.get('exportsUsed', 0) == 0;
     }
 
     function validUserUpdate(userId) {
@@ -26,7 +27,7 @@ service cloud.firestore {
           == resource.data.get('createdAt', null)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'uid', 'email', 'nombre', 'apellido', 'photoURL',
-          'exportsUsed', 'usage', 'preferences'
+          'preferences'
         ]);
     }
 
@@ -41,7 +42,7 @@ service cloud.firestore {
 
       match /sessions/{sessionId} {
         // Las sesiones de arbitraje son privadas y solo accesibles por su propietario.
-        allow read, create, update, delete: if isOwner(userId);
+        allow read, update, delete: if isOwner(userId);
       }
 
       match /operations/{operationId} {
