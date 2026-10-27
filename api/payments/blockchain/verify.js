@@ -59,6 +59,7 @@ module.exports = async function verifyBlockchainPayment(req, res) {
       recipient: String(paymentDocument.data.recipient || "").toLowerCase(),
       tokenContract: String(paymentDocument.data.tokenContract || "").toLowerCase(),
       amount: Number(paymentDocument.data.amount),
+      amountUnits8: Number(paymentDocument.data.amountUnits8),
       chainId: Number(paymentDocument.data.chainId),
     };
     if (constants.recipient !== process.env.BLOCKCHAIN_RECEIVER_ADDRESS?.toLowerCase() &&
@@ -66,7 +67,9 @@ module.exports = async function verifyBlockchainPayment(req, res) {
       throw new HttpError(503, "La dirección de recepción configurada no coincide con esta orden. Contacta con soporte.");
     }
     if (constants.tokenContract !== BSC_USDT_CONTRACT || constants.chainId !== 56 ||
-        constants.amount !== 15) {
+        !Number.isSafeInteger(constants.amountUnits8) ||
+        constants.amountUnits8 < 1500000001 || constants.amountUnits8 > 1500999999 ||
+        Math.round(constants.amount * 100000000) !== constants.amountUnits8) {
       throw new HttpError(503, "La orden no coincide con la configuración de USDT BEP20 esperada.");
     }
 
@@ -124,7 +127,9 @@ module.exports = async function verifyBlockchainPayment(req, res) {
       transferCount += 1;
     }
 
-    const expectedUnits = BigInt(String(constants.amount)) * (10n ** BigInt(USDT_DECIMALS));
+    const fractionalDigits = 8;
+    const expectedUnits = BigInt(String(constants.amountUnits8)) *
+      (10n ** BigInt(USDT_DECIMALS - fractionalDigits));
     if (!transferCount || receivedUnits !== expectedUnits) {
       throw new HttpError(400, "No se ha encontrado una transferencia exacta de 15 USDT del contrato BEP20 configurado a la dirección de recepción. Revisa la red, el token, el importe y el destinatario.");
     }
@@ -138,6 +143,7 @@ module.exports = async function verifyBlockchainPayment(req, res) {
       provider: "blockchain_bep20",
       txHash,
       amount: constants.amount,
+      amountUnits8: constants.amountUnits8,
       currency: "USDT",
       network: "BNB Smart Chain (BEP20)",
       tokenContract: constants.tokenContract,
