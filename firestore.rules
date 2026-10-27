@@ -47,7 +47,7 @@ service cloud.firestore {
 
       match /operations/{operationId} {
         // Las compras y ventas son privadas y solo accesibles por su propietario.
-        allow read, create, update, delete: if isOwner(userId);
+        allow read, update, delete: if isOwner(userId);
       }
 
       match /payments/{paymentId} {
