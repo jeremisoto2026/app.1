@@ -12,7 +12,7 @@ const {
   REQUIRED_BSC_CONFIRMATIONS,
   rpc,
   errorResponse,
-} = require("../../_lib/payments");
+} = require("../../../lib/payments");
 
 const parseTopicAddress = (topic) => {
   const value = String(topic || "").toLowerCase();
