@@ -544,7 +544,7 @@ export default function Profile() {
                 </article>
 
                 <article className="profile-plan-card profile-plan-card-pro relative overflow-hidden rounded-2xl border p-5 sm:p-6">
-                  <div className={"absolute right-0 top-0 rounded-bl-xl border-b border-l px-3 py-1.5 text-[10px] font-bold tracking-wide " + (proActive ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" : "border-violet-300/20 bg-violet-300/10 text-violet-200")}>{proActive ? "PLAN ACTIVO" : "PLAN PREMIUM"}</div>
+                  <div className={"absolute right-0 top-0 rounded-bl-xl border-b border-l px-3 py-1.5 text-[10px] font-bold tracking-wide " + (proActive ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" : "border-violet-300/20 bg-violet-300/10 text-violet-200")}>{proActive ? "PLAN ACTIVO" : "PLAN PRO"}</div>
                   <span className="jjx-eyebrow">PLAN AMPLIADO</span>
                   <h3 className="mt-4 text-xl font-semibold text-white">JJXCAPITAL Pro</h3>
                   <p className="mt-1 text-3xl font-semibold tracking-tight text-white">15 USDT <span className="text-xs font-medium text-slate-500">/ 30 días</span></p>
@@ -554,7 +554,15 @@ export default function Profile() {
                     <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Movimientos y exportaciones ilimitados</li>
                     <li className="flex items-start gap-2"><ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Acceso ilimitado durante 30 días desde la confirmación</li>
                   </ul>
-                  <button type="button" disabled className="jjx-button-primary mt-6 w-full justify-center opacity-60" title={proActive ? "Tu suscripción ya está activa" : "La activación se habilita tras confirmar el pago en el servidor"}>{proActive ? "Pro activo · vence " + currentExpiryLabel : "Pago de Pro en preparación"}</button>
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("payment-method-heading")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    disabled={proActive}
+                    className={"jjx-button-primary mt-6 w-full justify-center" + (proActive ? " opacity-60" : "")}
+                    title={proActive ? "Tu suscripción ya está activa" : "Ir al pago seguro mediante blockchain"}
+                  >
+                    {proActive ? "Pro activo · vence " + currentExpiryLabel : "Elegir Pro y pagar con blockchain"}
+                  </button>
                 </article>
               </section>
 
