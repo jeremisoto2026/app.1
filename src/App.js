@@ -71,7 +71,14 @@ const MainApp = () => {
   }, []);
 
   useEffect(() => {
-    if (!user) setActiveTab("dashboard");
+    if (!user?.uid) {
+      setActiveTab("dashboard");
+      return;
+    }
+
+    // Google can authenticate before its popup handler finishes. Close the
+    // auth dialog from the confirmed Firebase session as a reliable fallback.
+    setShowAuth(null);
   }, [user?.uid]);
 
   const handleTabChange = (tab) => {
