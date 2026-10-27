@@ -655,12 +655,12 @@ export default function Profile() {
                           <div className="rounded-xl border-2 border-amber-300/80 bg-amber-300/[0.10] p-4 shadow-lg shadow-amber-500/10">
                             <p className="text-center text-xs font-extrabold uppercase tracking-widest text-amber-200">Importe exacto que debes enviar</p>
                             <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(4)} USDT`} className="mt-3 break-all text-center font-mono text-3xl font-black tracking-tight text-white sm:text-4xl">
-                              {Number(blockchainInvoice.amount).toFixed(8)}
+                              {Number(blockchainInvoice.amount).toFixed(4)}
                             </p>
                             <p className="mt-1 text-center text-xl font-extrabold text-amber-100">USDT</p>
                             <button
                               type="button"
-                              onClick={() => copyPaymentDetail(Number(blockchainInvoice.amount).toFixed(8), "Importe exacto")}
+                              onClick={() => copyPaymentDetail(Number(blockchainInvoice.amount).toFixed(4), "Importe exacto")}
                               className="jjx-button-secondary mt-4 w-full justify-center border-amber-200/40 font-bold text-white"
                             >
                               Copiar importe exacto
