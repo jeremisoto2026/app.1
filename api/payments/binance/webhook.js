@@ -30,7 +30,7 @@ module.exports = async function binancePayWebhook(req, res) {
     const expectedSn = String(process.env.BINANCE_PAY_WEBHOOK_CERTIFICATE_SN || "");
     const publicKey = String(process.env.BINANCE_PAY_WEBHOOK_PUBLIC_KEY || "").replace(/\\n/g, "\n");
 
-    if (!timestamp || !nonce || !signature || !certificateSn || !publicKey) {
+    if (!timestamp || !nonce || !signature || !certificateSn || !expectedSn || !publicKey) {
       throw new HttpError(503, "El webhook de Binance Pay aún no está configurado con su certificado público.");
     }
     if (expectedSn && certificateSn !== expectedSn) {
