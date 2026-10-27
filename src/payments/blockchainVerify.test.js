@@ -17,7 +17,9 @@ jest.mock("../../lib/payments", () => {
     sendJson: jest.fn((res, statusCode, payload) => {
       res.status(statusCode);
       res.setHeader("Cache-Control", "no-store");
-      return res.json(payload);
+      res.body = payload;
+      res.json(payload);
+      return payload;
     }),
     requirePost: jest.fn((req, res) => {
       if (req.method === "POST") return true;
@@ -36,8 +38,11 @@ jest.mock("../../lib/payments", () => {
     REQUIRED_BSC_CONFIRMATIONS: 12,
     rpc: jest.fn(),
     errorResponse: jest.fn((res, error) => {
+      const payload = { error: error.message || "Error de prueba" };
       res.status(error.statusCode || 500);
-      return res.json({ error: error.message || "Error de prueba" });
+      res.body = payload;
+      res.json(payload);
+      return payload;
     }),
   };
 });
