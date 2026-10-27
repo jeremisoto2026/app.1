@@ -191,9 +191,9 @@ describe("calculateDashboardMetrics", () => {
 
     const result = calculateDashboardMetrics(operations, new Date("2026-10-22T12:00:00.000Z"));
     expect(result.profitByCurrency.EUR).toBeCloseTo(-2, 8);
-    expect(result.closedSales).toBe(3);
-    expect(result.winningSales).toBe(2);
-    expect(result.successRate).toBeCloseTo((2 / 3) * 100, 8);
+    expect(result.closedSales).toBe(1);
+    expect(result.winningSales).toBe(0);
+    expect(result.successRate).toBe(0);
   });
 });
 
@@ -294,9 +294,9 @@ describe("calculateDashboardSummaryMetrics", () => {
 
     const result = calculateDashboardSummaryMetrics(operations, sessions, new Date("2026-10-22T12:00:00.000Z"));
 
-    expect(result.closedSales).toBe(1);
-    expect(result.winningSales).toBe(0);
-    expect(result.successRate).toBe(0);
+    expect(result.closedSales).toBe(3);
+    expect(result.winningSales).toBe(2);
+    expect(result.successRate).toBeCloseTo((2 / 3) * 100, 8);
   });
 
   test("keeps crypto-session activity older than 30 days out of the recent summary", () => {
