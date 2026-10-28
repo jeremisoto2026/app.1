@@ -429,7 +429,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                     min={operationType === 'Venta' ? "0" : undefined}
                     step="any"
                     placeholder={operationType === 'Venta' ? "Ej. 30" : "Se calcula con el importe fiat y la tasa"}
-                    value={operationType === 'Venta' ? formData.crypto_amount : (Number.isFinite(previewAmountCrypto) ? String(previewAmountCrypto) : '')}
+                    value={operationType === 'Venta' ? formData.crypto_amount : (Number.isFinite(previewAmountCrypto) ? formatCryptoAmount(previewAmountCrypto) : '')}
                     onChange={e => handleInputChange('crypto_amount', e.target.value)}
                     readOnly={operationType !== 'Venta'}
                     required={operationType === 'Venta'}
@@ -447,7 +447,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                     min={operationType === 'Compra' ? "0" : undefined}
                     step="any"
                     placeholder={operationType === 'Compra' ? "Ej. 50" : "Se calcula con la cantidad vendida y la tasa"}
-                    value={operationType === 'Compra' ? formData.fiat_amount : (Number.isFinite(previewAmountFiat) ? String(previewAmountFiat) : '')}
+                    value={operationType === 'Compra' ? formData.fiat_amount : (Number.isFinite(previewAmountFiat) ? formatFiatAmount(previewAmountFiat) : '')}
                     onChange={e => handleInputChange('fiat_amount', e.target.value)}
                     readOnly={operationType !== 'Compra'}
                     required={operationType === 'Compra'}
