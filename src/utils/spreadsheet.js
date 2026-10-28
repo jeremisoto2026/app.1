@@ -55,7 +55,9 @@ export const buildProfessionalExcelXml = ({
   numericColumns = [],
   dateColumns = [],
   typeColumn = -1,
+  statusColumn = -1,
   coverageColumn = -1,
+  additionalSheets = [],
 }) => {
   const headerCount = headers.length;
   const headerRowIndex = 6;
@@ -97,6 +99,8 @@ export const buildProfessionalExcelXml = ({
       }
       if (columnIndex === typeColumn && value === "Compra") style = "Purchase";
       if (columnIndex === typeColumn && value === "Venta") style = "Sale";
+      if (columnIndex === statusColumn && value === "Completada") style = "CoverageComplete";
+      if (columnIndex === statusColumn && value === "Cancelada") style = "CoveragePartial";
       if (columnIndex === coverageColumn) {
         if (value === "Completo") style = "CoverageComplete";
         else if (value === "Parcial") style = "CoveragePartial";
@@ -106,6 +110,34 @@ export const buildProfessionalExcelXml = ({
     return `<Row ss:Height="22">${cells}</Row>`;
   }).join("");
   const filterEndRow = headerRowIndex + rows.length;
+  const extraWorksheets = additionalSheets.map((sheet) => {
+    const sheetHeaders = sheet.headers || [];
+    const sheetRows = sheet.rows || [];
+    const sheetHeaderRow = 4;
+    const sheetWidths = sheetHeaders.map((header, columnIndex) => {
+      const maxLength = sheetRows.reduce((max, row) => Math.max(max, String(row[columnIndex] ?? "").length), String(header ?? "").length);
+      return Math.min(280, Math.max(100, maxLength * 7 + 24));
+    });
+    const sheetColumns = sheetWidths.map((width) => `<Column ss:Width="${width}"/>`).join("");
+    const sheetHeaderXml = `<Row ss:Height="34">${sheetHeaders.map((header) => styledCell(header, "TableHeader")).join("")}</Row>`;
+    const sheetBodyXml = sheetRows.map((row, rowIndex) => {
+      const alternate = rowIndex % 2 === 1;
+      const cells = sheetHeaders.map((_, columnIndex) => {
+        const value = row[columnIndex];
+        let style = alternate ? "BodyAlt" : "Body";
+        if (sheet.numericColumns?.includes(columnIndex) && value !== "" && value !== null && value !== undefined) style = alternate ? "NumberAlt" : "Number";
+        if (sheet.dateColumns?.includes(columnIndex) && value instanceof Date) style = alternate ? "DateAlt" : "DateCell";
+        if (columnIndex === sheet.typeColumn && value === "Compra") style = "Purchase";
+        if (columnIndex === sheet.typeColumn && value === "Venta") style = "Sale";
+        if (columnIndex === sheet.coverageColumn && value === "Completo") style = "CoverageComplete";
+        if (columnIndex === sheet.coverageColumn && value === "Parcial") style = "CoveragePartial";
+        return styledCell(value, style);
+      }).join("");
+      return `<Row ss:Height="22">${cells}</Row>`;
+    }).join("");
+    const sheetFilterEnd = sheetHeaderRow + sheetRows.length;
+    return `<Worksheet ss:Name="${xmlEscape(sheet.name || "Detalle")}"><Table>${sheetColumns}<Row ss:Height="30">${styledCell(sheet.title || "JJXCAPITAL · Detalle de operaciones", "Title", Math.max(0, sheetHeaders.length - 1))}</Row><Row ss:Height="22">${styledCell(sheet.subtitle || "Detalle completo y trazabilidad", "Subtitle", Math.max(0, sheetHeaders.length - 1))}</Row><Row ss:Height="25">${styledCell(sheet.note || "Los importes se conservan en su moneda de origen.", "ReportNote", Math.max(0, sheetHeaders.length - 1))}</Row>${sheetHeaderXml}${sheetBodyXml}</Table><AutoFilter x:Range="R${sheetHeaderRow}C1:R${sheetFilterEnd}C${sheetHeaders.length}" xmlns="urn:schemas-microsoft-com:office:excel"/><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>${sheetHeaderRow}</SplitHorizontal><TopRowBottomPane>${sheetHeaderRow}</TopRowBottomPane><DoNotDisplayGridlines/></WorksheetOptions></Worksheet>`;
+  }).join("");
 
   return `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
@@ -133,7 +165,7 @@ ${summaryRows}<Row ss:Height="25">${styledCell(note, "ReportNote", Math.max(0, h
 ${headerRow}${bodyRows}</Table>
 <AutoFilter x:Range="R${headerRowIndex}C1:R${filterEndRow}C${headerCount}" xmlns="urn:schemas-microsoft-com:office:excel"/>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>${headerRowIndex}</SplitHorizontal><TopRowBottomPane>${headerRowIndex}</TopRowBottomPane><DoNotDisplayGridlines/></WorksheetOptions>
-</Worksheet></Workbook>`;
+</Worksheet>${extraWorksheets}</Workbook>`;
 };
 
 export const downloadExcelXml = (filename, xml) => {
