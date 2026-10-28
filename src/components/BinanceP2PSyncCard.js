@@ -280,10 +280,28 @@ export default function BinanceP2PSyncCard() {
             </button>
           </div>
           {lastResult && (
-            <p className="text-sm text-slate-500" role="status">
-              Encontradas: {lastResult.completedOrdersFound}. Nuevas: {lastResult.imported}. Ya registradas: {lastResult.skipped}.
-              {lastResult.hasMoreHistory ? " Hay más páginas pendientes." : ""}
-            </p>
+            <>
+              <p className="text-sm text-slate-500" role="status">
+                Encontradas: {lastResult.completedOrdersFound}. Nuevas: {lastResult.imported}. Ya registradas: {lastResult.skipped}.
+                {lastResult.hasMoreHistory ? " Hay más páginas pendientes." : ""}
+              </p>
+              {lastResult.diagnostics && (
+                <div className="mt-3 space-y-2 rounded-xl border border-slate-200/70 bg-slate-500/5 p-4 text-sm" aria-live="polite">
+                  <p className="font-semibold">Diagnóstico de la respuesta de Binance</p>
+                  <p>Filas recibidas: compras {lastResult.diagnostics.buyRowsReturned}, ventas {lastResult.diagnostics.sellRowsReturned}.</p>
+                  <p>Órdenes con estado completado: {lastResult.diagnostics.rowsMarkedCompleted}. Órdenes válidas para importar: {lastResult.diagnostics.usableCompletedOrders}.</p>
+                  <p>
+                    Totales informados por Binance: compras {lastResult.diagnostics.buyReportedTotal == null ? "no informado" : lastResult.diagnostics.buyReportedTotal}, ventas {lastResult.diagnostics.sellReportedTotal == null ? "no informado" : lastResult.diagnostics.sellReportedTotal}.
+                  </p>
+                  <p>
+                    Estados recibidos: {Object.keys(lastResult.diagnostics.statusCounts || {}).length
+                      ? Object.entries(lastResult.diagnostics.statusCounts).map(([statusName, count]) => statusName + ": " + count).join(" · ")
+                      : "Binance no devolvió filas."}
+                  </p>
+                  <p className="text-xs text-slate-500">Este resumen solo muestra cantidades y estados agregados; no contiene números de órdenes ni datos de contrapartes.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       ) : (
