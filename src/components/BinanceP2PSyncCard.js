@@ -323,10 +323,18 @@ export default function BinanceP2PSyncCard() {
                   Período consultado: {formatDate(lastResult.probeWindow?.start)} – {formatDate(lastResult.probeWindow?.end)}. Esta prueba no guarda operaciones ni modifica la sincronización habitual.
                 </p>
               ) : (
-                <p className="text-sm text-slate-500" role="status">
-                  Encontradas: {lastResult.completedOrdersFound}. Nuevas: {lastResult.imported}. Ya registradas: {lastResult.skipped}.
-                  {lastResult.hasMoreHistory ? " Hay más páginas pendientes." : ""}
-                </p>
+                <>
+                  <p className="text-sm text-slate-500" role="status">
+                    Encontradas: {lastResult.completedOrdersFound}. Nuevas: {lastResult.imported}. Ya registradas: {lastResult.skipped}.
+                    {lastResult.hasMoreHistory ? " Hay más páginas pendientes." : ""}
+                  </p>
+                  {lastResult.sessionAssignments && (
+                    <p className="text-sm text-slate-500" role="status">
+                      Vinculación automática: {lastResult.sessionAssignments.matched} con sesión compatible, {lastResult.sessionAssignments.unmatched} sin sesión compatible y {lastResult.sessionAssignments.ambiguous} con varias sesiones posibles.
+                      {lastResult.sessionAssignments.relinkedExisting ? " Se vincularon " + lastResult.sessionAssignments.relinkedExisting + " operaciones que ya estaban importadas." : ""}
+                    </p>
+                  )}
+                </>
               )}
               {lastResult.diagnostics && (
                 <div className="mt-3 space-y-2 rounded-xl border border-slate-200/70 bg-slate-500/5 p-4 text-sm" aria-live="polite">
