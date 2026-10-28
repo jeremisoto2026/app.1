@@ -17,6 +17,8 @@ import {
   FaFileAlt,
   FaLock,
   FaMoneyBillWave,
+  FaMoon,
+  FaSun,
   FaShieldAlt,
   FaSignInAlt,
 } from "react-icons/fa";
@@ -63,6 +65,15 @@ const MainApp = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    try { return window.localStorage.getItem("jjx-theme") || "dark"; }
+    catch { return "dark"; }
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.jjxTheme = theme;
+    try { window.localStorage.setItem("jjx-theme", theme); } catch { /* storage may be unavailable */ }
+  }, [theme]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 12);
@@ -282,7 +293,7 @@ const MainApp = () => {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell">\n      <button type="button" className="jjx-theme-toggle" onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"} title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}>\n        {theme === "dark" ? <FaSun aria-hidden="true" /> : <FaMoon aria-hidden="true" />}\n        <span>{theme === "dark" ? "Tema claro" : "Tema oscuro"}</span>\n      </button>
       <main className="app-content">
         <SectionErrorBoundary key={activeTab} onReturn={() => handleTabChange("dashboard")}>
           {activeTab === "dashboard" && (
