@@ -6,7 +6,7 @@
 
 ## Dictamen
 
-**No habilitar órdenes P2P reales todavía.** El repositorio dispone de algunas bases útiles de backend y autenticación, pero todavía no contiene una integración de trading P2P. Antes de programarla hay que cerrar las observaciones de seguridad y, sobre todo, confirmar con Binance qué automatización está autorizada para la cuenta concreta.
+**No conectar todavía la sincronización automática a una cuenta real.** El alcance correcto es importar el historial P2P de solo lectura, únicamente para órdenes completadas. El repositorio dispone de algunas bases útiles de backend y autenticación, pero no contiene aún un importador P2P. Antes de programarlo hay que corregir las observaciones prioritarias, comprobar el acceso a la API de historial con una clave de solo lectura y verificar sus respuestas en pruebas. No se enviarán órdenes, no se publicarán anuncios ni se marcarán pagos como realizados desde JJXCAPITAL.
 
 ## Alcance revisado
 
@@ -14,36 +14,37 @@ Se inspeccionaron `package.json`, `.gitignore`, `firebase.json`, `firestore.rule
 
 ## Hallazgos
 
-### P0 — Confirmar disponibilidad y permisos oficiales de Binance P2P
+### P0 — Verificar el acceso de solo lectura al historial personal P2P
 
-La integración actual de `api/payments/binance` sirve para **Binance Pay y el cobro de la suscripción Pro**; no es una API para publicar anuncios P2P ni para crear órdenes P2P de compra/venta.
+La integración actual de `api/payments/binance` sirve para **Binance Pay y el cobro de la suscripción Pro**; no importa operaciones P2P personales.
 
-La documentación pública de Binance Skills Hub distingue entre consultar historial y administrar anuncios (esto último requiere permisos de comerciante), e indica que esa integración no coloca órdenes P2P por cuenta del usuario. Binance describe P2Pro como un programa destinado a traders profesionales o exchanges con entidad legal local; sus requisitos publicados incluyen cuenta de entidad, depósito de seguridad, acuerdo de responsabilidad y licencia o cualificación equivalente para prestar servicios profesionales de cambio/pago.
+La documentación pública del repositorio oficial `binance/binance-cli` presenta `GET /sapi/v1/c2c/orderMatch/listUserOrderHistory` como “Get C2C Trade History (USER_DATA)”. El Binance Skills Hub describe igualmente el historial P2P personal mediante una solicitud autenticada y firmada. La respuesta documentada incluye campos relevantes para JJXCAPITAL: número de orden, tipo BUY/SELL, cripto, fiat, cantidad de cripto, total fiat, tasa/unidad de precio, estado, hora de creación y comisiones. La API también contempla paginación y filtros temporales. Las respuestas de la API real deberán verificarse antes de mapearlas al historial financiero.
 
-Antes de escribir un cliente P2P hay que obtener confirmación de Binance de los endpoints, permisos y operaciones permitidos para la cuenta real. No debe suponerse que una API key personal habilita automatización de órdenes P2P. No se debe intentar automatizar mediante endpoints privados no documentados o scraping del sitio.
+Referencias:
+- https://github.com/binance/binance-cli/blob/master/examples/c2c.md
+- https://github.com/binance/binance-skills-hub/blob/main/skills/binance/p2p/SKILL.md
+- https://github.com/binance/binance-skills-hub/blob/main/skills/binance/p2p/references/authentication.md
 
-Referencias oficiales:
-- https://www.binance.com/en/skills/detail/binance/p2p
-- https://www.binance.com/en/support/faq/detail/5d90781ef6054803bee2e30ea87f2013
-- https://www.binance.com/es/support/faq/detail/7159c97f2a83484688cc874710ac0266
+**Condición antes de implementar:** validar desde Preview que la cuenta y la clave API pueden consultar el endpoint de historial P2P personal. No usar endpoints de agente/comerciante que no sean necesarios para este alcance. Crear la clave sin permisos de trading ni retiros; solo habilitar el permiso mínimo que permita leer los datos. La autenticación deberá realizarse desde el backend, con firma HMAC y timestamp actual. No se debe hacer scraping de la web de Binance.
 
 ### P1 — `.gitignore` no excluye archivos `.env`
 
 El archivo ignora algunos archivos de tokens/credenciales, pero no incluye reglas generales para `.env`, `.env.local` ni `.env.*`. No se encontró un archivo `.env` en la lista de la raíz revisada, pero la protección preventiva es insuficiente. Añadir una regla de exclusión para los archivos de entorno y permitir únicamente una plantilla sin secretos (por ejemplo, `.env.example`). Revisar también el historial antes de asumir que nunca se filtró una credencial.
 
-### P1 — No hay protección específica para una futura ejecución P2P
+### P1 — No hay protección específica para la sincronización P2P
 
-No se encontró ningún endpoint de trading P2P ni una bóveda de claves de Binance para usuarios. Antes de añadir órdenes se necesitarán como mínimo:
-- credenciales aisladas por usuario, cifradas con una clave maestra almacenada como secreto del servidor; nunca en campos de perfil legibles por el navegador;
-- validación de identidad y propiedad en cada petición del backend;
-- idempotencia persistente para impedir órdenes duplicadas cuando una respuesta de red sea ambigua;
-- límites por usuario y globales para importe, frecuencia, exposición, precio, activo, fiat y método de pago;
-- estado explícito de operación, conciliación con Binance, registro de auditoría sin secretos y un interruptor de emergencia;
-- confirmación explícita del resumen de cada acción de escritura, al menos durante la fase inicial.
+No se encontró un conector de Binance P2P de solo lectura ni un almacén de credenciales por usuario. Antes de importar órdenes se necesitará:
+- guardar API keys individuales cifradas en el servidor, con clave maestra almacenada como secreto del entorno de servidor; nunca en texto claro en el perfil de Firestore, en `localStorage`, en variables `REACT_APP_*` ni en logs;
+- verificar el ID token de Firebase en cada petición, autorizar por UID y evaluar revocación de sesión;
+- mantener los secretos fuera del frontend y solicitar únicamente permisos de consulta del historial; sin permisos de trading/retiros;
+- deduplicar por número de orden de Binance y procesar cada orden idempotentemente, incluso si se repite el sondeo;
+- guardar el momento de última sincronización, consultar con una ventana temporal superpuesta para capturar cambios de estado y respetar paginación y límites de Binance;
+- registrar fuente, fecha de importación y los campos originales necesarios para auditar la conversión a `Compra`/`Venta`, sin guardar datos de más ni exponer información de contrapartes;
+- tratar órdenes incompletas/canceladas como no importables por defecto y no considerar completada una orden si el estado devuelto no se ha validado.
 
 ### P1 — Falta de limitación de frecuencia visible en las funciones actuales
 
-En los helpers y endpoints revisados no aparece una capa general de rate limiting por usuario/IP. Las cuotas de uso de la aplicación no sustituyen los límites de llamadas. Para una API de órdenes, las repeticiones y los reintentos deben controlarse en backend, no confiar en que el botón del frontend se pulse una sola vez.
+En los helpers y endpoints revisados no aparece una capa general de rate limiting por usuario/IP. Las cuotas de uso de la aplicación no sustituyen los límites de llamadas. El sincronizador debe tener límites por usuario y globales, no consultar Binance en cada renderizado del frontend, espaciar los reintentos y respetar los límites de la API. Los sondeos repetidos no deben crear registros duplicados.
 
 ### P1 — Las reglas activas de Firestore no están verificadas
 
