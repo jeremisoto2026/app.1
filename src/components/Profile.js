@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Profile.css";
+import BinanceP2PSyncCard from "./BinanceP2PSyncCard";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { collection, doc, getDoc, getDocs, onSnapshot } from "firebase/firestore";
@@ -460,6 +461,8 @@ export default function Profile() {
             </div>
           </div>
         </section>
+
+        <BinanceP2PSyncCard />
 
         <section aria-labelledby="profile-usage-heading" className="profile-section space-y-4">
           <div className="profile-section-heading">
