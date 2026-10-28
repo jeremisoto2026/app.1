@@ -3,7 +3,7 @@ import { collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from 
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowDownTrayIcon, PlusIcon, CheckCircleIcon, PlayIcon, TrashIcon, BoltIcon, DocumentPlusIcon } from "@heroicons/react/24/outline";
-import { calculateArbitrageSessionResult, calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
+import { calculateArbitrageSessionResult, calculateDashboardMetrics, getAccountingCryptoAmount, getOperationDate } from "../utils/financialCalculations";
 import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { formatCurrencyAmount } from "../utils/numberFormatting";
 
@@ -91,7 +91,13 @@ export default function ArbitrageSessions({ onOpenOperations }) {
           ? total + realized.profit / rate
           : total;
       }, 0);
-    const netCryptoChange = add("Compra", "crypto_amount") - add("Venta", "crypto_amount");
+    const netCryptoChange = accountingOperations.reduce((total, item) => {
+      const quantity = getAccountingCryptoAmount(item);
+      if (!Number.isFinite(quantity)) return total;
+      if (item.operation_type === "Compra") return total + quantity;
+      if (item.operation_type === "Venta") return total - quantity;
+      return total;
+    }, 0);
     return {
       profit: sessionResult.profit,
       profitCrypto: startsWithCrypto ? sessionResult.profit : profitCrypto,
