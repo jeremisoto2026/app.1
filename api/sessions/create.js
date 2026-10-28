@@ -32,13 +32,11 @@ module.exports = async function createSession(req, res) {
     const fiat = String(body.fiat || "").toUpperCase();
     const cryptoCode = String(body.crypto || "").toUpperCase();
     const initialCapitalType = String(body.initialCapitalType || "");
-    const initialCapital = Number(body.initialCapital);
 
     if (name.length > 120 || !STRATEGIES.includes(strategy) ||
         !FIAT_CURRENCIES.includes(fiat) || !CRYPTO_CURRENCIES.includes(cryptoCode) ||
-        !["fiat", "crypto"].includes(initialCapitalType) ||
-        !Number.isFinite(initialCapital) || initialCapital <= 0) {
-      throw new HttpError(400, "Revisa el nombre, la estrategia, las monedas y el capital inicial.");
+        !["fiat", "crypto"].includes(initialCapitalType)) {
+      throw new HttpError(400, "Revisa el nombre, la estrategia, el tipo de inicio y las monedas.");
     }
 
     const sessionsPath = userPath + "/sessions";
@@ -55,8 +53,6 @@ module.exports = async function createSession(req, res) {
       fiat,
       crypto: cryptoCode,
       initialCapitalType,
-      initialCapitalCurrency: initialCapitalType === "crypto" ? cryptoCode : fiat,
-      initialCapital,
       status: "active",
       createdAt,
       closedAt: null,

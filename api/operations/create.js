@@ -36,13 +36,15 @@ module.exports = async function createOperation(req, res) {
     const fiat = String(input.fiat || "").toUpperCase();
     const sessionId = String(input.sessionId || "").trim();
     const rate = Number(input.exchange_rate);
+    const amount = Number(input.amount);
     const fee = input.fee === "" || input.fee === null || input.fee === undefined ? 0 : Number(input.fee);
     if (!EXCHANGES.includes(exchange) || !OPERATION_TYPES.includes(operationType) ||
         !CRYPTO_CURRENCIES.includes(cryptoCode) || !FIAT_CURRENCIES.includes(fiat) ||
         cryptoCode === fiat || !sessionId ||
+        !Number.isFinite(amount) || amount <= 0 ||
         !Number.isFinite(rate) || rate <= 0 ||
         !Number.isFinite(fee) || fee < 0) {
-      throw new HttpError(400, "Revisa la plataforma, el tipo de movimiento, las monedas, la tasa y la comisión.");
+      throw new HttpError(400, "Revisa la plataforma, el tipo de movimiento, las monedas, el importe, la tasa y la comisión.");
     }
 
     const sessionPath = userPath + "/sessions/" + sessionId;
@@ -76,13 +78,13 @@ module.exports = async function createOperation(req, res) {
       throw new HttpError(409, "El siguiente movimiento de este arbitraje debe ser " + requiredOperation.toUpperCase() + ".");
     }
 
+    // Legacy sessions can still have an initial capital. New sessions start from a zero-based
+    // movement ledger and each operation uses the amount explicitly entered by the user.
     const initialCapital = Number(session.initialCapital);
-    if (!Number.isFinite(initialCapital) || initialCapital <= 0) {
-      throw new HttpError(409, "El arbitraje no tiene un capital inicial válido. Revisa sus datos antes de operar.");
-    }
+    const hasInitialCapital = Number.isFinite(initialCapital) && initialCapital > 0;
     const startsWithCrypto = session.initialCapitalType === "crypto";
-    let availableFiat = startsWithCrypto ? 0 : initialCapital;
-    let availableCrypto = startsWithCrypto ? initialCapital : 0;
+    let availableFiat = hasInitialCapital && !startsWithCrypto ? initialCapital : 0;
+    let availableCrypto = hasInitialCapital && startsWithCrypto ? initialCapital : 0;
     sessionOperations.forEach((movement) => {
       const saved = movement.data || {};
       const savedFiatAmount = Number(saved.fiat_amount);
@@ -97,16 +99,6 @@ module.exports = async function createOperation(req, res) {
     });
     if (Math.abs(availableFiat) < 1e-8) availableFiat = 0;
     if (Math.abs(availableCrypto) < 1e-10) availableCrypto = 0;
-    if (availableFiat < -1e-7 || availableCrypto < -1e-9) {
-      throw new HttpError(409, "El historial supera el capital disponible. Revisa los movimientos registrados antes de continuar.");
-    }
-
-    const amount = operationType === "Compra" ? availableFiat : availableCrypto;
-    if (!Number.isFinite(amount) || amount <= 0) {
-      throw new HttpError(409, operationType === "Compra"
-        ? "No queda saldo fiat disponible para registrar otra compra."
-        : "No queda saldo cripto disponible para registrar otra venta.");
-    }
 
     const cryptoAmount = operationType === "Compra" ? amount / rate - fee : amount;
     const fiatAmount = operationType === "Venta" ? amount * rate - fee : amount;
@@ -115,10 +107,10 @@ module.exports = async function createOperation(req, res) {
       throw new HttpError(400, "La comisión debe ser inferior al importe recibido.");
     }
     const nextFiatBalance = operationType === "Compra"
-      ? Math.max(0, availableFiat - fiatAmount)
+      ? availableFiat - fiatAmount
       : availableFiat + fiatAmount;
     const nextCryptoBalance = operationType === "Venta"
-      ? Math.max(0, availableCrypto - cryptoAmount)
+      ? availableCrypto - cryptoAmount
       : availableCrypto + cryptoAmount;
     const storedMovements = Number(profile.data.movementsUsed);
     const savedMovements = Number.isFinite(storedMovements) && storedMovements >= 0 ? storedMovements : 0;

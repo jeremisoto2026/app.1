@@ -718,7 +718,7 @@ const History = () => {
           <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
             <CardHeader className="p-0 mb-4">
               <CardTitle className="text-xl font-bold text-white">Resultado por arbitraje</CardTitle>
-              <p className="text-sm text-gray-400">El beneficio y el ROI se muestran en la moneda base con la que se inició cada ciclo.</p>
+              <p className="text-sm text-gray-400">El beneficio se calcula en la moneda elegida al iniciar cada arbitraje. El ROI solo se muestra cuando hay un capital inicial registrado.</p>
             </CardHeader>
             <CardContent className="p-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {sessionResults.map(session => (
@@ -726,12 +726,12 @@ const History = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-white">{session.name}</p>
-                      <p className="mt-1 text-xs text-gray-500">Capital inicial: {formatCurrency(session.initialCapital, session.baseCurrency)}</p>
+                      <p className="mt-1 text-xs text-gray-500">{Number(session.initialCapital) > 0 ? `Capital inicial: ${formatCurrency(session.initialCapital, session.baseCurrency)}` : `Inicio: ${session.isCryptoBase ? "Criptomoneda" : "Fiat"}`}</p>
                     </div>
                     <Badge className={session.status === "active" ? "bg-emerald-500/10 text-emerald-300" : "bg-gray-700 text-gray-300"}>{session.status === "active" ? "Activo" : "Cerrado"}</Badge>
                   </div>
                   <p className={`mt-3 text-xl font-bold ${session.profit > 0 ? "text-green-400" : session.profit < 0 ? "text-red-400" : "text-white"}`}>{formatCurrency(session.profit, session.baseCurrency)}</p>
-                  <p className="mt-1 text-xs text-gray-400">Beneficio / pérdida · ROI {session.roi.toFixed(2)}%</p>
+                  <p className="mt-1 text-xs text-gray-400">{Number.isFinite(session.roi) ? `Beneficio / pérdida · ROI ${session.roi.toFixed(2)}%` : "Beneficio / pérdida · ROI no disponible sin capital inicial"}</p>
                 </div>
               ))}
             </CardContent>

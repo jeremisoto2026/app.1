@@ -332,7 +332,9 @@ export const calculateArbitrageSessionResult = (session = {}, operations = []) =
   return {
     profit,
     initialCapital: Number.isFinite(initialCapital) ? initialCapital : 0,
-    roi: Number.isFinite(initialCapital) && initialCapital > 0 ? (profit / initialCapital) * 100 : 0,
+    roi: Number.isFinite(initialCapital) && initialCapital > 0
+      ? (profit / initialCapital) * 100
+      : (session.initialCapital === 0 ? 0 : null),
     baseCurrency,
     isCryptoBase,
     operationCount: matchingOperations.length,

@@ -244,7 +244,10 @@ describe("calculateArbitrageSessionResult", () => {
     });
   });
 
-  test("returns zero ROI for an invalid initial capital", () => {
+  test("does not invent an ROI when no initial capital was provided", () => {
+    expect(calculateArbitrageSessionResult({ fiat: "EUR", crypto: "USDT" }, [])).toMatchObject({
+      profit: 0, initialCapital: 0, roi: null, baseCurrency: "EUR", isCryptoBase: false,
+    });
     expect(calculateArbitrageSessionResult({ fiat: "EUR", crypto: "USDT", initialCapital: 0 }, [])).toMatchObject({
       profit: 0, initialCapital: 0, roi: 0, baseCurrency: "EUR", isCryptoBase: false,
     });
@@ -268,6 +271,21 @@ describe("calculateArbitrageSessionBalances", () => {
     ]);
     expect(afterSell).toMatchObject({ fiatBalance: 107.8, cryptoBalance: 0, nextOperationType: "Compra", operationCount: 2 });
   });
+  test("tracks the net movement of sessions without an initial capital", () => {
+    const session = { id: "manual-session", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT" };
+    expect(calculateArbitrageSessionBalances(session, [])).toMatchObject({
+      fiatBalance: 0, cryptoBalance: 0, nextOperationType: "Compra", operationCount: 0,
+    });
+    const operations = [
+      { id: "buy", sessionId: "manual-session", operation_type: "Compra", fiat: "EUR", crypto: "USDT", fiat_amount: 50, crypto_amount: 55, timestamp: new Date("2026-10-01T10:00:00.000Z") },
+      { id: "sell-part", sessionId: "manual-session", operation_type: "Venta", fiat: "EUR", crypto: "USDT", fiat_amount: 33, crypto_amount: 30, timestamp: new Date("2026-10-01T10:05:00.000Z") },
+    ];
+    expect(calculateArbitrageSessionBalances(session, operations)).toMatchObject({
+      fiatBalance: -17, cryptoBalance: 25, nextOperationType: "Compra", operationCount: 2,
+    });
+    expect(calculateArbitrageSessionResult(session, operations)).toMatchObject({ roi: null, baseCurrency: "EUR" });
+  });
+
   test("starts crypto-funded sessions with a sale and ignores other sessions", () => {
     const session = { id: "crypto-session", initialCapitalType: "crypto", initialCapital: 2, fiat: "EUR", crypto: "BTC" };
     expect(calculateArbitrageSessionBalances(session, [])).toMatchObject({

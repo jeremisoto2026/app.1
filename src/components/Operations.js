@@ -82,6 +82,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
   const selectedSessionOperationCount = selectedSessionOperations.length;
   const isFirstSessionOperation = Boolean(selectedSession) && selectedSessionOperationCount === 0;
   const operationType = selectedSession ? sessionBalances.nextOperationType : 'Compra';
+  const currentOperationAmount = Number(operationType === 'Venta' ? formData.crypto_amount : formData.fiat_amount);
 
   useEffect(() => {
     if (!selectedSession) return;
@@ -143,11 +144,10 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       return;
     }
 
-    const currentOperationAmount = operationType === 'Venta' ? sessionBalances.cryptoBalance : sessionBalances.fiatBalance;
     if (!Number.isFinite(currentOperationAmount) || currentOperationAmount <= 0) {
       setError(operationType === 'Venta'
-        ? 'No queda saldo de criptomoneda disponible en este arbitraje para registrar la venta.'
-        : 'No queda saldo fiat disponible en este arbitraje para registrar la compra.');
+        ? 'Introduce una cantidad de criptomoneda mayor que cero para vender.'
+        : 'Introduce un importe fiat mayor que cero para comprar.');
       return;
     }
 
@@ -195,6 +195,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
         crypto: formData.crypto,
         fiat: formData.fiat,
         sessionId: selectedSession.id,
+        amount: currentOperationAmount,
         sessionName: selectedSession.name,
         arbitrageType: selectedSession.strategy || 'Comercio P2P',
         ...calculatedAmounts,
@@ -236,7 +237,6 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
   let previewAmountFiat = null;
   const previewFee = formData.fee === '' ? 0 : Number(formData.fee);
   const previewFeeCurrency = operationType === 'Venta' ? (selectedSession?.fiat || formData.fiat) : (selectedSession?.crypto || formData.crypto);
-  const currentOperationAmount = operationType === 'Venta' ? sessionBalances.cryptoBalance : sessionBalances.fiatBalance;
   try {
     if (selectedSession && Number(formData.exchange_rate) > 0 && Number.isFinite(currentOperationAmount) && currentOperationAmount > 0) {
       const preview = calculateOperationAmounts({
@@ -322,21 +322,21 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
               {selectedSession && (
                 <div className="rounded-xl border border-purple-500/20 bg-purple-950/30 px-4 py-3 text-sm text-gray-300">
                   {selectedSession.initialCapitalType === 'crypto'
-                    ? <>Este arbitraje empieza con <strong>{selectedSession.initialCapital} {selectedSession.crypto}</strong>. El flujo habitual es vender esa cripto para obtener {selectedSession.fiat} y después recomprarla para cerrar el ciclo. La rentabilidad se medirá en {selectedSession.crypto}.</>
-                    : <>Este arbitraje empieza con <strong>{selectedSession.initialCapital} {selectedSession.fiat}</strong>. El flujo habitual es comprar {selectedSession.crypto} y venderla después para recuperar fiat. La rentabilidad se medirá en {selectedSession.fiat}.</>}
+                    ? <>Este arbitraje comienza por el lado cripto: la primera operación es una venta. Introduce solo la cantidad de {selectedSession.crypto} que realmente quieras vender; después podrás comprar la cantidad que decidas.</>
+                    : <>Este arbitraje comienza por el lado fiat: la primera operación es una compra. Introduce solo el importe de {selectedSession.fiat} que realmente quieras invertir; después podrás vender la cantidad de cripto que decidas.</>}
                 </div>
               )}
 
               <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-black/20 p-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-500">Saldo fiat disponible</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">{Number(selectedSession?.initialCapital) > 0 ? "Saldo fiat estimado (sesión anterior)" : "Flujo neto fiat registrado"}</p>
                   <p className="mt-1 text-lg font-semibold text-white">{formatFiatAmount(sessionBalances.fiatBalance)} {selectedSession?.fiat || 'EUR'}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-500">Saldo cripto disponible</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">{Number(selectedSession?.initialCapital) > 0 ? "Saldo cripto estimado (sesión anterior)" : "Variación neta cripto registrada"}</p>
                   <p className="mt-1 text-lg font-semibold text-white">{formatCryptoAmount(sessionBalances.cryptoBalance)} {selectedSession?.crypto || 'USDT'}</p>
                 </div>
-                <p className="text-xs leading-5 text-gray-500 sm:col-span-2">Los importes se rellenan automáticamente con el saldo disponible. Solo introduces la orden, plataforma, tasa de cambio y comisión.</p>
+                <p className="text-xs leading-5 text-gray-500 sm:col-span-2">Los importes aquí reflejan los movimientos registrados, no el saldo real de tu exchange. En cada operación introduces manualmente la cantidad que vas a mover.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -422,31 +422,39 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="crypto_amount" className="text-gray-300 font-medium">Cantidad en cripto</Label>
+                  <Label htmlFor="crypto_amount" className="text-gray-300 font-medium">{operationType === 'Venta' ? "Cantidad de cripto a vender" : "Cripto recibida (calculada)"}</Label>
                   <Input
                     id="crypto_amount"
-                    type="text"
-                    placeholder="Se calcula automáticamente"
-                    value={Number.isFinite(operationType === 'Venta' ? sessionBalances.cryptoBalance : previewAmountCrypto) ? formatCryptoAmount(operationType === 'Venta' ? sessionBalances.cryptoBalance : previewAmountCrypto) : ''}
-                    readOnly
-                    className="bg-gray-800 border-purple-500/30 text-gray-200 placeholder-gray-500 h-11 rounded-xl"
+                    type={operationType === 'Venta' ? "number" : "text"}
+                    min={operationType === 'Venta' ? "0" : undefined}
+                    step="any"
+                    placeholder={operationType === 'Venta' ? "Ej. 30" : "Se calcula con el importe fiat y la tasa"}
+                    value={operationType === 'Venta' ? formData.crypto_amount : (Number.isFinite(previewAmountCrypto) ? String(previewAmountCrypto) : '')}
+                    onChange={e => handleInputChange('crypto_amount', e.target.value)}
+                    readOnly={operationType !== 'Venta'}
+                    required={operationType === 'Venta'}
+                    className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl read-only:text-gray-200"
                     disabled={loading}
                   />
-                  <p className="text-xs text-gray-500">Cantidad que se vende o cripto estimada tras la compra.</p>
+                  <p className="text-xs text-gray-500">{operationType === 'Venta' ? "Tú decides cuánto vender; la cantidad no tiene que coincidir con compras anteriores." : "Se calcula automáticamente a partir del importe fiat que indiques."}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fiat_amount" className="text-gray-300 font-medium">Importe en moneda de cotización</Label>
+                  <Label htmlFor="fiat_amount" className="text-gray-300 font-medium">{operationType === 'Compra' ? "Importe fiat a invertir" : "Importe fiat recibido (calculado)"}</Label>
                   <Input
                     id="fiat_amount"
-                    type="text"
-                    placeholder="Se calcula automáticamente"
-                    value={Number.isFinite(operationType === 'Compra' ? sessionBalances.fiatBalance : previewAmountFiat) ? formatFiatAmount(operationType === 'Compra' ? sessionBalances.fiatBalance : previewAmountFiat) : ''}
-                    readOnly
-                    className="bg-gray-800 border-purple-500/30 text-gray-200 placeholder-gray-500 h-11 rounded-xl"
+                    type={operationType === 'Compra' ? "number" : "text"}
+                    min={operationType === 'Compra' ? "0" : undefined}
+                    step="any"
+                    placeholder={operationType === 'Compra' ? "Ej. 50" : "Se calcula con la cantidad vendida y la tasa"}
+                    value={operationType === 'Compra' ? formData.fiat_amount : (Number.isFinite(previewAmountFiat) ? String(previewAmountFiat) : '')}
+                    onChange={e => handleInputChange('fiat_amount', e.target.value)}
+                    readOnly={operationType !== 'Compra'}
+                    required={operationType === 'Compra'}
+                    className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl read-only:text-gray-200"
                     disabled={loading}
                   />
-                  <p className="text-xs text-gray-500">Importe fiat invertido o recibido tras la comisión.</p>
+                  <p className="text-xs text-gray-500">{operationType === 'Compra' ? "Tú decides cuánto fiat invertir en esta compra." : "Se calcula automáticamente a partir de la cantidad cripto que indiques."}</p>
                 </div>
 
                 <div className="space-y-2">
