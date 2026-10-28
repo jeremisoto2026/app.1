@@ -71,7 +71,7 @@ const History = () => {
   const [editError, setEditError] = useState("");
   const [editData, setEditData] = useState({
     order_id: "", exchange: "", operation_type: "", crypto: "", fiat: "",
-    amount: "", exchange_rate: "", fee: "0",
+    amount: "", exchange_rate: "", fee: "0", sessionId: "__unassigned__",
   });
 
   // Calcular cada venta con el historial completo, no solo con el filtro visual,
@@ -179,6 +179,7 @@ const History = () => {
         : (operation.fiat_amount ?? ""),
       exchange_rate: operation.exchange_rate ?? "",
       fee: operation.fee ?? "0",
+      sessionId: operation.sessionId || "__unassigned__",
     });
     setEditError("");
     setIsEditDialogOpen(true);
@@ -208,23 +209,21 @@ const History = () => {
       if (!editData.exchange || !editData.operation_type || !editData.crypto || !editData.fiat) {
         throw new Error("Completa la plataforma, el tipo de operación y ambas monedas.");
       }
-      const linkedSession = operationToEdit.sessionId
-        ? sessions.find(session => session.id === operationToEdit.sessionId)
+      const selectedSessionId = editData.sessionId && editData.sessionId !== "__unassigned__"
+        ? editData.sessionId
+        : "";
+      const targetSession = selectedSessionId
+        ? sessions.find(session => session.id === selectedSessionId)
         : null;
-      if (operationToEdit.sessionId) {
-        const pairChangedFromOperation =
-          String(editData.crypto).toUpperCase() !== String(operationToEdit.crypto || "").toUpperCase() ||
-          String(editData.fiat).toUpperCase() !== String(operationToEdit.fiat || "").toUpperCase();
-        if (!linkedSession && pairChangedFromOperation) {
-          throw new Error("No se pudo verificar el arbitraje de esta operación. No cambies sus monedas hasta que se puedan cargar los datos de la sesión.");
-        }
-        if (linkedSession) {
-          const pairChanged =
-            (linkedSession.crypto && String(editData.crypto).toUpperCase() !== String(linkedSession.crypto).toUpperCase()) ||
-            (linkedSession.fiat && String(editData.fiat).toUpperCase() !== String(linkedSession.fiat).toUpperCase());
-          if (pairChanged) {
-            throw new Error("Esta operación pertenece a un arbitraje con un par de monedas fijo. Para mantener el ROI correcto, no puedes cambiar sus monedas.");
-          }
+      if (selectedSessionId && !targetSession) {
+        throw new Error("No se pudo verificar el arbitraje seleccionado. Recarga el historial e inténtalo de nuevo.");
+      }
+      if (targetSession) {
+        const pairMismatch =
+          (targetSession.crypto && String(editData.crypto).toUpperCase() !== String(targetSession.crypto).toUpperCase()) ||
+          (targetSession.fiat && String(editData.fiat).toUpperCase() !== String(targetSession.fiat).toUpperCase());
+        if (pairMismatch) {
+          throw new Error("El par de monedas no coincide con el arbitraje seleccionado. Elige una sesión compatible o deja la operación sin asignar.");
         }
       }
       const calculatedAmounts = calculateOperationAmounts({
@@ -242,6 +241,9 @@ const History = () => {
         crypto: editData.crypto,
         fiat: editData.fiat,
         ...calculatedAmounts,
+        sessionId: targetSession?.id || null,
+        sessionName: targetSession?.name || (operationToEdit.source === "binance_p2p" ? "Binance P2P · Importado" : ""),
+        arbitrageType: targetSession?.strategy || (operationToEdit.source === "binance_p2p" ? "Binance P2P" : ""),
       };
 
       await updateDoc(doc(db, "users", user.uid, "operations", operationToEdit.id), updates);
@@ -975,6 +977,21 @@ const History = () => {
           </DialogHeader>
           <form onSubmit={handleSaveEdit} className="space-y-4">
             {editError && <div role="alert" className="rounded-lg border border-red-500/30 bg-red-900/20 p-3 text-sm text-red-200">{editError}</div>}
+            <div className="space-y-2">
+              <Label id="edit-session-label" htmlFor="edit-session">Vincular a arbitraje</Label>
+              <Select value={editData.sessionId || "__unassigned__"} onValueChange={(value) => handleEditFieldChange("sessionId", value)}>
+                <SelectTrigger id="edit-session" aria-labelledby="edit-session-label"><SelectValue placeholder="Elegir arbitraje" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unassigned__">Sin asignar · solo historial</SelectItem>
+                  {sessions.map((session) => (
+                    <SelectItem key={session.id} value={session.id}>
+                      {session.name} ({session.fiat || "EUR"} / {session.crypto || "USDT"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">Solo se guardará la vinculación si las monedas coinciden con la sesión. Para crear otra sesión, ve primero a Arbitrajes.</p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-order-id">Número de orden</Label>
