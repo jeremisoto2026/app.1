@@ -1849,3 +1849,38 @@ html[data-jjx-theme="light"] .app-shell [role="dialog"] label { color: #4d5b72 !
 @media (max-width: 767px) {
   .jjx-theme-toggle { top: 10px; right: 10px; min-height: 35px; padding: 0 11px; }
 }
+
+
+/* Theme switch lives in the same workspace header as the brand and profile. */
+.dashboard-topbar { gap: 12px; }
+.dashboard-theme-toggle {
+  position: static;
+  top: auto;
+  right: auto;
+  z-index: auto;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  backdrop-filter: none;
+}
+@media (max-width: 767px) {
+  .dashboard-theme-toggle {
+    position: static;
+    top: auto;
+    right: auto;
+    z-index: auto;
+    min-height: 36px;
+    padding: 0 10px;
+  }
+  .dashboard-topbar { gap: 8px; }
+  .dashboard-brand { gap: 8px; min-width: 0; }
+  .dashboard-brand > span:last-child { min-width: 0; }
+  .dashboard-brand strong { font-size: 12px; }
+  .dashboard-brand small { font-size: 8px; letter-spacing: .12em; }
+  .dashboard-profile-button { flex: 0 0 auto; }
+}
+@media (max-width: 390px) {
+  .dashboard-theme-toggle { gap: 5px; padding: 0 8px; font-size: 10px; }
+  .dashboard-theme-toggle svg { width: 14px; height: 14px; }
+  .dashboard-brand-mark { width: 38px; height: 38px; }
+  .dashboard-profile-button span { display: none; }
+}
