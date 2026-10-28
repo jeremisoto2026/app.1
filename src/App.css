@@ -1682,8 +1682,8 @@ input:focus, select:focus, textarea:focus {
 .jjx-theme-toggle {
   position: fixed;
   z-index: 80;
-  /* Desktop: keep clear of the fixed top navigation. */
-  top: 82px;
+  /* Fixed in the upper app header on desktop and mobile. */
+  top: 14px;
   right: 20px;
   display: inline-flex;
   align-items: center;
