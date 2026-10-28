@@ -81,7 +81,10 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
     : { fiatBalance: 0, cryptoBalance: 0, nextOperationType: 'Compra', operationCount: 0 };
   const selectedSessionOperationCount = selectedSessionOperations.length;
   const isFirstSessionOperation = Boolean(selectedSession) && selectedSessionOperationCount === 0;
-  const operationType = selectedSession ? sessionBalances.nextOperationType : 'Compra';
+  const initialOperationType = selectedSession?.initialCapitalType === 'crypto' ? 'Venta' : 'Compra';
+  const operationType = selectedSession
+    ? (isFirstSessionOperation ? initialOperationType : (formData.operation_type || sessionBalances.lastOperationType || initialOperationType))
+    : 'Compra';
   const currentOperationAmount = Number(operationType === 'Venta' ? formData.crypto_amount : formData.fiat_amount);
 
   useEffect(() => {
@@ -90,7 +93,9 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       ...previous,
       crypto: selectedSession.crypto || 'USDT',
       fiat: selectedSession.fiat || 'EUR',
-      operation_type: selectedSession.initialCapitalType === 'crypto' ? 'Venta' : 'Compra',
+      operation_type: selectedSessionOperationCount > 0
+        ? (sessionBalances.lastOperationType || (selectedSession.initialCapitalType === 'crypto' ? 'Venta' : 'Compra'))
+        : (selectedSession.initialCapitalType === 'crypto' ? 'Venta' : 'Compra'),
       crypto_amount: '',
       fiat_amount: '',
       exchange_rate: '',
@@ -215,8 +220,8 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       setFormData({
         order_id: '',
         exchange: '',
-        // Facilita continuar el ciclo: tras comprar, sugerir vender y viceversa.
-        operation_type: operationType === 'Compra' ? 'Venta' : 'Compra',
+        // Preserve the last type as a default; the user can change it for the next movement.
+        operation_type: operationType,
         crypto: selectedSession.crypto || 'USDT',
         fiat: selectedSession.fiat || 'EUR',
         crypto_amount: '',
@@ -376,13 +381,16 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
 
                 <div className="space-y-2">
                   <Label id="operation_type-label" className="text-gray-300 font-medium">Tipo de operación</Label>
-                  <div id="operation_type" aria-readonly="true" className="flex h-11 items-center justify-between rounded-xl border border-purple-500/30 bg-gray-800 px-3">
-                    <Badge className={operationType === 'Compra' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-violet-500/30 bg-violet-500/10 text-violet-300'}>
-                      {operationType.toUpperCase()}
-                    </Badge>
-                    <span className="text-xs text-gray-500">{isFirstSessionOperation ? 'Fijada por el capital inicial' : 'Siguiente paso del ciclo'}</span>
-                  </div>
-                  <p className="text-xs leading-5 text-gray-500">El tipo se determina automáticamente según el capital inicial y los movimientos ya registrados.</p>
+                  <Select value={operationType} onValueChange={(value) => handleInputChange('operation_type', value)} disabled={loading || isFirstSessionOperation}>
+                    <SelectTrigger id="operation_type" aria-labelledby="operation_type-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                      <SelectValue placeholder="Selecciona tipo de operación" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                      <SelectItem value="Compra">Compra</SelectItem>
+                      <SelectItem value="Venta">Venta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs leading-5 text-gray-500">{isFirstSessionOperation ? 'La primera operación está fijada por el tipo de inicio.' : 'Elige Compra o Venta en cada movimiento. Puedes repetir compras o ventas seguidas; no es obligatorio alternarlas.'}</p>
                 </div>
 
                 <div className="space-y-2">

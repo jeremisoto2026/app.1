@@ -256,7 +256,7 @@ describe("calculateArbitrageSessionResult", () => {
 
 
 describe("calculateArbitrageSessionBalances", () => {
-  test("spends the full available fiat balance, then sells the resulting crypto", () => {
+  test("tracks balances and keeps the last operation type as the default", () => {
     const session = { id: "fiat-session", initialCapitalType: "fiat", initialCapital: 100, fiat: "EUR", crypto: "USDT" };
     expect(calculateArbitrageSessionBalances(session, [])).toMatchObject({
       fiatBalance: 100, cryptoBalance: 0, nextOperationType: "Compra", operationCount: 0,
@@ -264,13 +264,25 @@ describe("calculateArbitrageSessionBalances", () => {
     const afterBuy = calculateArbitrageSessionBalances(session, [
       { id: "buy", sessionId: "fiat-session", operation_type: "Compra", fiat: "EUR", crypto: "USDT", fiat_amount: 100, crypto_amount: 9.8, timestamp: new Date("2026-10-01T10:00:00.000Z") },
     ]);
-    expect(afterBuy).toMatchObject({ fiatBalance: 0, cryptoBalance: 9.8, nextOperationType: "Venta", operationCount: 1 });
+    expect(afterBuy).toMatchObject({ fiatBalance: 0, cryptoBalance: 9.8, nextOperationType: "Compra", operationCount: 1 });
     const afterSell = calculateArbitrageSessionBalances(session, [
       { id: "buy", sessionId: "fiat-session", operation_type: "Compra", fiat: "EUR", crypto: "USDT", fiat_amount: 100, crypto_amount: 9.8, timestamp: new Date("2026-10-01T10:00:00.000Z") },
       { id: "sell", sessionId: "fiat-session", operation_type: "Venta", fiat: "EUR", crypto: "USDT", fiat_amount: 107.8, crypto_amount: 9.8, timestamp: new Date("2026-10-01T10:05:00.000Z") },
     ]);
-    expect(afterSell).toMatchObject({ fiatBalance: 107.8, cryptoBalance: 0, nextOperationType: "Compra", operationCount: 2 });
+    expect(afterSell).toMatchObject({ fiatBalance: 107.8, cryptoBalance: 0, nextOperationType: "Venta", operationCount: 2 });
   });
+  test("supports a partial sale followed by another sale in the same direction", () => {
+    const session = { id: "partial-sales", initialCapitalType: "fiat", initialCapital: 500, fiat: "EUR", crypto: "USDT" };
+    const operations = [
+      { id: "buy", sessionId: "partial-sales", operation_type: "Compra", fiat: "EUR", crypto: "USDT", fiat_amount: 500, crypto_amount: 581.3953488372093, timestamp: new Date("2026-10-01T10:00:00.000Z") },
+      { id: "sell-first", sessionId: "partial-sales", operation_type: "Venta", fiat: "EUR", crypto: "USDT", fiat_amount: 180, crypto_amount: 200, timestamp: new Date("2026-10-01T10:05:00.000Z") },
+      { id: "sell-second", sessionId: "partial-sales", operation_type: "Venta", fiat: "EUR", crypto: "USDT", fiat_amount: 90, crypto_amount: 100, timestamp: new Date("2026-10-01T10:10:00.000Z") },
+    ];
+    expect(calculateArbitrageSessionBalances(session, operations)).toMatchObject({
+      fiatBalance: 270, cryptoBalance: 281.3953488372093, nextOperationType: "Venta", operationCount: 3,
+    });
+  });
+
   test("tracks the net movement of sessions without an initial capital", () => {
     const session = { id: "manual-session", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT" };
     expect(calculateArbitrageSessionBalances(session, [])).toMatchObject({
@@ -281,7 +293,7 @@ describe("calculateArbitrageSessionBalances", () => {
       { id: "sell-part", sessionId: "manual-session", operation_type: "Venta", fiat: "EUR", crypto: "USDT", fiat_amount: 33, crypto_amount: 30, timestamp: new Date("2026-10-01T10:05:00.000Z") },
     ];
     expect(calculateArbitrageSessionBalances(session, operations)).toMatchObject({
-      fiatBalance: -17, cryptoBalance: 25, nextOperationType: "Compra", operationCount: 2,
+      fiatBalance: -17, cryptoBalance: 25, nextOperationType: "Venta", operationCount: 2,
     });
     expect(calculateArbitrageSessionResult(session, operations)).toMatchObject({ roi: null, baseCurrency: "EUR" });
   });
@@ -295,7 +307,7 @@ describe("calculateArbitrageSessionBalances", () => {
       { id: "other-buy", sessionId: "other-session", operation_type: "Compra", fiat: "EUR", crypto: "BTC", fiat_amount: 999, crypto_amount: 999 },
       { id: "sale", sessionId: "crypto-session", operation_type: "Venta", fiat: "EUR", crypto: "BTC", fiat_amount: 40, crypto_amount: 2, timestamp: new Date("2026-10-01T10:00:00.000Z") },
     ]);
-    expect(afterSale).toMatchObject({ fiatBalance: 40, cryptoBalance: 0, nextOperationType: "Compra", operationCount: 1 });
+    expect(afterSale).toMatchObject({ fiatBalance: 40, cryptoBalance: 0, nextOperationType: "Venta", operationCount: 1 });
   });
 });
 

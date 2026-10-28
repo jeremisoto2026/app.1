@@ -288,7 +288,7 @@ export const calculateArbitrageSessionBalances = (session = {}, operations = [])
   });
   const lastOperation = orderedOperations[orderedOperations.length - 1];
   const nextOperationType = lastOperation
-    ? (lastOperation.operation_type === "Compra" ? "Venta" : "Compra")
+    ? lastOperation.operation_type
     : (isCryptoBase ? "Venta" : "Compra");
   return {
     fiatBalance,

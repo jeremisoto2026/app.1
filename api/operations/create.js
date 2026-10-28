@@ -70,12 +70,11 @@ module.exports = async function createOperation(req, res) {
       const timeDiff = readTime(a.data.timestamp) - readTime(b.data.timestamp);
       return timeDiff || String(a.id).localeCompare(String(b.id));
     });
-    const lastMovement = orderedOperations[orderedOperations.length - 1];
-    const requiredOperation = lastMovement
-      ? (lastMovement.data.operation_type === "Compra" ? "Venta" : "Compra")
-      : (session.initialCapitalType === "crypto" ? "Venta" : "Compra");
-    if (operationType !== requiredOperation) {
-      throw new HttpError(409, "El siguiente movimiento de este arbitraje debe ser " + requiredOperation.toUpperCase() + ".");
+    if (orderedOperations.length === 0) {
+      const requiredFirstOperation = session.initialCapitalType === "crypto" ? "Venta" : "Compra";
+      if (operationType !== requiredFirstOperation) {
+        throw new HttpError(409, "La primera operación de este arbitraje debe ser " + requiredFirstOperation.toUpperCase() + ".");
+      }
     }
 
     // Legacy sessions can still have an initial capital. New sessions start from a zero-based
