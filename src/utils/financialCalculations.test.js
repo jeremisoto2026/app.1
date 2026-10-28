@@ -279,7 +279,7 @@ describe("calculateArbitrageSessionBalances", () => {
       { id: "sell-second", sessionId: "partial-sales", operation_type: "Venta", fiat: "EUR", crypto: "USDT", fiat_amount: 90, crypto_amount: 100, timestamp: new Date("2026-10-01T10:10:00.000Z") },
     ];
     expect(calculateArbitrageSessionBalances(session, operations)).toMatchObject({
-      fiatBalance: 270, cryptoBalance: 281.3953488372093, nextOperationType: "Venta", operationCount: 3,
+      fiatBalance: 270, cryptoBalance: 281.39534883721, nextOperationType: "Venta", operationCount: 3,
     });
   });
 
