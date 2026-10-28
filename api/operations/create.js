@@ -87,7 +87,15 @@ module.exports = async function createOperation(req, res) {
     sessionOperations.forEach((movement) => {
       const saved = movement.data || {};
       const savedFiatAmount = Number(saved.fiat_amount);
-      const savedCryptoAmount = Number(saved.crypto_amount);
+      const savedCryptoAmountRaw = Number(saved.crypto_amount);
+      const savedFee = Number(saved.fee);
+      const savedFeeCurrency = String(saved.fee_currency || "").trim().toUpperCase();
+      const savedCryptoAmount = saved.source === "binance_p2p" &&
+          savedFeeCurrency === cryptoCode && Number.isFinite(savedFee) && savedFee > 0
+        ? (saved.operation_type === "Compra"
+          ? Math.max(0, savedCryptoAmountRaw - savedFee)
+          : saved.operation_type === "Venta" ? savedCryptoAmountRaw + savedFee : savedCryptoAmountRaw)
+        : savedCryptoAmountRaw;
       if (saved.operation_type === "Compra") {
         if (Number.isFinite(savedFiatAmount)) availableFiat -= savedFiatAmount;
         if (Number.isFinite(savedCryptoAmount)) availableCrypto += savedCryptoAmount;
