@@ -9,6 +9,7 @@ import Operations from "./components/Operations";
 import History from "./components/History";
 import Profile from "./components/Profile";
 import SectionErrorBoundary from "./components/SectionErrorBoundary";
+import BinanceP2PAutoSync from "./components/BinanceP2PAutoSync";
 import {
   FaArrowRight,
   FaCalculator,
@@ -317,6 +318,7 @@ const MainApp = () => {
         </SectionErrorBoundary>
       </main>
       <NavigationBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <BinanceP2PAutoSync />
       {showAuth && (
         <AuthForms
           mode={showAuth}
