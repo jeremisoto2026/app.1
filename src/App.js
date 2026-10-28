@@ -3,12 +3,13 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AuthForms from "./components/AuthForms";
 import NavigationBar from "./components/NavigationBar";
 import Dashboard from "./components/Dashboard";
-import P2PSimulator from "./components/P2PSimulator";
-import ArbitrageSimulator from "./components/ArbitrageSimulator";
+import UnifiedSimulator from "./components/UnifiedSimulator";
+import ArbitrageSessions from "./components/ArbitrageSessions";
 import Operations from "./components/Operations";
 import History from "./components/History";
 import Profile from "./components/Profile";
 import SectionErrorBoundary from "./components/SectionErrorBoundary";
+import BinanceP2PAutoSync from "./components/BinanceP2PAutoSync";
 import {
   FaArrowRight,
   FaCalculator,
@@ -17,6 +18,8 @@ import {
   FaFileAlt,
   FaLock,
   FaMoneyBillWave,
+  FaMoon,
+  FaSun,
   FaShieldAlt,
   FaSignInAlt,
 } from "react-icons/fa";
@@ -53,7 +56,7 @@ const features = [
     title: "Historial exportable",
     description:
       "Busca, filtra y descarga tus registros para revisarlos o analizarlos en una hoja de cálculo.",
-    tag: "EXPORTACIÓN CSV",
+    tag: "EXPORTACIÓN EXCEL",
   },
 ];
 
@@ -61,7 +64,17 @@ const MainApp = () => {
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedSessionId, setSelectedSessionId] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    try { return window.localStorage.getItem("jjx-theme") || "dark"; }
+    catch { return "dark"; }
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.jjxTheme = theme;
+    try { window.localStorage.setItem("jjx-theme", theme); } catch { /* storage may be unavailable */ }
+  }, [theme]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 12);
@@ -70,7 +83,14 @@ const MainApp = () => {
   }, []);
 
   useEffect(() => {
-    if (!user) setActiveTab("dashboard");
+    if (!user?.uid) {
+      setActiveTab("dashboard");
+      return;
+    }
+
+    // Google can authenticate before its popup handler finishes. Close the
+    // auth dialog from the confirmed Firebase session as a reliable fallback.
+    setShowAuth(null);
   }, [user?.uid]);
 
   const handleTabChange = (tab) => {
@@ -92,7 +112,7 @@ const MainApp = () => {
 
         <header className={`landing-header ${scrolled ? "landing-header-scrolled" : ""}`}>
           <a className="landing-brand" href="#inicio" aria-label="JJXCAPITAL, inicio">
-            <span className="landing-brand-mark" aria-hidden="true">J</span>
+            <span className="landing-brand-mark" aria-hidden="true"><img src={`${process.env.PUBLIC_URL}/jjxcapital-mark.svg`} alt="" /></span>
             <span className="landing-brand-copy">
               <strong>JJXCAPITAL</strong>
               <small>CONTROL · ANÁLISIS · CLARIDAD</small>
@@ -157,7 +177,7 @@ const MainApp = () => {
               <section className="landing-preview" aria-label="Vista previa del panel de la aplicación">
                 <div className="preview-topbar">
                   <div className="preview-brand">
-                    <span className="preview-brand-mark">J</span>
+                    <span className="preview-brand-mark"><img src={`${process.env.PUBLIC_URL}/jjxcapital-mark.svg`} alt="" /></span>
                     <span><strong>JJXCAPITAL</strong><small>RESUMEN DE CUENTA</small></span>
                   </div>
                   <span className="preview-pill"><span className="status-dot" /> Vista previa</span>
@@ -254,7 +274,7 @@ const MainApp = () => {
 
           <footer className="landing-footer">
             <a className="landing-brand landing-brand-footer" href="#inicio" aria-label="Volver al inicio de JJXCAPITAL">
-              <span className="landing-brand-mark">J</span>
+              <span className="landing-brand-mark" aria-hidden="true"><img src={`${process.env.PUBLIC_URL}/jjxcapital-mark.svg`} alt="" /></span>
               <span className="landing-brand-copy"><strong>JJXCAPITAL</strong><small>CONTROL · ANÁLISIS · CLARIDAD</small></span>
             </a>
             <p>Herramienta de organización y simulación financiera. No constituye asesoramiento de inversión.</p>
@@ -279,19 +299,26 @@ const MainApp = () => {
         <SectionErrorBoundary key={activeTab} onReturn={() => handleTabChange("dashboard")}>
           {activeTab === "dashboard" && (
             <Dashboard
+              theme={theme}
+              onToggleTheme={() => setTheme((current) => current === "dark" ? "light" : "dark")}
               onOpenProfile={() => handleTabChange("profile")}
               onOpenOperations={() => handleTabChange("operations")}
               onOpenHistory={() => handleTabChange("history")}
+              onOpenArbitrages={() => handleTabChange("sessions")}
             />
           )}
-          {activeTab === "p2p" && <P2PSimulator />}
-          {activeTab === "arbitrage" && <ArbitrageSimulator />}
-          {activeTab === "operations" && <Operations />}
+          {activeTab === "simulator" && <UnifiedSimulator />}
+          {activeTab === "sessions" && <ArbitrageSessions onOpenOperations={(sessionId) => {
+            setSelectedSessionId(sessionId);
+            handleTabChange("operations");
+          }} />}
+          {activeTab === "operations" && <Operations initialSessionId={selectedSessionId} onOpenArbitrages={() => handleTabChange("sessions")} />}
           {activeTab === "history" && <History />}
           {activeTab === "profile" && <Profile />}
         </SectionErrorBoundary>
       </main>
       <NavigationBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <BinanceP2PAutoSync />
       {showAuth && (
         <AuthForms
           mode={showAuth}
@@ -312,3 +339,4 @@ function App() {
 }
 
 export default App;
+

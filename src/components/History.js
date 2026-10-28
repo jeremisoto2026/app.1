@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, deleteDoc, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -12,8 +12,8 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
-import { calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
-import { serializeCsv } from "../utils/csv";
+import { calculateArbitrageSessionResult, calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
+import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { filterOperations } from "../utils/operationFilters";
 import { 
   TrashIcon, 
@@ -45,8 +45,11 @@ const PAGE_SIZE = 10;
 const History = () => {
   const { user } = useAuth();
   const [operations, setOperations] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [sessionFilter, setSessionFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [sessionsFetchWarning, setSessionsFetchWarning] = useState("");
   const [filters, setFilters] = useState({
     crypto: "",
     fiat: "",
@@ -68,7 +71,7 @@ const History = () => {
   const [editError, setEditError] = useState("");
   const [editData, setEditData] = useState({
     order_id: "", exchange: "", operation_type: "", crypto: "", fiat: "",
-    amount: "", exchange_rate: "", fee: "0",
+    amount: "", exchange_rate: "", fee: "0", sessionId: "__unassigned__",
   });
 
   // Calcular cada venta con el historial completo, no solo con el filtro visual,
@@ -78,6 +81,13 @@ const History = () => {
     [operations]
   );
   const realizedProfitByOperation = financialMetrics.realizedProfitByOperation || {};
+  const sessionResults = useMemo(() => sessions.map(session => {
+    const sessionOperations = operations.filter(operation => operation.sessionId === session.id);
+    return {
+      ...session,
+      ...calculateArbitrageSessionResult(session, sessionOperations),
+    };
+  }), [sessions, operations]);
 
   // ---------- NUEVO: estados para diálogos personalizados ----------
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -94,13 +104,16 @@ const History = () => {
     const fetchOperations = async () => {
       if (!user) {
         setOperations([]);
+        setSessions([]);
         setFetchError("");
+        setSessionsFetchWarning("");
         setLoading(false);
         return;
       }
 
       setLoading(true);
       setFetchError("");
+      setSessionsFetchWarning("");
 
       try {
         // Incluye operaciones antiguas sin fecha y las ordena de forma fiable en cliente.
@@ -109,6 +122,15 @@ const History = () => {
           id: operationDoc.id,
           ...operationDoc.data(),
         }));
+        try {
+          const sessionSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
+          if (!cancelled) setSessions(sessionSnapshot.docs.map(sessionDoc => ({ id: sessionDoc.id, ...sessionDoc.data() })));
+        } catch (sessionError) {
+          console.warn("No se pudieron cargar los nombres de arbitraje en el historial:", sessionError);
+          if (!cancelled) {
+            setSessionsFetchWarning("No se pudieron cargar los arbitrajes. Los movimientos siguen visibles, pero sus resúmenes y filtros por sesión pueden estar incompletos. Comprueba las reglas de Firestore.");
+          }
+        }
         data.sort((a, b) => {
           const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
           const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
@@ -157,6 +179,7 @@ const History = () => {
         : (operation.fiat_amount ?? ""),
       exchange_rate: operation.exchange_rate ?? "",
       fee: operation.fee ?? "0",
+      sessionId: operation.sessionId || "__unassigned__",
     });
     setEditError("");
     setIsEditDialogOpen(true);
@@ -186,6 +209,23 @@ const History = () => {
       if (!editData.exchange || !editData.operation_type || !editData.crypto || !editData.fiat) {
         throw new Error("Completa la plataforma, el tipo de operación y ambas monedas.");
       }
+      const selectedSessionId = editData.sessionId && editData.sessionId !== "__unassigned__"
+        ? editData.sessionId
+        : "";
+      const targetSession = selectedSessionId
+        ? sessions.find(session => session.id === selectedSessionId)
+        : null;
+      if (selectedSessionId && !targetSession) {
+        throw new Error("No se pudo verificar el arbitraje seleccionado. Recarga el historial e inténtalo de nuevo.");
+      }
+      if (targetSession) {
+        const pairMismatch =
+          (targetSession.crypto && String(editData.crypto).toUpperCase() !== String(targetSession.crypto).toUpperCase()) ||
+          (targetSession.fiat && String(editData.fiat).toUpperCase() !== String(targetSession.fiat).toUpperCase());
+        if (pairMismatch) {
+          throw new Error("El par de monedas no coincide con el arbitraje seleccionado. Elige una sesión compatible o deja la operación sin asignar.");
+        }
+      }
       const calculatedAmounts = calculateOperationAmounts({
         operation_type: editData.operation_type,
         amount: editData.amount,
@@ -201,6 +241,9 @@ const History = () => {
         crypto: editData.crypto,
         fiat: editData.fiat,
         ...calculatedAmounts,
+        sessionId: targetSession?.id || null,
+        sessionName: targetSession?.name || (operationToEdit.source === "binance_p2p" ? "Binance P2P · Importado" : ""),
+        arbitrageType: targetSession?.strategy || (operationToEdit.source === "binance_p2p" ? "Binance P2P" : ""),
       };
 
       await updateDoc(doc(db, "users", user.uid, "operations", operationToEdit.id), updates);
@@ -240,7 +283,7 @@ const History = () => {
     }
   };
 
-  const exportToCSV = (data) => {
+  const exportToExcel = (data) => {
     if (!Array.isArray(data) || data.length === 0) {
       return false;
     }
@@ -264,7 +307,7 @@ const History = () => {
       const rows = sortedData.map(op => {
         const hasCryptoAmount = op.crypto_amount !== null && op.crypto_amount !== undefined && op.crypto_amount !== "";
         const cryptoAmount = Number(op.crypto_amount);
-        const formattedCryptoAmount = hasCryptoAmount && Number.isFinite(cryptoAmount) ? cryptoAmount.toFixed(8) : "";
+        const formattedCryptoAmount = hasCryptoAmount && Number.isFinite(cryptoAmount) ? cryptoAmount : "";
         const realization = op.operation_type === "Venta" ? realizedProfitByOperation[op.id] : null;
         const knownProfit = realization && realization.matchedQuantity > 0;
         const costCoverage = op.operation_type !== "Venta"
@@ -287,20 +330,20 @@ const History = () => {
           op.fiat || "",
           op.fiat_amount === null || op.fiat_amount === undefined || op.fiat_amount === ""
             ? ""
-            : Number.isFinite(Number(op.fiat_amount)) ? Number(op.fiat_amount).toFixed(2) : "",
+            : Number.isFinite(Number(op.fiat_amount)) ? Number(op.fiat_amount) : "",
           op.exchange_rate === null || op.exchange_rate === undefined || op.exchange_rate === ""
             ? ""
-            : Number.isFinite(Number(op.exchange_rate)) ? String(op.exchange_rate) : "",
+            : Number.isFinite(Number(op.exchange_rate)) ? Number(op.exchange_rate) : "",
           op.fee === null || op.fee === undefined || op.fee === ""
             ? ""
-            : Number.isFinite(Number(op.fee)) ? String(Number(op.fee)) : "",
+            : Number.isFinite(Number(op.fee)) ? Number(op.fee) : "",
           op.fee === null || op.fee === undefined || op.fee === ""
             ? ""
             : op.fee_currency || (op.operation_type === "Venta" ? op.fiat : op.crypto) || "",
-          knownProfit ? realization.matchedQuantity.toFixed(8) : "",
-          knownProfit ? realization.matchedProceeds.toFixed(2) : "",
-          knownProfit ? realization.matchedCost.toFixed(2) : "",
-          knownProfit ? realization.profit.toFixed(2) : "",
+          knownProfit ? realization.matchedQuantity : "",
+          knownProfit ? realization.matchedProceeds : "",
+          knownProfit ? realization.matchedCost : "",
+          knownProfit ? realization.profit : "",
           knownProfit ? realization.currency : "",
           costCoverage,
           formatDateForCSV(op.timestamp),
@@ -309,27 +352,12 @@ const History = () => {
 
       // Las columnas textuales son seguras frente a fórmulas; las columnas
       // numéricas conservan sus valores, incluidos los beneficios negativos.
-      const csvContent = serializeCsv(headers, rows, [0, 1, 2, 3, 4, 6, 10, 15, 16, 17]);
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-        return true;
-      } else {
-        showExportDialog('error', 'Error del navegador', 'Tu navegador no permite descargar archivos desde esta página.');
-        return false;
-      }
+      const excelXml = buildExcelXml(headers, rows);
+      downloadExcelXml(`historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.xls`, excelXml);
+      return true;
     } catch (err) {
-      console.error("Error al generar el CSV:", err);
-      showExportDialog('error', 'Error', 'Ocurrió un error al generar el CSV.');
+      console.error("Error al generar el Excel:", err);
+      showExportDialog('error', 'Error', 'Ocurrió un error al generar el archivo de Excel.');
       return false;
     }
   };
@@ -378,25 +406,32 @@ const History = () => {
       return;
     }
 
-    const exported = exportToCSV(dataToExport);
-
-    if (!exported) {
+    if (!user?.getIdToken) {
+      showExportDialog("error", "Sesión requerida", "Inicia sesión de nuevo para registrar esta exportación.");
       return;
     }
 
-    if (user) {
-      try {
-        const userRef = doc(db, "users", user.uid);
-        // Mantener sincronizados el contador actual y la ruta histórica para
-        // que los perfiles antiguos no pierdan el límite ya consumido.
-        await updateDoc(userRef, {
-          exportsUsed: increment(1),
-          "usage.exportaciones.usadas": increment(1),
-        });
-      } catch (error) {
-        console.error("Error al actualizar el contador de exportaciones:", error);
+    // El servidor comprueba el plan y registra el uso antes de permitir la descarga.
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/usage/record-export", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "operation_history" }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showExportDialog("warning", "Límite del plan alcanzado", payload.error || "No se puede exportar con el plan actual.");
+        return;
       }
+    } catch (error) {
+      console.error("Error al comprobar el límite de exportaciones:", error);
+      showExportDialog("error", "No se pudo autorizar la exportación", "Inténtalo de nuevo. No se ha iniciado la descarga.");
+      return;
     }
+
+    const exported = exportToExcel(dataToExport);
+    if (!exported) return;
   };
   
   const formatDateForCSV = (timestamp) => {
@@ -408,11 +443,12 @@ const History = () => {
     if (value === null || value === undefined || value === "") return "—";
     const amount = Number(value);
     if (!Number.isFinite(amount)) return "—";
+    const currencyCode = String(currency || "").trim().toUpperCase();
+    const supportsCryptoPrecision = ["BTC", "ETH", "BNB", "USDT", "USDC", "DAI", "SOL", "XRP", "LTC"].includes(currencyCode);
     const formatted = new Intl.NumberFormat("es-ES", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      maximumFractionDigits: supportsCryptoPrecision ? 8 : 2,
     }).format(amount);
-    const currencyCode = String(currency || "").trim().toUpperCase();
     // Mostrar siempre el código evita confundir USD con USDT u otras monedas con símbolo $.
     return currencyCode ? formatted + " " + currencyCode : formatted + " (moneda no especificada)";
   };
@@ -426,9 +462,15 @@ const History = () => {
     return [...new Set(operations.map((op) => op[field]).filter(Boolean))];
   };
 
+  const sessionScopedOperations = useMemo(() => {
+    if (sessionFilter === "all") return operations;
+    if (sessionFilter === "__legacy__") return operations.filter(operation => !operation.sessionId);
+    return operations.filter(operation => operation.sessionId === sessionFilter);
+  }, [operations, sessionFilter]);
+
   const filteredOperations = useMemo(
-    () => filterOperations(operations, filters),
-    [operations, filters]
+    () => filterOperations(sessionScopedOperations, filters),
+    [sessionScopedOperations, filters]
   );
 
   const sortedOperations = useMemo(() => {
@@ -447,7 +489,7 @@ const History = () => {
   useEffect(() => {
     setBuyPage(1);
     setSellPage(1);
-  }, [filters, sortOrder]);
+  }, [filters, sortOrder, sessionFilter]);
 
   const buyOperations = sortedOperations.filter(op => op.operation_type === 'Compra');
   const sellOperations = sortedOperations.filter(op => op.operation_type === 'Venta');
@@ -461,7 +503,7 @@ const History = () => {
   }, [buyOperations.length, sellOperations.length]);
 
   const hasActiveFilters = Boolean(
-    filters.crypto || filters.fiat || filters.exchange || filters.search.trim()
+    filters.crypto || filters.fiat || filters.exchange || filters.search.trim() || sessionFilter !== "all"
   );
 
   const renderOperations = (ops, currentPage, setPage, operationLabel) => {
@@ -483,7 +525,7 @@ const History = () => {
             <button
               type="button"
               className="dashboard-text-action mt-4"
-              onClick={() => setFilters({ crypto: "", fiat: "", exchange: "", search: "" })}
+              onClick={() => { setFilters({ crypto: "", fiat: "", exchange: "", search: "" }); setSessionFilter("all"); }}
             >
               <ArrowPathIcon className="h-4 w-4" /> Limpiar filtros
             </button>
@@ -506,6 +548,7 @@ const History = () => {
           <div className="flex justify-between items-center">
             <div className="flex-1">
               <span className="text-purple-400 font-semibold">Orden #{operation.order_id || "N/A"}</span>
+                {operation.sessionName && <span className="mt-1 block text-xs text-gray-500">Arbitraje: {operation.sessionName}</span>}
             </div>
             <div className="flex items-center gap-2">
               <Badge className={operation.operation_type === 'Compra' 
@@ -673,6 +716,30 @@ const History = () => {
           </p>
         </div>
 
+        {sessionResults.length > 0 && (
+          <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
+            <CardHeader className="p-0 mb-4">
+              <CardTitle className="text-xl font-bold text-white">Resultado por arbitraje</CardTitle>
+              <p className="text-sm text-gray-400">El beneficio se calcula en la moneda elegida al iniciar cada arbitraje. El ROI solo se muestra cuando hay un capital inicial registrado.</p>
+            </CardHeader>
+            <CardContent className="p-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {sessionResults.map(session => (
+                <div key={session.id} className="rounded-xl border border-purple-500/15 bg-gray-950/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-white">{session.name}</p>
+                      <p className="mt-1 text-xs text-gray-500">{Number(session.initialCapital) > 0 ? `Capital inicial: ${formatCurrency(session.initialCapital, session.baseCurrency)}` : `Inicio: ${session.isCryptoBase ? "Criptomoneda" : "Fiat"}`}</p>
+                    </div>
+                    <Badge className={session.status === "active" ? "bg-emerald-500/10 text-emerald-300" : "bg-gray-700 text-gray-300"}>{session.status === "active" ? "Activo" : "Cerrado"}</Badge>
+                  </div>
+                  <p className={`mt-3 text-xl font-bold ${session.profit > 0 ? "text-green-400" : session.profit < 0 ? "text-red-400" : "text-white"}`}>{formatCurrency(session.profit, session.baseCurrency)}</p>
+                  <p className="mt-1 text-xs text-gray-400">{Number.isFinite(session.roi) ? `Beneficio / pérdida · ROI ${session.roi.toFixed(2)}%` : "Beneficio / pérdida · ROI no disponible sin capital inicial"}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Filtros */}
         <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
           <CardHeader className="p-0 mb-6 border-b border-purple-500/10 pb-4">
@@ -688,6 +755,7 @@ const History = () => {
                 variant="outline"
                 onClick={() => {
                   setFilters({ crypto: "", fiat: "", exchange: "", search: "" });
+                  setSessionFilter("all");
                   setSortOrder("newest");
                   setBuyPage(1);
                   setSellPage(1);
@@ -700,7 +768,20 @@ const History = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label id="history-session-label" htmlFor="history-session" className="text-gray-300 font-medium">Arbitraje</Label>
+                <Select value={sessionFilter} onValueChange={setSessionFilter}>
+                  <SelectTrigger id="history-session" aria-labelledby="history-session-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
+                    <SelectValue placeholder="Todos los arbitrajes" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
+                    <SelectItem value="all">Todos los arbitrajes</SelectItem>
+                    {sessions.map(session => <SelectItem key={session.id} value={session.id}>{session.name} ({session.fiat || "EUR"} / {session.crypto || "USDT"})</SelectItem>)}
+                    <SelectItem value="__legacy__">Operaciones antiguas sin arbitraje</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label id="history-crypto-label" htmlFor="history-crypto" className="text-gray-300 font-medium">Criptomoneda</Label>
                 <Select value={filters.crypto || "__all__"} onValueChange={(value) => setFilters((previous) => ({ ...previous, crypto: value === "__all__" ? "" : value }))}>
@@ -828,7 +909,7 @@ const History = () => {
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-11 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20"
               >
                 <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-                Exportar CSV
+                Exportar Excel
               </Button>
             </div>
           </CardContent>
@@ -837,6 +918,11 @@ const History = () => {
         {fetchError && (
           <div role="alert" className="rounded-xl border border-red-500/30 bg-red-900/20 p-4 text-red-200">
             {fetchError}
+          </div>
+        )}
+        {sessionsFetchWarning && (
+          <div role="status" className="rounded-xl border border-amber-500/30 bg-amber-900/10 p-4 text-amber-100">
+            {sessionsFetchWarning}
           </div>
         )}
 
@@ -891,6 +977,21 @@ const History = () => {
           </DialogHeader>
           <form onSubmit={handleSaveEdit} className="space-y-4">
             {editError && <div role="alert" className="rounded-lg border border-red-500/30 bg-red-900/20 p-3 text-sm text-red-200">{editError}</div>}
+            <div className="space-y-2">
+              <Label id="edit-session-label" htmlFor="edit-session">Vincular a arbitraje</Label>
+              <Select value={editData.sessionId || "__unassigned__"} onValueChange={(value) => handleEditFieldChange("sessionId", value)}>
+                <SelectTrigger id="edit-session" aria-labelledby="edit-session-label"><SelectValue placeholder="Elegir arbitraje" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unassigned__">Sin asignar · solo historial</SelectItem>
+                  {sessions.map((session) => (
+                    <SelectItem key={session.id} value={session.id}>
+                      {session.name} ({session.fiat || "EUR"} / {session.crypto || "USDT"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">Solo se guardará la vinculación si las monedas coinciden con la sesión. Para crear otra sesión, ve primero a Arbitrajes.</p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-order-id">Número de orden</Label>

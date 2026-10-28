@@ -5,6 +5,7 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   signOut as firebaseSignOut,
   updateProfile
@@ -54,7 +55,9 @@ export const AuthProvider = ({ children }) => {
         apellido: lastName,
         photoURL: result.user.photoURL || "",
         plan: "free",          // 👈 solo plan, sin role
-        exportsUsed: 0,        // 👈 contador inicial
+        exportsUsed: 0,        // contador inicial de exportaciones
+        ordersUsed: 0,
+        movementsUsed: 0,
         createdAt: serverTimestamp()
       });
 
@@ -73,6 +76,12 @@ export const AuthProvider = ({ children }) => {
       console.error("Error al iniciar sesión:", error);
       throw error;
     }
+  };
+
+  const resetPassword = async (email) => {
+    const normalizedEmail = String(email || "").trim();
+    if (!normalizedEmail) throw new Error("Introduce tu correo electrónico.");
+    return sendPasswordResetEmail(auth, normalizedEmail);
   };
 
   // 🔹 Inicio de sesión con Google
@@ -105,6 +114,8 @@ export const AuthProvider = ({ children }) => {
           photoURL: result.user.photoURL || "",
           plan: "free",
           exportsUsed: 0,
+          ordersUsed: 0,
+          movementsUsed: 0,
           createdAt: serverTimestamp(),
         });
       }
@@ -131,6 +142,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     signUp,
     signIn,
+    resetPassword,
     signInWithGoogle,
     signOut
   };

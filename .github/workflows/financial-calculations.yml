@@ -13,6 +13,7 @@ on:
     branches:
       - main
       - fix/financial-calculations
+      - feat/arbitrage-sessions-export-profile
   pull_request:
     branches:
       - main

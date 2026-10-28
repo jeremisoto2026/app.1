@@ -109,6 +109,22 @@ export const calculateOperationAmounts = ({
 
 const normalizeCurrency = (value) => String(value || "").trim().toUpperCase();
 
+export const getAccountingCryptoAmount = (operation = {}) => {
+  const quantity = toFiniteNumber(operation.crypto_amount);
+  if (!Number.isFinite(quantity)) return quantity;
+  const fee = toFiniteNumber(operation.fee);
+  const cryptoCode = normalizeCurrency(operation.crypto);
+  const feeCurrency = normalizeCurrency(operation.fee_currency);
+  if (operation.source !== "binance_p2p" || !Number.isFinite(fee) || fee <= 0 ||
+      !cryptoCode || feeCurrency !== cryptoCode) return quantity;
+
+  // Binance P2P reports its order fee in crypto. For accounting, a buy adds
+  // the net crypto received; a sell consumes the order quantity plus its fee.
+  if (operation.operation_type === "Compra") return Math.max(0, quantity - fee);
+  if (operation.operation_type === "Venta") return quantity + fee;
+  return quantity;
+};
+
 const addToCurrencyTotal = (totals, currency, amount) => {
   const key = normalizeCurrency(currency);
   if (!key || !Number.isFinite(amount)) return;
@@ -133,7 +149,7 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
       ...operation,
       _calculationDate: getOperationDate(operation.timestamp),
       _originalIndex: index,
-      _cryptoQuantity: toFiniteNumber(operation.crypto_amount),
+      _cryptoQuantity: getAccountingCryptoAmount(operation),
       _fiatValue: toFiniteNumber(operation.fiat_amount),
       _cryptoCode: normalizeCurrency(operation.crypto),
       _fiatCode: normalizeCurrency(operation.fiat),
@@ -155,7 +171,10 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
     );
 
   datedOperations.forEach((operation) => {
-    const pairKey = `${operation._cryptoCode}/${operation._fiatCode}`;
+    // An arbitraje es una unidad contable aislada. Las operaciones antiguas sin sessionId
+    // se siguen agrupando entre sí para no perder su historial previo.
+    const sessionKey = operation.sessionId || "__legacy__";
+    const pairKey = sessionKey + "::" + operation._cryptoCode + "/" + operation._fiatCode;
     if (!inventoryByPair.has(pairKey)) inventoryByPair.set(pairKey, []);
     const lots = inventoryByPair.get(pairKey);
 
@@ -246,7 +265,207 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
   };
 };
 
- 
+
+// Shared session-level accounting keeps the detail screen and history ROI consistent.
+// Operations with a different asset pair are excluded so unlike currencies are never
+// mixed into a session result, even if an old/editable record contains inconsistent data.
+export const calculateArbitrageSessionBalances = (session = {}, operations = []) => {
+  const isCryptoBase = session.initialCapitalType === "crypto";
+  const initialCapital = toFiniteNumber(session.initialCapital);
+  const initial = Number.isFinite(initialCapital) && initialCapital > 0 ? initialCapital : 0;
+  const cryptoCode = normalizeCurrency(session.crypto);
+  const fiatCode = normalizeCurrency(session.fiat);
+  const matchingOperations = (Array.isArray(operations) ? operations : []).filter((operation) => {
+    if (session.id && operation.sessionId !== session.id) return false;
+    return (!cryptoCode || normalizeCurrency(operation.crypto) === cryptoCode) &&
+      (!fiatCode || normalizeCurrency(operation.fiat) === fiatCode);
+  });
+  let fiatBalance = isCryptoBase ? 0 : initial;
+  let cryptoBalance = isCryptoBase ? initial : 0;
+  matchingOperations.forEach((operation) => {
+    const fiatAmount = toFiniteNumber(operation.fiat_amount);
+    const cryptoAmount = getAccountingCryptoAmount(operation);
+    if (operation.operation_type === "Compra") {
+      if (Number.isFinite(fiatAmount)) fiatBalance -= fiatAmount;
+      if (Number.isFinite(cryptoAmount)) cryptoBalance += cryptoAmount;
+    } else if (operation.operation_type === "Venta") {
+      if (Number.isFinite(cryptoAmount)) cryptoBalance -= cryptoAmount;
+      if (Number.isFinite(fiatAmount)) fiatBalance += fiatAmount;
+    }
+  });
+  const cleanBalance = (value, tolerance) => Math.abs(value) < tolerance ? 0 : Number(value.toPrecision(14));
+  fiatBalance = cleanBalance(fiatBalance, 1e-8);
+  cryptoBalance = cleanBalance(cryptoBalance, 1e-10);
+  const orderedOperations = matchingOperations.slice().sort((a, b) => {
+    const dateA = getOperationDate(a.timestamp)?.getTime() ?? 0;
+    const dateB = getOperationDate(b.timestamp)?.getTime() ?? 0;
+    if (dateA !== dateB) return dateA - dateB;
+    return String(a.id || "").localeCompare(String(b.id || ""));
+  });
+  const lastOperation = orderedOperations[orderedOperations.length - 1];
+  const nextOperationType = lastOperation
+    ? lastOperation.operation_type
+    : (isCryptoBase ? "Venta" : "Compra");
+  return {
+    fiatBalance,
+    cryptoBalance,
+    nextOperationType,
+    operationCount: matchingOperations.length,
+    lastOperationType: lastOperation?.operation_type || null,
+  };
+};
+
+export const calculateArbitrageSessionResult = (session = {}, operations = []) => {
+  const initialCapital = toFiniteNumber(session.initialCapital);
+  const isCryptoBase = session.initialCapitalType === "crypto";
+  const cryptoCode = normalizeCurrency(session.crypto);
+  const fiatCode = normalizeCurrency(session.fiat);
+  const baseCurrency = normalizeCurrency(session.initialCapitalCurrency) ||
+    (isCryptoBase ? cryptoCode : fiatCode) || (isCryptoBase ? "USDT" : "EUR");
+  const matchingOperations = (Array.isArray(operations) ? operations : []).filter((operation) => {
+    // If a caller passes a global operation list, never include another session
+    // merely because it uses the same pair of currencies.
+    if (session.id && operation.sessionId !== session.id) return false;
+    const operationCrypto = normalizeCurrency(operation.crypto);
+    const operationFiat = normalizeCurrency(operation.fiat);
+    return (!cryptoCode || operationCrypto === cryptoCode) &&
+      (!fiatCode || operationFiat === fiatCode);
+  });
+
+  let profit = 0;
+  if (isCryptoBase) {
+    profit = matchingOperations.reduce((total, operation) => {
+      const quantity = getAccountingCryptoAmount(operation);
+      if (!Number.isFinite(quantity) || quantity <= 0) return total;
+      if (operation.operation_type === "Compra") return total + quantity;
+      if (operation.operation_type === "Venta") return total - quantity;
+      return total;
+    }, 0);
+  } else {
+    profit = calculateDashboardMetrics(matchingOperations).profitByCurrency?.[fiatCode] || 0;
+  }
+
+  return {
+    profit,
+    initialCapital: Number.isFinite(initialCapital) ? initialCapital : 0,
+    roi: Number.isFinite(initialCapital) && initialCapital > 0
+      ? (profit / initialCapital) * 100
+      : (session.initialCapital === 0 ? 0 : null),
+    baseCurrency,
+    isCryptoBase,
+    operationCount: matchingOperations.length,
+  };
+};
+
+
+// Dashboard accounting combines two clearly distinct units:
+// - fiat-start / legacy operations use realized FIFO profit in quote currency;
+// - crypto-start sessions contribute their net result in the initial crypto asset.
+// Crypto-start operations are excluded from FIFO totals to avoid a misleading
+// quote-currency result without a fiat cost basis for the initial crypto capital.
+export const calculateDashboardSummaryMetrics = (operations = [], sessions = [], now = new Date()) => {
+  const allOperations = Array.isArray(operations) ? operations : [];
+  const allSessions = Array.isArray(sessions) ? sessions : [];
+  const referenceDate = getOperationDate(now) || new Date();
+  const startOfWindow = new Date(referenceDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const cryptoSessions = allSessions.filter((session) =>
+    session && session.id && session.initialCapitalType === "crypto"
+  );
+  const cryptoSessionIds = new Set(cryptoSessions.map((session) => session.id));
+  const fiatAccountingOperations = allOperations.filter(
+    (operation) => !cryptoSessionIds.has(operation.sessionId)
+  );
+
+  const metrics = calculateDashboardMetrics(fiatAccountingOperations, referenceDate);
+  const profitByCurrency = { ...(metrics.profitByCurrency || {}) };
+  const monthlyProfitByCurrency = { ...(metrics.monthlyProfitByCurrency || {}) };
+  let completedCryptoCycles = 0;
+  let winningCryptoCycles = 0;
+
+  cryptoSessions.forEach((session) => {
+    const result = calculateArbitrageSessionResult(session, allOperations);
+    if (!result.operationCount || !result.baseCurrency || !Number.isFinite(result.profit)) return;
+
+    profitByCurrency[result.baseCurrency] =
+      (profitByCurrency[result.baseCurrency] || 0) + result.profit;
+
+    // Attribute only the net crypto result generated by operations inside the
+    // same 30-day window used for fiat metrics, keeping each asset separate.
+    const recentSessionOperations = allOperations.filter((operation) => {
+      if (operation.sessionId !== session.id) return false;
+      const operationDate = getOperationDate(operation.timestamp);
+      return operationDate &&
+        operationDate >= startOfWindow &&
+        operationDate <= referenceDate;
+    });
+    const recentResult = calculateArbitrageSessionResult(session, recentSessionOperations);
+
+    if (recentResult.operationCount && recentResult.baseCurrency && Number.isFinite(recentResult.profit)) {
+      monthlyProfitByCurrency[recentResult.baseCurrency] =
+        (monthlyProfitByCurrency[recentResult.baseCurrency] || 0) + recentResult.profit;
+    }
+
+    // In crypto-start sessions, a cycle is completed when one or more valid
+    // sales are followed by one or more valid crypto purchases. The session can
+    // remain active; an unfinished sale without a subsequent buy is not counted.
+    const validSessionOperations = allOperations
+      .map((operation, index) => ({
+        operation,
+        index,
+        date: getOperationDate(operation.timestamp),
+        cryptoAmount: toFiniteNumber(operation.crypto_amount),
+        fiatAmount: toFiniteNumber(operation.fiat_amount),
+      }))
+      .filter(({ operation, date, cryptoAmount, fiatAmount }) =>
+        operation.sessionId === session.id &&
+        normalizeCurrency(operation.crypto) === normalizeCurrency(session.crypto) &&
+        normalizeCurrency(operation.fiat) === normalizeCurrency(session.fiat) &&
+        date &&
+        ["Compra", "Venta"].includes(operation.operation_type) &&
+        Number.isFinite(cryptoAmount) && cryptoAmount > 0 &&
+        Number.isFinite(fiatAmount) && fiatAmount > 0
+      )
+      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.index - b.index);
+
+    let cycleSellCrypto = 0;
+    let cycleBuyCrypto = 0;
+    const finishCycle = () => {
+      if (cycleSellCrypto > 0 && cycleBuyCrypto > 0) {
+        completedCryptoCycles += 1;
+        if (cycleBuyCrypto - cycleSellCrypto > 1e-10) winningCryptoCycles += 1;
+      }
+      cycleSellCrypto = 0;
+      cycleBuyCrypto = 0;
+    };
+
+    validSessionOperations.forEach(({ operation, cryptoAmount }) => {
+      if (operation.operation_type === "Venta") {
+        // A new sale starts the next cycle; finalize a previous sale/rebuy pair.
+        if (cycleSellCrypto > 0 && cycleBuyCrypto > 0) finishCycle();
+        cycleSellCrypto += cryptoAmount;
+      } else if (operation.operation_type === "Compra" && cycleSellCrypto > 0) {
+        cycleBuyCrypto += cryptoAmount;
+      }
+    });
+    // Also count the latest cycle if its repurchase has already been recorded.
+    finishCycle();
+  });
+
+  const closedSales = (metrics.closedSales || 0) + completedCryptoCycles;
+  const winningSales = (metrics.winningSales || 0) + winningCryptoCycles;
+  const successRate = closedSales ? (winningSales / closedSales) * 100 : 0;
+
+  return {
+    ...metrics,
+    totalOperations: allOperations.length,
+    closedSales,
+    winningSales,
+    successRate,
+    profitByCurrency,
+    monthlyProfitByCurrency,
+  };
+};
+
 export const calculateCryptoArbitrage = ({
   amount,
   buy_price,

@@ -94,10 +94,30 @@ describe("Profile", () => {
 
     expect(container.textContent).toContain("Información del perfil");
     expect(container.textContent).toContain("Uso de tu cuenta");
-    expect(container.textContent).toContain("Operaciones registradas");
+    expect(container.textContent).toContain("Movimientos registrados");
     expect(container.textContent).toContain("2");
-    expect(container.textContent).toContain("Suscripciones");
+    expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
+    expect(container.textContent).toContain("TIPO DE PLAN ACTUAL");
+    expect(container.textContent).toContain("Órdenes / arbitrajes");
+    expect(container.textContent).toContain("Máximo 300");
+    expect(container.textContent).toContain("150 máximo");
+    expect(container.textContent).toContain("Máximo 50");
+    expect(container.textContent).toContain("Método de pago");
+    expect(container.textContent).toContain("Historial de pagos");
+    expect(container.textContent).toContain("15 USDT");
+    expect(container.textContent).not.toContain("Pagar con Binance Pay");
+    expect(container.textContent).toContain("0x4c64b783f1babc0a2fe62f174873f415393c2269");
+    expect(container.textContent).toContain("BNB Smart Chain (BEP20)");
+    expect(container.textContent).toContain("La verificación consulta la blockchain");
     expect(container.textContent).toContain("Contactar con soporte");
+    const supportLink = Array.from(container.querySelectorAll("a")).find(
+      (link) => link.textContent.trim() === "Contactar con soporte"
+    );
+    expect(supportLink).toBeTruthy();
+    expect(supportLink.getAttribute("href")).toContain("https://mail.google.com/mail/?view=cm");
+    expect(supportLink.getAttribute("href")).toContain("to=soportejjxcapital%40gmail.com");
+    expect(supportLink.getAttribute("target")).toBe("_blank");
+    expect(supportLink.getAttribute("rel")).toContain("noopener");
   });
 
   test("keeps the profile visible when the operation counter cannot load", async () => {
@@ -108,7 +128,9 @@ describe("Profile", () => {
     });
 
     expect(container.textContent).toContain("Información del perfil");
-    expect(container.textContent).toContain("No se pudo consultar el historial");
-    expect(container.textContent).toContain("Suscripciones");
+    expect(container.textContent).toContain("no se pudo consultar el contador de movimientos");
+    expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
+    expect(container.textContent).toContain("Método de pago");
+    expect(container.textContent).toContain("Historial de pagos");
   });
 });

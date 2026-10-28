@@ -12,10 +12,13 @@ service cloud.firestore {
         ])
         && request.resource.data.keys().hasOnly([
           'uid', 'email', 'nombre', 'apellido', 'photoURL',
-          'plan', 'exportsUsed', 'createdAt', 'usage', 'preferences'
+          'plan', 'exportsUsed', 'ordersUsed', 'movementsUsed', 'createdAt', 'preferences'
         ])
         && request.resource.data.uid == userId
-        && request.resource.data.plan == 'free';
+        && request.resource.data.plan == 'free'
+        && request.resource.data.get('exportsUsed', 0) == 0
+        && request.resource.data.get('ordersUsed', 0) == 0
+        && request.resource.data.get('movementsUsed', 0) == 0;
     }
 
     function validUserUpdate(userId) {
@@ -26,7 +29,7 @@ service cloud.firestore {
           == resource.data.get('createdAt', null)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'uid', 'email', 'nombre', 'apellido', 'photoURL',
-          'exportsUsed', 'usage', 'preferences'
+          'preferences'
         ]);
     }
 
@@ -39,9 +42,22 @@ service cloud.firestore {
       // La aplicación no ofrece eliminación de cuenta desde el perfil.
       allow delete: if false;
 
+      match /sessions/{sessionId} {
+        // Los cambios de estado pasan por el servidor para preservar la unicidad del par.
+        allow read: if isOwner(userId);
+        allow update, delete: if false;
+      }
+
       match /operations/{operationId} {
         // Las compras y ventas son privadas y solo accesibles por su propietario.
-        allow read, create, update, delete: if isOwner(userId);
+        allow read, update, delete: if isOwner(userId);
+      }
+
+      match /payments/{paymentId} {
+        // El usuario solo puede consultar su propio historial de pagos.
+        // Las órdenes y su estado solo pueden escribirlas las funciones de servidor.
+        allow read: if isOwner(userId);
+        allow create, update, delete: if false;
       }
     }
 

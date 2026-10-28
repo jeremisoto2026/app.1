@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">JJXCAPITAL</title>
+  <desc id="desc">Control, análisis y claridad para operaciones cripto.</desc>
+  <defs>
+    <linearGradient id="jjx-accent" x1="635" y1="214" x2="725" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9ADCF0"/>
+      <stop offset="1" stop-color="#9668FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="760" rx="20" fill="#030919"/>
+  <g transform="translate(440 88)">
+    <path d="M31 16h111v168c0 39-26 67-66 67-28 0-48-16-52-42" stroke="#F5F6FA" stroke-width="12" stroke-linecap="butt" stroke-linejoin="round"/>
+    <path d="m142 77 168 202" stroke="#F5F6FA" stroke-width="12" stroke-linecap="butt"/>
+    <path d="m195 118 90-106" stroke="url(#jjx-accent)" stroke-width="11" stroke-linecap="butt"/>
+    <path d="m128 279 59-96" stroke="#F5F6FA" stroke-width="11" stroke-linecap="butt"/>
+  </g>
+  <text x="600" y="526" text-anchor="middle" fill="#F5F6FA" font-family="Montserrat, Inter, Avenir, Segoe UI, sans-serif" font-size="64" font-weight="400" letter-spacing="18">JJXCAPITAL</text>
+  <text x="600" y="586" text-anchor="middle" fill="#D4DBE8" font-family="Montserrat, Inter, Avenir, Segoe UI, sans-serif" font-size="22" font-weight="450" letter-spacing="6">CONTROL · ANÁLISIS · CLARIDAD</text>
+</svg>

@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
-import { calculateDashboardMetrics } from "../utils/financialCalculations";
+import { calculateDashboardSummaryMetrics } from "../utils/financialCalculations";
+import { isProSubscriptionActive } from "../utils/planLimits";
+import { formatCurrencyAmount } from "../utils/numberFormatting";
 import {
   ArrowDownTrayIcon,
   ArrowRightIcon,
@@ -10,10 +12,13 @@ import {
   ChartBarSquareIcon,
   CheckCircleIcon,
   ClockIcon,
+  BoltIcon,
   CurrencyDollarIcon,
   DocumentPlusIcon,
   ShieldCheckIcon,
   UserCircleIcon,
+  SunIcon,
+  MoonIcon,
 } from "@heroicons/react/24/outline";
 
 const emptyMetrics = {
@@ -25,11 +30,36 @@ const emptyMetrics = {
   winningSales: 0,
 };
 
-const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
+const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbitrages, theme, onToggleTheme }) => {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState(emptyMetrics);
+  const [activeArbitrages, setActiveArbitrages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sessionsWarning, setSessionsWarning] = useState("");
+  const [hasActivePro, setHasActivePro] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.uid) {
+      setHasActivePro(null);
+      return () => { cancelled = true; };
+    }
+
+    setHasActivePro(null);
+    getDoc(doc(db, "users", user.uid))
+      .then((snapshot) => {
+        if (cancelled) return;
+        setHasActivePro(isProSubscriptionActive(snapshot.exists() ? snapshot.data() : {}));
+      })
+      .catch((profileError) => {
+        console.warn("No se pudo comprobar el plan para el resumen:", profileError);
+        if (!cancelled) setHasActivePro(null);
+      });
+
+    return () => { cancelled = true; };
+  }, [user?.uid]);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,21 +67,41 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
     const fetchDashboard = async () => {
       if (!user) {
         setMetrics(emptyMetrics);
+        setActiveArbitrages(0);
         setError("");
+        setSessionsWarning("");
         setLoading(false);
         return;
       }
 
       setLoading(true);
       setError("");
+      setSessionsWarning("");
       try {
         const snapshot = await getDocs(collection(db, "users", user.uid, "operations"));
         const operations = snapshot.docs.map((operationDoc) => ({
           id: operationDoc.id,
           ...operationDoc.data(),
         }));
-        const calculated = calculateDashboardMetrics(operations);
-        if (!cancelled) setMetrics(calculated);
+        let activeCount = 0;
+        let sessions = [];
+        try {
+          const sessionsSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
+          sessions = sessionsSnapshot.docs.map((sessionDoc) => ({
+            id: sessionDoc.id,
+            ...sessionDoc.data(),
+          }));
+          activeCount = sessions.filter((session) => session.status === "active").length;
+        } catch (sessionsError) {
+          // Keep operation-level figures available if session access is denied.
+          console.warn("No se pudieron cargar los arbitrajes del resumen:", sessionsError);
+          if (!cancelled) setSessionsWarning("No se pudieron cargar los arbitrajes. Las métricas de operaciones siguen visibles, pero los resultados de sesiones iniciadas en cripto y el contador de arbitrajes pueden estar incompletos. Comprueba las reglas de Firestore.");
+        }
+        const calculated = calculateDashboardSummaryMetrics(operations, sessions);
+        if (!cancelled) {
+          setMetrics(calculated);
+          setActiveArbitrages(activeCount);
+        }
       } catch (loadError) {
         console.error("Error al cargar el resumen:", loadError);
         if (!cancelled) setError("No se ha podido cargar el resumen. Comprueba tu conexión y vuelve a intentarlo.");
@@ -78,13 +128,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
   );
   const monthlyScale = Math.max(1, ...monthlyEntries.map(([, amount]) => Math.abs(amount)));
 
-  const formatAmount = (amount, currency) => {
-    const formatted = new Intl.NumberFormat("es-ES", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-    return `${formatted} ${currency}`;
-  };
+  const formatAmount = (amount, currency) => `${formatCurrencyAmount(amount, currency)} ${currency}`;
 
   if (loading) {
     return (
@@ -112,11 +156,26 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
+        {sessionsWarning && (
+          <div role="status" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-900/10 p-4 text-sm text-amber-100">
+            {sessionsWarning}
+          </div>
+        )}
         <header className="dashboard-topbar">
           <div className="dashboard-brand">
-            <span className="dashboard-brand-mark" aria-hidden="true">J</span>
+            <span className="dashboard-brand-mark" aria-hidden="true"><img src={`${process.env.PUBLIC_URL}/jjxcapital-mark.svg`} alt="" /></span>
             <span><strong>JJXCAPITAL</strong><small>ESPACIO DE TRABAJO</small></span>
           </div>
+          <button
+            type="button"
+            className="jjx-theme-toggle dashboard-theme-toggle"
+            onClick={onToggleTheme}
+            aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+            title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+          >
+            {theme === "dark" ? <SunIcon aria-hidden="true" /> : <MoonIcon aria-hidden="true" />}
+            <span>{theme === "dark" ? "Tema claro" : "Tema oscuro"}</span>
+          </button>
           <button
             type="button"
             className="dashboard-profile-button"
@@ -173,18 +232,18 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
                 </strong>
               )) : <strong className="metric-no-data">Sin datos suficientes</strong>}
             </div>
-            <p>Por moneda de cotización · método FIFO</p>
-            <span className="metric-card-foot"><ShieldCheckIcon aria-hidden="true" /> Solo costes de compra conocidos</span>
+            <p>Por unidad de cuenta: fiat o cripto</p>
+            <span className="metric-card-foot"><ShieldCheckIcon aria-hidden="true" /> Fiat por FIFO; cripto según el resultado neto de su sesión</span>
           </article>
 
           <article className="dashboard-metric-card">
             <div className="metric-card-heading">
-              <span>Ventas cerradas</span>
+              <span>Operaciones cerradas</span>
               <span className="metric-icon metric-icon-teal"><CheckCircleIcon aria-hidden="true" /></span>
             </div>
             <strong className="metric-primary-value">{metrics.closedSales}</strong>
-            <p>Ventas con coste de compra cubierto</p>
-            <span className="metric-card-foot"><ClockIcon aria-hidden="true" /> No incluye ventas parcialmente cubiertas</span>
+            <p>Ventas cubiertas y ciclos cripto completados</p>
+            <span className="metric-card-foot"><ClockIcon aria-hidden="true" /> Excluye ventas parciales y ciclos sin recompra</span>
           </article>
 
           <article className="dashboard-metric-card">
@@ -195,10 +254,50 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
             <strong className="metric-primary-value">
               {metrics.closedSales ? `${metrics.successRate.toFixed(1)}%` : "—"}
             </strong>
-            <p>{metrics.closedSales ? `${metrics.winningSales || 0} ventas cerradas con resultado positivo` : "Se calculará al registrar ventas cerradas"}</p>
+            <p>{metrics.closedSales ? `${metrics.winningSales || 0} operaciones cerradas con resultado positivo` : "Se calculará al cerrar ventas cubiertas o completar ciclos cripto"}</p>
             <span className="metric-card-foot"><ShieldCheckIcon aria-hidden="true" /> No representa una garantía futura</span>
           </article>
+
+          <article className="dashboard-metric-card">
+            <div className="metric-card-heading">
+              <span>Arbitrajes en curso</span>
+              <span className="metric-icon metric-icon-purple"><BoltIcon aria-hidden="true" /></span>
+            </div>
+            <strong className="metric-primary-value">{activeArbitrages}</strong>
+            <p>Espacios de trabajo aún abiertos</p>
+            <button type="button" className="dashboard-text-action mt-2" onClick={onOpenArbitrages}>Gestionar arbitrajes <ArrowRightIcon aria-hidden="true" /></button>
+          </article>
         </section>
+
+        {hasActivePro === false && (
+          <section className="dashboard-pro-promo" aria-labelledby="dashboard-pro-promo-heading">
+            <div className="dashboard-pro-promo-glow" aria-hidden="true" />
+            <div className="dashboard-pro-promo-main">
+              <span className="dashboard-pro-promo-kicker"><span /> JJXCAPITAL PRO</span>
+              <h2 id="dashboard-pro-promo-heading">Tus análisis, sin límites de uso</h2>
+              <p>Amplía tu espacio de trabajo y gestiona más arbitrajes desde una sola cuenta.</p>
+              <div className="dashboard-pro-promo-benefits">
+                <span><BoltIcon aria-hidden="true" /> Arbitrajes ilimitados</span>
+                <span><ChartBarSquareIcon aria-hidden="true" /> Movimientos ilimitados</span>
+                <span><ArrowDownTrayIcon aria-hidden="true" /> Exportaciones ilimitadas</span>
+              </div>
+            </div>
+            <div className="dashboard-pro-promo-offer">
+              <div className="dashboard-pro-promo-price">
+                <strong>15 USDT</strong>
+                <span>por 30 días</span>
+              </div>
+              <button
+                type="button"
+                className="dashboard-action dashboard-action-primary"
+                onClick={onOpenProfile}
+              >
+                Ver plan Pro <ArrowRightIcon aria-hidden="true" />
+              </button>
+              <small>Se activa al confirmar el pago.</small>
+            </div>
+          </section>
+        )}
 
         <section className="dashboard-lower-grid">
           <article className="dashboard-panel">
@@ -282,3 +381,4 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory }) => {
 };
 
 export default Dashboard;
+

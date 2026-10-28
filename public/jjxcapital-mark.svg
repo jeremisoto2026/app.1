@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 300" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Monograma JJXCAPITAL</title>
+  <defs>
+    <linearGradient id="jjx-accent" x1="195" y1="118" x2="285" y2="12" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9ADCF0"/>
+      <stop offset="1" stop-color="#9668FF"/>
+    </linearGradient>
+  </defs>
+  <path d="M31 16h111v168c0 39-26 67-66 67-28 0-48-16-52-42" stroke="#F5F6FA" stroke-width="12" stroke-linecap="butt" stroke-linejoin="round"/>
+  <path d="m142 77 168 202" stroke="#F5F6FA" stroke-width="12" stroke-linecap="butt"/>
+  <path d="m195 118 90-106" stroke="url(#jjx-accent)" stroke-width="11" stroke-linecap="butt"/>
+  <path d="m128 279 59-96" stroke="#F5F6FA" stroke-width="11" stroke-linecap="butt"/>
+</svg>
