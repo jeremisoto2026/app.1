@@ -1,7 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <defs><linearGradient id="accent" x1="24" y1="25" x2="52" y2="52" gradientUnits="userSpaceOnUse"><stop stop-color="#B9ABFF"/><stop offset="1" stop-color="#8DC9FF"/></linearGradient></defs>
-  <rect x="2" y="2" width="60" height="60" rx="18" fill="#080B13" stroke="#283247" stroke-width="2"/>
-  <path d="M18 15h27v25c0 9-6 14-16 14h-5" stroke="#F5F6FA" stroke-width="3.5" stroke-linecap="square"/>
-  <path d="m38 31 15 21M53 31 38 52" stroke="url(#accent)" stroke-width="3" stroke-linecap="square"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-labelledby="title">
+  <title id="title">JJXCAPITAL</title>
+  <defs>
+    <linearGradient id="jjx-accent" x1="39" y1="28" x2="56" y2="8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9ADCF0"/>
+      <stop offset="1" stop-color="#9668FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="18" fill="#030919" stroke="#283247" stroke-width="2"/>
+  <g transform="translate(1 4) scale(.19)">
+    <path d="M31 16h111v168c0 39-26 67-66 67-28 0-48-16-52-42" stroke="#F5F6FA" stroke-width="12" stroke-linecap="butt" stroke-linejoin="round"/>
+    <path d="m142 77 168 202" stroke="#F5F6FA" stroke-width="12" stroke-linecap="butt"/>
+    <path d="m195 118 90-106" stroke="url(#jjx-accent)" stroke-width="11" stroke-linecap="butt"/>
+    <path d="m128 279 59-96" stroke="#F5F6FA" stroke-width="11" stroke-linecap="butt"/>
+  </g>
 </svg>
-
