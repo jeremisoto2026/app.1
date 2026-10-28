@@ -25,6 +25,7 @@ module.exports = async function binanceP2PStatus(req, res) {
       lastSyncAt: data.lastSyncAt || null,
       lastImportedCount: Number(data.lastImportedCount) || 0,
       lastSyncStatus: data.lastSyncStatus || null,
+      lastSyncErrorCode: data.lastSyncError || null,
       backfillComplete: data.initialBackfillComplete === true,
       hasMoreHistory: data.initialBackfillComplete !== true ||
         Boolean(data.pendingWindowStart && (data.pendingNextBuyPage || data.pendingNextSellPage)),
