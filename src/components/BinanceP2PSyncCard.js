@@ -171,6 +171,9 @@ export default function BinanceP2PSyncCard() {
           <span className="jjx-eyebrow">INTEGRACIONES</span>
           <h2 id="binance-p2p-sync-heading">Sincronización Binance P2P</h2>
           <p>Importa a tu historial las compras y ventas P2P completadas, sin crear órdenes ni enviar pagos.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Para vincular una orden automáticamente a un arbitraje, crea primero una sesión con el mismo par de monedas. La asignación usa el par y las fechas de la sesión; si hay varias sesiones posibles, la operación queda sin asignar para evitar mezclar arbitrajes.
+          </p>
         </div>
       </div>
 
