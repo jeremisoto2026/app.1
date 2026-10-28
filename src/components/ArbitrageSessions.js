@@ -5,11 +5,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { ArrowDownTrayIcon, PlusIcon, CheckCircleIcon, PlayIcon, TrashIcon, BoltIcon, DocumentPlusIcon } from "@heroicons/react/24/outline";
 import { calculateArbitrageSessionResult, calculateDashboardMetrics, getOperationDate } from "../utils/financialCalculations";
 import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
+import { formatCurrencyAmount } from "../utils/numberFormatting";
 
 const FIAT_CURRENCIES = ["EUR", "USD", "VES", "COP", "ARS", "MXN", "BRL", "PEN", "CLP", "GBP"];
 const CRYPTO_CURRENCIES = ["USDT", "USDC", "BTC", "ETH", "BNB", "DAI"];
 const ARBITRAGE_TYPES = ["Comercio P2P", "P2P entre plataformas"];
-const money = (value, currency) => new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 8 }).format(Number.isFinite(Number(value)) ? Number(value) : 0) + " " + currency;
+const money = (value, currency) => formatCurrencyAmount(value, currency) + " " + currency;
 const formatDate = (value) => {
   const date = getOperationDate(value);
   return date ? date.toLocaleString("es-ES") : "Fecha no disponible";

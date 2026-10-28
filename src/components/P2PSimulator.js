@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { simulateP2P } from '../utils/simulations';
+import { formatCryptoAmount, formatFiatAmount } from '../utils/numberFormatting';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -388,8 +389,8 @@ const P2PSimulator = () => {
                         <span className="text-white font-medium">
                           {result.amount_sent !== undefined
                             ? (result.operation_type === 'Venta'
-                                ? Number(result.amount_sent).toFixed(8) + ' ' + result.crypto
-                                : Number(result.amount_sent).toFixed(2) + ' ' + result.fiat)
+                                ? formatCryptoAmount(result.amount_sent) + ' ' + result.crypto
+                                : formatFiatAmount(result.amount_sent) + ' ' + result.fiat)
                             : 'N/A'}
                         </span>
                       </div>
@@ -398,8 +399,8 @@ const P2PSimulator = () => {
                         <span className="text-white font-medium">
                           {result.amount_received !== undefined
                             ? (result.operation_type === 'Venta'
-                                ? Number(result.amount_received).toFixed(2) + ' ' + result.fiat
-                                : Number(result.amount_received).toFixed(8) + ' ' + result.crypto)
+                                ? formatFiatAmount(result.amount_received) + ' ' + result.fiat
+                                : formatCryptoAmount(result.amount_received) + ' ' + result.crypto)
                             : 'N/A'}
                         </span>
                       </div>
@@ -407,7 +408,7 @@ const P2PSimulator = () => {
                         <span className="text-gray-400">Comisión:</span>
                         <span className="text-red-400 font-medium">
                           {result.fee_amount !== undefined
-                            ? ('-' + Number(result.fee_amount).toFixed(8) + ' ' + result.crypto)
+                            ? ('-' + formatCryptoAmount(result.fee_amount) + ' ' + result.crypto)
                             : ('-' + result.fee + ' ' + result.crypto)}
                         </span>
                       </div>
@@ -417,8 +418,8 @@ const P2PSimulator = () => {
                           <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-lg px-3 py-1 rounded-lg">
                             {result.net_amount !== undefined
                               ? (result.operation_type === 'Venta'
-                                  ? Number(result.net_amount).toFixed(2) + ' ' + result.fiat
-                                  : Number(result.net_amount).toFixed(8) + ' ' + result.crypto)
+                                  ? formatFiatAmount(result.net_amount) + ' ' + result.fiat
+                                  : formatCryptoAmount(result.net_amount) + ' ' + result.crypto)
                               : 'N/A'}
                           </Badge>
                         </div>

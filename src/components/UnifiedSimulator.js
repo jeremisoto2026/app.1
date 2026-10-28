@@ -4,11 +4,12 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { CalculatorIcon, ArrowsRightLeftIcon, BoltIcon } from "@heroicons/react/24/outline";
+import { formatCurrencyAmount } from "../utils/numberFormatting";
 
 const CRYPTOS = ["USDT", "USDC", "BTC", "ETH", "BNB", "SOL", "XRP", "LTC"];
 const FIATS = ["EUR", "USD", "VES", "MXN", "COP", "ARS", "BRL", "CLP"];
 const EXCHANGES = ["Binance", "Bybit", "Bitget", "OKX", "KuCoin", "Otro"];
-const money = (value, currency) => new Intl.NumberFormat("es-ES", { maximumFractionDigits: 8 }).format(value) + " " + currency;
+const money = (value, currency) => formatCurrencyAmount(value, currency) + " " + currency;
 
 export default function UnifiedSimulator() {
   const [mode, setMode] = useState("p2p");

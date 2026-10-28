@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { calculateCryptoArbitrage } from "../utils/financialCalculations";
+import { formatCryptoAmount } from "../utils/numberFormatting";
 import {
   Card,
   CardHeader,
@@ -365,13 +366,13 @@ const ArbitrageSimulator = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Cripto inicial:</span>
                       <span className="text-white font-medium">
-                        {result.investment.toFixed(8)} {formData.crypto}
+                        {formatCryptoAmount(result.investment)} {formData.crypto}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Cripto final tras recomprar:</span>
                       <span className="text-white font-medium">
-                        {result.revenue.toFixed(8)} {formData.crypto}
+                        {formatCryptoAmount(result.revenue)} {formData.crypto}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -389,7 +390,7 @@ const ArbitrageSimulator = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Comisión de compra:</span>
                       <span className="text-white font-medium">
-                        {result.buy_fee_crypto.toFixed(8)} {formData.crypto}
+                        {formatCryptoAmount(result.buy_fee_crypto)} {formData.crypto}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -399,7 +400,7 @@ const ArbitrageSimulator = () => {
                           ? "bg-green-500/20 text-green-400 border-green-500/30" 
                           : "bg-red-500/20 text-red-400 border-red-500/30"
                       }`}>
-                        {result.profit > 0 ? "+" : ""}{result.profit.toFixed(8)} {formData.crypto}
+                        {result.profit > 0 ? "+" : ""}{formatCryptoAmount(result.profit)} {formData.crypto}
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center">

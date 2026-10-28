@@ -4,6 +4,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { saveOperation } from '../services/database';
 import { calculateOperationAmounts, calculateArbitrageSessionBalances } from '../utils/financialCalculations';
+import { formatCryptoAmount, formatFiatAmount } from '../utils/numberFormatting';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -329,11 +330,11 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
               <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-black/20 p-4 sm:grid-cols-2">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-gray-500">Saldo fiat disponible</p>
-                  <p className="mt-1 text-lg font-semibold text-white">{Number(sessionBalances.fiatBalance).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {selectedSession?.fiat || 'EUR'}</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{formatFiatAmount(sessionBalances.fiatBalance)} {selectedSession?.fiat || 'EUR'}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wide text-gray-500">Saldo cripto disponible</p>
-                  <p className="mt-1 text-lg font-semibold text-white">{Number(sessionBalances.cryptoBalance).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} {selectedSession?.crypto || 'USDT'}</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{formatCryptoAmount(sessionBalances.cryptoBalance)} {selectedSession?.crypto || 'USDT'}</p>
                 </div>
                 <p className="text-xs leading-5 text-gray-500 sm:col-span-2">Los importes se rellenan automáticamente con el saldo disponible. Solo introduces la orden, plataforma, tasa de cambio y comisión.</p>
               </div>
@@ -424,11 +425,9 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                   <Label htmlFor="crypto_amount" className="text-gray-300 font-medium">Cantidad en cripto</Label>
                   <Input
                     id="crypto_amount"
-                    type="number"
-                    min="0"
-                    step="0.00000001"
+                    type="text"
                     placeholder="Se calcula automáticamente"
-                    value={Number.isFinite(operationType === 'Venta' ? sessionBalances.cryptoBalance : previewAmountCrypto) ? String(operationType === 'Venta' ? sessionBalances.cryptoBalance : previewAmountCrypto) : ''}
+                    value={Number.isFinite(operationType === 'Venta' ? sessionBalances.cryptoBalance : previewAmountCrypto) ? formatCryptoAmount(operationType === 'Venta' ? sessionBalances.cryptoBalance : previewAmountCrypto) : ''}
                     readOnly
                     className="bg-gray-800 border-purple-500/30 text-gray-200 placeholder-gray-500 h-11 rounded-xl"
                     disabled={loading}
@@ -440,11 +439,9 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                   <Label htmlFor="fiat_amount" className="text-gray-300 font-medium">Importe en moneda de cotización</Label>
                   <Input
                     id="fiat_amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
+                    type="text"
                     placeholder="Se calcula automáticamente"
-                    value={Number.isFinite(operationType === 'Compra' ? sessionBalances.fiatBalance : previewAmountFiat) ? String(operationType === 'Compra' ? sessionBalances.fiatBalance : previewAmountFiat) : ''}
+                    value={Number.isFinite(operationType === 'Compra' ? sessionBalances.fiatBalance : previewAmountFiat) ? formatFiatAmount(operationType === 'Compra' ? sessionBalances.fiatBalance : previewAmountFiat) : ''}
                     readOnly
                     className="bg-gray-800 border-purple-500/30 text-gray-200 placeholder-gray-500 h-11 rounded-xl"
                     disabled={loading}
@@ -507,19 +504,19 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Cantidad en cripto:</span>
                     <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                      {Number.isFinite(previewAmountCrypto) ? previewAmountCrypto.toFixed(8) + ' ' + (formData.crypto || '') : '—'}
+                      {Number.isFinite(previewAmountCrypto) ? formatCryptoAmount(previewAmountCrypto) + ' ' + (formData.crypto || '') : '—'}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Importe en moneda de cotización:</span>
                     <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                      {Number.isFinite(previewAmountFiat) ? previewAmountFiat.toFixed(2) + ' ' + (formData.fiat || '') : '—'}
+                      {Number.isFinite(previewAmountFiat) ? formatFiatAmount(previewAmountFiat) + ' ' + (formData.fiat || '') : '—'}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Comisión:</span>
                     <Badge className="bg-gray-700 text-gray-300 border-gray-600">
-                      {Number.isFinite(previewFee) ? previewFee.toFixed(operationType === 'Venta' ? 2 : 8) : '0.00'} {previewFeeCurrency || 'unidad'}
+                      {Number.isFinite(previewFee) ? (operationType === 'Venta' ? formatFiatAmount(previewFee) : formatCryptoAmount(previewFee)) : (operationType === 'Venta' ? formatFiatAmount(0) : formatCryptoAmount(0))} {previewFeeCurrency || 'unidad'}
                     </Badge>
                   </div>
                 </CardContent>

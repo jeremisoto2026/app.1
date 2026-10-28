@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { calculateDashboardSummaryMetrics } from "../utils/financialCalculations";
 import { isProSubscriptionActive } from "../utils/planLimits";
+import { formatCurrencyAmount } from "../utils/numberFormatting";
 import {
   ArrowDownTrayIcon,
   ArrowRightIcon,
@@ -125,13 +126,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
   );
   const monthlyScale = Math.max(1, ...monthlyEntries.map(([, amount]) => Math.abs(amount)));
 
-  const formatAmount = (amount, currency) => {
-    const formatted = new Intl.NumberFormat("es-ES", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-    return `${formatted} ${currency}`;
-  };
+  const formatAmount = (amount, currency) => `${formatCurrencyAmount(amount, currency)} ${currency}`;
 
   if (loading) {
     return (
