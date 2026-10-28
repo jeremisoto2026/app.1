@@ -253,6 +253,52 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
 // Shared session-level accounting keeps the detail screen and history ROI consistent.
 // Operations with a different asset pair are excluded so unlike currencies are never
 // mixed into a session result, even if an old/editable record contains inconsistent data.
+export const calculateArbitrageSessionBalances = (session = {}, operations = []) => {
+  const isCryptoBase = session.initialCapitalType === "crypto";
+  const initialCapital = toFiniteNumber(session.initialCapital);
+  const initial = Number.isFinite(initialCapital) && initialCapital > 0 ? initialCapital : 0;
+  const cryptoCode = normalizeCurrency(session.crypto);
+  const fiatCode = normalizeCurrency(session.fiat);
+  const matchingOperations = (Array.isArray(operations) ? operations : []).filter((operation) => {
+    if (session.id && operation.sessionId !== session.id) return false;
+    return (!cryptoCode || normalizeCurrency(operation.crypto) === cryptoCode) &&
+      (!fiatCode || normalizeCurrency(operation.fiat) === fiatCode);
+  });
+  let fiatBalance = isCryptoBase ? 0 : initial;
+  let cryptoBalance = isCryptoBase ? initial : 0;
+  matchingOperations.forEach((operation) => {
+    const fiatAmount = toFiniteNumber(operation.fiat_amount);
+    const cryptoAmount = toFiniteNumber(operation.crypto_amount);
+    if (operation.operation_type === "Compra") {
+      if (Number.isFinite(fiatAmount)) fiatBalance -= fiatAmount;
+      if (Number.isFinite(cryptoAmount)) cryptoBalance += cryptoAmount;
+    } else if (operation.operation_type === "Venta") {
+      if (Number.isFinite(cryptoAmount)) cryptoBalance -= cryptoAmount;
+      if (Number.isFinite(fiatAmount)) fiatBalance += fiatAmount;
+    }
+  });
+  const cleanBalance = (value, tolerance) => Math.abs(value) < tolerance ? 0 : Number(value.toPrecision(14));
+  fiatBalance = cleanBalance(fiatBalance, 1e-8);
+  cryptoBalance = cleanBalance(cryptoBalance, 1e-10);
+  const orderedOperations = matchingOperations.slice().sort((a, b) => {
+    const dateA = getOperationDate(a.timestamp)?.getTime() ?? 0;
+    const dateB = getOperationDate(b.timestamp)?.getTime() ?? 0;
+    if (dateA !== dateB) return dateA - dateB;
+    return String(a.id || "").localeCompare(String(b.id || ""));
+  });
+  const lastOperation = orderedOperations[orderedOperations.length - 1];
+  const nextOperationType = lastOperation
+    ? (lastOperation.operation_type === "Compra" ? "Venta" : "Compra")
+    : (isCryptoBase ? "Venta" : "Compra");
+  return {
+    fiatBalance,
+    cryptoBalance,
+    nextOperationType,
+    operationCount: matchingOperations.length,
+    lastOperationType: lastOperation?.operation_type || null,
+  };
+};
+
 export const calculateArbitrageSessionResult = (session = {}, operations = []) => {
   const initialCapital = toFiniteNumber(session.initialCapital);
   const isCryptoBase = session.initialCapitalType === "crypto";

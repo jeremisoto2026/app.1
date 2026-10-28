@@ -6,7 +6,7 @@ const {
   requireFirebaseUser,
   getDocument,
   countDocuments,
-  hasDocumentsMatchingField,
+  listDocumentsMatchingField,
   commitWrites,
   createWrite,
   documentName,
@@ -37,17 +37,12 @@ module.exports = async function createOperation(req, res) {
     const sessionId = String(input.sessionId || "").trim();
     const rate = Number(input.exchange_rate);
     const fee = input.fee === "" || input.fee === null || input.fee === undefined ? 0 : Number(input.fee);
-    const cryptoAmount = Number(input.crypto_amount);
-    const fiatAmount = Number(input.fiat_amount);
-
     if (!EXCHANGES.includes(exchange) || !OPERATION_TYPES.includes(operationType) ||
         !CRYPTO_CURRENCIES.includes(cryptoCode) || !FIAT_CURRENCIES.includes(fiat) ||
         cryptoCode === fiat || !sessionId ||
         !Number.isFinite(rate) || rate <= 0 ||
-        !Number.isFinite(fee) || fee < 0 ||
-        !Number.isFinite(cryptoAmount) || cryptoAmount <= 0 ||
-        !Number.isFinite(fiatAmount) || fiatAmount <= 0) {
-      throw new HttpError(400, "Revisa la plataforma, el tipo de movimiento, las monedas, los importes, la tasa y la comisión.");
+        !Number.isFinite(fee) || fee < 0) {
+      throw new HttpError(400, "Revisa la plataforma, el tipo de movimiento, las monedas, la tasa y la comisión.");
     }
 
     const sessionPath = userPath + "/sessions/" + sessionId;
@@ -62,28 +57,69 @@ module.exports = async function createOperation(req, res) {
     }
 
     const operationsPath = userPath + "/operations";
-    const hasSessionOperations = await hasDocumentsMatchingField(operationsPath, "sessionId", sessionId);
-    const isFirstOperation = !session.firstOperationType && !hasSessionOperations;
-    const requiredFirstOperation = session.initialCapitalType === "crypto" ? "Venta" : "Compra";
-    if (isFirstOperation && operationType !== requiredFirstOperation) {
-      throw new HttpError(409, "La primera operación de este arbitraje debe ser " + requiredFirstOperation.toUpperCase() +
-        (session.initialCapitalType === "crypto" ? " porque comienza con capital cripto." : " porque comienza con capital fiat."));
+    const sessionOperations = await listDocumentsMatchingField(operationsPath, "sessionId", sessionId);
+    const orderedOperations = sessionOperations.slice().sort((a, b) => {
+      const readTime = (value) => {
+        const parsed = value && typeof value === "object" && Number.isFinite(value.seconds)
+          ? new Date(value.seconds * 1000).getTime()
+          : new Date(value || 0).getTime();
+        return Number.isFinite(parsed) ? parsed : 0;
+      };
+      const timeDiff = readTime(a.data.timestamp) - readTime(b.data.timestamp);
+      return timeDiff || String(a.id).localeCompare(String(b.id));
+    });
+    const lastMovement = orderedOperations[orderedOperations.length - 1];
+    const requiredOperation = lastMovement
+      ? (lastMovement.data.operation_type === "Compra" ? "Venta" : "Compra")
+      : (session.initialCapitalType === "crypto" ? "Venta" : "Compra");
+    if (operationType !== requiredOperation) {
+      throw new HttpError(409, "El siguiente movimiento de este arbitraje debe ser " + requiredOperation.toUpperCase() + ".");
     }
 
-    // Recalcular en el servidor para no confiar en los importes derivados enviados por el navegador.
-    const expectedCrypto = operationType === "Compra" ? fiatAmount / rate - fee : cryptoAmount;
-    const expectedFiat = operationType === "Venta" ? cryptoAmount * rate - fee : fiatAmount;
-    if (!Number.isFinite(expectedCrypto) || expectedCrypto <= 0 ||
-        !Number.isFinite(expectedFiat) || expectedFiat <= 0) {
-      throw new HttpError(400, "La comisión debe ser inferior al importe del movimiento.");
+    const initialCapital = Number(session.initialCapital);
+    if (!Number.isFinite(initialCapital) || initialCapital <= 0) {
+      throw new HttpError(409, "El arbitraje no tiene un capital inicial válido. Revisa sus datos antes de operar.");
     }
-    const tolerance = Math.max(1e-8, Math.abs(expectedCrypto) * 1e-8);
-    const fiatTolerance = Math.max(1e-8, Math.abs(expectedFiat) * 1e-8);
-    if (Math.abs(expectedCrypto - cryptoAmount) > tolerance ||
-        Math.abs(expectedFiat - fiatAmount) > fiatTolerance) {
-      throw new HttpError(400, "Los importes calculados no coinciden con la tasa y la comisión. Revisa el movimiento.");
+    const startsWithCrypto = session.initialCapitalType === "crypto";
+    let availableFiat = startsWithCrypto ? 0 : initialCapital;
+    let availableCrypto = startsWithCrypto ? initialCapital : 0;
+    sessionOperations.forEach((movement) => {
+      const saved = movement.data || {};
+      const savedFiatAmount = Number(saved.fiat_amount);
+      const savedCryptoAmount = Number(saved.crypto_amount);
+      if (saved.operation_type === "Compra") {
+        if (Number.isFinite(savedFiatAmount)) availableFiat -= savedFiatAmount;
+        if (Number.isFinite(savedCryptoAmount)) availableCrypto += savedCryptoAmount;
+      } else if (saved.operation_type === "Venta") {
+        if (Number.isFinite(savedCryptoAmount)) availableCrypto -= savedCryptoAmount;
+        if (Number.isFinite(savedFiatAmount)) availableFiat += savedFiatAmount;
+      }
+    });
+    if (Math.abs(availableFiat) < 1e-8) availableFiat = 0;
+    if (Math.abs(availableCrypto) < 1e-10) availableCrypto = 0;
+    if (availableFiat < -1e-7 || availableCrypto < -1e-9) {
+      throw new HttpError(409, "El historial supera el capital disponible. Revisa los movimientos registrados antes de continuar.");
     }
 
+    const amount = operationType === "Compra" ? availableFiat : availableCrypto;
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new HttpError(409, operationType === "Compra"
+        ? "No queda saldo fiat disponible para registrar otra compra."
+        : "No queda saldo cripto disponible para registrar otra venta.");
+    }
+
+    const cryptoAmount = operationType === "Compra" ? amount / rate - fee : amount;
+    const fiatAmount = operationType === "Venta" ? amount * rate - fee : amount;
+    if (!Number.isFinite(cryptoAmount) || cryptoAmount <= 0 ||
+        !Number.isFinite(fiatAmount) || fiatAmount <= 0) {
+      throw new HttpError(400, "La comisión debe ser inferior al importe recibido.");
+    }
+    const nextFiatBalance = operationType === "Compra"
+      ? Math.max(0, availableFiat - fiatAmount)
+      : availableFiat + fiatAmount;
+    const nextCryptoBalance = operationType === "Venta"
+      ? Math.max(0, availableCrypto - cryptoAmount)
+      : availableCrypto + cryptoAmount;
     const storedMovements = Number(profile.data.movementsUsed);
     const savedMovements = Number.isFinite(storedMovements) && storedMovements >= 0 ? storedMovements : 0;
     const currentMovements = Math.max(savedMovements, await countDocuments(operationsPath, 151));
@@ -104,10 +140,22 @@ module.exports = async function createOperation(req, res) {
       fiat_amount: fiatAmount,
       exchange_rate: rate,
       fee,
-      fee_currency: String(input.fee_currency || (operationType === "Venta" ? fiat : cryptoCode)),
+      fee_currency: operationType === "Venta" ? fiat : cryptoCode,
       timestamp,
     };
 
+    const firstOperationType = orderedOperations[0]?.data.operation_type || operationType;
+    const firstOperationTime = orderedOperations[0]?.data.timestamp
+      ? new Date(orderedOperations[0].data.timestamp)
+      : timestamp;
+    const sessionUpdate = {
+      firstOperationType,
+      firstOperationAt: firstOperationTime,
+      lastOperationType: operationType,
+      operationCount: sessionOperations.length + 1,
+      fiatBalance: nextFiatBalance,
+      cryptoBalance: nextCryptoBalance,
+    };
     const writes = [
       {
         update: { name: documentName(operationsPath + "/" + id), fields: toFields(operation) },
@@ -115,13 +163,8 @@ module.exports = async function createOperation(req, res) {
       },
       createWrite(userPath, { movementsUsed: currentMovements + 1 },
         profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
+      createWrite(sessionPath, sessionUpdate, { updateTime: sessionDocument.updateTime }),
     ];
-    if (isFirstOperation) {
-      writes.push(createWrite(sessionPath, {
-        firstOperationType: operationType,
-        firstOperationAt: timestamp,
-      }, { updateTime: sessionDocument.updateTime }));
-    }
     await commitWrites(writes);
 
     return sendJson(res, 201, {

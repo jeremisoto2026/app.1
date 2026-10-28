@@ -1,6 +1,7 @@
 import {
   calculateCryptoArbitrage,
   calculateArbitrageSessionResult,
+  calculateArbitrageSessionBalances,
   calculateDashboardMetrics,
   calculateDashboardSummaryMetrics,
   calculateOperationAmounts,
@@ -250,6 +251,35 @@ describe("calculateArbitrageSessionResult", () => {
   });
 });
 
+
+describe("calculateArbitrageSessionBalances", () => {
+  test("spends the full available fiat balance, then sells the resulting crypto", () => {
+    const session = { id: "fiat-session", initialCapitalType: "fiat", initialCapital: 100, fiat: "EUR", crypto: "USDT" };
+    expect(calculateArbitrageSessionBalances(session, [])).toMatchObject({
+      fiatBalance: 100, cryptoBalance: 0, nextOperationType: "Compra", operationCount: 0,
+    });
+    const afterBuy = calculateArbitrageSessionBalances(session, [
+      { id: "buy", sessionId: "fiat-session", operation_type: "Compra", fiat: "EUR", crypto: "USDT", fiat_amount: 100, crypto_amount: 9.8, timestamp: new Date("2026-10-01T10:00:00.000Z") },
+    ]);
+    expect(afterBuy).toMatchObject({ fiatBalance: 0, cryptoBalance: 9.8, nextOperationType: "Venta", operationCount: 1 });
+    const afterSell = calculateArbitrageSessionBalances(session, [
+      { id: "buy", sessionId: "fiat-session", operation_type: "Compra", fiat: "EUR", crypto: "USDT", fiat_amount: 100, crypto_amount: 9.8, timestamp: new Date("2026-10-01T10:00:00.000Z") },
+      { id: "sell", sessionId: "fiat-session", operation_type: "Venta", fiat: "EUR", crypto: "USDT", fiat_amount: 107.8, crypto_amount: 9.8, timestamp: new Date("2026-10-01T10:05:00.000Z") },
+    ]);
+    expect(afterSell).toMatchObject({ fiatBalance: 107.8, cryptoBalance: 0, nextOperationType: "Compra", operationCount: 2 });
+  });
+  test("starts crypto-funded sessions with a sale and ignores other sessions", () => {
+    const session = { id: "crypto-session", initialCapitalType: "crypto", initialCapital: 2, fiat: "EUR", crypto: "BTC" };
+    expect(calculateArbitrageSessionBalances(session, [])).toMatchObject({
+      fiatBalance: 0, cryptoBalance: 2, nextOperationType: "Venta",
+    });
+    const afterSale = calculateArbitrageSessionBalances(session, [
+      { id: "other-buy", sessionId: "other-session", operation_type: "Compra", fiat: "EUR", crypto: "BTC", fiat_amount: 999, crypto_amount: 999 },
+      { id: "sale", sessionId: "crypto-session", operation_type: "Venta", fiat: "EUR", crypto: "BTC", fiat_amount: 40, crypto_amount: 2, timestamp: new Date("2026-10-01T10:00:00.000Z") },
+    ]);
+    expect(afterSale).toMatchObject({ fiatBalance: 40, cryptoBalance: 0, nextOperationType: "Compra", operationCount: 1 });
+  });
+});
 
 describe("calculateDashboardSummaryMetrics", () => {
   test("includes crypto-start session profit in crypto units without mixing it into fiat FIFO", () => {

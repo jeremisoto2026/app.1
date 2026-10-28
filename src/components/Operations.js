@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { saveOperation } from '../services/database';
-import { calculateOperationAmounts } from '../utils/financialCalculations';
+import { calculateOperationAmounts, calculateArbitrageSessionBalances } from '../utils/financialCalculations';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -30,7 +30,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [sessions, setSessions] = useState([]);
-  const [sessionOperationCounts, setSessionOperationCounts] = useState({});
+  const [sessionOperations, setSessionOperations] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState(initialSessionId);
   const [sessionsLoading, setSessionsLoading] = useState(true);
 
@@ -39,7 +39,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
     const loadSessions = async () => {
       if (!user?.uid) {
         setSessions([]);
-        setSessionOperationCounts({});
+        setSessionOperations([]);
         setSelectedSessionId('');
         setSessionsLoading(false);
         return;
@@ -51,15 +51,11 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
           getDocs(collection(db, 'users', user.uid, 'operations')),
         ]);
         const records = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-        const operationCounts = operationsSnapshot.docs.reduce((counts, item) => {
-          const sessionId = item.data().sessionId;
-          if (sessionId) counts[sessionId] = (counts[sessionId] || 0) + 1;
-          return counts;
-        }, {});
+        const operationRecords = operationsSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
         const active = records.filter(item => item.status === 'active');
         if (!cancelled) {
           setSessions(records);
-          setSessionOperationCounts(operationCounts);
+          setSessionOperations(operationRecords);
           const next = active.find(item => item.id === initialSessionId) || active[0];
           setSelectedSessionId(next?.id || '');
         }
@@ -76,9 +72,15 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
 
   const activeSessions = sessions.filter(item => item.status === 'active');
   const selectedSession = activeSessions.find(item => item.id === selectedSessionId);
-  const selectedSessionOperationCount = selectedSession ? (sessionOperationCounts[selectedSession.id] || 0) : 0;
+  const selectedSessionOperations = selectedSession
+    ? sessionOperations.filter(item => item.sessionId === selectedSession.id)
+    : [];
+  const sessionBalances = selectedSession
+    ? calculateArbitrageSessionBalances(selectedSession, selectedSessionOperations)
+    : { fiatBalance: 0, cryptoBalance: 0, nextOperationType: 'Compra', operationCount: 0 };
+  const selectedSessionOperationCount = selectedSessionOperations.length;
   const isFirstSessionOperation = Boolean(selectedSession) && selectedSessionOperationCount === 0;
-  const requiredFirstOperation = selectedSession?.initialCapitalType === 'crypto' ? 'Venta' : 'Compra';
+  const operationType = selectedSession ? sessionBalances.nextOperationType : 'Compra';
 
   useEffect(() => {
     if (!selectedSession) return;
@@ -97,8 +99,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
   }, [selectedSession?.id, selectedSession?.crypto, selectedSession?.fiat, selectedSession?.initialCapitalType]);
 
   const exchanges = ['Binance', 'Bybit', 'OKX', 'KuCoin'];
-  const operationTypes = ['Venta', 'Compra'];
-  // Deben coincidir con las monedas permitidas al crear una sesión de arbitraje.
+    // Deben coincidir con las monedas permitidas al crear una sesión de arbitraje.
   const cryptos = ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'DAI'];
   const fiats = ['EUR', 'USD', 'VES', 'COP', 'ARS', 'MXN', 'BRL', 'PEN', 'CLP', 'GBP'];
 
@@ -141,27 +142,16 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       return;
     }
 
-    if ((sessionOperationCounts[selectedSession.id] || 0) === 0 && formData.operation_type !== requiredFirstOperation) {
-      setFormData(previous => ({
-        ...previous,
-        operation_type: requiredFirstOperation,
-        crypto_amount: '',
-        fiat_amount: '',
-        exchange_rate: '',
-        fee: '0',
-      }));
-      setError('La primera operación debe ser ' + requiredFirstOperation.toUpperCase() +
-        (selectedSession.initialCapitalType === 'crypto' ? ' porque el arbitraje empieza con capital cripto.' : ' porque el arbitraje empieza con capital fiat.'));
+    const currentOperationAmount = operationType === 'Venta' ? sessionBalances.cryptoBalance : sessionBalances.fiatBalance;
+    if (!Number.isFinite(currentOperationAmount) || currentOperationAmount <= 0) {
+      setError(operationType === 'Venta'
+        ? 'No queda saldo de criptomoneda disponible en este arbitraje para registrar la venta.'
+        : 'No queda saldo fiat disponible en este arbitraje para registrar la compra.');
       return;
     }
 
-    const requiredFields = ['exchange', 'operation_type', 'crypto', 'fiat', 'exchange_rate'];
-    const amountField = formData.operation_type === 'Venta' ? 'crypto_amount' : 'fiat_amount';
+    const requiredFields = ['exchange', 'exchange_rate'];
     const missingFields = requiredFields.filter(field => !formData[field]);
-
-    if (!formData[amountField]) {
-      missingFields.push(amountField);
-    }
     
     if (missingFields.length > 0) {
       const fieldLabels = {
@@ -181,8 +171,8 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
     let calculatedAmounts;
     try {
       calculatedAmounts = calculateOperationAmounts({
-        operation_type: formData.operation_type,
-        amount: formData[amountField],
+        operation_type: operationType,
+        amount: currentOperationAmount,
         exchange_rate: formData.exchange_rate,
         fee: formData.fee,
         crypto: formData.crypto,
@@ -200,7 +190,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       const operationData = {
         order_id: formData.order_id.trim(),
         exchange: formData.exchange,
-        operation_type: formData.operation_type,
+        operation_type: operationType,
         crypto: formData.crypto,
         fiat: formData.fiat,
         sessionId: selectedSession.id,
@@ -211,11 +201,12 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
         timestamp: new Date()
       };
 
-      await saveOperation(user.uid, operationData);
-      setSessionOperationCounts(previous => ({
-        ...previous,
-        [selectedSession.id]: (previous[selectedSession.id] || 0) + 1,
-      }));
+      const savedOperation = await saveOperation(user.uid, operationData);
+      setSessionOperations(previous => [...previous, {
+        ...operationData,
+        ...(savedOperation || {}),
+        id: savedOperation?.id || ('local-' + Date.now()),
+      }]);
       
       setSuccess('La operación se ha guardado correctamente.');
       
@@ -223,7 +214,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
         order_id: '',
         exchange: '',
         // Facilita continuar el ciclo: tras comprar, sugerir vender y viceversa.
-        operation_type: formData.operation_type === 'Compra' ? 'Venta' : 'Compra',
+        operation_type: operationType === 'Compra' ? 'Venta' : 'Compra',
         crypto: selectedSession.crypto || 'USDT',
         fiat: selectedSession.fiat || 'EUR',
         crypto_amount: '',
@@ -243,24 +234,23 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
   let previewAmountCrypto = null;
   let previewAmountFiat = null;
   const previewFee = formData.fee === '' ? 0 : Number(formData.fee);
-  const previewFeeCurrency = formData.operation_type === 'Venta' ? formData.fiat : formData.crypto;
-
+  const previewFeeCurrency = operationType === 'Venta' ? (selectedSession?.fiat || formData.fiat) : (selectedSession?.crypto || formData.crypto);
+  const currentOperationAmount = operationType === 'Venta' ? sessionBalances.cryptoBalance : sessionBalances.fiatBalance;
   try {
-    if (formData.operation_type) {
-      const previewInput = formData.operation_type === 'Venta' ? formData.crypto_amount : formData.fiat_amount;
+    if (selectedSession && Number(formData.exchange_rate) > 0 && Number.isFinite(currentOperationAmount) && currentOperationAmount > 0) {
       const preview = calculateOperationAmounts({
-        operation_type: formData.operation_type,
-        amount: previewInput,
+        operation_type: operationType,
+        amount: currentOperationAmount,
         exchange_rate: formData.exchange_rate,
         fee: formData.fee,
-        crypto: formData.crypto,
-        fiat: formData.fiat,
+        crypto: selectedSession.crypto || 'USDT',
+        fiat: selectedSession.fiat || 'EUR',
       });
       previewAmountCrypto = preview.crypto_amount;
       previewAmountFiat = preview.fiat_amount;
     }
   } catch {
-    // Un formulario incompleto no debe mostrar importes calculados que parecen válidos.
+    // A partial form must never look like a valid financial calculation.
   }
 
   if (sessionsLoading) {
@@ -336,6 +326,18 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                 </div>
               )}
 
+              <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-black/20 p-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Saldo fiat disponible</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{Number(sessionBalances.fiatBalance).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {selectedSession?.fiat || 'EUR'}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Saldo cripto disponible</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{Number(sessionBalances.cryptoBalance).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} {selectedSession?.crypto || 'USDT'}</p>
+                </div>
+                <p className="text-xs leading-5 text-gray-500 sm:col-span-2">Los importes se rellenan automáticamente con el saldo disponible. Solo introduces la orden, plataforma, tasa de cambio y comisión.</p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="order_id" className="text-gray-300 font-medium">
@@ -372,26 +374,14 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label id="operation_type-label" htmlFor="operation_type" className="text-gray-300 font-medium">
-                    Tipo de operación <span className="text-red-400">*</span>
-                  </Label>
-                  <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)} disabled={loading || isFirstSessionOperation}>
-                    <SelectTrigger id="operation_type" aria-labelledby="operation_type-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
-                      <SelectValue placeholder="Selecciona tipo" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-purple-500/30 text-white">
-                      {operationTypes.map(type => (
-                        <SelectItem key={type} value={type} className="rounded-lg focus:bg-purple-500/10">
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {isFirstSessionOperation && (
-                    <p id="operation-type-lock-note" className="text-xs leading-5 text-violet-300">
-                      Primera operación obligatoria: <strong>{requiredFirstOperation.toUpperCase()}</strong>. Se fija según el capital inicial y no se puede cambiar.
-                    </p>
-                  )}
+                  <Label id="operation_type-label" className="text-gray-300 font-medium">Tipo de operación</Label>
+                  <div id="operation_type" aria-readonly="true" className="flex h-11 items-center justify-between rounded-xl border border-purple-500/30 bg-gray-800 px-3">
+                    <Badge className={operationType === 'Compra' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-violet-500/30 bg-violet-500/10 text-violet-300'}>
+                      {operationType.toUpperCase()}
+                    </Badge>
+                    <span className="text-xs text-gray-500">{isFirstSessionOperation ? 'Fijada por el capital inicial' : 'Siguiente paso del ciclo'}</span>
+                  </div>
+                  <p className="text-xs leading-5 text-gray-500">El tipo se determina automáticamente según el capital inicial y los movimientos ya registrados.</p>
                 </div>
 
                 <div className="space-y-2">
@@ -431,37 +421,35 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="crypto_amount" className="text-gray-300 font-medium">
-                    Cantidad en cripto {formData.operation_type === 'Venta' && <span className="text-red-400">*</span>}
-                  </Label>
+                  <Label htmlFor="crypto_amount" className="text-gray-300 font-medium">Cantidad en cripto</Label>
                   <Input
                     id="crypto_amount"
                     type="number"
                     min="0"
                     step="0.00000001"
-                    placeholder="0.00000000"
-                    value={formData.crypto_amount}
-                    onChange={(e) => handleInputChange('crypto_amount', e.target.value)}
-                    className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
-                    disabled={formData.operation_type === 'Compra' || loading}
+                    placeholder="Se calcula automáticamente"
+                    value={Number.isFinite(operationType === 'Venta' ? sessionBalances.cryptoBalance : previewAmountCrypto) ? String(operationType === 'Venta' ? sessionBalances.cryptoBalance : previewAmountCrypto) : ''}
+                    readOnly
+                    className="bg-gray-800 border-purple-500/30 text-gray-200 placeholder-gray-500 h-11 rounded-xl"
+                    disabled={loading}
                   />
+                  <p className="text-xs text-gray-500">Cantidad que se vende o cripto estimada tras la compra.</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fiat_amount" className="text-gray-300 font-medium">
-                    Importe en moneda de cotización {formData.operation_type === 'Compra' && <span className="text-red-400">*</span>}
-                  </Label>
+                  <Label htmlFor="fiat_amount" className="text-gray-300 font-medium">Importe en moneda de cotización</Label>
                   <Input
                     id="fiat_amount"
                     type="number"
                     min="0"
                     step="0.01"
-                    placeholder="0.00"
-                    value={formData.fiat_amount}
-                    onChange={(e) => handleInputChange('fiat_amount', e.target.value)}
-                    className="bg-gray-800 border-purple-500/30 text-white placeholder-gray-500 h-11 rounded-xl"
-                    disabled={formData.operation_type === 'Venta' || loading}
+                    placeholder="Se calcula automáticamente"
+                    value={Number.isFinite(operationType === 'Compra' ? sessionBalances.fiatBalance : previewAmountFiat) ? String(operationType === 'Compra' ? sessionBalances.fiatBalance : previewAmountFiat) : ''}
+                    readOnly
+                    className="bg-gray-800 border-purple-500/30 text-gray-200 placeholder-gray-500 h-11 rounded-xl"
+                    disabled={loading}
                   />
+                  <p className="text-xs text-gray-500">Importe fiat invertido o recibido tras la comisión.</p>
                 </div>
 
                 <div className="space-y-2">
@@ -483,12 +471,12 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="fee" className="text-gray-300 font-medium">
-                    Comisión ({formData.operation_type === 'Venta' ? (formData.fiat || 'moneda de cotización') : (formData.crypto || 'cripto')})
+                    Comisión ({operationType === 'Venta' ? (formData.fiat || 'moneda de cotización') : (formData.crypto || 'cripto')})
                   </Label>
                   <p className="text-xs text-gray-500">
-                    {formData.operation_type === 'Venta'
+                    {operationType === 'Venta'
                       ? 'Introduce la comisión en la moneda de cotización; se resta del importe recibido.'
-                      : formData.operation_type === 'Compra'
+                      : operationType === 'Compra'
                         ? 'Introduce la comisión como cantidad cripto; se resta de la cripto recibida.'
                         : 'La comisión es un importe fijo, no un porcentaje. La unidad depende de si compras o vendes.'}
                   </p>
@@ -496,7 +484,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                     id="fee"
                     type="number"
                     min="0"
-                    step={formData.operation_type === 'Compra' ? '0.00000001' : '0.01'}
+                    step={operationType === 'Compra' ? '0.00000001' : '0.01'}
                     placeholder="0.00"
                     value={formData.fee}
                     onChange={(e) => handleInputChange('fee', e.target.value)}
@@ -531,7 +519,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Comisión:</span>
                     <Badge className="bg-gray-700 text-gray-300 border-gray-600">
-                      {Number.isFinite(previewFee) ? previewFee.toFixed(formData.operation_type === 'Venta' ? 2 : 8) : '0.00'} {previewFeeCurrency || 'unidad'}
+                      {Number.isFinite(previewFee) ? previewFee.toFixed(operationType === 'Venta' ? 2 : 8) : '0.00'} {previewFeeCurrency || 'unidad'}
                     </Badge>
                   </div>
                 </CardContent>
