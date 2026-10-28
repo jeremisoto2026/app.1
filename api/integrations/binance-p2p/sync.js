@@ -281,10 +281,19 @@ module.exports = async function syncBinanceP2P(req, res) {
     let pendingWindow = false;
     const backfill = state.initialBackfillComplete !== true;
 
+    const connectedAt = parseTime(state.connectedAt);
+    const connectionFloor = connectedAt ? connectedAt.getTime() : null;
+
     if (backfill) {
       mode = "backfill";
-      startTimestamp = Number(state.backfillStartTimestamp) || (requestNow - 29 * DAY_MS);
+      const savedBackfillStart = Number(state.backfillStartTimestamp);
+      startTimestamp = connectionFloor !== null
+        ? Math.max(Number.isFinite(savedBackfillStart) && savedBackfillStart > 0 ? savedBackfillStart : connectionFloor, connectionFloor)
+        : (Number(state.backfillStartTimestamp) || (requestNow - 29 * DAY_MS));
       endTimestamp = Number(state.backfillEndTimestamp) || requestNow;
+      // Older stored setups may have saved the end at connection time; in that case
+      // use the current request time. The lower bound still prevents pre-connection imports.
+      if (endTimestamp <= startTimestamp) endTimestamp = requestNow;
       buyPage = pageStart(state.nextBuyPage, 1);
       sellPage = pageStart(state.nextSellPage, 1);
     } else if (state.pendingWindowStart && state.pendingWindowEnd) {
@@ -297,8 +306,12 @@ module.exports = async function syncBinanceP2P(req, res) {
     } else {
       mode = "incremental";
       const previousSync = parseTime(state.lastSyncAt);
-      startTimestamp = Math.max(requestNow - 29 * DAY_MS,
-        previousSync ? previousSync.getTime() - 10 * 60 * 1000 : requestNow - 29 * DAY_MS);
+      const defaultStart = connectionFloor !== null ? connectionFloor : requestNow - 29 * DAY_MS;
+      startTimestamp = Math.max(
+        connectionFloor !== null ? connectionFloor : 0,
+        requestNow - 29 * DAY_MS,
+        previousSync ? previousSync.getTime() - 10 * 60 * 1000 : defaultStart
+      );
       endTimestamp = requestNow;
       buyPage = 1;
       sellPage = 1;
