@@ -5,6 +5,7 @@ const {
   requirePost,
   requireFirebaseUser,
   getDocument,
+  listAllDocuments,
   countDocuments,
   commitWrites,
   createWrite,
@@ -40,6 +41,16 @@ module.exports = async function createSession(req, res) {
     }
 
     const sessionsPath = userPath + "/sessions";
+    const existingSessions = await listAllDocuments(sessionsPath, 100, 10);
+    const duplicate = existingSessions.find((item) =>
+      item.data?.status === "active" &&
+      String(item.data?.fiat || "").toUpperCase() === fiat &&
+      String(item.data?.crypto || "").toUpperCase() === cryptoCode
+    );
+    if (duplicate) {
+      throw new HttpError(409, "Ya tienes un arbitraje activo para " + fiat + " / " + cryptoCode + ". Abre esa sesión o termínala antes de crear otra del mismo par.");
+    }
+
     const storedOrders = Number(profile.data.ordersUsed);
     const savedOrders = Number.isFinite(storedOrders) && storedOrders >= 0 ? storedOrders : 0;
     const currentOrders = Math.max(savedOrders, await countDocuments(sessionsPath, 301));
