@@ -75,6 +75,7 @@ module.exports = async function binanceP2PStatus(req, res) {
       backfillComplete: data.initialBackfillComplete === true,
       hasMoreHistory: data.initialBackfillComplete !== true ||
         Boolean(data.pendingWindowStart && (data.pendingNextBuyPage || data.pendingNextSellPage)),
+      historyProbeEnabled: process.env.VERCEL_ENV === "preview",
     };
 
     const requestUrl = new URL(req.url || "/", "http://localhost");
