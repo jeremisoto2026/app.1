@@ -22,6 +22,8 @@ import {
   FaSun,
   FaShieldAlt,
   FaSignInAlt,
+  FaSyncAlt,
+  FaKey,
 } from "react-icons/fa";
 import "./App.css";
 
@@ -31,8 +33,8 @@ const features = [
     icon: FaMoneyBillWave,
     title: "Operaciones bajo control",
     description:
-      "Registra compras y ventas con cantidades, precios, plataforma y comisiones claramente identificados.",
-    tag: "REGISTRO MANUAL",
+      "Importa órdenes P2P completadas de Binance y registra también tus operaciones con sus datos claramente identificados.",
+    tag: "BINANCE P2P + REGISTRO",
   },
   {
     number: "02",
@@ -135,15 +137,14 @@ const MainApp = () => {
                 GESTIÓN DE OPERACIONES CRIPTO
               </div>
               <h1>
-                Tus operaciones.
+                Binance P2P.
                 <br />
-                <span>Tu visión.</span>
+                <span>Bajo tu control.</span>
                 <br />
-                Todo en orden.
+                Con claridad.
               </h1>
               <p className="landing-lead">
-                Una forma más clara de registrar, revisar y analizar tus operaciones P2P y escenarios de arbitraje.
-                Sin ruido. Con los datos en su moneda correcta.
+                JJXCAPITAL importa automáticamente tus nuevas órdenes P2P completadas mediante una API de solo lectura y las organiza junto a tus sesiones de arbitraje.
               </p>
 
               <div className="landing-hero-actions">
@@ -166,9 +167,9 @@ const MainApp = () => {
               </div>
 
               <div className="landing-assurances">
-                <span><FaCheck aria-hidden="true" /> Registro manual y transparente</span>
-                <span><FaCheck aria-hidden="true" /> Sin órdenes automáticas</span>
-                <span><FaCheck aria-hidden="true" /> Historial descargable</span>
+                <span><FaCheck aria-hidden="true" /> Sin permisos para operar</span>
+                <span><FaCheck aria-hidden="true" /> Sin permisos de retirada</span>
+                <span><FaCheck aria-hidden="true" /> Historial organizado</span>
               </div>
             </div>
 
@@ -217,6 +218,46 @@ const MainApp = () => {
             </div>
           </section>
 
+          <section className="landing-binance" aria-labelledby="landing-binance-title">
+            <div className="landing-binance-copy">
+              <span className="landing-eyebrow"><span className="eyebrow-line" /> INTEGRACIÓN BINANCE P2P</span>
+              <h2 id="landing-binance-title">Tus órdenes, <span>en su sitio.</span></h2>
+              <p>
+                Conecta una API limitada a consulta. Mientras usas JJXCAPITAL, la plataforma comprueba nuevas órdenes completadas y las incorpora a tu historial para que puedas analizarlas.
+              </p>
+              <ul className="landing-binance-assurances">
+                <li><FaCheck aria-hidden="true" /><span>Importación automática de órdenes completadas desde que conectas la API.</span></li>
+                <li><FaCheck aria-hidden="true" /><span>La clave no necesita permisos para crear operaciones ni retirar fondos.</span></li>
+                <li><FaCheck aria-hidden="true" /><span>Los registros se mantienen dentro de tu cuenta de JJXCAPITAL.</span></li>
+              </ul>
+              <button className="landing-button landing-button-secondary landing-binance-cta" type="button" onClick={() => openAuth("register")}>
+                Conocer la plataforma <FaArrowRight aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="landing-binance-visual" aria-label="Vista ilustrativa del flujo de sincronización P2P">
+              <div className="binance-card-glow" aria-hidden="true" />
+              <div className="binance-card">
+                <div className="binance-card-header">
+                  <div className="binance-provider-icon"><FaSyncAlt aria-hidden="true" /></div>
+                  <div className="binance-provider-copy"><strong>Binance P2P</strong><span>Conexión de historial</span></div>
+                  <span className="binance-readonly-pill"><FaKey aria-hidden="true" /> Solo lectura</span>
+                </div>
+                <div className="binance-card-divider" />
+                <div className="binance-flow-heading"><span>FLUJO DE SINCRONIZACIÓN</span><span>3 pasos</span></div>
+                <div className="binance-flow">
+                  <div className="binance-flow-step"><span className="binance-flow-index"><FaKey aria-hidden="true" /></span><span><strong>Conectas tu API</strong><small>Permisos de consulta</small></span><FaCheck className="binance-flow-check" aria-hidden="true" /></div>
+                  <div className="binance-flow-connector" aria-hidden="true" />
+                  <div className="binance-flow-step"><span className="binance-flow-index"><FaSyncAlt aria-hidden="true" /></span><span><strong>Se importan las nuevas órdenes</strong><small>Solo órdenes P2P completadas</small></span><FaCheck className="binance-flow-check" aria-hidden="true" /></div>
+                  <div className="binance-flow-connector" aria-hidden="true" />
+                  <div className="binance-flow-step"><span className="binance-flow-index"><FaChartLine aria-hidden="true" /></span><span><strong>Revisas y analizas</strong><small>Desde tu historial JJXCAPITAL</small></span><FaArrowRight className="binance-flow-arrow" aria-hidden="true" /></div>
+                </div>
+                <div className="binance-card-footer"><FaShieldAlt aria-hidden="true" /><span>La API no puede operar ni retirar fondos</span></div>
+              </div>
+              <p className="binance-visual-caption">La sincronización requiere conectar tu cuenta de Binance.</p>
+            </div>
+          </section>
+
           <section className="landing-principles" aria-label="Principios de JJXCAPITAL">
             <div className="principle-item">
               <span className="principle-number">01</span>
@@ -236,7 +277,7 @@ const MainApp = () => {
             <div className="landing-section-heading">
               <span className="landing-eyebrow"><span className="eyebrow-line" /> TODO LO ESENCIAL, BIEN ORGANIZADO</span>
               <h2>Herramientas para trabajar<br /><span>con más perspectiva.</span></h2>
-              <p>Funciones concretas para entender tus operaciones, sin prometer automatizaciones ni resultados que la plataforma no ofrece.</p>
+              <p>Herramientas para organizar operaciones manuales y órdenes P2P sincronizadas, revisar resultados y simular escenarios con claridad.</p>
             </div>
             <div className="landing-feature-grid">
               {features.map((feature) => {
@@ -268,7 +309,7 @@ const MainApp = () => {
               <button className="landing-button landing-button-primary" type="button" onClick={() => openAuth("register")}>
                 Crear cuenta gratis <FaArrowRight aria-hidden="true" />
               </button>
-              <span>Sin conexión de trading automática ni envío de órdenes.</span>
+              <span>La conexión de Binance solo sincroniza historial; nunca ejecuta órdenes.</span>
             </div>
           </section>
 
@@ -339,4 +380,3 @@ function App() {
 }
 
 export default App;
-

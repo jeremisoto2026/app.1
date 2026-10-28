@@ -373,7 +373,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
 
         <footer className="dashboard-disclaimer">
           <ShieldCheckIcon aria-hidden="true" />
-          <p>JJXCAPITAL organiza operaciones que introduces manualmente. Los simuladores son estimaciones; no conectan con exchanges ni ejecutan órdenes.</p>
+          <p>JJXCAPITAL organiza operaciones manuales y órdenes sincronizadas desde Binance P2P. Los simuladores son estimaciones; la API no ejecuta órdenes ni retira fondos.</p>
         </footer>
       </div>
     </div>
@@ -381,4 +381,3 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
 };
 
 export default Dashboard;
-

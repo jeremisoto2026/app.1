@@ -969,6 +969,49 @@ input:focus, select:focus, textarea:focus {
 .preview-disclaimer { margin-top: 16px; color: #617089; text-align: center; font-size: 9px; }
 .landing-preview-caption { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 16px; color: #8f9db2; font-size: 11px; text-align: center; }
 .caption-lock { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 7px; background: rgba(129,140,248,.09); color: #a9a0ff; }
+.landing-binance {
+  position: relative; display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); align-items: center;
+  gap: clamp(32px, 6vw, 78px); margin: 0 0 68px; padding: clamp(25px, 4vw, 48px);
+  overflow: hidden; border: 1px solid rgba(141,157,190,.2); border-radius: 22px;
+  background: linear-gradient(125deg, rgba(20,29,47,.96), rgba(12,18,31,.98) 58%, rgba(22,24,45,.94));
+  box-shadow: 0 26px 70px rgba(0,0,0,.18), inset 0 1px rgba(255,255,255,.035);
+}
+.landing-binance::before { position: absolute; content: ""; width: 300px; height: 300px; top: -205px; right: 16%; border-radius: 50%; background: rgba(139,124,246,.14); filter: blur(80px); pointer-events: none; }
+.landing-binance-copy, .landing-binance-visual { position: relative; z-index: 1; min-width: 0; }
+.landing-binance-copy h2 { margin: 18px 0 13px; color: #f0f3fb; font-size: clamp(29px, 3.3vw, 43px); font-weight: 750; letter-spacing: -.055em; line-height: 1.12; }
+.landing-binance-copy h2 span { color: #a8a3ff; background: linear-gradient(100deg,#b8aaff,#7eb9ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.landing-binance-copy > p { max-width: 520px; color: #99a7bd; font-size: 13px; line-height: 1.85; }
+.landing-binance-assurances { display: grid; gap: 13px; margin: 22px 0 25px; padding: 0; list-style: none; }
+.landing-binance-assurances li { display: flex; align-items: flex-start; gap: 10px; color: #bac5d6; font-size: 11px; line-height: 1.65; }
+.landing-binance-assurances svg { flex: 0 0 15px; width: 15px; margin-top: 2px; color: #73ddb8; }
+.landing-binance-cta { min-height: 43px; font-size: 11px; }
+.landing-binance-visual { padding: 11px; }
+.binance-card-glow { position: absolute; inset: 9% 0; z-index: -1; background: linear-gradient(135deg,rgba(107,89,216,.3),rgba(56,134,193,.14)); filter: blur(36px); }
+.binance-card { padding: 20px; border: 1px solid rgba(155,168,198,.19); border-radius: 17px; background: linear-gradient(145deg,rgba(10,16,28,.97),rgba(14,21,36,.96)); box-shadow: 0 22px 50px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.03); }
+.binance-card-header { display: flex; align-items: center; gap: 11px; }
+.binance-provider-icon { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border: 1px solid rgba(139,124,246,.2); border-radius: 12px; background: rgba(139,124,246,.11); color: #b9adff; }
+.binance-provider-icon svg { width: 17px; height: 17px; }
+.binance-provider-copy { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
+.binance-provider-copy strong { color: #edf1f8; font-size: 12px; font-weight: 750; }
+.binance-provider-copy span { color: #7f8da4; font-size: 10px; }
+.binance-readonly-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 1px solid rgba(112,215,181,.2); border-radius: 999px; background: rgba(57,158,127,.08); color: #83ddbc; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.binance-readonly-pill svg { width: 11px; height: 11px; }
+.binance-card-divider { height: 1px; margin: 17px 0; background: rgba(148,163,184,.12); }
+.binance-flow-heading { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 13px; color: #8593aa; font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.binance-flow-heading span:last-child { color: #68778e; font-weight: 600; letter-spacing: 0; }
+.binance-flow { display: grid; }
+.binance-flow-step { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 0; }
+.binance-flow-index { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; border: 1px solid rgba(129,140,248,.17); border-radius: 9px; background: rgba(129,140,248,.08); color: #aaa2ff; }
+.binance-flow-index svg { width: 13px; height: 13px; }
+.binance-flow-step > span:nth-child(2) { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
+.binance-flow-step strong { color: #dfe6f1; font-size: 10px; font-weight: 700; }
+.binance-flow-step small { color: #8290a7; font-size: 9px; }
+.binance-flow-check { flex: 0 0 13px; width: 13px; color: #70d7b5; }
+.binance-flow-arrow { flex: 0 0 12px; width: 12px; color: #8996ad; }
+.binance-flow-connector { width: 1px; height: 8px; margin-left: 14px; background: linear-gradient(rgba(139,124,246,.4),rgba(96,165,250,.18)); }
+.binance-card-footer { display: flex; align-items: center; gap: 8px; margin-top: 15px; padding-top: 13px; border-top: 1px solid rgba(148,163,184,.1); color: #8997ad; font-size: 9px; line-height: 1.5; }
+.binance-card-footer svg { flex: 0 0 13px; width: 13px; color: #88a8d6; }
+.binance-visual-caption { margin-top: 9px; color: #748198; text-align: center; font-size: 9px; }
 .landing-principles { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 30px; padding: 27px 0; border-top: 1px solid var(--jjx-border); border-bottom: 1px solid var(--jjx-border); }
 .principle-item { display: flex; gap: 13px; align-items: flex-start; }
 .principle-number { color: #9b94fa; font-size: 11px; font-weight: 850; letter-spacing: .06em; padding-top: 2px; }
@@ -1010,6 +1053,7 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 1024px) {
   .landing-hero { gap: 32px; grid-template-columns: minmax(0,1fr) minmax(0,.9fr); }
+  .landing-binance { grid-template-columns: 1fr 1fr; gap: 24px; }
   .landing-feature-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .landing-cta { grid-template-columns: auto minmax(0,1fr); }
   .cta-actions { grid-column: 2; }
@@ -1023,6 +1067,10 @@ input:focus, select:focus, textarea:focus {
   .landing-button-quiet { min-height: 39px; padding: 0 11px; font-size: 11px; }
   .landing-main { width: min(100% - 36px, 580px); }
   .landing-hero { grid-template-columns: 1fr; gap: 42px; padding: 65px 0 44px; }
+  .landing-binance { grid-template-columns: 1fr; gap: 18px; margin-bottom: 43px; padding: 23px; }
+  .landing-binance-visual { padding: 4px 0 0; }
+  .landing-binance-copy h2 { font-size: 31px; }
+  .binance-card { padding: 16px; }
   .landing-hero h1 { margin: 18px 0; font-size: clamp(43px, 11vw, 64px); }
   .landing-lead { font-size: 14px; }
   .landing-hero-actions { align-items: stretch; flex-direction: column; }
@@ -1942,4 +1990,3 @@ html[data-jjx-theme="light"] .app-shell :is(.text-yellow-400, .text-amber-400, .
 html[data-jjx-theme="light"] .app-shell :is(.text-blue-400, .text-sky-400, .text-indigo-400, .text-violet-400, .text-purple-400) { color: #5146b8 !important; }
 html[data-jjx-theme="light"] .app-shell .dashboard-brand small { color: #64748b !important; }
 html[data-jjx-theme="light"] .app-shell .dashboard-profile-button { color: #34435b; }
-
