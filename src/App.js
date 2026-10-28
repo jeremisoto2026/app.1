@@ -293,7 +293,11 @@ const MainApp = () => {
   }
 
   return (
-    <div className="app-shell">\n      <button type="button" className="jjx-theme-toggle" onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"} title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}>\n        {theme === "dark" ? <FaSun aria-hidden="true" /> : <FaMoon aria-hidden="true" />}\n        <span>{theme === "dark" ? "Tema claro" : "Tema oscuro"}</span>\n      </button>
+    <div className="app-shell">
+      <button type="button" className="jjx-theme-toggle" onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"} title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}>
+        {theme === "dark" ? <FaSun aria-hidden="true" /> : <FaMoon aria-hidden="true" />}
+        <span>{theme === "dark" ? "Tema claro" : "Tema oscuro"}</span>
+      </button>
       <main className="app-content">
         <SectionErrorBoundary key={activeTab} onReturn={() => handleTabChange("dashboard")}>
           {activeTab === "dashboard" && (
