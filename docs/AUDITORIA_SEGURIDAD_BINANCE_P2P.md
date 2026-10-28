@@ -75,13 +75,14 @@ No fue posible consultar el proyecto de Vercel con la conexión disponible. Por 
 - Las credenciales de Binance Pay se leen desde variables de entorno del servidor; no se encontró una clave privada o una clave de trading literal en los archivos seleccionados.
 - La configuración de Firebase incluida en `src/firebase.js` es configuración cliente pública, no una cuenta de servicio. Su exposición no equivale a filtrar una clave privada; la protección depende de reglas, autenticación y restricciones apropiadas.
 
-## Plan de remediación antes de cualquier orden real
+## Plan de remediación antes de habilitar la sincronización
 
-1. Confirmar por escrito con Binance el acceso a P2P API y las funciones autorizadas para la cuenta (consulta, anuncios, creación/aceptación de órdenes, pago/liberación, etc.).
-2. Endurecer higiene del repositorio, revocación de sesiones, límites de peticiones y cobertura de pruebas.
+1. Validar la llamada de historial personal `GET /sapi/v1/c2c/orderMatch/listUserOrderHistory` desde Preview con una clave de lectura; comprobar el contrato de la respuesta y permisos reales de la cuenta.
+2. Endurecer higiene del repositorio, verificación/revocación de sesiones, límites de peticiones y cobertura de pruebas.
 3. Verificar las reglas activas de Firebase y el entorno de Vercel sin mostrar secretos.
-4. Diseñar el almacén cifrado de credenciales por usuario, controles de permiso mínimos y registro de auditoría.
-5. Implementar primero consulta de solo lectura. Probar después la lógica de escritura en un entorno oficialmente admitido, sin fondos reales.
-6. Habilitar producción solo tras revisar resultados, límites, idempotencia, conciliación y procedimiento de emergencia.
+4. Diseñar el almacén cifrado por usuario para las credenciales, la separación de permisos y el registro de auditoría.
+5. Implementar la importación de solo lectura, mapeo de los campos y deduplicación persistente por número de orden.
+6. Comparar varias órdenes P2P ya completadas con el historial de Binance y validar el impacto de comisiones en los cálculos actuales.
+7. Habilitar la sincronización automática solo tras revisar build, pruebas, límites de consulta, desconexión y recuperación ante errores. No se necesita permiso de trading ni de retiros.
 
 **No se han creado órdenes reales ni se han cambiado variables de entorno, reglas de Firebase o configuración de producción durante esta auditoría.**
