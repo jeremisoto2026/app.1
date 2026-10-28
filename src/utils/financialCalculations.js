@@ -109,6 +109,22 @@ export const calculateOperationAmounts = ({
 
 const normalizeCurrency = (value) => String(value || "").trim().toUpperCase();
 
+export const getAccountingCryptoAmount = (operation = {}) => {
+  const quantity = toFiniteNumber(operation.crypto_amount);
+  if (!Number.isFinite(quantity)) return quantity;
+  const fee = toFiniteNumber(operation.fee);
+  const cryptoCode = normalizeCurrency(operation.crypto);
+  const feeCurrency = normalizeCurrency(operation.fee_currency);
+  if (operation.source !== "binance_p2p" || !Number.isFinite(fee) || fee <= 0 ||
+      !cryptoCode || feeCurrency !== cryptoCode) return quantity;
+
+  // Binance P2P reports its order fee in crypto. For accounting, a buy adds
+  // the net crypto received; a sell consumes the order quantity plus its fee.
+  if (operation.operation_type === "Compra") return Math.max(0, quantity - fee);
+  if (operation.operation_type === "Venta") return quantity + fee;
+  return quantity;
+};
+
 const addToCurrencyTotal = (totals, currency, amount) => {
   const key = normalizeCurrency(currency);
   if (!key || !Number.isFinite(amount)) return;
@@ -133,7 +149,7 @@ export const calculateDashboardMetrics = (operations = [], now = new Date()) => 
       ...operation,
       _calculationDate: getOperationDate(operation.timestamp),
       _originalIndex: index,
-      _cryptoQuantity: toFiniteNumber(operation.crypto_amount),
+      _cryptoQuantity: getAccountingCryptoAmount(operation),
       _fiatValue: toFiniteNumber(operation.fiat_amount),
       _cryptoCode: normalizeCurrency(operation.crypto),
       _fiatCode: normalizeCurrency(operation.fiat),
@@ -268,7 +284,7 @@ export const calculateArbitrageSessionBalances = (session = {}, operations = [])
   let cryptoBalance = isCryptoBase ? initial : 0;
   matchingOperations.forEach((operation) => {
     const fiatAmount = toFiniteNumber(operation.fiat_amount);
-    const cryptoAmount = toFiniteNumber(operation.crypto_amount);
+    const cryptoAmount = getAccountingCryptoAmount(operation);
     if (operation.operation_type === "Compra") {
       if (Number.isFinite(fiatAmount)) fiatBalance -= fiatAmount;
       if (Number.isFinite(cryptoAmount)) cryptoBalance += cryptoAmount;
@@ -319,7 +335,7 @@ export const calculateArbitrageSessionResult = (session = {}, operations = []) =
   let profit = 0;
   if (isCryptoBase) {
     profit = matchingOperations.reduce((total, operation) => {
-      const quantity = toFiniteNumber(operation.crypto_amount);
+      const quantity = getAccountingCryptoAmount(operation);
       if (!Number.isFinite(quantity) || quantity <= 0) return total;
       if (operation.operation_type === "Compra") return total + quantity;
       if (operation.operation_type === "Venta") return total - quantity;
