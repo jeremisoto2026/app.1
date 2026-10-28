@@ -1,4 +1,5 @@
 {
+  "regions": ["cdg1"],
   "functions": {
     "api/integrations/binance-p2p/connect.js": {
       "maxDuration": 60
