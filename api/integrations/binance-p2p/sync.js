@@ -138,6 +138,10 @@ module.exports = async function syncBinanceP2P(req, res) {
     }
 
     const now = Date.now();
+    const lastAttempt = parseTime(integration.data.lastSyncAttemptAt);
+    if (lastAttempt && now - lastAttempt.getTime() < 5000) {
+      throw new HttpError(429, "Espera unos segundos antes de volver a sincronizar.");
+    }
     const lockExpiry = parseTime(integration.data.syncLockExpiresAt);
     if (integration.data.syncLockId && lockExpiry && lockExpiry.getTime() > now) {
       throw new HttpError(409, "Ya hay una sincronización en curso. Espera a que termine.");
@@ -148,6 +152,7 @@ module.exports = async function syncBinanceP2P(req, res) {
       syncLockId: lockId,
       syncLockExpiresAt: new Date(now + LOCK_MS),
       lastSyncStatus: "syncing",
+      lastSyncAttemptAt: new Date(now),
       lastSyncError: null,
     }, integration.updateTime ? { updateTime: integration.updateTime } : { exists: true })]);
     ownsLock = true;
