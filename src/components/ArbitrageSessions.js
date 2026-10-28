@@ -61,6 +61,10 @@ export default function ArbitrageSessions({ onOpenOperations }) {
   useEffect(() => { loadData(); }, [user?.uid]);
 
   const activeSessions = sessions.filter(item => item.status === "active");
+  const duplicateActiveSession = activeSessions.find(item =>
+    String(item.fiat || "").toUpperCase() === String(draft.fiat || "").toUpperCase() &&
+    String(item.crypto || "").toUpperCase() === String(draft.crypto || "").toUpperCase()
+  );
   const selectedSession = sessions.find(item => item.id === selected);
   const sessionOperations = useMemo(
     () => selectedSession ? operations.filter(item => item.sessionId === selectedSession.id) : [],
@@ -318,8 +322,11 @@ export default function ArbitrageSessions({ onOpenOperations }) {
               </select>
             </label>
           </>}
+          {duplicateActiveSession && <div role="alert" className="sm:col-span-2 lg:col-span-3 rounded-xl border border-amber-400/25 bg-amber-400/5 px-4 py-3 text-sm text-amber-100">
+            Ya existe un arbitraje activo para <strong>{draft.fiat} / {draft.crypto}</strong> ({duplicateActiveSession.name}). No puedes crear otro con el mismo par mientras esté en curso. Selecciona esa sesión en la lista o termínala antes de iniciar una nueva.
+          </div>}
           <div className="flex items-end gap-2">
-            <button disabled={saving} type="submit" className="jjx-button-primary flex-1">{saving ? "Guardando…" : "Crear arbitraje"}</button>
+            <button disabled={saving || Boolean(duplicateActiveSession)} type="submit" className="jjx-button-primary flex-1">{saving ? "Guardando…" : duplicateActiveSession ? "Ya existe una sesión activa" : "Crear arbitraje"}</button>
             <button type="button" onClick={() => setShowCreate(false)} className="jjx-button-secondary">Cancelar</button>
           </div>
           <p className="sm:col-span-2 lg:col-span-3 text-xs leading-5 text-slate-500">El tipo de inicio solo determina la primera operación. En cada compra o venta introducirás la cantidad que realmente vas a mover. Los flujos se calculan a partir de las operaciones registradas y no representan el saldo real de tu exchange.</p>
