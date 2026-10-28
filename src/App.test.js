@@ -9,11 +9,17 @@ jest.mock("./contexts/AuthContext", () => ({
   useAuth: () => ({ user: mockUser }),
 }));
 
-jest.mock("./components/AuthForms", () => function MockAuthForms({ mode }) {
-  return React.createElement("div", { "data-testid": "auth-dialog" }, mode);
+jest.mock("./components/AuthForms", () => {
+  const ReactForMock = jest.requireActual("react");
+  return function MockAuthForms({ mode }) {
+    return ReactForMock.createElement("div", { "data-testid": "auth-dialog" }, mode);
+  };
 });
 jest.mock("./components/NavigationBar", () => () => null);
-jest.mock("./components/Dashboard", () => () => React.createElement("div", null, "dashboard"));
+jest.mock("./components/Dashboard", () => {
+  const ReactForMock = jest.requireActual("react");
+  return () => ReactForMock.createElement("div", null, "dashboard");
+});
 jest.mock("./components/UnifiedSimulator", () => () => null);
 jest.mock("./components/ArbitrageSessions", () => () => null);
 jest.mock("./components/Operations", () => () => null);
