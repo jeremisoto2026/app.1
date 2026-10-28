@@ -30,6 +30,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [sessions, setSessions] = useState([]);
+  const [sessionOperationCounts, setSessionOperationCounts] = useState({});
   const [selectedSessionId, setSelectedSessionId] = useState(initialSessionId);
   const [sessionsLoading, setSessionsLoading] = useState(true);
 
@@ -38,17 +39,27 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
     const loadSessions = async () => {
       if (!user?.uid) {
         setSessions([]);
+        setSessionOperationCounts({});
         setSelectedSessionId('');
         setSessionsLoading(false);
         return;
       }
       setSessionsLoading(true);
       try {
-        const snapshot = await getDocs(collection(db, 'users', user.uid, 'sessions'));
+        const [snapshot, operationsSnapshot] = await Promise.all([
+          getDocs(collection(db, 'users', user.uid, 'sessions')),
+          getDocs(collection(db, 'users', user.uid, 'operations')),
+        ]);
         const records = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+        const operationCounts = operationsSnapshot.docs.reduce((counts, item) => {
+          const sessionId = item.data().sessionId;
+          if (sessionId) counts[sessionId] = (counts[sessionId] || 0) + 1;
+          return counts;
+        }, {});
         const active = records.filter(item => item.status === 'active');
         if (!cancelled) {
           setSessions(records);
+          setSessionOperationCounts(operationCounts);
           const next = active.find(item => item.id === initialSessionId) || active[0];
           setSelectedSessionId(next?.id || '');
         }
@@ -65,6 +76,9 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
 
   const activeSessions = sessions.filter(item => item.status === 'active');
   const selectedSession = activeSessions.find(item => item.id === selectedSessionId);
+  const selectedSessionOperationCount = selectedSession ? (sessionOperationCounts[selectedSession.id] || 0) : 0;
+  const isFirstSessionOperation = Boolean(selectedSession) && selectedSessionOperationCount === 0;
+  const requiredFirstOperation = selectedSession?.initialCapitalType === 'crypto' ? 'Venta' : 'Compra';
 
   useEffect(() => {
     if (!selectedSession) return;
@@ -127,6 +141,20 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       return;
     }
 
+    if ((sessionOperationCounts[selectedSession.id] || 0) === 0 && formData.operation_type !== requiredFirstOperation) {
+      setFormData(previous => ({
+        ...previous,
+        operation_type: requiredFirstOperation,
+        crypto_amount: '',
+        fiat_amount: '',
+        exchange_rate: '',
+        fee: '0',
+      }));
+      setError('La primera operación debe ser ' + requiredFirstOperation.toUpperCase() +
+        (selectedSession.initialCapitalType === 'crypto' ? ' porque el arbitraje empieza con capital cripto.' : ' porque el arbitraje empieza con capital fiat.'));
+      return;
+    }
+
     const requiredFields = ['exchange', 'operation_type', 'crypto', 'fiat', 'exchange_rate'];
     const amountField = formData.operation_type === 'Venta' ? 'crypto_amount' : 'fiat_amount';
     const missingFields = requiredFields.filter(field => !formData[field]);
@@ -184,6 +212,10 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       };
 
       await saveOperation(user.uid, operationData);
+      setSessionOperationCounts(previous => ({
+        ...previous,
+        [selectedSession.id]: (previous[selectedSession.id] || 0) + 1,
+      }));
       
       setSuccess('La operación se ha guardado correctamente.');
       
@@ -343,7 +375,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                   <Label id="operation_type-label" htmlFor="operation_type" className="text-gray-300 font-medium">
                     Tipo de operación <span className="text-red-400">*</span>
                   </Label>
-                  <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)} disabled={loading}>
+                  <Select value={formData.operation_type} onValueChange={(value) => handleInputChange('operation_type', value)} disabled={loading || isFirstSessionOperation}>
                     <SelectTrigger id="operation_type" aria-labelledby="operation_type-label" className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona tipo" />
                     </SelectTrigger>
@@ -355,6 +387,11 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {isFirstSessionOperation && (
+                    <p id="operation-type-lock-note" className="text-xs leading-5 text-violet-300">
+                      Primera operación obligatoria: <strong>{requiredFirstOperation.toUpperCase()}</strong>. Se fija según el capital inicial y no se puede cambiar.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
