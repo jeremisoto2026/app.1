@@ -6,6 +6,7 @@ const {
   requireFirebaseUser,
   getDocument,
   countDocuments,
+  hasDocumentsMatchingField,
   commitWrites,
   createWrite,
   documentName,
@@ -49,7 +50,8 @@ module.exports = async function createOperation(req, res) {
       throw new HttpError(400, "Revisa la plataforma, el tipo de movimiento, las monedas, los importes, la tasa y la comisión.");
     }
 
-    const sessionDocument = await getDocument(userPath + "/sessions/" + sessionId);
+    const sessionPath = userPath + "/sessions/" + sessionId;
+    const sessionDocument = await getDocument(sessionPath);
     if (!sessionDocument || sessionDocument.data.status !== "active") {
       throw new HttpError(409, "Selecciona un arbitraje activo de tu cuenta para registrar el movimiento.");
     }
@@ -57,6 +59,15 @@ module.exports = async function createOperation(req, res) {
     if ((session.crypto && String(session.crypto).toUpperCase() !== cryptoCode) ||
         (session.fiat && String(session.fiat).toUpperCase() !== fiat)) {
       throw new HttpError(400, "Las monedas del movimiento deben coincidir con las del arbitraje seleccionado.");
+    }
+
+    const operationsPath = userPath + "/operations";
+    const hasSessionOperations = await hasDocumentsMatchingField(operationsPath, "sessionId", sessionId);
+    const isFirstOperation = !session.firstOperationType && !hasSessionOperations;
+    const requiredFirstOperation = session.initialCapitalType === "crypto" ? "Venta" : "Compra";
+    if (isFirstOperation && operationType !== requiredFirstOperation) {
+      throw new HttpError(409, "La primera operación de este arbitraje debe ser " + requiredFirstOperation.toUpperCase() +
+        (session.initialCapitalType === "crypto" ? " porque comienza con capital cripto." : " porque comienza con capital fiat."));
     }
 
     // Recalcular en el servidor para no confiar en los importes derivados enviados por el navegador.
@@ -73,7 +84,6 @@ module.exports = async function createOperation(req, res) {
       throw new HttpError(400, "Los importes calculados no coinciden con la tasa y la comisión. Revisa el movimiento.");
     }
 
-    const operationsPath = userPath + "/operations";
     const storedMovements = Number(profile.data.movementsUsed);
     const savedMovements = Number.isFinite(storedMovements) && storedMovements >= 0 ? storedMovements : 0;
     const currentMovements = Math.max(savedMovements, await countDocuments(operationsPath, 151));
@@ -98,14 +108,21 @@ module.exports = async function createOperation(req, res) {
       timestamp,
     };
 
-    await commitWrites([
+    const writes = [
       {
         update: { name: documentName(operationsPath + "/" + id), fields: toFields(operation) },
         currentDocument: { exists: false },
       },
       createWrite(userPath, { movementsUsed: currentMovements + 1 },
         profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
-    ]);
+    ];
+    if (isFirstOperation) {
+      writes.push(createWrite(sessionPath, {
+        firstOperationType: operationType,
+        firstOperationAt: timestamp,
+      }, { updateTime: sessionDocument.updateTime }));
+    }
+    await commitWrites(writes);
 
     return sendJson(res, 201, {
       operation: { ...operation, id, timestamp: timestamp.toISOString() },
