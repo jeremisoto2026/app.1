@@ -41,6 +41,7 @@ export default function BinanceP2PSyncCard() {
   const [apiSecret, setApiSecret] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [probingHistory, setProbingHistory] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -109,6 +110,25 @@ export default function BinanceP2PSyncCard() {
       setError(syncError.message || "No se pudo sincronizar el historial.");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleHistoricalProbe = async () => {
+    setProbingHistory(true);
+    setError("");
+    setMessage("");
+    setLastResult(null);
+    try {
+      const payload = await callApi(user, "/api/integrations/binance-p2p/sync", "POST", {
+        historyProbe: true,
+      });
+      setLastResult(payload);
+      setMessage(payload.message || "Prueba histórica completada.");
+      await refreshStatus();
+    } catch (probeError) {
+      setError(probeError.message || "No se pudo consultar el historial antiguo de Binance.");
+    } finally {
+      setProbingHistory(false);
     }
   };
 
@@ -264,41 +284,93 @@ export default function BinanceP2PSyncCard() {
             <button
               type="button"
               onClick={handleSync}
-              disabled={!status.encryptionConfigured || syncing || disconnecting}
+              disabled={!status.encryptionConfigured || syncing || probingHistory || disconnecting}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               <ArrowPathIcon className={"h-4 w-4 " + (syncing ? "animate-spin" : "")} aria-hidden="true" />
               {syncing ? "Sincronizando…" : status.hasMoreHistory ? "Continuar sincronización" : "Sincronizar ahora"}
             </button>
+            {status.historyProbeEnabled && (
+              <button
+                type="button"
+                onClick={handleHistoricalProbe}
+                disabled={!status.encryptionConfigured || syncing || probingHistory || disconnecting}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-500/40 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                title="Consulta de solo lectura en Preview; no importa ni guarda operaciones."
+              >
+                <ArrowPathIcon className={"h-4 w-4 " + (probingHistory ? "animate-spin" : "")} aria-hidden="true" />
+                {probingHistory ? "Consultando historial antiguo…" : "Probar historial de 6–12 meses"}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleDisconnect}
-              disabled={syncing || disconnecting}
+              disabled={syncing || probingHistory || disconnecting}
               className="jjx-button-secondary rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-60"
             >
               {disconnecting ? "Desconectando…" : "Desconectar"}
             </button>
           </div>
+          {status.historyProbeEnabled && (
+            <p className="text-xs text-slate-500">
+              Prueba temporal solo en Preview: consulta el historial de hace aproximadamente 6–12 meses por tramos de menos de 30 días, límite de Binance. No importa operaciones ni cambia el cursor de la sincronización normal.
+            </p>
+          )}
           {lastResult && (
             <>
-              <p className="text-sm text-slate-500" role="status">
-                Encontradas: {lastResult.completedOrdersFound}. Nuevas: {lastResult.imported}. Ya registradas: {lastResult.skipped}.
-                {lastResult.hasMoreHistory ? " Hay más páginas pendientes." : ""}
-              </p>
+              {lastResult.historyProbe ? (
+                <p className="text-sm text-slate-500" role="status">
+                  Período consultado: {formatDate(lastResult.probeWindow?.start)} – {formatDate(lastResult.probeWindow?.end)}. Esta prueba no guarda operaciones ni modifica la sincronización habitual.
+                </p>
+              ) : (
+                <p className="text-sm text-slate-500" role="status">
+                  Encontradas: {lastResult.completedOrdersFound}. Nuevas: {lastResult.imported}. Ya registradas: {lastResult.skipped}.
+                  {lastResult.hasMoreHistory ? " Hay más páginas pendientes." : ""}
+                </p>
+              )}
               {lastResult.diagnostics && (
                 <div className="mt-3 space-y-2 rounded-xl border border-slate-200/70 bg-slate-500/5 p-4 text-sm" aria-live="polite">
-                  <p className="font-semibold">Diagnóstico de la respuesta de Binance</p>
-                  <p>Filas recibidas: compras {lastResult.diagnostics.buyRowsReturned}, ventas {lastResult.diagnostics.sellRowsReturned}.</p>
-                  <p>Órdenes con estado completado: {lastResult.diagnostics.rowsMarkedCompleted}. Órdenes válidas para importar: {lastResult.diagnostics.usableCompletedOrders}.</p>
-                  <p>
-                    Totales informados por Binance: compras {lastResult.diagnostics.buyReportedTotal == null ? "no informado" : lastResult.diagnostics.buyReportedTotal}, ventas {lastResult.diagnostics.sellReportedTotal == null ? "no informado" : lastResult.diagnostics.sellReportedTotal}.
-                  </p>
-                  <p>
-                    Estados recibidos: {Object.keys(lastResult.diagnostics.statusCounts || {}).length
-                      ? Object.entries(lastResult.diagnostics.statusCounts).map(([statusName, count]) => statusName + ": " + count).join(" · ")
-                      : "Binance no devolvió filas."}
-                  </p>
-                  <p className="text-xs text-slate-500">Este resumen solo muestra cantidades y estados agregados; no contiene números de órdenes ni datos de contrapartes.</p>
+                  {lastResult.historyProbe ? (
+                    <>
+                      <p className="font-semibold">Diagnóstico del historial antiguo de Binance</p>
+                      <p>Tramos revisados: {lastResult.diagnostics.windowsScanned}. Filas recibidas: compras {lastResult.diagnostics.buyRowsReturned}, ventas {lastResult.diagnostics.sellRowsReturned}.</p>
+                      <p>Órdenes completadas: {lastResult.diagnostics.rowsMarkedCompleted}. Órdenes válidas para importar: {lastResult.diagnostics.usableCompletedOrders} (solo comprobación; no se importaron).</p>
+                      <p>
+                        Estados recibidos: {Object.keys(lastResult.diagnostics.statusCounts || {}).length
+                          ? Object.entries(lastResult.diagnostics.statusCounts).map(([statusName, count]) => statusName + ": " + count).join(" · ")
+                          : "Binance no devolvió filas."}
+                      </p>
+                      <div className="space-y-2 pt-2">
+                        {lastResult.diagnostics.windows.map((window, index) => (
+                          <div key={window.start} className="rounded-lg border border-slate-200/70 p-3">
+                            <p className="font-semibold">Tramo {index + 1}: {formatDate(window.start)} – {formatDate(window.end)}</p>
+                            <p>Compras: {window.buyRowsReturned} · Ventas: {window.sellRowsReturned} · Completadas: {window.rowsMarkedCompleted} · Válidas: {window.usableCompletedOrders}</p>
+                            {(window.moreBuyPages || window.moreSellPages) && (
+                              <p className="text-amber-600">Este tramo tiene más páginas que no se revisaron en la prueba rápida.</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {lastResult.diagnostics.morePages && (
+                        <p className="text-amber-600">Algunos tramos tienen más páginas. La prueba revisó hasta dos páginas por compra/venta y tramo.</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold">Diagnóstico de la respuesta de Binance</p>
+                      <p>Filas recibidas: compras {lastResult.diagnostics.buyRowsReturned}, ventas {lastResult.diagnostics.sellRowsReturned}.</p>
+                      <p>Órdenes con estado completado: {lastResult.diagnostics.rowsMarkedCompleted}. Órdenes válidas para importar: {lastResult.diagnostics.usableCompletedOrders}.</p>
+                      <p>
+                        Totales informados por Binance: compras {lastResult.diagnostics.buyReportedTotal == null ? "no informado" : lastResult.diagnostics.buyReportedTotal}, ventas {lastResult.diagnostics.sellReportedTotal == null ? "no informado" : lastResult.diagnostics.sellReportedTotal}.
+                      </p>
+                      <p>
+                        Estados recibidos: {Object.keys(lastResult.diagnostics.statusCounts || {}).length
+                          ? Object.entries(lastResult.diagnostics.statusCounts).map(([statusName, count]) => statusName + ": " + count).join(" · ")
+                          : "Binance no devolvió filas."}
+                      </p>
+                      <p className="text-xs text-slate-500">Este resumen solo muestra cantidades y estados agregados; no contiene números de órdenes ni datos de contrapartes.</p>
+                    </>
+                  )}
                 </div>
               )}
             </>
