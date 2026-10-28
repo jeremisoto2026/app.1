@@ -41,23 +41,34 @@ module.exports = async function connectBinanceP2P(req, res) {
     const path = INTEGRATION_PATH(claims.sub);
     const existing = await getDocument(path);
     const now = new Date();
-    const isNewConnection = !existing?.data?.encryptedCredentials;
-    const firstBackfillStart = now.getTime() - 29 * 24 * 60 * 60 * 1000;
-    const firstBackfillEnd = now.getTime();
+    const existingLockExpiry = existing?.data?.syncLockExpiresAt
+      ? new Date(existing.data.syncLockExpiresAt).getTime()
+      : 0;
+    if (existing?.data?.syncLockId && Number.isFinite(existingLockExpiry) && existingLockExpiry > now.getTime()) {
+      throw new HttpError(409, "Hay una sincronización de Binance en curso. Espera a que termine antes de actualizar la conexión.");
+    }
     const fields = {
       encryptedCredentials,
       connectionStatus: "connected",
       apiKeyHint: credentials.apiKey.slice(-4),
-      connectedAt: existing?.data?.connectedAt || now,
+      connectedAt: now,
       lastVerifiedAt: now,
-      ...(isNewConnection ? {
-        initialBackfillComplete: false,
-        backfillStartTimestamp: firstBackfillStart,
-        backfillEndTimestamp: firstBackfillEnd,
-        nextBuyPage: 1,
-        nextSellPage: 1,
-        lastImportedCount: 0,
-      } : {}),
+      initialBackfillComplete: false,
+      backfillStartTimestamp: now.getTime(),
+      backfillEndTimestamp: now.getTime(),
+      nextBuyPage: 1,
+      nextSellPage: 1,
+      pendingWindowStart: null,
+      pendingWindowEnd: null,
+      pendingNextBuyPage: null,
+      pendingNextSellPage: null,
+      lastSyncAt: null,
+      lastSyncAttemptAt: null,
+      lastSyncStatus: null,
+      lastSyncError: null,
+      lastImportedCount: 0,
+      syncLockId: null,
+      syncLockExpiresAt: new Date(0),
     };
     await commitWrites([createWrite(path, fields, existing?.updateTime
       ? { updateTime: existing.updateTime }
@@ -66,7 +77,8 @@ module.exports = async function connectBinanceP2P(req, res) {
     return sendJson(res, 200, {
       connected: true,
       apiKeyHint: credentials.apiKey.slice(-4),
-      message: "La conexión de solo lectura con Binance se ha verificado correctamente.",
+      connectedAt: now.toISOString(),
+      message: "Binance está conectado en modo de solo lectura. Se importarán operaciones completadas desde este momento.",
     });
   } catch (error) {
     if (error instanceof HttpError) return errorResponse(res, error);
@@ -74,3 +86,4 @@ module.exports = async function connectBinanceP2P(req, res) {
     return sendJson(res, 500, { error: "No se pudo guardar la conexión de Binance de forma segura." });
   }
 };
+

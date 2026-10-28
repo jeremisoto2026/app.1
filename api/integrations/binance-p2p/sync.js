@@ -198,142 +198,6 @@ module.exports = async function syncBinanceP2P(req, res) {
     if (!integration?.data?.encryptedCredentials || integration.data.connectionStatus !== "connected") {
       throw new HttpError(409, "Conecta primero tu cuenta de Binance P2P en Perfil.");
     }
-    const historyProbe = req.body?.historyProbe === true;
-    if (historyProbe && process.env.VERCEL_ENV !== "preview") {
-      throw new HttpError(403, "La prueba de historial antiguo solo está disponible en Preview.");
-    }
-
-    const now = Date.now();
-    const lastAttempt = parseTime(integration.data.lastSyncAttemptAt);
-    if (lastAttempt && now - lastAttempt.getTime() < 5000) {
-      throw new HttpError(429, "Espera unos segundos antes de volver a sincronizar.");
-    }
-    const lockExpiry = parseTime(integration.data.syncLockExpiresAt);
-    if (integration.data.syncLockId && lockExpiry && lockExpiry.getTime() > now) {
-      throw new HttpError(409, "Ya hay una sincronización en curso. Espera a que termine.");
-    }
-
-    lockId = crypto.randomUUID();
-    await commitWrites([createWrite(integrationPath, {
-      syncLockId: lockId,
-      syncLockExpiresAt: new Date(now + LOCK_MS),
-      lastSyncStatus: "syncing",
-      lastSyncAttemptAt: new Date(now),
-      lastSyncError: null,
-    }, integration.updateTime ? { updateTime: integration.updateTime } : { exists: true })]);
-    ownsLock = true;
-
-    const locked = await getDocument(integrationPath);
-    if (!locked || locked.data?.syncLockId !== lockId) {
-      throw new HttpError(409, "No se pudo reservar la sincronización. Inténtalo de nuevo.");
-    }
-    const state = locked.data;
-    const credentials = decryptCredentials(state.encryptedCredentials);
-
-    if (historyProbe) {
-      // Read-only historical diagnostic: scan 181–365 days ago in safe windows under Binance's 30-day interval limit.
-      // It deliberately does not import records or change the regular sync cursor.
-      const probeNow = Date.now();
-      const oldestTimestamp = probeNow - 365 * DAY_MS;
-      const newestTimestamp = probeNow - 181 * DAY_MS;
-      const windows = [];
-      for (let cursor = oldestTimestamp; cursor < newestTimestamp;) {
-        const windowEnd = Math.min(cursor + 29 * DAY_MS, newestTimestamp);
-        windows.push({ startTimestamp: cursor, endTimestamp: windowEnd });
-        cursor = windowEnd;
-      }
-
-      const windowResults = await Promise.all(windows.map(async (window) => {
-        const [buyResult, sellResult] = await Promise.all([
-          fetchSide(credentials, "BUY", window.startTimestamp, window.endTimestamp, 1),
-          fetchSide(credentials, "SELL", window.startTimestamp, window.endTimestamp, 1),
-        ]);
-        const rows = [...buyResult.rows, ...sellResult.rows];
-        const completedRows = rows.filter(isCompleted);
-        const byOrder = new Map();
-        completedRows.forEach((row) => {
-          const normalized = normalizeOrder(row);
-          if (normalized && !byOrder.has(normalized.sourceOrderId)) {
-            byOrder.set(normalized.sourceOrderId, normalized);
-          }
-        });
-        const statusCounts = {};
-        rows.forEach((row) => {
-          const status = String(row?.orderStatus ?? row?.status ?? "SIN_ESTADO").trim().toUpperCase().slice(0, 40) || "SIN_ESTADO";
-          statusCounts[status] = (statusCounts[status] || 0) + 1;
-        });
-        return {
-          start: new Date(window.startTimestamp).toISOString(),
-          end: new Date(window.endTimestamp).toISOString(),
-          buyRowsReturned: buyResult.rows.length,
-          sellRowsReturned: sellResult.rows.length,
-          buyReportedTotal: buyResult.total,
-          sellReportedTotal: sellResult.total,
-          rowsMarkedCompleted: completedRows.length,
-          usableCompletedOrders: byOrder.size,
-          statusCounts,
-          moreBuyPages: buyResult.nextPage !== null,
-          moreSellPages: sellResult.nextPage !== null,
-        };
-      }));
-
-      const aggregateStatusCounts = {};
-      windowResults.forEach((window) => Object.entries(window.statusCounts).forEach(([name, count]) => {
-        aggregateStatusCounts[name] = (aggregateStatusCounts[name] || 0) + count;
-      }));
-      const diagnostics = {
-        windows: windowResults,
-        windowsScanned: windowResults.length,
-        buyRowsReturned: windowResults.reduce((sum, window) => sum + window.buyRowsReturned, 0),
-        sellRowsReturned: windowResults.reduce((sum, window) => sum + window.sellRowsReturned, 0),
-        rowsMarkedCompleted: windowResults.reduce((sum, window) => sum + window.rowsMarkedCompleted, 0),
-        usableCompletedOrders: windowResults.reduce((sum, window) => sum + window.usableCompletedOrders, 0),
-        statusCounts: aggregateStatusCounts,
-        morePages: windowResults.some((window) => window.moreBuyPages || window.moreSellPages),
-      };
-      console.info("JJXCAPITAL Binance historical probe summary:", JSON.stringify({
-        windowsScanned: diagnostics.windowsScanned,
-        buyRowsReturned: diagnostics.buyRowsReturned,
-        sellRowsReturned: diagnostics.sellRowsReturned,
-        rowsMarkedCompleted: diagnostics.rowsMarkedCompleted,
-        usableCompletedOrders: diagnostics.usableCompletedOrders,
-        statusCounts: diagnostics.statusCounts,
-        morePages: diagnostics.morePages,
-      }));
-
-      const latest = await getDocument(integrationPath);
-      if (!latest || latest.data?.syncLockId !== lockId) {
-        throw new HttpError(409, "La conexión cambió durante la prueba. Vuelve a intentarlo.");
-      }
-      await commitWrites([createWrite(integrationPath, {
-        lastSyncStatus: integration.data.lastSyncStatus || "success",
-        lastSyncError: integration.data.lastSyncError || null,
-        lastSyncAttemptAt: new Date(),
-        syncLockId: null,
-        syncLockExpiresAt: new Date(0),
-      }, latest.updateTime ? { updateTime: latest.updateTime } : { exists: true })]);
-      ownsLock = false;
-
-      const rowsReturned = diagnostics.buyRowsReturned + diagnostics.sellRowsReturned;
-      const message = rowsReturned
-        ? "Prueba histórica completada: Binance devolvió " + rowsReturned + " filas de hace aproximadamente 6–12 meses. No se importó ni guardó ninguna operación."
-        : "Prueba histórica completada: Binance no devolvió filas en el período revisado de hace aproximadamente 6–12 meses. No se importó ni guardó ninguna operación.";
-      return sendJson(res, 200, {
-        success: true,
-        historyProbe: true,
-        imported: 0,
-        skipped: 0,
-        completedOrdersFound: diagnostics.usableCompletedOrders,
-        diagnostics,
-        probeWindow: {
-          start: new Date(oldestTimestamp).toISOString(),
-          end: new Date(newestTimestamp).toISOString(),
-        },
-        hasMoreHistory: diagnostics.morePages,
-        message,
-      });
-    }
-
     const requestNow = Date.now();
     let startTimestamp;
     let endTimestamp;
@@ -344,14 +208,15 @@ module.exports = async function syncBinanceP2P(req, res) {
     const backfill = state.initialBackfillComplete !== true;
 
     const connectedAt = parseTime(state.connectedAt);
-    const connectionFloor = connectedAt ? connectedAt.getTime() : null;
+    const connectionFloor = connectedAt ? connectedAt.getTime() : requestNow - 1000;
 
     if (backfill) {
       mode = "backfill";
       const savedBackfillStart = Number(state.backfillStartTimestamp);
-      startTimestamp = connectionFloor !== null
-        ? Math.max(Number.isFinite(savedBackfillStart) && savedBackfillStart > 0 ? savedBackfillStart : connectionFloor, connectionFloor)
-        : (Number(state.backfillStartTimestamp) || (requestNow - 29 * DAY_MS));
+      startTimestamp = Math.max(
+        Number.isFinite(savedBackfillStart) && savedBackfillStart > 0 ? savedBackfillStart : connectionFloor,
+        connectionFloor
+      );
       endTimestamp = Number(state.backfillEndTimestamp) || requestNow;
       // Older stored setups may have saved the end at connection time; in that case
       // use the current request time. The lower bound still prevents pre-connection imports.
@@ -368,9 +233,9 @@ module.exports = async function syncBinanceP2P(req, res) {
     } else {
       mode = "incremental";
       const previousSync = parseTime(state.lastSyncAt);
-      const defaultStart = connectionFloor !== null ? connectionFloor : requestNow - 29 * DAY_MS;
+      const defaultStart = connectionFloor;
       startTimestamp = Math.max(
-        connectionFloor !== null ? connectionFloor : 0,
+        connectionFloor,
         requestNow - 29 * DAY_MS,
         previousSync ? previousSync.getTime() - 10 * 60 * 1000 : defaultStart
       );
@@ -390,11 +255,6 @@ module.exports = async function syncBinanceP2P(req, res) {
     ]);
 
     const sourceRows = [...buyResult.rows, ...sellResult.rows];
-    const statusCounts = {};
-    sourceRows.forEach((row) => {
-      const status = String(row?.orderStatus ?? row?.status ?? "SIN_ESTADO").trim().toUpperCase().slice(0, 40) || "SIN_ESTADO";
-      statusCounts[status] = (statusCounts[status] || 0) + 1;
-    });
     const completedSourceRows = sourceRows.filter(isCompleted);
 
     const byOrder = new Map();
@@ -404,17 +264,6 @@ module.exports = async function syncBinanceP2P(req, res) {
       if (!byOrder.has(normalized.sourceOrderId)) byOrder.set(normalized.sourceOrderId, normalized);
     });
     const candidates = [...byOrder.values()];
-    const syncDiagnostics = {
-      buyRowsReturned: buyResult.rows.length,
-      sellRowsReturned: sellResult.rows.length,
-      buyReportedTotal: buyResult.total,
-      sellReportedTotal: sellResult.total,
-      rowsMarkedCompleted: completedSourceRows.length,
-      usableCompletedOrders: candidates.length,
-      statusCounts,
-    };
-    console.info("JJXCAPITAL Binance P2P sync summary:", JSON.stringify(syncDiagnostics));
-
     const sessionDocuments = candidates.length
       ? await listAllDocuments(sessionsPathFor(claims.sub), 100, 10)
       : [];
@@ -458,6 +307,7 @@ module.exports = async function syncBinanceP2P(req, res) {
     const nextSellPage = sellResult.nextPage;
     const bothDone = nextBuyPage === null && nextSellPage === null;
     const updated = {
+      connectedAt: state.connectedAt || new Date(connectionFloor),
       lastSyncStatus: "success",
       lastSyncError: null,
       lastSyncAttemptAt: new Date(),
@@ -521,7 +371,6 @@ module.exports = async function syncBinanceP2P(req, res) {
       imported: fresh.length,
       skipped: Math.max(0, candidates.length - fresh.length),
       completedOrdersFound: candidates.length,
-      diagnostics: syncDiagnostics,
       sessionAssignments: { ...sessionAssignments, relinkedExisting },
       hasMoreHistory: hasMore,
       initialBackfillComplete: backfill ? bothDone : state.initialBackfillComplete === true,
@@ -545,3 +394,4 @@ module.exports = async function syncBinanceP2P(req, res) {
     return sendJson(res, 500, { error: "No se pudo sincronizar el historial P2P. Inténtalo de nuevo." });
   }
 };
+
