@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowDownTrayIcon, PlusIcon, CheckCircleIcon, PlayIcon, TrashIcon, BoltIcon, DocumentPlusIcon } from "@heroicons/react/24/outline";
@@ -62,9 +62,14 @@ export default function ArbitrageSessions({ onOpenOperations }) {
 
   const activeSessions = sessions.filter(item => item.status === "active");
   const duplicateActiveSession = activeSessions.find(item =>
-    String(item.fiat || "").toUpperCase() === String(draft.fiat || "").toUpperCase() &&
-    String(item.crypto || "").toUpperCase() === String(draft.crypto || "").toUpperCase()
+    String(item.fiat || "").trim().toUpperCase() === String(draft.fiat || "").trim().toUpperCase() &&
+    String(item.crypto || "").trim().toUpperCase() === String(draft.crypto || "").trim().toUpperCase()
   );
+  const openExistingSession = () => {
+    if (!duplicateActiveSession) return;
+    setSelected(duplicateActiveSession.id);
+    setShowCreate(false);
+  };
   const selectedSession = sessions.find(item => item.id === selected);
   const sessionOperations = useMemo(
     () => selectedSession ? operations.filter(item => item.sessionId === selectedSession.id) : [],
@@ -166,15 +171,19 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setSaving(true);
     setError("");
     try {
-      await updateDoc(doc(db, "users", user.uid, "sessions", selectedSession.id), {
-        status,
-        closedAt: status === "closed" ? serverTimestamp() : null,
+      const token = await user.getIdToken();
+      const response = await fetch("/api/sessions/status", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: selectedSession.id, status }),
       });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "No se pudo actualizar el estado del arbitraje.");
       await loadData();
       setSelected(selectedSession.id);
     } catch (statusError) {
       console.error("Error updating arbitrage status:", statusError);
-      setError("No se pudo actualizar el estado del arbitraje.");
+      setError(statusError?.message || "No se pudo actualizar el estado del arbitraje.");
     } finally {
       setSaving(false);
     }
@@ -191,12 +200,19 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setSaving(true);
     setError("");
     try {
-      await deleteDoc(doc(db, "users", user.uid, "sessions", selectedSession.id));
+      const token = await user.getIdToken();
+      const response = await fetch("/api/sessions/delete", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: selectedSession.id }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "No se pudo eliminar el arbitraje.");
       setSelected("");
       await loadData();
     } catch (deleteError) {
       console.error("Error deleting arbitrage:", deleteError);
-      setError("No se pudo eliminar el arbitraje.");
+      setError(deleteError?.message || "No se pudo eliminar el arbitraje.");
     } finally {
       setSaving(false);
     }
@@ -323,7 +339,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
             </label>
           </>}
           {duplicateActiveSession && <div role="alert" className="sm:col-span-2 lg:col-span-3 rounded-xl border border-amber-400/25 bg-amber-400/5 px-4 py-3 text-sm text-amber-100">
-            Ya existe un arbitraje activo para <strong>{draft.fiat} / {draft.crypto}</strong> ({duplicateActiveSession.name}). No puedes crear otro con el mismo par mientras esté en curso. Selecciona esa sesión en la lista o termínala antes de iniciar una nueva.
+            Ya existe un arbitraje activo para <strong>{draft.fiat} / {draft.crypto}</strong> ({duplicateActiveSession.name}). No puedes crear otro con el mismo par mientras esté en curso. <button type="button" onClick={openExistingSession} className="font-semibold underline underline-offset-2">Abrir el arbitraje existente</button> o termínalo antes de iniciar una nueva sesión.
           </div>}
           <div className="flex items-end gap-2">
             <button disabled={saving || Boolean(duplicateActiveSession)} type="submit" className="jjx-button-primary flex-1">{saving ? "Guardando…" : duplicateActiveSession ? "Ya existe una sesión activa" : "Crear arbitraje"}</button>

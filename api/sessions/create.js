@@ -41,13 +41,18 @@ module.exports = async function createSession(req, res) {
     }
 
     const sessionsPath = userPath + "/sessions";
+    const pairPath = userPath + "/sessionPairs/" + fiat + "_" + cryptoCode;
     const existingSessions = await listAllDocuments(sessionsPath, 100, 10);
     const duplicate = existingSessions.find((item) =>
       item.data?.status === "active" &&
-      String(item.data?.fiat || "").toUpperCase() === fiat &&
-      String(item.data?.crypto || "").toUpperCase() === cryptoCode
+      String(item.data?.fiat || "").trim().toUpperCase() === fiat &&
+      String(item.data?.crypto || "").trim().toUpperCase() === cryptoCode
     );
     if (duplicate) {
+      throw new HttpError(409, "Ya tienes un arbitraje activo para " + fiat + " / " + cryptoCode + ". Abre la sesión " + (duplicate.data?.name || "existente") + " o termínala antes de crear otra del mismo par.");
+    }
+    const pairIndex = await getDocument(pairPath);
+    if (pairIndex?.data?.activeSessionId) {
       throw new HttpError(409, "Ya tienes un arbitraje activo para " + fiat + " / " + cryptoCode + ". Abre esa sesión o termínala antes de crear otra del mismo par.");
     }
 
@@ -74,6 +79,8 @@ module.exports = async function createSession(req, res) {
         update: { name: documentName(sessionsPath + "/" + id), fields: toFields(session) },
         currentDocument: { exists: false },
       },
+      createWrite(pairPath, { activeSessionId: id, fiat, crypto: cryptoCode },
+        pairIndex?.updateTime ? { updateTime: pairIndex.updateTime } : { exists: false }),
       createWrite(userPath, { ordersUsed: currentOrders + 1 },
         profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
     ]);

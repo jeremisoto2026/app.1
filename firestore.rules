@@ -43,8 +43,9 @@ service cloud.firestore {
       allow delete: if false;
 
       match /sessions/{sessionId} {
-        // Las sesiones de arbitraje son privadas y solo accesibles por su propietario.
-        allow read, update, delete: if isOwner(userId);
+        // Los cambios de estado pasan por el servidor para preservar la unicidad del par.
+        allow read: if isOwner(userId);
+        allow update, delete: if false;
       }
 
       match /operations/{operationId} {
