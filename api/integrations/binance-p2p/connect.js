@@ -27,6 +27,15 @@ module.exports = async function connectBinanceP2P(req, res) {
 
     // Validate server-side encryption configuration before making an external request.
     const encryptedCredentials = encryptCredentials(credentials);
+    const guardPath = "users/" + claims.sub + "/privateIntegrations/binanceP2PConnectGuard";
+    const guard = await getDocument(guardPath);
+    const lastAttempt = guard?.data?.lastAttemptAt ? new Date(guard.data.lastAttemptAt).getTime() : 0;
+    if (Number.isFinite(lastAttempt) && lastAttempt > 0 && Date.now() - lastAttempt < 5000) {
+      throw new HttpError(429, "Espera unos segundos antes de volver a verificar las credenciales.");
+    }
+    await commitWrites([createWrite(guardPath, { lastAttemptAt: new Date() }, guard?.updateTime
+      ? { updateTime: guard.updateTime }
+      : { exists: false })]);
     await verifyCredentials(credentials);
 
     const path = INTEGRATION_PATH(claims.sub);
