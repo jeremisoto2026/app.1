@@ -1,12 +1,13 @@
 const crypto = require("crypto");
 const {
   HttpError, sendJson, requirePost, requireFirebaseUser, getDocument,
-  listDocumentsMatchingAnyField, commitWrites, createWrite, documentName, toFields, errorResponse,
+  listDocumentsMatchingAnyField, listAllDocuments, commitWrites, createWrite, documentName, toFields, errorResponse,
 } = require("../../../lib/payments");
 const { decryptCredentials, fetchHistory } = require("../../../lib/binance-p2p");
 
 const integrationPathFor = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
 const operationsPathFor = (uid) => "users/" + uid + "/operations";
+const sessionsPathFor = (uid) => "users/" + uid + "/sessions";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_PAGES_PER_SIDE_PER_REQUEST = 2;
 const LOOKUP_CHUNK = 30;
@@ -54,6 +55,11 @@ function normalizeOrder(row) {
   const commission = num(row?.commission);
   const takerCommission = num(row?.takerCommission);
   const takerAmount = num(row?.takerAmount);
+  const advertisementRole = String(row?.advertisementRole ?? "").trim().toUpperCase();
+  const sourceFee = advertisementRole === "TAKER"
+    ? (Number.isFinite(takerCommission) ? takerCommission : commission)
+    : (Number.isFinite(commission) ? commission : takerCommission);
+  const fee = Number.isFinite(sourceFee) && sourceFee > 0 ? sourceFee : 0;
   return {
     order_id: orderNumber,
     source: "binance_p2p",
@@ -62,6 +68,10 @@ function normalizeOrder(row) {
     sourceCommission: Number.isFinite(commission) ? commission : null,
     sourceTakerCommission: Number.isFinite(takerCommission) ? takerCommission : null,
     sourceTakerAmount: Number.isFinite(takerAmount) ? takerAmount : null,
+    sourceAdvertisementNumber: String(row?.advNo ?? row?.advOrderNumber ?? "").trim() || null,
+    sourceFiatSymbol: String(row?.fiatSymbol ?? "").trim() || null,
+    sourcePayMethodName: String(row?.payMethodName ?? "").trim() || null,
+    sourceAdvertisementRole: advertisementRole || null,
     exchange: "Binance",
     operation_type: tradeType === "BUY" ? "Compra" : "Venta",
     crypto,
@@ -69,11 +79,13 @@ function normalizeOrder(row) {
     crypto_amount: cryptoAmount,
     fiat_amount: fiatAmount,
     exchange_rate: rate,
-    // Preserve Binance fees separately until the exact fee currency/net semantics are confirmed.
-    fee: 0,
-    fee_currency: "",
+    // Binance documents this commission in crypto; preserve it without subtracting it twice
+    // from the gross amounts already reported by the order-history endpoint.
+    fee,
+    fee_currency: crypto,
     timestamp,
     importedAt: new Date(),
+    sessionId: null,
     sessionName: "Binance P2P · Importado",
     arbitrageType: "Binance P2P",
   };
@@ -96,19 +108,69 @@ async function fetchSide(credentials, tradeType, startTimestamp, endTimestamp, p
     pageStart: page, maxPages: MAX_PAGES_PER_SIDE_PER_REQUEST,
   });
 }
-async function findExistingOrderIds(uid, candidates) {
+async function findExistingOrderDocuments(uid, candidates) {
   const ids = [...new Set(candidates.map((item) => item.order_id))];
-  const existing = new Set();
+  const existing = new Map();
   for (let i = 0; i < ids.length; i += LOOKUP_CHUNK) {
     const matches = await listDocumentsMatchingAnyField(
       operationsPathFor(uid), "order_id", ids.slice(i, i + LOOKUP_CHUNK)
     );
     matches.forEach((document) => {
       const orderId = String(document.data?.order_id || "");
-      if (orderId) existing.add(orderId);
+      if (!orderId) return;
+      if (!existing.has(orderId)) existing.set(orderId, []);
+      existing.get(orderId).push(document);
     });
   }
   return existing;
+}
+
+function matchSessionForOrder(operation, sessionDocuments) {
+  const operationTime = operation.timestamp instanceof Date
+    ? operation.timestamp.getTime()
+    : parseTime(operation.timestamp)?.getTime();
+  if (!Number.isFinite(operationTime)) return { session: null, ambiguous: false };
+
+  const matching = sessionDocuments.filter((document) => {
+    const session = document.data || {};
+    if (String(session.crypto || "").trim().toUpperCase() !== operation.crypto ||
+        String(session.fiat || "").trim().toUpperCase() !== operation.fiat) return false;
+
+    const createdAt = parseTime(session.createdAt);
+    if (!createdAt || operationTime < createdAt.getTime()) return false;
+
+    const closedAt = parseTime(session.closedAt);
+    if (closedAt) return operationTime < closedAt.getTime();
+    return session.status === "active";
+  });
+
+  if (matching.length !== 1) return { session: null, ambiguous: matching.length > 1 };
+  return { session: matching[0], ambiguous: false };
+}
+
+function withSessionAssignment(operation, sessionDocuments) {
+  const result = matchSessionForOrder(operation, sessionDocuments);
+  if (!result.session) {
+    return {
+      operation: {
+        ...operation,
+        sessionId: null,
+        sessionName: result.ambiguous ? "Binance P2P · Sesión ambigua" : "Binance P2P · Importado",
+        arbitrageType: "Binance P2P",
+      },
+      status: result.ambiguous ? "ambiguous" : "unmatched",
+    };
+  }
+  const session = result.session.data || {};
+  return {
+    operation: {
+      ...operation,
+      sessionId: result.session.id,
+      sessionName: String(session.name || "Sesión de arbitraje"),
+      arbitrageType: String(session.strategy || "Comercio P2P"),
+    },
+    status: "matched",
+  };
 }
 async function releaseLock(path, fields, lockId) {
   try {
@@ -352,8 +414,19 @@ module.exports = async function syncBinanceP2P(req, res) {
       statusCounts,
     };
     console.info("JJXCAPITAL Binance P2P sync summary:", JSON.stringify(syncDiagnostics));
-    const existingOrderIds = await findExistingOrderIds(claims.sub, candidates);
-    const fresh = candidates.filter((item) => !existingOrderIds.has(item.order_id));
+
+    const sessionDocuments = candidates.length
+      ? await listAllDocuments(sessionsPathFor(claims.sub), 100, 10)
+      : [];
+    const assignmentResults = candidates.map((operation) => withSessionAssignment(operation, sessionDocuments));
+    const assignedCandidates = assignmentResults.map((result) => result.operation);
+    const sessionAssignments = assignmentResults.reduce((counts, result) => {
+      counts[result.status] += 1;
+      return counts;
+    }, { matched: 0, unmatched: 0, ambiguous: 0 });
+
+    const existingOrderDocuments = await findExistingOrderDocuments(claims.sub, assignedCandidates);
+    const fresh = assignedCandidates.filter((item) => !existingOrderDocuments.has(item.order_id));
     const writes = fresh.map((operation) => ({
       update: {
         name: documentName(operationsPathFor(claims.sub) + "/" + deterministicId(operation.order_id)),
@@ -361,6 +434,24 @@ module.exports = async function syncBinanceP2P(req, res) {
       },
       currentDocument: { exists: false },
     }));
+
+    // If a previous version imported this Binance order without a session, attach it now
+    // only when the session match is unique and the record is an existing Binance import.
+    let relinkedExisting = 0;
+    for (const operation of assignedCandidates) {
+      if (!operation.sessionId) continue;
+      const matches = existingOrderDocuments.get(operation.order_id) || [];
+      const existing = matches.find((item) =>
+        item.data?.source === "binance_p2p" && !item.data?.sessionId
+      );
+      if (!existing) continue;
+      writes.push(createWrite(operationsPathFor(claims.sub) + "/" + existing.id, {
+        sessionId: operation.sessionId,
+        sessionName: operation.sessionName,
+        arbitrageType: operation.arbitrageType,
+      }, existing.updateTime ? { updateTime: existing.updateTime } : { exists: true }));
+      relinkedExisting += 1;
+    }
     if (writes.length) await commitWrites(writes);
 
     const nextBuyPage = buyResult.nextPage;
@@ -431,12 +522,14 @@ module.exports = async function syncBinanceP2P(req, res) {
       skipped: Math.max(0, candidates.length - fresh.length),
       completedOrdersFound: candidates.length,
       diagnostics: syncDiagnostics,
+      sessionAssignments: { ...sessionAssignments, relinkedExisting },
       hasMoreHistory: hasMore,
       initialBackfillComplete: backfill ? bothDone : state.initialBackfillComplete === true,
       lastSyncAt: updated.lastSyncAt || state.lastSyncAt || null,
       message: fresh.length
-        ? "Sincronización completada: se han importado " + fresh.length + " operaciones nuevas."
-        : "Sincronización completada: no había operaciones completadas nuevas para importar.",
+        ? "Sincronización completada: se han importado " + fresh.length + " operaciones nuevas. Vinculadas automáticamente a una sesión: " + sessionAssignments.matched + "."
+        : "Sincronización completada: no había operaciones completadas nuevas para importar." +
+          (relinkedExisting ? " Se han vinculado " + relinkedExisting + " operaciones importadas previamente a su sesión." : ""),
     });
   } catch (error) {
     if (ownsLock && integrationPath && lockId) {
