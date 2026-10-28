@@ -45,6 +45,9 @@ export default function BinanceP2PSyncCard() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [lastResult, setLastResult] = useState(null);
+  const [runningDiagnostic, setRunningDiagnostic] = useState(false);
+  const [diagnostic, setDiagnostic] = useState(null);
+  const [diagnosticError, setDiagnosticError] = useState("");
 
   const refreshStatus = useCallback(async () => {
     const payload = await callApi(user, "/api/integrations/binance-p2p/status");
@@ -125,6 +128,20 @@ export default function BinanceP2PSyncCard() {
     }
   };
 
+  const handleNetworkDiagnostic = async () => {
+    setRunningDiagnostic(true);
+    setDiagnosticError("");
+    setDiagnostic(null);
+    try {
+      const payload = await callApi(user, "/api/integrations/binance-p2p/network-diagnostic");
+      setDiagnostic(payload);
+    } catch (diagnosticRequestError) {
+      setDiagnosticError(diagnosticRequestError.message || "No se pudo completar el diagnóstico de red.");
+    } finally {
+      setRunningDiagnostic(false);
+    }
+  };
+
   return (
     <section className="profile-section jjx-panel p-6 sm:p-7 space-y-5" aria-labelledby="binance-p2p-sync-heading">
       <div className="profile-card-heading">
@@ -147,6 +164,45 @@ export default function BinanceP2PSyncCard() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200/70 bg-slate-500/5 p-4 space-y-3">
+        <div>
+          <p className="font-semibold">Diagnóstico de red para soporte de Binance</p>
+          <p className="text-sm text-slate-500">
+            Ejecuta tres consultas públicas de solo lectura desde este servidor. No utiliza ni transmite tus claves API.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleNetworkDiagnostic}
+          disabled={runningDiagnostic || !user}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold disabled:opacity-60"
+        >
+          <ArrowPathIcon className={"h-4 w-4 " + (runningDiagnostic ? "animate-spin" : "")} aria-hidden="true" />
+          {runningDiagnostic ? "Ejecutando pruebas desde Vercel…" : "Ejecutar las 3 pruebas para soporte"}
+        </button>
+        {diagnosticError && <p role="alert" className="text-sm text-red-600">{diagnosticError}</p>}
+        {diagnostic && (
+          <div className="space-y-3" aria-live="polite">
+            <p className="text-xs text-slate-500">
+              Entorno: {diagnostic.runtimeRegion} · {diagnostic.generatedAt}
+            </p>
+            {diagnostic.results.map((item) => (
+              <div key={item.label} className="rounded-lg border border-slate-200/70 p-3 space-y-2">
+                <p className="font-semibold text-sm">{item.label}</p>
+                <code className="block break-all text-xs">{item.command}</code>
+                <p className={"text-sm font-semibold " + (item.ok ? "text-emerald-600" : "text-red-600")}>
+                  Resultado: {item.httpStatus ? "HTTP " + item.httpStatus : "Sin respuesta HTTP"}
+                </p>
+                <pre className="whitespace-pre-wrap break-all rounded bg-slate-950/5 p-2 text-xs">{item.output}</pre>
+              </div>
+            ))}
+            <p className="text-xs text-slate-500">
+              Haz una captura de esta sección completa para el agente. Las pruebas se ejecutan mediante solicitudes GET equivalentes desde la función de Vercel; no hay una terminal persistente disponible en Vercel Functions.
+            </p>
+          </div>
+        )}
       </div>
 
       {error && (
