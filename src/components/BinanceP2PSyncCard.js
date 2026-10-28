@@ -166,6 +166,16 @@ export default function BinanceP2PSyncCard() {
         <p className="text-sm text-slate-500" role="status">Comprobando conexión de Binance…</p>
       ) : status?.connected ? (
         <div className="space-y-4">
+          {!status.encryptionConfigured && (
+            <div role="alert" className="profile-alert profile-alert-warning">
+              La clave de cifrado del servidor no está disponible. La sincronización está desactivada hasta corregir BINANCE_P2P_ENCRYPTION_KEY en Vercel.
+            </div>
+          )}
+          {status.lastSyncStatus === "error" && (
+            <div role="status" className="profile-alert profile-alert-warning">
+              La última sincronización no terminó correctamente. Pulsa «Sincronizar ahora» para reintentar; código interno: {status.lastSyncErrorCode || "no disponible"}.
+            </div>
+          )}
           <div className="rounded-xl border border-slate-200/70 bg-slate-500/5 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -197,7 +207,7 @@ export default function BinanceP2PSyncCard() {
             <button
               type="button"
               onClick={handleSync}
-              disabled={syncing || disconnecting}
+              disabled={!status.encryptionConfigured || syncing || disconnecting}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               <ArrowPathIcon className={"h-4 w-4 " + (syncing ? "animate-spin" : "")} aria-hidden="true" />
