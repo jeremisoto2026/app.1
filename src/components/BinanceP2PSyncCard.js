@@ -133,8 +133,9 @@ export default function BinanceP2PSyncCard() {
     setDiagnosticError("");
     setDiagnostic(null);
     try {
-      const payload = await callApi(user, "/api/integrations/binance-p2p/network-diagnostic");
-      setDiagnostic(payload);
+      const payload = await callApi(user, "/api/integrations/binance-p2p/status?networkDiagnostic=1");
+      setDiagnostic(payload.networkDiagnostic || null);
+      if (!payload.networkDiagnostic) throw new Error("El servidor no devolvió los resultados del diagnóstico.");
     } catch (diagnosticRequestError) {
       setDiagnosticError(diagnosticRequestError.message || "No se pudo completar el diagnóstico de red.");
     } finally {
