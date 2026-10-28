@@ -13,7 +13,7 @@ import {
 } from "./ui/select";
 import { db } from "../firebase";
 import { calculateArbitrageSessionResult, calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
-import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
+import { buildProfessionalExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { filterOperations } from "../utils/operationFilters";
 import { 
   TrashIcon, 
@@ -290,10 +290,10 @@ const History = () => {
 
     try {
       const headers = [
-        "ID_Documento", "ID_Orden", "Tipo_Operacion", "Plataforma", "Criptomoneda", "Cantidad_Cripto",
-        "Moneda_Cotizacion", "Importe_Cotizado", "Tasa_Cambio", "Comision", "Moneda_Comision",
-        "Cantidad_Cripto_Emparejada", "Ingreso_Emparejado", "Coste_Emparejado",
-        "Beneficio_Realizado", "Moneda_Beneficio", "Cobertura_Coste", "Fecha"
+        "ID de registro", "N.º de orden", "Tipo", "Plataforma", "Activo cripto", "Cantidad cripto",
+        "Moneda fiat", "Importe fiat", "Precio de cambio", "Comisión", "Moneda de comisión",
+        "Cantidad emparejada", "Ingreso emparejado", "Coste emparejado",
+        "Beneficio realizado", "Moneda de beneficio", "Cobertura FIFO", "Fecha y hora"
       ];
 
       // Exportar por orden cronológico ascendente para que el registro permita
@@ -346,13 +346,40 @@ const History = () => {
           knownProfit ? realization.profit : "",
           knownProfit ? realization.currency : "",
           costCoverage,
-          formatDateForCSV(op.timestamp),
+          getOperationDate(op.timestamp) || "",
         ];
       });
 
-      // Las columnas textuales son seguras frente a fórmulas; las columnas
-      // numéricas conservan sus valores, incluidos los beneficios negativos.
-      const excelXml = buildExcelXml(headers, rows);
+      const operationDates = sortedData
+        .map((op) => getOperationDate(op.timestamp))
+        .filter((date) => date instanceof Date && Number.isFinite(date.getTime()))
+        .sort((a, b) => a.getTime() - b.getTime());
+      const period = operationDates.length
+        ? `${format(operationDates[0], "dd/MM/yyyy")} — ${format(operationDates[operationDates.length - 1], "dd/MM/yyyy")}`
+        : "Fechas no disponibles";
+      const purchases = sortedData.filter((op) => op.operation_type === "Compra").length;
+      const sales = sortedData.filter((op) => op.operation_type === "Venta").length;
+      const generatedAt = format(new Date(), "dd/MM/yyyy HH:mm");
+
+      // No se suman importes de monedas distintas. Las fechas y cifras se
+      // exportan como valores de Excel para que puedan ordenarse y filtrarse.
+      const excelXml = buildProfessionalExcelXml({
+        headers,
+        rows,
+        title: "JJXCAPITAL · Historial de operaciones",
+        subtitle: `Generado el ${generatedAt} · Se incluyen los filtros y el rango seleccionados`,
+        summary: [
+          { label: "REGISTROS INCLUIDOS", value: rows.length },
+          { label: "COMPRAS", value: purchases },
+          { label: "VENTAS", value: sales },
+          { label: "PERÍODO CUBIERTO", value: period },
+        ],
+        note: "Los importes se conservan en su moneda de origen y no se agregan entre divisas. El beneficio realizado aplica a ventas emparejadas mediante FIFO.",
+        numericColumns: [5, 7, 8, 9, 11, 12, 13, 14],
+        dateColumns: [17],
+        typeColumn: 2,
+        coverageColumn: 16,
+      });
       downloadExcelXml(`historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.xls`, excelXml);
       return true;
     } catch (err) {
