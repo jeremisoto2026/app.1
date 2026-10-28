@@ -112,7 +112,7 @@ const MainApp = () => {
 
         <header className={`landing-header ${scrolled ? "landing-header-scrolled" : ""}`}>
           <a className="landing-brand" href="#inicio" aria-label="JJXCAPITAL, inicio">
-            <span className="landing-brand-mark" aria-hidden="true">J</span>
+            <span className="landing-brand-mark" aria-hidden="true"><img src={`${process.env.PUBLIC_URL}/jjxcapital-mark.svg`} alt="" /></span>
             <span className="landing-brand-copy">
               <strong>JJXCAPITAL</strong>
               <small>CONTROL · ANÁLISIS · CLARIDAD</small>
@@ -177,7 +177,7 @@ const MainApp = () => {
               <section className="landing-preview" aria-label="Vista previa del panel de la aplicación">
                 <div className="preview-topbar">
                   <div className="preview-brand">
-                    <span className="preview-brand-mark">J</span>
+                    <span className="preview-brand-mark"><img src={`${process.env.PUBLIC_URL}/jjxcapital-mark.svg`} alt="" /></span>
                     <span><strong>JJXCAPITAL</strong><small>RESUMEN DE CUENTA</small></span>
                   </div>
                   <span className="preview-pill"><span className="status-dot" /> Vista previa</span>
@@ -274,7 +274,7 @@ const MainApp = () => {
 
           <footer className="landing-footer">
             <a className="landing-brand landing-brand-footer" href="#inicio" aria-label="Volver al inicio de JJXCAPITAL">
-              <span className="landing-brand-mark">J</span>
+              <span className="landing-brand-mark" aria-hidden="true"><img src={`${process.env.PUBLIC_URL}/jjxcapital-mark.svg`} alt="" /></span>
               <span className="landing-brand-copy"><strong>JJXCAPITAL</strong><small>CONTROL · ANÁLISIS · CLARIDAD</small></span>
             </a>
             <p>Herramienta de organización y simulación financiera. No constituye asesoramiento de inversión.</p>
@@ -339,3 +339,4 @@ function App() {
 }
 
 export default App;
+

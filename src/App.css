@@ -889,15 +889,12 @@ input:focus, select:focus, textarea:focus {
 .landing-brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; min-width: 0; }
 .landing-brand-mark {
   display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 42px;
-  color: #fff; font-size: 21px; font-weight: 850; letter-spacing: -.08em;
-  border-radius: 13px;
-  background: linear-gradient(145deg, #7668e8, #3479c9);
-  border: 1px solid rgba(255,255,255,.16);
-  box-shadow: 0 8px 26px rgba(82, 92, 209, .22);
+  color: #fff;
 }
+.landing-brand-mark img, .preview-brand-mark img, .dashboard-brand-mark img { display: block; width: 76%; height: 76%; object-fit: contain; }
 .landing-brand-copy { display: flex; flex-direction: column; line-height: 1.2; gap: 5px; }
-.landing-brand-copy strong { font-size: 15px; font-weight: 850; letter-spacing: .105em; }
-.landing-brand-copy small { font-size: 9px; color: var(--jjx-subtle); font-weight: 700; letter-spacing: .12em; }
+.landing-brand-copy strong { font-size: 14px; font-weight: 650; letter-spacing: .16em; }
+.landing-brand-copy small { font-size: 9px; color: var(--jjx-subtle); font-weight: 550; letter-spacing: .14em; }
 .landing-header-actions { display: flex; align-items: center; gap: 22px; }
 .landing-header-note { display: inline-flex; align-items: center; gap: 8px; color: var(--jjx-muted); font-size: 12px; }
 .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--jjx-success); box-shadow: 0 0 0 4px rgba(74,222,128,.08); }
@@ -940,10 +937,10 @@ input:focus, select:focus, textarea:focus {
 }
 .preview-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--jjx-border); }
 .preview-brand { display: flex; align-items: center; gap: 9px; }
-.preview-brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(145deg, #7668e8, #3479c9); color: white; font-size: 14px; font-weight: 850; }
+.preview-brand-mark { display: grid; place-items: center; width: 30px; height: 30px; color: white; }
 .preview-brand > span:last-child { display: flex; flex-direction: column; gap: 3px; }
-.preview-brand strong { font-size: 10px; letter-spacing: .1em; }
-.preview-brand small { color: var(--jjx-subtle); font-size: 8px; letter-spacing: .12em; }
+.preview-brand strong { font-size: 10px; font-weight: 650; letter-spacing: .14em; }
+.preview-brand small { color: var(--jjx-subtle); font-size: 8px; letter-spacing: .14em; }
 .preview-pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: 999px; border: 1px solid rgba(148,163,184,.16); color: #94a3b8; font-size: 9px; white-space: nowrap; }
 .preview-pill .status-dot { width: 5px; height: 5px; box-shadow: none; }
 .preview-welcome { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 25px 0 18px; }
@@ -1004,9 +1001,9 @@ input:focus, select:focus, textarea:focus {
 .cta-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 190px; }
 .cta-actions > span { max-width: 240px; color: #77869d; font-size: 10px; line-height: 1.6; }
 .landing-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; padding: 23px 0 30px; border-top: 1px solid var(--jjx-border); }
-.landing-brand-footer .landing-brand-mark { width: 34px; height: 34px; flex-basis: 34px; border-radius: 10px; font-size: 17px; }
-.landing-brand-footer .landing-brand-copy strong { font-size: 11px; }
-.landing-brand-footer .landing-brand-copy small { font-size: 7px; }
+.landing-brand-footer .landing-brand-mark { width: 34px; height: 34px; flex-basis: 34px; }
+.landing-brand-footer .landing-brand-copy strong { font-size: 11px; font-weight: 650; letter-spacing: .16em; }
+.landing-brand-footer .landing-brand-copy small { font-size: 7px; font-weight: 500; letter-spacing: .14em; }
 .landing-footer p { color: #748199; font-size: 10px; }
 .landing-footer > a:last-child { color: #a9b5cb; font-size: 11px; text-decoration: none; }
 .landing-footer > a:last-child:hover { color: #b7b0ff; }
@@ -1111,10 +1108,10 @@ input:focus, select:focus, textarea:focus {
 .dashboard-container { width: min(1240px, calc(100% - 44px)); margin: 0 auto; padding: 10px 0 28px; }
 .dashboard-topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 8px 0 24px; border-bottom: 1px solid var(--jjx-border); }
 .dashboard-brand { display: flex; align-items: center; gap: 11px; }
-.dashboard-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; color: white; font-size: 18px; font-weight: 850; border-radius: 11px; background: linear-gradient(145deg,#7668e8,#3479c9); box-shadow: 0 8px 20px rgba(82,92,209,.2); }
+.dashboard-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; color: white; }
 .dashboard-brand > span:last-child { display: flex; flex-direction: column; gap: 4px; }
-.dashboard-brand strong { color: #edf1fa; font-size: 12px; letter-spacing: .12em; }
-.dashboard-brand small { color: #75839b; font-size: 8px; font-weight: 800; letter-spacing: .14em; }
+.dashboard-brand strong { color: #edf1fa; font-size: 12px; font-weight: 600; letter-spacing: .16em; }
+.dashboard-brand small { color: #75839b; font-size: 8px; font-weight: 550; letter-spacing: .16em; }
 .dashboard-profile-button { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border: 1px solid var(--jjx-border); border-radius: 10px; background: rgba(255,255,255,.025); color: #c2ccdd; font-size: 12px; cursor: pointer; }
 .dashboard-profile-button svg { width: 19px; height: 19px; color: #a5a0ff; }
 .dashboard-profile-button:hover { border-color: var(--jjx-border-strong); background: rgba(129,140,248,.08); }
@@ -1945,3 +1942,4 @@ html[data-jjx-theme="light"] .app-shell :is(.text-yellow-400, .text-amber-400, .
 html[data-jjx-theme="light"] .app-shell :is(.text-blue-400, .text-sky-400, .text-indigo-400, .text-violet-400, .text-purple-400) { color: #5146b8 !important; }
 html[data-jjx-theme="light"] .app-shell .dashboard-brand small { color: #64748b !important; }
 html[data-jjx-theme="light"] .app-shell .dashboard-profile-button { color: #34435b; }
+

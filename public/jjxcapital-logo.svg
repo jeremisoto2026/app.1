@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" fill="none">
+  <defs>
+    <linearGradient id="accent" x1="518" y1="190" x2="684" y2="410" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B9ABFF"/><stop offset="1" stop-color="#8DC9FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="620" rx="28" fill="#080B13"/>
+  <path d="M506 94h188v174c0 68-41 102-112 102h-31" stroke="#F5F6FA" stroke-width="12" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="m646 198 111 164M757 198 646 362" stroke="url(#accent)" stroke-width="10" stroke-linecap="square"/>
+  <text x="600" y="486" text-anchor="middle" fill="#F4F6FB" font-family="Inter, Avenir, Segoe UI, sans-serif" font-size="56" font-weight="600" letter-spacing="13">JJXCAPITAL</text>
+  <text x="600" y="535" text-anchor="middle" fill="#8995AA" font-family="Inter, Avenir, Segoe UI, sans-serif" font-size="17" font-weight="500" letter-spacing="5.2">CONTROL · ANÁLISIS · CLARIDAD</text>
+</svg>
+
