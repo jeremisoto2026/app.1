@@ -1884,3 +1884,64 @@ html[data-jjx-theme="light"] .app-shell [role="dialog"] label { color: #4d5b72 !
   .dashboard-brand-mark { width: 38px; height: 38px; }
   .dashboard-profile-button span { display: none; }
 }
+
+
+/* Refined light theme: consistent contrast across every workspace module. */
+html[data-jjx-theme="light"] .app-shell {
+  --jjx-bg: #f5f7fc;
+  --jjx-surface: #ffffff;
+  --jjx-surface-muted: #f0f3f9;
+  --jjx-text: #172033;
+  --jjx-text-secondary: #536178;
+  --jjx-border: #d9e1ed;
+  --jjx-accent: #5146b8;
+  background: var(--jjx-bg) !important;
+  color: var(--jjx-text) !important;
+}
+html[data-jjx-theme="light"] .app-shell :is(p, label, small, li, dt, dd, th, td, caption, figcaption) {
+  color: inherit;
+}
+html[data-jjx-theme="light"] .app-shell :is(p, label, small, li, dt, dd, figcaption, .text-muted, .text-secondary) {
+  color: #536178;
+}
+html[data-jjx-theme="light"] .app-shell :is(h1, h2, h3, h4, h5, h6, strong, b, legend) {
+  color: #172033;
+}
+html[data-jjx-theme="light"] .app-shell :is([class*="text-gray-6"], [class*="text-gray-7"], [class*="text-gray-8"], [class*="text-slate-6"], [class*="text-slate-7"], [class*="text-slate-8"], [class*="text-zinc-"]) {
+  color: #536178 !important;
+}
+html[data-jjx-theme="light"] .app-shell :is(input, textarea, select, option) {
+  color: #172033 !important;
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+html[data-jjx-theme="light"] .app-shell :is(input, textarea, select)::placeholder {
+  color: #718096 !important;
+  opacity: 1;
+}
+html[data-jjx-theme="light"] .app-shell :is(input, textarea, select):focus {
+  border-color: #6d63d9 !important;
+  box-shadow: 0 0 0 3px rgba(109,99,217,.15) !important;
+}
+html[data-jjx-theme="light"] .app-shell :is([class*="bg-gray-50"], [class*="bg-slate-50"], [class*="bg-white/"], [class*="bg-gray-100"], [class*="bg-slate-100"]) {
+  color: #172033;
+}
+html[data-jjx-theme="light"] .app-shell :is([class*="border-gray-"], [class*="border-slate-"], [class*="border-zinc-"]) {
+  border-color: #d9e1ed !important;
+}
+html[data-jjx-theme="light"] .app-shell :is(.jjx-panel, .jjx-inset, .dashboard-metric-card, .dashboard-panel, .dashboard-pro-promo, .history-empty-state, [role="dialog"]) {
+  color: #172033;
+}
+html[data-jjx-theme="light"] .app-shell a:not([class*="bg-"]) {
+  color: #5146b8;
+}
+html[data-jjx-theme="light"] .app-shell button:disabled {
+  color: #8490a3 !important;
+  opacity: .75;
+}
+html[data-jjx-theme="light"] .app-shell :is(.text-green-400, .text-green-500, .text-emerald-400, .text-emerald-500) { color: #18794e !important; }
+html[data-jjx-theme="light"] .app-shell :is(.text-red-400, .text-red-500, .text-rose-400, .text-rose-500) { color: #b42335 !important; }
+html[data-jjx-theme="light"] .app-shell :is(.text-yellow-400, .text-amber-400, .text-orange-400) { color: #925d00 !important; }
+html[data-jjx-theme="light"] .app-shell :is(.text-blue-400, .text-sky-400, .text-indigo-400, .text-violet-400, .text-purple-400) { color: #5146b8 !important; }
+html[data-jjx-theme="light"] .app-shell .dashboard-brand small { color: #64748b !important; }
+html[data-jjx-theme="light"] .app-shell .dashboard-profile-button { color: #34435b; }
