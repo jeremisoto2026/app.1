@@ -1682,8 +1682,9 @@ input:focus, select:focus, textarea:focus {
 .jjx-theme-toggle {
   position: fixed;
   z-index: 80;
-  top: 14px;
-  right: 16px;
+  /* Desktop: keep clear of the fixed top navigation. */
+  top: 82px;
+  right: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1704,6 +1705,17 @@ input:focus, select:focus, textarea:focus {
 .jjx-theme-toggle:hover { transform: translateY(-1px); border-color: rgba(129,140,248,.65); }
 .jjx-theme-toggle svg { width: 15px; height: 15px; color: #c4b5fd; }
 .jjx-theme-toggle:focus-visible { outline: 2px solid #818cf8; outline-offset: 3px; }
+
+/* On phones the navigation is at the bottom, so the switch stays in the header area. */
+@media (max-width: 767px) {
+  .jjx-theme-toggle {
+    top: 14px;
+    right: 14px;
+    z-index: 90;
+    min-height: 36px;
+    padding: 0 11px;
+  }
+}
 
 html[data-jjx-theme="light"] { color-scheme: light; }
 html[data-jjx-theme="dark"] { color-scheme: dark; }
