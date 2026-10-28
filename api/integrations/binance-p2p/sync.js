@@ -205,14 +205,31 @@ module.exports = async function syncBinanceP2P(req, res) {
       fetchSide(credentials, "SELL", startTimestamp, endTimestamp, sellPage),
     ]);
 
+    const sourceRows = [...buyResult.rows, ...sellResult.rows];
+    const statusCounts = {};
+    sourceRows.forEach((row) => {
+      const status = String(row?.orderStatus ?? row?.status ?? "SIN_ESTADO").trim().toUpperCase().slice(0, 40) || "SIN_ESTADO";
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+    });
+    const completedSourceRows = sourceRows.filter(isCompleted);
+
     const byOrder = new Map();
-    [...buyResult.rows, ...sellResult.rows].forEach((row) => {
-      if (!isCompleted(row)) return;
+    completedSourceRows.forEach((row) => {
       const normalized = normalizeOrder(row);
       if (!normalized) return;
       if (!byOrder.has(normalized.sourceOrderId)) byOrder.set(normalized.sourceOrderId, normalized);
     });
     const candidates = [...byOrder.values()];
+    const syncDiagnostics = {
+      buyRowsReturned: buyResult.rows.length,
+      sellRowsReturned: sellResult.rows.length,
+      buyReportedTotal: buyResult.total,
+      sellReportedTotal: sellResult.total,
+      rowsMarkedCompleted: completedSourceRows.length,
+      usableCompletedOrders: candidates.length,
+      statusCounts,
+    };
+    console.info("JJXCAPITAL Binance P2P sync summary:", JSON.stringify(syncDiagnostics));
     const existingOrderIds = await findExistingOrderIds(claims.sub, candidates);
     const fresh = candidates.filter((item) => !existingOrderIds.has(item.order_id));
     const writes = fresh.map((operation) => ({
@@ -291,6 +308,7 @@ module.exports = async function syncBinanceP2P(req, res) {
       imported: fresh.length,
       skipped: Math.max(0, candidates.length - fresh.length),
       completedOrdersFound: candidates.length,
+      diagnostics: syncDiagnostics,
       hasMoreHistory: hasMore,
       initialBackfillComplete: backfill ? bothDone : state.initialBackfillComplete === true,
       lastSyncAt: updated.lastSyncAt || state.lastSyncAt || null,
