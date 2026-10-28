@@ -17,6 +17,8 @@ import {
   DocumentPlusIcon,
   ShieldCheckIcon,
   UserCircleIcon,
+  SunIcon,
+  MoonIcon,
 } from "@heroicons/react/24/outline";
 
 const emptyMetrics = {
@@ -28,7 +30,7 @@ const emptyMetrics = {
   winningSales: 0,
 };
 
-const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbitrages }) => {
+const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbitrages, theme, onToggleTheme }) => {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState(emptyMetrics);
   const [activeArbitrages, setActiveArbitrages] = useState(0);
@@ -164,6 +166,16 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
             <span className="dashboard-brand-mark" aria-hidden="true">J</span>
             <span><strong>JJXCAPITAL</strong><small>ESPACIO DE TRABAJO</small></span>
           </div>
+          <button
+            type="button"
+            className="jjx-theme-toggle dashboard-theme-toggle"
+            onClick={onToggleTheme}
+            aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+            title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+          >
+            {theme === "dark" ? <SunIcon aria-hidden="true" /> : <MoonIcon aria-hidden="true" />}
+            <span>{theme === "dark" ? "Tema claro" : "Tema oscuro"}</span>
+          </button>
           <button
             type="button"
             className="dashboard-profile-button"
