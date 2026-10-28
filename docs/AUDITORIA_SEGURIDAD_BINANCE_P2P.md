@@ -6,11 +6,11 @@
 
 ## Dictamen
 
-**No conectar todavía la sincronización automática a una cuenta real.** El alcance correcto es importar el historial P2P de solo lectura, únicamente para órdenes completadas. El repositorio dispone de algunas bases útiles de backend y autenticación, pero no contiene aún un importador P2P. Antes de programarlo hay que corregir las observaciones prioritarias, comprobar el acceso a la API de historial con una clave de solo lectura y verificar sus respuestas en pruebas. No se enviarán órdenes, no se publicarán anuncios ni se marcarán pagos como realizados desde JJXCAPITAL.
+**Conector inicial implementado en la rama de trabajo; no está validado contra una cuenta real ni listo para producción.** El alcance es consultar el historial personal P2P y guardar solo operaciones completadas. Se añadieron endpoints de conexión, estado, sincronización y desconexión; credenciales cifradas por usuario; importación deduplicada; interfaz en Perfil y sondeo cada cinco minutos mientras la aplicación está abierta. Siguen pendientes configurar los secretos del servidor, validar las respuestas reales de Binance, confirmar el mapeo de cantidades/comisiones y superar las pruebas. No se crean órdenes, no se publican anuncios ni se liberan pagos desde JJXCAPITAL.
 
 ## Alcance revisado
 
-Se inspeccionaron `package.json`, `.gitignore`, `firebase.json`, `firestore.rules`, `src/firebase.js`, `src/contexts/AuthContext.js`, `api/operations/create.js`, `api/sessions/create.js`, `api/usage/record-export.js`, las funciones actuales de Binance Pay y pagos blockchain, `lib/payments.js`, `docs/PAYMENTS_SETUP.md` y el workflow de GitHub Actions. No se inspeccionaron los valores de variables de entorno de Vercel o Firebase, y el acceso conectado a Vercel no permitió verificar el proyecto desplegado. No se ejecutó el build ni una auditoría de dependencias; no se hizo un análisis completo de todo el historial de Git.
+Se inspeccionaron además `lib/binance-p2p.js`, los endpoints de `api/integrations/binance-p2p/`, `src/components/BinanceP2PSyncCard.js`, `src/components/BinanceP2PAutoSync.js` y `src/binanceP2PBackend.test.js`. No se inspeccionaron los valores de variables de entorno de Vercel o Firebase, y el acceso conectado a Vercel no permitió verificar la configuración real del proyecto. Se ha iniciado CI de GitHub Actions para tests y build; su resultado aún debe confirmarse. No se hizo análisis completo del historial de Git ni auditoría dinámica de seguridad.
 
 ## Hallazgos
 
@@ -25,26 +25,28 @@ Referencias:
 - https://github.com/binance/binance-skills-hub/blob/main/skills/binance/p2p/SKILL.md
 - https://github.com/binance/binance-skills-hub/blob/main/skills/binance/p2p/references/authentication.md
 
-**Condición antes de implementar:** validar desde Preview que la cuenta y la clave API pueden consultar el endpoint de historial P2P personal. No usar endpoints de agente/comerciante que no sean necesarios para este alcance. Crear la clave sin permisos de trading ni retiros; solo habilitar el permiso mínimo que permita leer los datos. La autenticación deberá realizarse desde el backend, con firma HMAC y timestamp actual. No se debe hacer scraping de la web de Binance.
+**Condición antes de activar:** validar desde Preview que la cuenta y la API key pueden consultar el endpoint de historial P2P personal. El backend ya firma las solicitudes con HMAC-SHA256 y timestamp. La conexión se prueba antes de guardar las credenciales. Crear la clave sin permisos de trading ni retiros y con el permiso mínimo de lectura de historial. No usar endpoints de agente/comerciante no necesarios ni hacer scraping de la web de Binance.
 
-### P1 — `.gitignore` no excluye archivos `.env`
+### P1 — Higiene de archivos de entorno (mitigación aplicada)
 
-El archivo ignora algunos archivos de tokens/credenciales, pero no incluye reglas generales para `.env`, `.env.local` ni `.env.*`. No se encontró un archivo `.env` en la lista de la raíz revisada, pero la protección preventiva es insuficiente. Añadir una regla de exclusión para los archivos de entorno y permitir únicamente una plantilla sin secretos (por ejemplo, `.env.example`). Revisar también el historial antes de asumir que nunca se filtró una credencial.
+Se añadieron al `.gitignore` las reglas `.env` y `.env.*`, permitiendo plantillas explícitas `.env.example` y `.env.template`. No se encontró un archivo `.env` en la lista de la raíz revisada. Aún hay que escanear el historial de Git y los artefactos de CI antes de afirmar que nunca se filtró un secreto.
 
-### P1 — No hay protección específica para la sincronización P2P
+### P1 — Protección del conector (implementación inicial, pendiente de validación)
 
-No se encontró un conector de Binance P2P de solo lectura ni un almacén de credenciales por usuario. Antes de importar órdenes se necesitará:
-- guardar API keys individuales cifradas en el servidor, con clave maestra almacenada como secreto del entorno de servidor; nunca en texto claro en el perfil de Firestore, en `localStorage`, en variables `REACT_APP_*` ni en logs;
-- verificar el ID token de Firebase en cada petición, autorizar por UID y evaluar revocación de sesión;
-- mantener los secretos fuera del frontend y solicitar únicamente permisos de consulta del historial; sin permisos de trading/retiros;
-- deduplicar por número de orden de Binance y procesar cada orden idempotentemente, incluso si se repite el sondeo;
-- guardar el momento de última sincronización, consultar con una ventana temporal superpuesta para capturar cambios de estado y respetar paginación y límites de Binance;
-- registrar fuente, fecha de importación y los campos originales necesarios para auditar la conversión a `Compra`/`Venta`, sin guardar datos de más ni exponer información de contrapartes;
-- tratar órdenes incompletas/canceladas como no importables por defecto y no considerar completada una orden si el estado devuelto no se ha validado.
+La rama ahora incluye credenciales cifradas con AES-256-GCM en el servidor, guardadas bajo `users/{uid}/privateIntegrations/binanceP2P`; las reglas versionadas deniegan rutas privadas no contempladas al cliente. Se verifica el usuario mediante el helper de token de Firebase, la sincronización trabaja sobre el UID autenticado y la API key no vuelve a mostrarse. Se añadió deduplicación por número de orden y un bloqueo de sincronización por usuario.
+
+Pendientes importantes:
+- configurar `BINANCE_P2P_ENCRYPTION_KEY` en Preview y Production desde Vercel; el valor debe ser 32 bytes aleatorios en hex;
+- confirmar en Preview permisos de lectura y mapeo de una orden real ya completada;
+- evaluar verificación de revocación de sesión y una política más completa de rate limiting;
+- confirmar comisiones y cantidades netas antes de usar el resultado importado para analizar beneficios;
+- añadir pruebas específicas para conflictos de importación, estados, paginación y desconexión.
+
+El importador solo considera completadas las órdenes que Binance marque explícitamente como `COMPLETED` o su código documentado equivalente. No se guardan nicknames ni métodos de pago de la contraparte.
 
 ### P1 — Falta de limitación de frecuencia visible en las funciones actuales
 
-En los helpers y endpoints revisados no aparece una capa general de rate limiting por usuario/IP. Las cuotas de uso de la aplicación no sustituyen los límites de llamadas. El sincronizador debe tener límites por usuario y globales, no consultar Binance en cada renderizado del frontend, espaciar los reintentos y respetar los límites de la API. Los sondeos repetidos no deben crear registros duplicados.
+La conexión y sincronización incorporan una espera mínima de cinco segundos por usuario y bloqueo para impedir solicitudes simultáneas, además de paginación acotada. Esto no equivale a rate limiting distribuido por IP ni a una cuota global. Antes de producción debe ampliarse la protección si el tráfico, el plan de Vercel o los límites de Binance lo requieren.
 
 ### P1 — Las reglas activas de Firestore no están verificadas
 
@@ -70,19 +72,21 @@ No fue posible consultar el proyecto de Vercel con la conexión disponible. Por 
 
 ## Aspectos positivos observados
 
-- Las rutas API revisadas requieren un ID token de Firebase y las funciones de servidor usan credenciales de Firebase a través de variables de entorno.
-- Las reglas versionadas limitan el acceso a recursos propios y tienen una denegación general por defecto.
-- Las credenciales de Binance Pay se leen desde variables de entorno del servidor; no se encontró una clave privada o una clave de trading literal en los archivos seleccionados.
-- La configuración de Firebase incluida en `src/firebase.js` es configuración cliente pública, no una cuenta de servicio. Su exposición no equivale a filtrar una clave privada; la protección depende de reglas, autenticación y restricciones apropiadas.
+- Las nuevas rutas de Binance exigen un ID token de Firebase y derivan el UID de los claims verificados.
+- La clave secreta de Binance se cifra en el servidor y no se devuelve en las respuestas del API.
+- La importación usa escrituras con ID de documento determinista y comprobación de `order_id` existentes para evitar duplicados en sincronizaciones repetidas.
+- Las nuevas llamadas no incluyen endpoints de trading, de liberación de pagos, ni de retiradas.
+- Las reglas versionadas deniegan rutas Firestore no contempladas, aunque las reglas desplegadas siguen pendientes de verificación.
+- La configuración incluida en `src/firebase.js` es configuración cliente pública y no una cuenta de servicio.
 
-## Plan de remediación antes de habilitar la sincronización
+## Pasos pendientes antes de habilitar la sincronización en producción
 
-1. Validar la llamada de historial personal `GET /sapi/v1/c2c/orderMatch/listUserOrderHistory` desde Preview con una clave de lectura; comprobar el contrato de la respuesta y permisos reales de la cuenta.
-2. Endurecer higiene del repositorio, verificación/revocación de sesiones, límites de peticiones y cobertura de pruebas.
-3. Verificar las reglas activas de Firebase y el entorno de Vercel sin mostrar secretos.
-4. Diseñar el almacén cifrado por usuario para las credenciales, la separación de permisos y el registro de auditoría.
-5. Implementar la importación de solo lectura, mapeo de los campos y deduplicación persistente por número de orden.
-6. Comparar varias órdenes P2P ya completadas con el historial de Binance y validar el impacto de comisiones en los cálculos actuales.
-7. Habilitar la sincronización automática solo tras revisar build, pruebas, límites de consulta, desconexión y recuperación ante errores. No se necesita permiso de trading ni de retiros.
+1. Configurar `BINANCE_P2P_ENCRYPTION_KEY` en Vercel Preview y comprobar que las funciones existentes tienen la configuración segura de Firebase.
+2. Confirmar que el build y los tests pasan en GitHub Actions.
+3. Verificar las reglas activas de Firestore, dominios y protección de previews de Vercel sin revelar valores secretos.
+4. Con una API key de solo lectura creada por el usuario, conectar desde Preview y validar que el endpoint devuelve el historial esperado.
+5. Comparar varias órdenes ya completadas, validar unidades de importe y tasa, y decidir la semántica de comisiones antes de hacer conclusiones de beneficio.
+6. Repetir sincronización, probar importación duplicada, estado incompleto, desconexión y recuperación de errores.
+7. La sincronización automática actual funciona cada cinco minutos mientras la app esté abierta y haya sesión iniciada. El procesamiento con navegador cerrado requiere un programador backend que aún no se ha configurado. No se necesitan permisos de trading ni retiros.
 
 **No se han creado órdenes reales ni se han cambiado variables de entorno, reglas de Firebase o configuración de producción durante esta auditoría.**
