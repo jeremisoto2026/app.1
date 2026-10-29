@@ -13,7 +13,7 @@ import {
 } from "./ui/select";
 import { db } from "../firebase";
 import { calculateArbitrageSessionResult, calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
-import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
+import { buildProfessionalExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { filterOperations } from "../utils/operationFilters";
 import { 
   TrashIcon, 
@@ -289,12 +289,13 @@ const History = () => {
     }
 
     try {
-      const headers = [
-        "ID_Documento", "ID_Orden", "Tipo_Operacion", "Plataforma", "Criptomoneda", "Cantidad_Cripto",
-        "Moneda_Cotizacion", "Importe_Cotizado", "Tasa_Cambio", "Comision", "Moneda_Comision",
-        "Cantidad_Cripto_Emparejada", "Ingreso_Emparejado", "Coste_Emparejado",
-        "Beneficio_Realizado", "Moneda_Beneficio", "Cobertura_Coste", "Fecha"
+      const detailHeaders = [
+        "ID de registro", "N.º de orden", "Tipo", "Plataforma", "Activo cripto", "Cantidad cripto",
+        "Moneda fiat", "Importe fiat", "Precio de cambio", "Comisión", "Moneda de comisión",
+        "Cantidad emparejada", "Ingreso emparejado", "Coste emparejado",
+        "Beneficio realizado", "Moneda de beneficio", "Cobertura FIFO", "Fecha y hora", "Estado de origen", "Fuente"
       ];
+      const headers = ["Fecha", "Orden", "Tipo", "Activo / fiat", "Precio", "Cantidad", "Total fiat", "Estado", "Fuente"];
 
       // Exportar por orden cronológico ascendente para que el registro permita
       // reconstruir el coste de adquisición y revisar el cálculo FIFO.
@@ -304,7 +305,7 @@ const History = () => {
         return dateA - dateB;
       });
 
-      const rows = sortedData.map(op => {
+      const detailRows = sortedData.map(op => {
         const hasCryptoAmount = op.crypto_amount !== null && op.crypto_amount !== undefined && op.crypto_amount !== "";
         const cryptoAmount = Number(op.crypto_amount);
         const formattedCryptoAmount = hasCryptoAmount && Number.isFinite(cryptoAmount) ? cryptoAmount : "";
@@ -346,13 +347,98 @@ const History = () => {
           knownProfit ? realization.profit : "",
           knownProfit ? realization.currency : "",
           costCoverage,
-          formatDateForCSV(op.timestamp),
+          getOperationDate(op.timestamp) || "",
+          op.sourceStatus || "",
+          op.source === "binance_p2p" ? "Binance C2C/P2P" : op.exchange || "Registro manual",
         ];
       });
 
-      // Las columnas textuales son seguras frente a fórmulas; las columnas
-      // numéricas conservan sus valores, incluidos los beneficios negativos.
-      const excelXml = buildExcelXml(headers, rows);
+      const displayData = [...sortedData].sort((a, b) => {
+        const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+        const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.NEGATIVE_INFINITY;
+        return dateB - dateA;
+      });
+      const getOrderStatus = (operation) => {
+        const rawStatus = String(operation.sourceStatus || "").trim().toUpperCase();
+        if (["COMPLETED", "COMPLETE", "4"].includes(rawStatus)) return "Completada";
+        if (["CANCELED", "CANCELLED", "5"].includes(rawStatus)) return "Cancelada";
+        return operation.source === "binance_p2p" ? "Completada" : "Registrada";
+      };
+      const orderRows = displayData.map((op) => {
+        const cryptoAmount = Number(op.crypto_amount);
+        const fiatAmount = Number(op.fiat_amount);
+        const exchangeRate = Number(op.exchange_rate);
+        return [
+          getOperationDate(op.timestamp) || "",
+          op.order_id || "—",
+          op.operation_type || "—",
+          `${op.crypto || "—"} / ${op.fiat || "—"}`,
+          Number.isFinite(exchangeRate) && op.exchange_rate !== "" ? exchangeRate : "",
+          Number.isFinite(cryptoAmount) && op.crypto_amount !== "" ? cryptoAmount : "",
+          Number.isFinite(fiatAmount) && op.fiat_amount !== "" ? fiatAmount : "",
+          getOrderStatus(op),
+          op.source === "binance_p2p" ? "Binance C2C/P2P" : op.exchange || "Registro manual",
+        ];
+      });
+
+      const operationDates = sortedData
+        .map((op) => getOperationDate(op.timestamp))
+        .filter((date) => date instanceof Date && Number.isFinite(date.getTime()))
+        .sort((a, b) => a.getTime() - b.getTime());
+      const period = operationDates.length
+        ? `${format(operationDates[0], "dd/MM/yyyy")} — ${format(operationDates[operationDates.length - 1], "dd/MM/yyyy")}`
+        : "Fechas no disponibles";
+      const purchases = sortedData.filter((op) => op.operation_type === "Compra").length;
+      const sales = sortedData.filter((op) => op.operation_type === "Venta").length;
+      const generatedAt = format(new Date(), "dd/MM/yyyy HH:mm");
+      const volumeByFiat = sortedData.reduce((totals, operation) => {
+        const amount = Number(operation.fiat_amount);
+        if (operation.fiat && Number.isFinite(amount)) {
+          totals.set(operation.fiat, (totals.get(operation.fiat) || 0) + amount);
+        }
+        return totals;
+      }, new Map());
+      const volumeLabel = volumeByFiat.size
+        ? [...volumeByFiat.entries()].map(([currency, amount]) =>
+          `${currency} ${new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(amount)}`
+        ).join(" · ")
+        : "Sin datos";
+      const sourceLabel = sortedData.some((op) => op.source === "binance_p2p")
+        ? "Binance P2P · solo lectura"
+        : "Registro de operaciones";
+
+      // El primer libro reproduce el resumen compacto del diseño Canva; la
+      // segunda hoja conserva trazabilidad completa y cálculo FIFO.
+      const excelXml = buildProfessionalExcelXml({
+        headers,
+        rows: orderRows,
+        title: "JJXCAPITAL  /  HISTORIAL",
+        subtitle: `Órdenes P2P  ·  ${sourceLabel}  ·  Exportado el ${generatedAt}`,
+        summary: [
+          { label: "ÓRDENES ENCONTRADAS", value: orderRows.length },
+          { label: "COMPRAS", value: purchases },
+          { label: "VENTAS", value: sales },
+          { label: "VOLUMEN TOTAL POR FIAT", value: volumeLabel },
+        ],
+        note: `Período: ${period}. Vista de consulta; no ejecuta órdenes ni retira fondos. Los detalles de costes y FIFO están en la hoja «Detalle y FIFO».`,
+        sheetName: "Órdenes P2P",
+        numericColumns: [4, 5, 6],
+        dateColumns: [0],
+        typeColumn: 2,
+        statusColumn: 7,
+        additionalSheets: [{
+          name: "Detalle y FIFO",
+          title: "JJXCAPITAL · Detalle de operaciones",
+          subtitle: `Orden cronológico ascendente para revisión y reconstrucción FIFO · ${orderRows.length} registros`,
+          note: "Los valores se conservan en su moneda de origen. El beneficio se calcula solo sobre ventas con coste emparejado.",
+          headers: detailHeaders,
+          rows: detailRows,
+          numericColumns: [5, 7, 8, 9, 11, 12, 13, 14],
+          dateColumns: [17],
+          typeColumn: 2,
+          coverageColumn: 16,
+        }],
+      });
       downloadExcelXml(`historial-operaciones-${format(new Date(), 'yyyy-MM-dd')}.xls`, excelXml);
       return true;
     } catch (err) {
