@@ -951,48 +951,48 @@ const History = () => {
         </Card>
 
         {/* Exportar */}
-        <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-6">
-          <CardHeader className="p-0 mb-6 border-b border-purple-500/10 pb-4">
-            <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
+        <Card className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-purple-500/20 shadow-xl p-4 sm:p-5 md:p-6">
+          <CardHeader className="p-0 mb-5 border-b border-purple-500/10 pb-4">
+            <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg shrink-0">
                 <DocumentArrowDownIcon className="h-5 w-5 text-blue-400" />
               </div>
-              Exportar historial
+              <span>Exportar historial</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="flex flex-col md:flex-row gap-4 items-end">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                <div className="space-y-2">
+            <div className="flex flex-col md:flex-row gap-4 md:items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0 flex-1">
+                <div className="space-y-2 min-w-0">
                   <Label htmlFor="export-start-date" className="text-gray-300 font-medium">Fecha de inicio</Label>
-                  <div className="relative">
-                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <div className="relative w-full">
+                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                     <Input
                       id="export-start-date"
                       type="date"
                       value={exportStartDate}
                       onChange={(e) => setExportStartDate(e.target.value)}
-                      className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl pl-10"
+                      className="w-full min-w-0 box-border bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl pl-10"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <Label htmlFor="export-end-date" className="text-gray-300 font-medium">Fecha de fin</Label>
-                  <div className="relative">
-                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <div className="relative w-full">
+                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                     <Input
                       id="export-end-date"
                       type="date"
                       value={exportEndDate}
                       onChange={(e) => setExportEndDate(e.target.value)}
-                      className="bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl pl-10"
+                      className="w-full min-w-0 box-border bg-gray-800 border-purple-500/30 text-white h-11 rounded-xl pl-10"
                     />
                   </div>
                 </div>
               </div>
               <Button
                 onClick={handleExport}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-11 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20"
+                className="w-full md:w-auto shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-11 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20"
               >
                 <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
                 Exportar Excel
