@@ -100,7 +100,7 @@ describe("Profile", () => {
     expect(container.textContent).toContain("TIPO DE PLAN ACTUAL");
     expect(container.textContent).toContain("Órdenes realizadas");
     expect(container.textContent).toContain("Máximo 300");
-    expect(container.textContent).toContain("150 máximo");
+    expect(container.textContent).toContain("Máximo 150");
     expect(container.textContent).toContain("Máximo 50");
     expect(container.textContent).toContain("Método de pago");
     expect(container.textContent).toContain("Historial de pagos");
