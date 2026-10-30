@@ -127,6 +127,32 @@ describe("Profile", () => {
     expect(supportLink.getAttribute("rel")).toContain("noopener");
   });
 
+  test("keeps cumulative usage after operations and sessions are deleted", async () => {
+    firestoreMocks.getDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        nombre: "Persona",
+        apellido: "Prueba",
+        email: "persona@example.com",
+        plan: "free",
+        ordersConsumed: 12,
+        arbitragesConsumed: 7,
+        exportsUsed: 4,
+      }),
+    });
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce({ size: 3 }) // solo quedan 3 órdenes visibles
+      .mockResolvedValueOnce({ size: 2 }); // solo quedan 2 arbitrajes visibles
+
+    await act(async () => {
+      root.render(<Profile />);
+    });
+
+    const usageCards = container.querySelectorAll(".profile-usage-card");
+    expect(usageCards[0].querySelector(".profile-usage-value").textContent).toBe("12");
+    expect(usageCards[1].querySelector(".profile-usage-value").textContent).toBe("7");
+  });
+
   test("keeps the profile visible when the operation counter cannot load", async () => {
     firestoreMocks.getDocs.mockRejectedValueOnce(new Error("Permission denied"));
 
@@ -135,7 +161,7 @@ describe("Profile", () => {
     });
 
     expect(container.textContent).toContain("Información del perfil");
-    expect(container.textContent).toContain("no se pudo consultar el contador de movimientos");
+    expect(container.textContent).toContain("no se pudo consultar el contador de órdenes");
     expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
     expect(container.textContent).toContain("Método de pago");
     expect(container.textContent).toContain("Historial de pagos");
