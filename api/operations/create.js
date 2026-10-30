@@ -119,9 +119,14 @@ module.exports = async function createOperation(req, res) {
     const nextCryptoBalance = operationType === "Venta"
       ? availableCrypto - cryptoAmount
       : availableCrypto + cryptoAmount;
-    // Cada orden/movimiento dentro de un arbitraje consume el límite de 300 órdenes.
-    // El contador se reconstruye desde operations para no arrastrar el significado antiguo de ordersUsed.
-    const currentOrders = await countDocuments(operationsPath, 301);
+    // El consumo del plan es acumulativo: borrar operaciones no devuelve capacidad.
+    // ordersConsumed es el contador canónico; ordersUsed se conserva como compatibilidad
+    // con la versión Preview que ya guardaba este consumo en ese campo.
+    const storedOrders = Math.max(
+      Number(profile.data.ordersConsumed) || 0,
+      Number(profile.data.ordersUsed) || 0
+    );
+    const currentOrders = Math.max(storedOrders, await countDocuments(operationsPath, 301));
     assertPlanAllows(profile.data, "orders", currentOrders);
 
     const id = crypto.randomUUID().replace(/-/g, "");
@@ -160,7 +165,7 @@ module.exports = async function createOperation(req, res) {
         update: { name: documentName(operationsPath + "/" + id), fields: toFields(operation) },
         currentDocument: { exists: false },
       },
-      createWrite(userPath, { ordersUsed: currentOrders + 1 },
+      createWrite(userPath, { ordersConsumed: currentOrders + 1, ordersUsed: currentOrders + 1 },
         profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
       createWrite(sessionPath, sessionUpdate, { updateTime: sessionDocument.updateTime }),
     ];
