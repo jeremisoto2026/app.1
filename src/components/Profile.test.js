@@ -94,11 +94,11 @@ describe("Profile", () => {
 
     expect(container.textContent).toContain("Información del perfil");
     expect(container.textContent).toContain("Uso de tu cuenta");
-    expect(container.textContent).toContain("Movimientos registrados");
+    expect(container.textContent).toContain("Arbitrajes Registrados");
     expect(container.textContent).toContain("2");
     expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
     expect(container.textContent).toContain("TIPO DE PLAN ACTUAL");
-    expect(container.textContent).toContain("Órdenes / arbitrajes");
+    expect(container.textContent).toContain("Órdenes realizadas");
     expect(container.textContent).toContain("Máximo 300");
     expect(container.textContent).toContain("150 máximo");
     expect(container.textContent).toContain("Máximo 50");
