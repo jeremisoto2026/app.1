@@ -119,10 +119,15 @@ module.exports = async function createOperation(req, res) {
     const nextCryptoBalance = operationType === "Venta"
       ? availableCrypto - cryptoAmount
       : availableCrypto + cryptoAmount;
-    const storedMovements = Number(profile.data.movementsUsed);
-    const savedMovements = Number.isFinite(storedMovements) && storedMovements >= 0 ? storedMovements : 0;
-    const currentMovements = Math.max(savedMovements, await countDocuments(operationsPath, 151));
-    assertPlanAllows(profile.data, "movements", currentMovements);
+    // El consumo del plan es acumulativo: borrar operaciones no devuelve capacidad.
+    // ordersConsumed es el contador canónico; ordersUsed se conserva como compatibilidad
+    // con la versión Preview que ya guardaba este consumo en ese campo.
+    const storedOrders = Math.max(
+      Number(profile.data.ordersConsumed) || 0,
+      Number(profile.data.ordersUsed) || 0
+    );
+    const currentOrders = Math.max(storedOrders, await countDocuments(operationsPath, 301));
+    assertPlanAllows(profile.data, "orders", currentOrders);
 
     const id = crypto.randomUUID().replace(/-/g, "");
     const timestamp = new Date();
@@ -160,7 +165,7 @@ module.exports = async function createOperation(req, res) {
         update: { name: documentName(operationsPath + "/" + id), fields: toFields(operation) },
         currentDocument: { exists: false },
       },
-      createWrite(userPath, { movementsUsed: currentMovements + 1 },
+      createWrite(userPath, { ordersConsumed: currentOrders + 1, ordersUsed: currentOrders + 1 },
         profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
       createWrite(sessionPath, sessionUpdate, { updateTime: sessionDocument.updateTime }),
     ];
@@ -168,7 +173,7 @@ module.exports = async function createOperation(req, res) {
 
     return sendJson(res, 201, {
       operation: { ...operation, id, timestamp: timestamp.toISOString() },
-      usage: { movements: currentMovements + 1, limit: 150 },
+      usage: { orders: currentOrders + 1, limit: 300 },
     });
   } catch (error) {
     return errorResponse(res, error);
