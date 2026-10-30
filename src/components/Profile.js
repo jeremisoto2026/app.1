@@ -49,8 +49,8 @@ export default function Profile() {
   const [profileError, setProfileError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [operationCount, setOperationCount] = useState(null);
   const [orderCount, setOrderCount] = useState(null);
+  const [arbitrageCount, setArbitrageCount] = useState(null);
   const [exportCount, setExportCount] = useState(null);
   const [retry, setRetry] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState("");
@@ -210,8 +210,8 @@ export default function Profile() {
       setProfileError("");
       if (!user?.uid) {
         setProfileData(null);
-        setOperationCount(0);
         setOrderCount(0);
+        setArbitrageCount(0);
         setLoading(false);
         return;
       }
@@ -237,7 +237,7 @@ export default function Profile() {
 
       try {
         const operationsSnapshot = await getDocs(collection(db, "users", user.uid, "operations"));
-        if (!cancelled) setOperationCount(operationsSnapshot.size);
+        if (!cancelled) setOrderCount(operationsSnapshot.size);
       } catch (error) {
         console.error("No se pudo contar el historial:", error);
         if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de movimientos.");
@@ -245,10 +245,10 @@ export default function Profile() {
 
       try {
         const sessionsSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
-        if (!cancelled) setOrderCount(sessionsSnapshot.size);
+        if (!cancelled) setArbitrageCount(sessionsSnapshot.size);
       } catch (error) {
-        console.error("No se pudo contar las órdenes/arbitrajes:", error);
-        if (!cancelled) setOrderCount(null);
+        console.error("No se pudo contar los arbitrajes registrados:", error);
+        if (!cancelled) setArbitrageCount(null);
       }
 
       await loadPaymentHistory();
@@ -364,18 +364,16 @@ export default function Profile() {
   const photoURL = asText(profileData.photoURL) || asText(user?.photoURL);
   const proActive = isProSubscriptionActive(profileData);
   const planLabel = proActive ? "Pro activo" : "Plan gratuito";
-  const storedOrderCount = Number(profileData.ordersUsed);
-  const storedMovementCount = Number(profileData.movementsUsed);
-  const hasStoredOrderCount = Number.isFinite(storedOrderCount) && storedOrderCount >= 0;
-  const hasStoredMovementCount = Number.isFinite(storedMovementCount) && storedMovementCount >= 0;
-  const ordersAvailable = Number.isFinite(orderCount) || hasStoredOrderCount;
-  const operationsAvailable = Number.isFinite(operationCount) || hasStoredMovementCount;
-  const ordersUsed = Math.max(Number.isFinite(orderCount) ? orderCount : 0, hasStoredOrderCount ? storedOrderCount : 0);
-  const movementsUsed = Math.max(Number.isFinite(operationCount) ? operationCount : 0, hasStoredMovementCount ? storedMovementCount : 0);
+  // Los contadores visibles se calculan desde sus colecciones reales para no mezclar
+  // los campos históricos ordersUsed/movementsUsed, que tenían el significado invertido.
+  const ordersAvailable = Number.isFinite(orderCount);
+  const arbitragesAvailable = Number.isFinite(arbitrageCount);
+  const ordersUsed = ordersAvailable ? orderCount : 0;
+  const arbitragesUsed = arbitragesAvailable ? arbitrageCount : 0;
   const exports = Number.isFinite(exportCount) ? exportCount : countFromProfile(profileData);
   const memberSince = formatDate(profileData.createdAt, user?.metadata?.creationTime);
   const orderUsage = ordersAvailable ? getLimitProgress(ordersUsed, FREE_PLAN_LIMITS.orders) : null;
-  const movementUsage = operationsAvailable ? getLimitProgress(movementsUsed, FREE_PLAN_LIMITS.movements) : null;
+  const movementUsage = arbitragesAvailable ? getLimitProgress(arbitragesUsed, FREE_PLAN_LIMITS.movements) : null;
   const exportUsage = getLimitProgress(exports, FREE_PLAN_LIMITS.exports);
   const currentExpiryLabel = proActive ? formatPaymentDate(profileData.subscriptionExpiresAt) : "";
   const expiredPaymentCount = payments.filter(
@@ -424,7 +422,7 @@ export default function Profile() {
               <div className="profile-hero-plan">
                 <span className="profile-mini-label">PLAN ACTUAL</span>
                 <strong>{proActive ? "Pro · Ilimitado" : "Gratuito"}</strong>
-                <span>{proActive ? "Vence el " + currentExpiryLabel : "Hasta 300 órdenes · 150 movimientos · 50 exportaciones"}</span>
+                <span>{proActive ? "Vence el " + currentExpiryLabel : "Hasta 300 órdenes · 150 arbitrajes registrados · 50 exportaciones"}</span>
               </div>
               <button type="button" onClick={handleSignOut} disabled={signingOut} className="jjx-button-secondary profile-signout" aria-label="Cerrar sesión">
                 <ArrowLeftOnRectangleIcon className="h-4 w-4" />
@@ -483,7 +481,7 @@ export default function Profile() {
             <article className="profile-usage-card jjx-panel p-5">
               <div className="profile-usage-card-heading">
                 <span className="profile-usage-icon profile-usage-icon-orders"><BoltIcon className="h-5 w-5" aria-hidden="true" /></span>
-                <div><p>Órdenes / arbitrajes</p><span>{proActive ? "Sin límite" : "Máximo 300"}</span></div>
+                <div><p>Órdenes realizadas</p><span>{proActive ? "Sin límite" : "Máximo 300"}</span></div>
               </div>
               <p className="profile-usage-value">{proActive ? "Ilimitado" : ordersAvailable ? ordersUsed : "—"}</p>
               {!proActive && <p className="profile-usage-caption">{ordersAvailable ? `de ${FREE_PLAN_LIMITS.orders} · ${orderUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
@@ -494,10 +492,10 @@ export default function Profile() {
             <article className="profile-usage-card jjx-panel p-5">
               <div className="profile-usage-card-heading">
                 <span className="profile-usage-icon profile-usage-icon-movements"><ChartBarIcon className="h-5 w-5" aria-hidden="true" /></span>
-                <div><p>Movimientos registrados</p><span>{proActive ? "Sin límite" : "150 máximo"}</span></div>
+                <div><p>Arbitrajes Registrados</p><span>{proActive ? "Sin límite" : "Máximo 150"}</span></div>
               </div>
-              <p className="profile-usage-value">{proActive ? "Ilimitado" : operationsAvailable ? movementsUsed : "—"}</p>
-              {!proActive && <p className="profile-usage-caption">{operationsAvailable ? `de ${FREE_PLAN_LIMITS.movements} · ${movementUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
+              <p className="profile-usage-value">{proActive ? "Ilimitado" : arbitragesAvailable ? arbitragesUsed : "—"}</p>
+              {!proActive && <p className="profile-usage-caption">{arbitragesAvailable ? `de ${FREE_PLAN_LIMITS.movements} · ${movementUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
               {!proActive && <div className="profile-progress-track"><span style={{ width: `${movementUsage?.percent || 0}%` }} /></div>}
               {proActive && <p className="profile-usage-caption profile-usage-positive">Incluido durante tu suscripción</p>}
             </article>
