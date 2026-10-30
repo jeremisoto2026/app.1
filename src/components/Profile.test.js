@@ -87,7 +87,11 @@ describe("Profile", () => {
     consoleError.mockRestore();
   });
 
-  test("renders the profile and subscriptions section without crashing", async () => {
+  test("renders the profile with orders and arbitrages counted separately", async () => {
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce({ size: 3 }) // órdenes dentro de arbitrajes
+      .mockResolvedValueOnce({ size: 1 }); // arbitrajes creados
+
     await act(async () => {
       root.render(<Profile />);
     });
@@ -96,7 +100,9 @@ describe("Profile", () => {
     expect(container.textContent).toContain("Uso de tu cuenta");
     expect(container.textContent).toContain("Órdenes realizadas");
     expect(container.textContent).toContain("Arbitrajes Registrados");
-    expect(container.textContent).toContain("2");
+    const usageCards = container.querySelectorAll(".profile-usage-card");
+    expect(usageCards[0].querySelector(".profile-usage-value").textContent).toBe("3");
+    expect(usageCards[1].querySelector(".profile-usage-value").textContent).toBe("1");
     expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
     expect(container.textContent).toContain("TIPO DE PLAN ACTUAL");
     expect(container.textContent).toContain("Órdenes realizadas");
