@@ -119,10 +119,10 @@ module.exports = async function createOperation(req, res) {
     const nextCryptoBalance = operationType === "Venta"
       ? availableCrypto - cryptoAmount
       : availableCrypto + cryptoAmount;
-    const storedMovements = Number(profile.data.movementsUsed);
-    const savedMovements = Number.isFinite(storedMovements) && storedMovements >= 0 ? storedMovements : 0;
-    const currentMovements = Math.max(savedMovements, await countDocuments(operationsPath, 151));
-    assertPlanAllows(profile.data, "movements", currentMovements);
+    // Cada orden/movimiento dentro de un arbitraje consume el límite de 300 órdenes.
+    // El contador se reconstruye desde operations para no arrastrar el significado antiguo de ordersUsed.
+    const currentOrders = await countDocuments(operationsPath, 301);
+    assertPlanAllows(profile.data, "orders", currentOrders);
 
     const id = crypto.randomUUID().replace(/-/g, "");
     const timestamp = new Date();
@@ -160,7 +160,7 @@ module.exports = async function createOperation(req, res) {
         update: { name: documentName(operationsPath + "/" + id), fields: toFields(operation) },
         currentDocument: { exists: false },
       },
-      createWrite(userPath, { movementsUsed: currentMovements + 1 },
+      createWrite(userPath, { ordersUsed: currentOrders + 1 },
         profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
       createWrite(sessionPath, sessionUpdate, { updateTime: sessionDocument.updateTime }),
     ];
@@ -168,7 +168,7 @@ module.exports = async function createOperation(req, res) {
 
     return sendJson(res, 201, {
       operation: { ...operation, id, timestamp: timestamp.toISOString() },
-      usage: { movements: currentMovements + 1, limit: 150 },
+      usage: { orders: currentOrders + 1, limit: 300 },
     });
   } catch (error) {
     return errorResponse(res, error);
