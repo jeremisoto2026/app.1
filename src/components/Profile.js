@@ -237,7 +237,11 @@ export default function Profile() {
 
       try {
         const operationsSnapshot = await getDocs(collection(db, "users", user.uid, "operations"));
-        if (!cancelled) setOrderCount(operationsSnapshot.size);
+        const persistedOrders = Math.max(
+          Number(data.ordersConsumed) || 0,
+          Number(data.ordersUsed) || 0
+        );
+        if (!cancelled) setOrderCount(Math.max(operationsSnapshot.size, persistedOrders));
       } catch (error) {
         console.error("No se pudo contar el historial:", error);
         if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de órdenes.");
@@ -245,7 +249,11 @@ export default function Profile() {
 
       try {
         const sessionsSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
-        if (!cancelled) setArbitrageCount(sessionsSnapshot.size);
+        const persistedArbitrages = Math.max(
+          Number(data.arbitragesConsumed) || 0,
+          Number(data.movementsUsed) || 0
+        );
+        if (!cancelled) setArbitrageCount(Math.max(sessionsSnapshot.size, persistedArbitrages));
       } catch (error) {
         console.error("No se pudo contar los arbitrajes registrados:", error);
         if (!cancelled) setArbitrageCount(null);
