@@ -240,7 +240,7 @@ export default function Profile() {
         if (!cancelled) setOrderCount(operationsSnapshot.size);
       } catch (error) {
         console.error("No se pudo contar el historial:", error);
-        if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de movimientos.");
+        if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de órdenes.");
       }
 
       try {
