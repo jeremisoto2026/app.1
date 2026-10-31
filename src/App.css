@@ -2337,3 +2337,18 @@ html[data-jjx-theme="light"] .app-shell button:is(
 ) [class*="text-white"] {
   color: #ffffff !important;
 }
+
+
+/* Convert dark alert surfaces into soft status panels in light mode. */
+html[data-jjx-theme="light"] .app-shell [class*="bg-red-900"] {
+  background-color: #fff1f2 !important;
+}
+html[data-jjx-theme="light"] .app-shell [class*="bg-green-900"] {
+  background-color: #effaf3 !important;
+}
+html[data-jjx-theme="light"] .app-shell [class*="bg-amber-900"] {
+  background-color: #fff8e8 !important;
+}
+html[data-jjx-theme="light"] .app-shell [class*="bg-purple-950"] {
+  background-color: #f4f1ff !important;
+}
