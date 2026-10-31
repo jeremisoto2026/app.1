@@ -163,7 +163,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
         )}
         <header className="dashboard-topbar">
           <div className="dashboard-brand">
-            <span className="dashboard-brand-mark" aria-hidden="true"><img src={`${process.env.PUBLIC_URL}/jjxcapital-mark.svg`} alt="" /></span>
+            <span className="dashboard-brand-mark" aria-hidden="true"><img src={`${process.env.PUBLIC_URL}/${theme === "light" ? "jjxcapital-mark-light.svg" : "jjxcapital-mark.svg"}`} alt="" /></span>
             <span><strong>JJXCAPITAL</strong><small>ESPACIO DE TRABAJO</small></span>
           </div>
           <button
