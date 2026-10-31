@@ -2168,3 +2168,172 @@ html[data-jjx-theme="light"] .app-shell .profile-page :is(.text-emerald-100, .te
 html[data-jjx-theme="light"] .app-shell .profile-page :is(.text-violet-200, .text-violet-300, .text-purple-200, .text-purple-300) { color: #5144b8 !important; }
 html[data-jjx-theme="light"] .app-shell .profile-page :is(.text-amber-100, .text-amber-200) { color: #845500 !important; }
 html[data-jjx-theme="light"] .app-shell .profile-page :is(.text-rose-200, .text-rose-300) { color: #a12e3b !important; }
+
+
+/* Light theme contrast correction: keep the workspace readable without changing dark mode. */
+html[data-jjx-theme="light"] .app-shell .dashboard-brand strong {
+  color: #17243a !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-brand small {
+  color: #5d6b82 !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-brand-mark {
+  border: 1px solid #dedaf8;
+  border-radius: 12px;
+  background: #f1efff;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-brand-mark img {
+  width: 84%;
+  height: 84%;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-profile-button {
+  color: #34435b !important;
+  border-color: #d5deeb !important;
+  background: #ffffff !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-profile-button svg {
+  color: #5144b8 !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-profile-button:hover {
+  border-color: #aaa2e7 !important;
+  background: #f5f3ff !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-theme-toggle {
+  color: #34435b !important;
+  border-color: #d5deeb !important;
+  background: #ffffff !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-theme-toggle svg {
+  color: #5144b8 !important;
+}
+
+/* Improve secondary labels and icons that were originally tuned for dark cards. */
+html[data-jjx-theme="light"] .app-shell .metric-card-heading {
+  color: #52627a !important;
+}
+html[data-jjx-theme="light"] .app-shell .metric-card-foot {
+  color: #64748b !important;
+  border-top-color: #e3e8f0 !important;
+}
+html[data-jjx-theme="light"] .app-shell .metric-card-foot svg {
+  color: #64748b !important;
+}
+html[data-jjx-theme="light"] .app-shell .metric-icon-blue {
+  color: #245b9a !important;
+  background: #eaf2fc !important;
+}
+html[data-jjx-theme="light"] .app-shell .metric-icon-purple {
+  color: #5144b8 !important;
+  background: #f0edff !important;
+}
+html[data-jjx-theme="light"] .app-shell .metric-icon-teal {
+  color: #0f766e !important;
+  background: #e8f7f5 !important;
+}
+html[data-jjx-theme="light"] .app-shell .metric-positive {
+  color: #18794e !important;
+}
+html[data-jjx-theme="light"] .app-shell .metric-negative {
+  color: #b42335 !important;
+}
+html[data-jjx-theme="light"] .app-shell .metric-no-data,
+html[data-jjx-theme="light"] .app-shell .currency-code {
+  color: #52627a !important;
+}
+html[data-jjx-theme="light"] .app-shell .panel-heading-icon,
+html[data-jjx-theme="light"] .app-shell .empty-state-icon {
+  color: #5144b8 !important;
+  border-color: #e0dcfb !important;
+  background: #f2f0ff !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-empty-state > strong,
+html[data-jjx-theme="light"] .app-shell .guidance-item strong {
+  color: #26354d !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-empty-state p,
+html[data-jjx-theme="light"] .app-shell .guidance-item p {
+  color: #5a6980 !important;
+}
+html[data-jjx-theme="light"] .app-shell .guidance-index {
+  color: #5144b8 !important;
+  border-color: #e0dcfb !important;
+  background: #f2f0ff !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-disclaimer {
+  border-color: #dce3ee !important;
+  background: #f8fafd !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-disclaimer svg {
+  color: #53647c !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-state {
+  color: #17243a !important;
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-state-icon {
+  color: #5144b8 !important;
+  border-color: #e0dcfb !important;
+  background: #f2f0ff !important;
+}
+
+/* Pastel utility text colors need darker equivalents on white surfaces. */
+html[data-jjx-theme="light"] .app-shell :is(
+  [class~="text-indigo-100"], [class~="text-indigo-200"], [class~="text-indigo-300"],
+  [class~="text-violet-100"], [class~="text-violet-200"], [class~="text-violet-300"],
+  [class~="text-purple-100"], [class~="text-purple-200"], [class~="text-purple-300"]
+) {
+  color: #5144b8 !important;
+}
+html[data-jjx-theme="light"] .app-shell :is(
+  [class~="text-blue-100"], [class~="text-blue-200"], [class~="text-blue-300"],
+  [class~="text-sky-100"], [class~="text-sky-200"], [class~="text-sky-300"],
+  [class~="text-cyan-100"], [class~="text-cyan-200"], [class~="text-cyan-300"]
+) {
+  color: #245b9a !important;
+}
+html[data-jjx-theme="light"] .app-shell :is(
+  [class~="text-emerald-100"], [class~="text-emerald-200"], [class~="text-emerald-300"],
+  [class~="text-green-100"], [class~="text-green-200"], [class~="text-green-300"],
+  [class~="text-teal-100"], [class~="text-teal-200"], [class~="text-teal-300"]
+) {
+  color: #176b45 !important;
+}
+html[data-jjx-theme="light"] .app-shell :is(
+  [class~="text-amber-100"], [class~="text-amber-200"], [class~="text-amber-300"],
+  [class~="text-yellow-100"], [class~="text-yellow-200"], [class~="text-yellow-300"],
+  [class~="text-orange-100"], [class~="text-orange-200"], [class~="text-orange-300"]
+) {
+  color: #845500 !important;
+}
+html[data-jjx-theme="light"] .app-shell :is(
+  [class~="text-rose-100"], [class~="text-rose-200"], [class~="text-rose-300"],
+  [class~="text-red-100"], [class~="text-red-200"], [class~="text-red-300"],
+  [class~="text-pink-100"], [class~="text-pink-200"], [class~="text-pink-300"]
+) {
+  color: #a12e3b !important;
+}
+
+/* Preserve white labels on saturated action buttons. */
+html[data-jjx-theme="light"] .app-shell button:is(
+  [class*="bg-indigo-500"], [class*="bg-indigo-600"], [class*="bg-indigo-700"], [class*="bg-indigo-800"],
+  [class*="bg-violet-500"], [class*="bg-violet-600"], [class*="bg-violet-700"], [class*="bg-violet-800"],
+  [class*="bg-purple-500"], [class*="bg-purple-600"], [class*="bg-purple-700"], [class*="bg-purple-800"],
+  [class*="bg-blue-500"], [class*="bg-blue-600"], [class*="bg-blue-700"], [class*="bg-blue-800"],
+  [class*="bg-emerald-500"], [class*="bg-emerald-600"], [class*="bg-emerald-700"],
+  [class*="bg-green-500"], [class*="bg-green-600"], [class*="bg-green-700"],
+  [class*="bg-rose-500"], [class*="bg-rose-600"], [class*="bg-rose-700"],
+  [class*="bg-red-500"], [class*="bg-red-600"], [class*="bg-red-700"]
+) {
+  color: #ffffff !important;
+}
+html[data-jjx-theme="light"] .app-shell button:is(
+  [class*="bg-indigo-500"], [class*="bg-indigo-600"], [class*="bg-indigo-700"], [class*="bg-indigo-800"],
+  [class*="bg-violet-500"], [class*="bg-violet-600"], [class*="bg-violet-700"], [class*="bg-violet-800"],
+  [class*="bg-purple-500"], [class*="bg-purple-600"], [class*="bg-purple-700"], [class*="bg-purple-800"],
+  [class*="bg-blue-500"], [class*="bg-blue-600"], [class*="bg-blue-700"], [class*="bg-blue-800"],
+  [class*="bg-emerald-500"], [class*="bg-emerald-600"], [class*="bg-emerald-700"],
+  [class*="bg-green-500"], [class*="bg-green-600"], [class*="bg-green-700"],
+  [class*="bg-rose-500"], [class*="bg-rose-600"], [class*="bg-rose-700"],
+  [class*="bg-red-500"], [class*="bg-red-600"], [class*="bg-red-700"]
+) [class*="text-white"] {
+  color: #ffffff !important;
+}
