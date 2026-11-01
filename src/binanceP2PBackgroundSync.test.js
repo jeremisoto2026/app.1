@@ -33,7 +33,8 @@ jest.mock("../api/integrations/binance-p2p/sync", () => ({
 const payments = require("../lib/payments");
 const oidc = require("../lib/github-actions-oidc");
 const sync = require("../api/integrations/binance-p2p/sync");
-const cron = require("../api/integrations/binance-p2p/cron");
+const { createBinanceP2PScheduler } = require("../lib/binance-p2p-scheduler");
+const cron = createBinanceP2PScheduler({ syncUser: sync.syncUser });
 
 function makeResponse() {
   return {
