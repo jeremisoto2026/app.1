@@ -13,17 +13,8 @@ const syncBinanceP2P = require("./sync");
 
 const SCHEDULER_STATE_PATH = "systemJobs/binanceP2PBackgroundSync";
 const LOCK_MS = 4 * 60 * 1000;
-const MAX_USERS_PER_REQUEST = 2;
+const MAX_USERS_PER_REQUEST = 1;
 const QUERY_LIMIT = 25;
-
-function responseStub() {
-  return {
-    statusCode: 200,
-    status(code) { this.statusCode = code; return this; },
-    setHeader() { return this; },
-    json(body) { this.body = body; return this; },
-  };
-}
 
 async function releaseSchedulerLock(lockId, updates = {}) {
   try {
