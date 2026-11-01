@@ -49,6 +49,17 @@ describe("Binance P2P background scheduler endpoint", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    payments.sendJson.mockImplementation((res, statusCode, payload) => {
+      res.status(statusCode).setHeader("Cache-Control", "no-store");
+      return res.json(payload);
+    });
+    payments.errorResponse.mockImplementation((res, error) => {
+      res.status(error.statusCode || 500).setHeader("Cache-Control", "no-store");
+      return res.json({ error: error.message });
+    });
+    payments.createWrite.mockImplementation((path, data, precondition) => ({
+      path, data, precondition,
+    }));
     storedState = null;
     oidc.verifyGitHubActionsOidcToken.mockResolvedValue({ repository: "jeremisoto2026/app.1" });
     payments.getDocument.mockImplementation(async () => storedState
@@ -156,7 +167,7 @@ describe("Binance P2P background scheduler endpoint", () => {
       new payments.HttpError(401, "Token no válido")
     );
     const response = makeResponse();
-    await cron({ method: "POST", headers: {} }, response);
+    await cron({ method: "POST", headers: { authorization: "Bearer invalid-token" } }, response);
 
     expect(response.statusCode).toBe(401);
     expect(sync.syncUser).not.toHaveBeenCalled();
