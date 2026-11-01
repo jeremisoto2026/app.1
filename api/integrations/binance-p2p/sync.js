@@ -216,7 +216,6 @@ async function syncBinanceP2P(req, res) {
 
     // Restore the user's sync state and decrypt credentials before requesting Binance.
     const state = integration.data || {};
-    const credentials = decryptCredentials(state.encryptedCredentials);
     const requestNow = Date.now();
 
     // Prevent manual and automatic requests from processing the same account concurrently.
@@ -227,6 +226,7 @@ async function syncBinanceP2P(req, res) {
       throw new HttpError(409, "Ya hay una sincronización de Binance en curso. Espera unos segundos e inténtalo de nuevo.");
     }
 
+    const credentials = decryptCredentials(state.encryptedCredentials);
     lockId = crypto.randomBytes(16).toString("hex");
     await commitWrites([createWrite(
       integrationPath,
