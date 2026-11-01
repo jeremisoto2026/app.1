@@ -421,7 +421,7 @@ module.exports = async function syncBinanceP2P(req, res) {
       }, lockId);
     }
     if (error instanceof HttpError) return errorResponse(res, error);
-    console.error("Binance P2P sync failed:", error?.message || "unknown_error");
+    console.error("Binance P2P sync failed:", error?.stack || error?.message || "unknown_error");
     return sendJson(res, 500, { error: "No se pudo sincronizar el historial P2P. Inténtalo de nuevo." });
   }
 };
