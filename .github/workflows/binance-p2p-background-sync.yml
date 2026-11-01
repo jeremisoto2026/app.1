@@ -1,0 +1,59 @@
+name: Binance P2P background synchronization
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: binance-p2p-background-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Request short-lived GitHub identity token and run sync batches
+        shell: bash
+        env:
+          SYNC_ENDPOINT: https://app-1-nu-five.vercel.app/api/integrations/binance-p2p/sync
+        run: |
+          set -euo pipefail
+
+          oidc_response="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=jjxcapital-binance-p2p-sync")"
+          oidc_token="$(printf '%s' "$oidc_response" | jq --exit-status --raw-output '.value')"
+          echo "::add-mask::$oidc_token"
+
+          # Each endpoint call processes a small batch to stay within Hobby
+          # function duration limits. Continue through up to eight batches per run.
+          for batch in 1 2 3 4 5 6 7 8; do
+            response="$(curl --fail --silent --show-error --max-time 65 \
+              --retry 2 --retry-all-errors --retry-delay 2 \
+              -X POST "$SYNC_ENDPOINT" \
+              -H "Authorization: Bearer $oidc_token" \
+              -H "X-JJXCapital-Scheduler: binance-p2p" \
+              -H "Content-Type: application/json" \
+              --data '{}')"
+            echo "$response"
+
+            success="$(printf '%s' "$response" | jq --raw-output '.success // false')"
+            failed="$(printf '%s' "$response" | jq --raw-output '.failed // 0')"
+            has_more="$(printf '%s' "$response" | jq --raw-output '.hasMore // false')"
+
+            if [[ "$success" != "true" ]]; then
+              echo "::warning::At least one Binance P2P account could not be synchronized in batch $batch."
+            fi
+            if [[ "$has_more" != "true" ]]; then
+              break
+            fi
+            if [[ "$failed" != "0" ]]; then
+              echo "::warning::Continuing to the next batch despite a partial account failure."
+            fi
+          done

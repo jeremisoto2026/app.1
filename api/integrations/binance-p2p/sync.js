@@ -4,6 +4,7 @@ const {
   listDocumentsMatchingAnyField, listAllDocuments, commitWrites, createWrite, documentName, toFields, errorResponse,
 } = require("../../../lib/payments");
 const { decryptCredentials, fetchHistory } = require("../../../lib/binance-p2p");
+const { createBinanceP2PScheduler } = require("../../../lib/binance-p2p-scheduler");
 
 const integrationPathFor = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
 const operationsPathFor = (uid) => "users/" + uid + "/operations";
@@ -184,21 +185,55 @@ async function releaseLock(path, fields, lockId) {
   }
 }
 
-module.exports = async function syncBinanceP2P(req, res) {
+async function syncBinanceP2P(req, res) {
   if (!requirePost(req, res)) return;
+  if (req.headers?.["x-jjxcapital-scheduler"] === "binance-p2p") {
+    return runBackgroundSync(req, res);
+  }
   let integrationPath = "";
   let lockId = "";
   let ownsLock = false;
   let errorFields = {};
 
   try {
-    const claims = await requireFirebaseUser(req);
+    // Internal calls are only created by the verified background scheduler module.
+    // Public HTTP requests cannot populate this server-side request property.
+    let claims;
+    if (typeof req.internalBinanceP2PUserId === "string") {
+      const internalUid = req.internalBinanceP2PUserId;
+      if (!internalUid || internalUid.length > 128 || internalUid.includes("/")) {
+        throw new HttpError(400, "El identificador interno de usuario no es válido.");
+      }
+      claims = { sub: internalUid };
+    } else {
+      claims = await requireFirebaseUser(req);
+    }
     integrationPath = integrationPathFor(claims.sub);
     const integration = await getDocument(integrationPath);
     if (!integration?.data?.encryptedCredentials || integration.data.connectionStatus !== "connected") {
       throw new HttpError(409, "Conecta primero tu cuenta de Binance P2P en Perfil.");
     }
+
+    // Restore the user's sync state and decrypt credentials before requesting Binance.
+    const state = integration.data || {};
     const requestNow = Date.now();
+
+    // Prevent manual and automatic requests from processing the same account concurrently.
+    const lockExpiry = state.syncLockExpiresAt
+      ? new Date(state.syncLockExpiresAt).getTime()
+      : 0;
+    if (state.syncLockId && Number.isFinite(lockExpiry) && lockExpiry > requestNow) {
+      throw new HttpError(409, "Ya hay una sincronización de Binance en curso. Espera unos segundos e inténtalo de nuevo.");
+    }
+
+    const credentials = decryptCredentials(state.encryptedCredentials);
+    lockId = crypto.randomBytes(16).toString("hex");
+    await commitWrites([createWrite(
+      integrationPath,
+      { syncLockId: lockId, syncLockExpiresAt: new Date(requestNow + LOCK_MS) },
+      integration.updateTime ? { updateTime: integration.updateTime } : { exists: true }
+    )]);
+    ownsLock = true;
     let startTimestamp;
     let endTimestamp;
     let buyPage;
@@ -390,8 +425,28 @@ module.exports = async function syncBinanceP2P(req, res) {
       }, lockId);
     }
     if (error instanceof HttpError) return errorResponse(res, error);
-    console.error("Binance P2P sync failed:", error?.message || "unknown_error");
+    console.error("Binance P2P sync failed:", error?.stack || error?.message || "unknown_error");
     return sendJson(res, 500, { error: "No se pudo sincronizar el historial P2P. Inténtalo de nuevo." });
   }
-};
+}
 
+// The scheduler reuses this endpoint so the free Vercel plan does not need
+// another Serverless Function. GitHub Actions must pass a signed OIDC token.
+async function syncBinanceP2PForUser(uid) {
+  const response = {
+    statusCode: 200,
+    status(code) { this.statusCode = code; return this; },
+    setHeader() { return this; },
+    json(body) { this.body = body; return this; },
+  };
+  await syncBinanceP2P({
+    method: "POST",
+    internalBinanceP2PUserId: String(uid || ""),
+  }, response);
+  return { statusCode: response.statusCode, body: response.body || null };
+}
+
+const runBackgroundSync = createBinanceP2PScheduler({ syncUser: syncBinanceP2PForUser });
+syncBinanceP2P.syncUser = syncBinanceP2PForUser;
+syncBinanceP2P.runBackgroundSync = runBackgroundSync;
+module.exports = syncBinanceP2P;
