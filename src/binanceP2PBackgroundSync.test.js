@@ -84,18 +84,51 @@ describe("Binance P2P background scheduler endpoint", () => {
     }, response);
 
     expect(oidc.verifyGitHubActionsOidcToken).toHaveBeenCalledWith("github-oidc-token");
-    expect(sync.syncUser).toHaveBeenCalledTimes(2);
-    expect(sync.syncUser).toHaveBeenNthCalledWith(1, "user-a");
-    expect(sync.syncUser).toHaveBeenNthCalledWith(2, "user-b");
+    expect(sync.syncUser).toHaveBeenCalledTimes(1);
+    expect(sync.syncUser).toHaveBeenCalledWith("user-a");
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchObject({
       success: true,
-      processed: 2,
-      succeeded: 2,
-      imported: 2,
+      processed: 1,
+      succeeded: 1,
+      imported: 1,
+      hasMore: true,
+    });
+    expect(storedState.lastDocumentName).toContain("/users/user-a/");
+    expect(storedState.schedulerLockId).toBeNull();
+  });
+
+  test("advances the Firestore cursor so the next batch processes the next user", async () => {
+    const firstResponse = makeResponse();
+    await cron({
+      method: "POST",
+      headers: { authorization: "Bearer github-oidc-token" },
+    }, firstResponse);
+
+    payments.listConnectedBinanceP2PIntegrations.mockResolvedValue([
+      {
+        name: "projects/p/databases/(default)/documents/users/user-b/privateIntegrations/binanceP2P",
+        uid: "user-b",
+        data: { connectionStatus: "connected", encryptedCredentials: { ciphertext: "b" } },
+      },
+    ]);
+    sync.syncUser.mockClear();
+
+    const secondResponse = makeResponse();
+    await cron({
+      method: "POST",
+      headers: { authorization: "Bearer github-oidc-token" },
+    }, secondResponse);
+
+    expect(sync.syncUser).toHaveBeenCalledTimes(1);
+    expect(sync.syncUser).toHaveBeenCalledWith("user-b");
+    expect(secondResponse.body).toMatchObject({
+      success: true,
+      processed: 1,
+      imported: 1,
       hasMore: false,
     });
-    expect(storedState.schedulerLockId).toBeNull();
+    expect(storedState.lastDocumentName).toBeNull();
   });
 
   test("does not start a second global scheduler while a lock is active", async () => {
@@ -119,10 +152,9 @@ describe("Binance P2P background scheduler endpoint", () => {
   });
 
   test("rejects requests without a valid GitHub OIDC token", async () => {
-    oidc.verifyGitHubActionsOidcToken.mockRejectedValue({
-      statusCode: 401,
-      message: "Token no válido",
-    });
+    oidc.verifyGitHubActionsOidcToken.mockRejectedValue(
+      new payments.HttpError(401, "Token no válido")
+    );
     const response = makeResponse();
     await cron({ method: "POST", headers: {} }, response);
 
