@@ -143,7 +143,7 @@ module.exports = async function runBinanceP2PBackgroundSync(req, res) {
       });
     }
     if (error instanceof HttpError) return errorResponse(res, error);
-    console.error("Binance P2P background scheduler failed:", error?.message || "unknown_error");
+    console.error("Binance P2P background scheduler failed:", error?.stack || error?.message || "unknown_error");
     return sendJson(res, 500, { error: "No se pudo completar la sincronización automática de Binance P2P." });
   }
 };
