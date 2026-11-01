@@ -8,9 +8,6 @@
     },
     "api/integrations/binance-p2p/sync.js": {
       "maxDuration": 60
-    },
-    "api/integrations/binance-p2p/cron.js": {
-      "maxDuration": 60
     }
   }
 }
