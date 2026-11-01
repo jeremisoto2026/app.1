@@ -198,7 +198,27 @@ module.exports = async function syncBinanceP2P(req, res) {
     if (!integration?.data?.encryptedCredentials || integration.data.connectionStatus !== "connected") {
       throw new HttpError(409, "Conecta primero tu cuenta de Binance P2P en Perfil.");
     }
+
+    // Restore the user's sync state and decrypt credentials before requesting Binance.
+    const state = integration.data || {};
+    const credentials = decryptCredentials(state.encryptedCredentials);
     const requestNow = Date.now();
+
+    // Prevent manual and automatic requests from processing the same account concurrently.
+    const lockExpiry = state.syncLockExpiresAt
+      ? new Date(state.syncLockExpiresAt).getTime()
+      : 0;
+    if (state.syncLockId && Number.isFinite(lockExpiry) && lockExpiry > requestNow) {
+      throw new HttpError(409, "Ya hay una sincronización de Binance en curso. Espera unos segundos e inténtalo de nuevo.");
+    }
+
+    lockId = crypto.randomBytes(16).toString("hex");
+    await commitWrites([createWrite(
+      integrationPath,
+      { syncLockId: lockId, syncLockExpiresAt: new Date(requestNow + LOCK_MS) },
+      integration.updateTime ? { updateTime: integration.updateTime } : { exists: true }
+    )]);
+    ownsLock = true;
     let startTimestamp;
     let endTimestamp;
     let buyPage;
