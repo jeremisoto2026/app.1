@@ -45,6 +45,20 @@ describe("Binance P2P sync endpoint", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    payments.requirePost.mockImplementation(() => true);
+    payments.createWrite.mockImplementation((path, data, precondition) => ({
+      path, data, precondition,
+    }));
+    payments.sendJson.mockImplementation((res, status, payload) => {
+      res.statusCode = status;
+      res.body = payload;
+      return res;
+    });
+    payments.errorResponse.mockImplementation((res, error) => {
+      res.statusCode = error.statusCode || 500;
+      res.body = { error: error.message };
+      return res;
+    });
     acquiredLockId = null;
     const now = Date.now();
     integrationState = {
