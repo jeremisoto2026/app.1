@@ -192,7 +192,18 @@ module.exports = async function syncBinanceP2P(req, res) {
   let errorFields = {};
 
   try {
-    const claims = await requireFirebaseUser(req);
+    // Internal calls are only created by the verified background scheduler module.
+    // Public HTTP requests cannot populate this server-side request property.
+    let claims;
+    if (typeof req.internalBinanceP2PUserId === "string") {
+      const internalUid = req.internalBinanceP2PUserId;
+      if (!internalUid || internalUid.length > 128 || internalUid.includes("/")) {
+        throw new HttpError(400, "El identificador interno de usuario no es válido.");
+      }
+      claims = { sub: internalUid };
+    } else {
+      claims = await requireFirebaseUser(req);
+    }
     integrationPath = integrationPathFor(claims.sub);
     const integration = await getDocument(integrationPath);
     if (!integration?.data?.encryptedCredentials || integration.data.connectionStatus !== "connected") {
@@ -415,3 +426,20 @@ module.exports = async function syncBinanceP2P(req, res) {
   }
 };
 
+
+
+// Reuse the exact same sync logic from the verified scheduler without making an
+// HTTP request back into Vercel or minting a Firebase session for another user.
+module.exports.syncUser = async function syncBinanceP2PForUser(uid) {
+  const response = {
+    statusCode: 200,
+    status(code) { this.statusCode = code; return this; },
+    setHeader() { return this; },
+    json(body) { this.body = body; return this; },
+  };
+  await module.exports({
+    method: "POST",
+    internalBinanceP2PUserId: String(uid || ""),
+  }, response);
+  return { statusCode: response.statusCode, body: response.body || null };
+};
