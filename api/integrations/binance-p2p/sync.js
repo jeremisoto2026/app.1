@@ -4,6 +4,7 @@ const {
   listDocumentsMatchingAnyField, listAllDocuments, commitWrites, createWrite, documentName, toFields, errorResponse,
 } = require("../../../lib/payments");
 const { decryptCredentials, fetchHistory } = require("../../../lib/binance-p2p");
+const { createBinanceP2PScheduler } = require("../../../lib/binance-p2p-scheduler");
 
 const integrationPathFor = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
 const operationsPathFor = (uid) => "users/" + uid + "/operations";
@@ -184,8 +185,11 @@ async function releaseLock(path, fields, lockId) {
   }
 }
 
-module.exports = async function syncBinanceP2P(req, res) {
+async function syncBinanceP2P(req, res) {
   if (!requirePost(req, res)) return;
+  if (req.headers?.["x-jjxcapital-scheduler"] === "binance-p2p") {
+    return runBackgroundSync(req, res);
+  }
   let integrationPath = "";
   let lockId = "";
   let ownsLock = false;
@@ -424,22 +428,25 @@ module.exports = async function syncBinanceP2P(req, res) {
     console.error("Binance P2P sync failed:", error?.stack || error?.message || "unknown_error");
     return sendJson(res, 500, { error: "No se pudo sincronizar el historial P2P. Inténtalo de nuevo." });
   }
-};
+}
 
-
-
-// Reuse the exact same sync logic from the verified scheduler without making an
-// HTTP request back into Vercel or minting a Firebase session for another user.
-module.exports.syncUser = async function syncBinanceP2PForUser(uid) {
+// The scheduler reuses this endpoint so the free Vercel plan does not need
+// another Serverless Function. GitHub Actions must pass a signed OIDC token.
+async function syncBinanceP2PForUser(uid) {
   const response = {
     statusCode: 200,
     status(code) { this.statusCode = code; return this; },
     setHeader() { return this; },
     json(body) { this.body = body; return this; },
   };
-  await module.exports({
+  await syncBinanceP2P({
     method: "POST",
     internalBinanceP2PUserId: String(uid || ""),
   }, response);
   return { statusCode: response.statusCode, body: response.body || null };
-};
+}
+
+const runBackgroundSync = createBinanceP2PScheduler({ syncUser: syncBinanceP2PForUser });
+syncBinanceP2P.syncUser = syncBinanceP2PForUser;
+syncBinanceP2P.runBackgroundSync = runBackgroundSync;
+module.exports = syncBinanceP2P;
