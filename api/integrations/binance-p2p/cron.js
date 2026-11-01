@@ -49,7 +49,7 @@ module.exports = async function runBinanceP2PBackgroundSync(req, res) {
   let ownsLock = false;
   try {
     const authorization = String(req.headers?.authorization || req.headers?.Authorization || "");
-    const tokenMatch = /^Bearer\\s+(.+)$/i.exec(authorization);
+    const tokenMatch = /^Bearer\s+(.+)$/i.exec(authorization);
     if (!tokenMatch) throw new HttpError(401, "Falta la identidad del programador.");
 
     await verifyGitHubActionsOidcToken(tokenMatch[1]);
