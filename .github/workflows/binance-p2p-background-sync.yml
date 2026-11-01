@@ -21,7 +21,7 @@ jobs:
       - name: Request short-lived GitHub identity token and run sync batches
         shell: bash
         env:
-          SYNC_ENDPOINT: https://app-1-nu-five.vercel.app/api/integrations/binance-p2p/cron
+          SYNC_ENDPOINT: https://app-1-nu-five.vercel.app/api/integrations/binance-p2p/sync
         run: |
           set -euo pipefail
 
@@ -38,6 +38,7 @@ jobs:
               --retry 2 --retry-all-errors --retry-delay 2 \
               -X POST "$SYNC_ENDPOINT" \
               -H "Authorization: Bearer $oidc_token" \
+              -H "X-JJXCapital-Scheduler: binance-p2p" \
               -H "Content-Type: application/json" \
               --data '{}')"
             echo "$response"
