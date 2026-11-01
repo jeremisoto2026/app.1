@@ -32,8 +32,8 @@ jobs:
           echo "::add-mask::$oidc_token"
 
           # Each endpoint call processes a small batch to stay within Hobby
-          # function duration limits. Continue through up to four batches per run.
-          for batch in 1 2 3 4; do
+          # function duration limits. Continue through up to eight batches per run.
+          for batch in 1 2 3 4 5 6 7 8; do
             response="$(curl --fail --silent --show-error --max-time 65 \
               --retry 2 --retry-all-errors --retry-delay 2 \
               -X POST "$SYNC_ENDPOINT" \
