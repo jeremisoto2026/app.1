@@ -47,9 +47,12 @@ function makeResponse() {
 
 describe("Binance P2P background scheduler endpoint", () => {
   let storedState;
+  let originalSchedulerSecret;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    originalSchedulerSecret = process.env.BINANCE_P2P_SCHEDULER_SECRET;
+    delete process.env.BINANCE_P2P_SCHEDULER_SECRET;
     payments.sendJson.mockImplementation((res, statusCode, payload) => {
       res.status(statusCode).setHeader("Cache-Control", "no-store");
       return res.json(payload);
@@ -86,6 +89,14 @@ describe("Binance P2P background scheduler endpoint", () => {
       statusCode: 200,
       body: { success: true, imported: 1 },
     });
+  });
+
+  afterEach(() => {
+    if (originalSchedulerSecret === undefined) {
+      delete process.env.BINANCE_P2P_SCHEDULER_SECRET;
+    } else {
+      process.env.BINANCE_P2P_SCHEDULER_SECRET = originalSchedulerSecret;
+    }
   });
 
   test("syncs connected users using the verified scheduler identity", async () => {
@@ -143,6 +154,36 @@ describe("Binance P2P background scheduler endpoint", () => {
     expect(storedState.lastDocumentName).toBeNull();
   });
 
+  test("accepts the dedicated Cloudflare scheduler secret without weakening GitHub OIDC checks", async () => {
+    const secret = "c".repeat(64);
+    process.env.BINANCE_P2P_SCHEDULER_SECRET = secret;
+    const response = makeResponse();
+
+    await cron({
+      method: "POST",
+      headers: { "x-jjxcapital-scheduler-token": secret },
+    }, response);
+
+    expect(oidc.verifyGitHubActionsOidcToken).not.toHaveBeenCalled();
+    expect(sync.syncUser).toHaveBeenCalledWith("user-a");
+    expect(response.statusCode).toBe(200);
+    expect(response.body.success).toBe(true);
+  });
+
+  test("rejects an incorrect Cloudflare scheduler secret before accessing Firestore", async () => {
+    process.env.BINANCE_P2P_SCHEDULER_SECRET = "d".repeat(64);
+    const response = makeResponse();
+
+    await cron({
+      method: "POST",
+      headers: { "x-jjxcapital-scheduler-token": "wrong-secret" },
+    }, response);
+
+    expect(response.statusCode).toBe(401);
+    expect(sync.syncUser).not.toHaveBeenCalled();
+    expect(payments.getDocument).not.toHaveBeenCalled();
+  });
+
   test("does not start a second global scheduler while a lock is active", async () => {
     storedState = {
       schedulerLockId: "another-run",
@@ -163,7 +204,7 @@ describe("Binance P2P background scheduler endpoint", () => {
     });
   });
 
-  test("rejects requests without a valid GitHub OIDC token", async () => {
+  test("rejects requests without a valid GitHub OIDC token or external secret", async () => {
     oidc.verifyGitHubActionsOidcToken.mockRejectedValue(
       new payments.HttpError(401, "Token no válido")
     );
