@@ -10,6 +10,7 @@ const {
   INITIAL_BACKFILL_DAYS,
   INITIAL_BACKFILL_VERSION,
   getInitialBackfillWindow,
+  serializePreviewOperation,
 } = require("../../lib/bybit-p2p-api");
 
 describe("Bybit P2P connector", () => {
@@ -112,6 +113,41 @@ describe("Bybit P2P connector", () => {
       fee_currency: null,
     });
     expect(normalized.timestamp).toBeInstanceOf(Date);
+  });
+
+  test("serializes only safe preview operation fields for the profile viewer", () => {
+    const serialized = serializePreviewOperation({
+      id: "bybit-p2p-document",
+      data: {
+        order_id: "BYBIT-123",
+        sourceOrderId: "123",
+        operation_type: "Venta",
+        crypto: "USDT",
+        fiat: "EUR",
+        crypto_amount: 70,
+        fiat_amount: 64.4,
+        exchange_rate: 0.92,
+        timestamp: new Date("2026-11-03T00:25:00.000Z"),
+        sessionName: "Bybit P2P · Importado",
+        sessionId: null,
+        encryptedCredentials: "must-not-leak",
+      },
+    });
+
+    expect(serialized).toEqual({
+      id: "bybit-p2p-document",
+      orderId: "BYBIT-123",
+      operationType: "Venta",
+      crypto: "USDT",
+      fiat: "EUR",
+      cryptoAmount: 70,
+      fiatAmount: 64.4,
+      exchangeRate: 0.92,
+      timestamp: "2026-11-03T00:25:00.000Z",
+      sessionName: "Bybit P2P · Importado",
+      sessionId: null,
+    });
+    expect(JSON.stringify(serialized)).not.toContain("must-not-leak");
   });
 
   test("ignores unfinished or malformed orders", () => {
