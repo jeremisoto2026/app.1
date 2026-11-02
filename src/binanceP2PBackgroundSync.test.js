@@ -48,12 +48,9 @@ function makeResponse() {
 describe("Binance P2P background scheduler endpoint", () => {
   let storedState;
   let originalSchedulerSecret;
-  let originalSchedulerSecret;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    originalSchedulerSecret = process.env.BINANCE_P2P_SCHEDULER_SECRET;
-    delete process.env.BINANCE_P2P_SCHEDULER_SECRET;
     originalSchedulerSecret = process.env.BINANCE_P2P_SCHEDULER_SECRET;
     delete process.env.BINANCE_P2P_SCHEDULER_SECRET;
     payments.sendJson.mockImplementation((res, statusCode, payload) => {
@@ -92,14 +89,6 @@ describe("Binance P2P background scheduler endpoint", () => {
       statusCode: 200,
       body: { success: true, imported: 1 },
     });
-  });
-
-  afterEach(() => {
-    if (originalSchedulerSecret === undefined) {
-      delete process.env.BINANCE_P2P_SCHEDULER_SECRET;
-    } else {
-      process.env.BINANCE_P2P_SCHEDULER_SECRET = originalSchedulerSecret;
-    }
   });
 
   afterEach(() => {
