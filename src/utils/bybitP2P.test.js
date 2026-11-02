@@ -6,6 +6,11 @@ const {
   extractItems,
   normalizeCompletedOrder,
 } = require("../../lib/bybit-p2p");
+const {
+  INITIAL_BACKFILL_DAYS,
+  INITIAL_BACKFILL_VERSION,
+  getInitialBackfillWindow,
+} = require("../../lib/bybit-p2p-api");
 
 describe("Bybit P2P connector", () => {
   const previousKey = process.env.BYBIT_P2P_ENCRYPTION_KEY;
@@ -38,6 +43,43 @@ describe("Bybit P2P connector", () => {
     const order = { id: "123", status: 50 };
     expect(extractItems({ result: { items: [order] } })).toEqual([order]);
     expect(extractItems({ data: { items: [order] } })).toEqual([order]);
+  });
+
+  test("reopens the initial backfill for 30 days on an existing legacy connection", () => {
+    const connectionTime = Date.UTC(2026, 10, 3, 0, 25, 0);
+    const now = connectionTime + 60_000;
+    const window = getInitialBackfillWindow({
+      initialBackfillComplete: true,
+      backfillStartTimestamp: null,
+      backfillEndTimestamp: null,
+    }, connectionTime, now);
+
+    expect(INITIAL_BACKFILL_DAYS).toBe(30);
+    expect(window).toEqual({
+      needsReset: true,
+      beginTime: connectionTime - 30 * 24 * 60 * 60 * 1000,
+      endTime: now,
+      page: 1,
+    });
+  });
+
+  test("preserves the page cursor while continuing a versioned 30-day backfill", () => {
+    const connectionTime = Date.UTC(2026, 10, 3, 0, 25, 0);
+    const start = connectionTime - 30 * 24 * 60 * 60 * 1000;
+    const end = connectionTime + 60_000;
+    const window = getInitialBackfillWindow({
+      initialBackfillVersion: INITIAL_BACKFILL_VERSION,
+      backfillStartTimestamp: start,
+      backfillEndTimestamp: end,
+      nextPage: 3,
+    }, connectionTime, end + 10_000);
+
+    expect(window).toEqual({
+      needsReset: false,
+      beginTime: start,
+      endTime: end,
+      page: 3,
+    });
   });
 
   test("normalizes Bybit fiat total and token quantity separately", () => {
