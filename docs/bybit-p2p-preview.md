@@ -35,7 +35,7 @@ The Bybit order-list schema does not specify the fee currency. The raw fee is re
 
 ## Synchronization
 
-The Preview currently supports manual sync and bounded pagination (two pages per request, 30 rows per page). The initial backfill covers the 30 days immediately before the connection timestamp (a rolling 30-day period, not the previous calendar month). A one-time backfill version migration reopens this 30-day import for existing Preview connections, even if an earlier zero-result sync marked the initial backfill complete; the user does not need to reconnect the API. Further syncs are incremental. A deterministic document ID plus an order lookup prevents duplicates.
+The Preview currently supports manual sync and bounded pagination (two pages per request, 30 rows per page). The initial backfill covers the 30 days ending at the connection timestamp (a rolling 30-day period, not the previous calendar month). A one-time backfill version migration reopens this 30-day import for existing Preview connections, even if an earlier zero-result sync marked the initial backfill complete; the user does not need to reconnect the API. Further syncs are incremental. A deterministic document ID plus an order lookup prevents duplicates.
 
 The production Cloudflare Worker is intentionally unchanged. Automatic Bybit scheduling is a later step after the real API connection and import mapping have been validated in Preview.
 
