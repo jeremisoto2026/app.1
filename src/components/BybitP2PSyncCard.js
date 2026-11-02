@@ -193,7 +193,7 @@ export default function BybitP2PSyncCard() {
               <div>
                 <p className="font-semibold">Bybit conectado · Preview</p>
                 <p className="text-sm text-slate-500">API Key terminada en {status.apiKeyHint ? "••••" + status.apiKeyHint : "••••"}</p>
-                <p className="mt-1 text-xs text-slate-500">Importación desde {formatDate(status.connectedAt)}</p>
+                <p className="mt-1 text-xs text-slate-500">Cuenta conectada el {formatDate(status.connectedAt)}</p>
               </div>
               <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" /> Solo lectura
@@ -209,11 +209,15 @@ export default function BybitP2PSyncCard() {
                 <p className="mt-1 text-sm font-medium">{Number(status.lastImportedCount) || 0}</p>
               </div>
             </div>
-            {status.hasMoreHistory && (
+            {status.initialBackfillPending ? (
               <p className="mt-3 text-sm text-amber-600">
-                Hay más páginas pendientes desde que conectaste la API. Pulsa continuar para completar la importación inicial.
+                La próxima sincronización recuperará las órdenes completadas de los 30 días anteriores a la conexión.
               </p>
-            )}
+            ) : status.hasMoreHistory ? (
+              <p className="mt-3 text-sm text-amber-600">
+                Hay más páginas pendientes. Pulsa continuar para completar la importación inicial.
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-3">
             <button
@@ -223,7 +227,7 @@ export default function BybitP2PSyncCard() {
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               <ArrowPathIcon className={"h-4 w-4 " + (syncing ? "animate-spin" : "")} aria-hidden="true" />
-              {syncing ? "Sincronizando…" : status.hasMoreHistory ? "Continuar sincronización" : "Sincronizar ahora"}
+              {syncing ? "Sincronizando…" : status.initialBackfillPending ? "Importar últimos 30 días" : status.hasMoreHistory ? "Continuar sincronización" : "Sincronizar ahora"}
             </button>
             <button
               type="button"
