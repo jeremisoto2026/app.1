@@ -58,7 +58,7 @@ describe("Bybit P2P connector", () => {
     expect(window).toEqual({
       needsReset: true,
       beginTime: connectionTime - 30 * 24 * 60 * 60 * 1000,
-      endTime: now,
+      endTime: connectionTime,
       page: 1,
     });
   });
