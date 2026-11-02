@@ -48,7 +48,7 @@ export default function BybitP2PSyncCard() {
   const [lastResult, setLastResult] = useState(null);
 
   const refreshStatus = useCallback(async () => {
-    const payload = await callApi(user, "/api/integrations/bybit-p2p/status");
+    const payload = await callApi(user, "/api/integrations/binance-p2p/status?provider=bybit");
     setStatus(payload);
     return payload;
   }, [user]);
@@ -62,7 +62,7 @@ export default function BybitP2PSyncCard() {
       }
       setLoadingStatus(true);
       try {
-        const payload = await callApi(user, "/api/integrations/bybit-p2p/status");
+        const payload = await callApi(user, "/api/integrations/binance-p2p/status?provider=bybit");
         if (!cancelled) setStatus(payload);
       } catch (loadError) {
         if (!cancelled) setError(loadError.message || "No se pudo comprobar la conexión de Bybit.");
@@ -81,7 +81,7 @@ export default function BybitP2PSyncCard() {
     setMessage("");
     setLastResult(null);
     try {
-      const payload = await callApi(user, "/api/integrations/bybit-p2p/connect", "POST", {
+      const payload = await callApi(user, "/api/integrations/binance-p2p/connect?provider=bybit", "POST", {
         apiKey: apiKey.trim(),
         apiSecret: apiSecret.trim(),
       });
@@ -102,7 +102,7 @@ export default function BybitP2PSyncCard() {
     setMessage("");
     setLastResult(null);
     try {
-      const payload = await callApi(user, "/api/integrations/bybit-p2p/sync", "POST", {});
+      const payload = await callApi(user, "/api/integrations/binance-p2p/sync?provider=bybit", "POST", {});
       setLastResult(payload);
       setMessage(payload.message || "Sincronización de Bybit completada.");
       await refreshStatus();
@@ -118,7 +118,7 @@ export default function BybitP2PSyncCard() {
     setError("");
     setMessage("");
     try {
-      const payload = await callApi(user, "/api/integrations/bybit-p2p/disconnect", "POST", {});
+      const payload = await callApi(user, "/api/integrations/binance-p2p/disconnect?provider=bybit", "POST", {});
       setStatus((current) => ({ ...(current || {}), connected: false, apiKeyHint: null }));
       setMessage(payload.message || "Bybit se ha desconectado en Preview.");
       setLastResult(null);

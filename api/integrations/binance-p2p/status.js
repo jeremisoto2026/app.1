@@ -8,6 +8,17 @@ const {
 const INTEGRATION_PATH = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
 
 module.exports = async function binanceP2PStatus(req, res) {
+  // Bybit is routed through this existing function to respect Vercel Hobby's 12-function cap.
+  // Requests without provider=bybit keep the original Binance code path untouched.
+  try {
+    const requestUrl = new URL(String(req.url || "/"), "https://jjxcapital.internal");
+    if (requestUrl.searchParams.get("provider") === "bybit") {
+      return require("../../../lib/bybit-p2p-api").status(req, res);
+    }
+  } catch (routeError) {
+    return sendJson(res, 400, { error: "La solicitud de integración no es válida." });
+  }
+
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return sendJson(res, 405, { error: "Método no permitido." });
