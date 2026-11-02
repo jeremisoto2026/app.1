@@ -16,6 +16,7 @@ import { PlusCircleIcon, DocumentTextIcon, CurrencyDollarIcon } from '@heroicons
 
 const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
   const { user } = useAuth();
+  const includeBybitPreview = process.env.REACT_APP_BYBIT_P2P_PREVIEW_MODE === "true";
   const [formData, setFormData] = useState({
     order_id: '',
     exchange: '',
@@ -47,12 +48,18 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
       }
       setSessionsLoading(true);
       try {
-        const [snapshot, operationsSnapshot] = await Promise.all([
+        const [snapshot, operationsSnapshot, previewOperationsSnapshot] = await Promise.all([
           getDocs(collection(db, 'users', user.uid, 'sessions')),
           getDocs(collection(db, 'users', user.uid, 'operations')),
+          includeBybitPreview
+            ? getDocs(collection(db, 'users', user.uid, 'previewOperations'))
+            : Promise.resolve({ docs: [] }),
         ]);
         const records = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-        const operationRecords = operationsSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+        const operationRecords = [
+          ...operationsSnapshot.docs.map(item => ({ id: item.id, ...item.data() })),
+          ...(previewOperationsSnapshot?.docs || []).map(item => ({ id: item.id, ...item.data() })),
+        ];
         const active = records.filter(item => item.status === 'active');
         if (!cancelled) {
           setSessions(records);

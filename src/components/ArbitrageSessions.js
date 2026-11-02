@@ -18,6 +18,7 @@ const formatDate = (value) => {
 
 export default function ArbitrageSessions({ onOpenOperations }) {
   const { user } = useAuth();
+  const includeBybitPreview = process.env.REACT_APP_BYBIT_P2P_PREVIEW_MODE === "true";
   const [sessions, setSessions] = useState([]);
   const [operations, setOperations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,13 +38,19 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setLoading(true);
     setError("");
     try {
-      const [sessionSnapshot, operationSnapshot] = await Promise.all([
+      const [sessionSnapshot, operationSnapshot, previewOperationsSnapshot] = await Promise.all([
         getDocs(collection(db, "users", user.uid, "sessions")),
         getDocs(collection(db, "users", user.uid, "operations")),
+        includeBybitPreview
+          ? getDocs(collection(db, "users", user.uid, "previewOperations"))
+          : Promise.resolve({ docs: [] }),
       ]);
       const records = sessionSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
       records.sort((a, b) => (getOperationDate(b.createdAt)?.getTime() || 0) - (getOperationDate(a.createdAt)?.getTime() || 0));
-      const savedOperations = operationSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+      const savedOperations = [
+        ...operationSnapshot.docs.map(item => ({ id: item.id, ...item.data() })),
+        ...(previewOperationsSnapshot?.docs || []).map(item => ({ id: item.id, ...item.data() })),
+      ];
       savedOperations.sort((a, b) => (getOperationDate(b.timestamp)?.getTime() || 0) - (getOperationDate(a.timestamp)?.getTime() || 0));
       setSessions(records);
       setOperations(savedOperations);

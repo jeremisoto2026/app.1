@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Profile.css";
 import BinanceP2PSyncCard from "./BinanceP2PSyncCard";
+import BybitP2PSyncCard from "./BybitP2PSyncCard";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { collection, doc, getDoc, getDocs, onSnapshot } from "firebase/firestore";
@@ -463,6 +464,7 @@ export default function Profile() {
         </section>
 
         <BinanceP2PSyncCard />
+        {process.env.REACT_APP_BYBIT_P2P_PREVIEW_MODE === "true" && <BybitP2PSyncCard />}
 
         <section aria-labelledby="profile-usage-heading" className="profile-section space-y-4">
           <div className="profile-section-heading">
