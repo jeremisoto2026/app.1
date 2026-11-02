@@ -44,7 +44,6 @@ const PAGE_SIZE = 10;
 
 const History = () => {
   const { user } = useAuth();
-  const includeBybitPreview = process.env.REACT_APP_BYBIT_P2P_PREVIEW_MODE === "true";
   const [operations, setOperations] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [sessionFilter, setSessionFilter] = useState("all");
@@ -118,22 +117,11 @@ const History = () => {
 
       try {
         // Incluye operaciones antiguas sin fecha y las ordena de forma fiable en cliente.
-        const [querySnapshot, previewSnapshot] = await Promise.all([
-          getDocs(collection(db, "users", user.uid, "operations")),
-          includeBybitPreview
-            ? getDocs(collection(db, "users", user.uid, "previewOperations"))
-            : Promise.resolve(null),
-        ]);
-        const data = [
-          ...querySnapshot.docs.map((operationDoc) => ({
-            id: operationDoc.id,
-            ...operationDoc.data(),
-          })),
-          ...(previewSnapshot?.docs || []).map((operationDoc) => ({
-            id: operationDoc.id,
-            ...operationDoc.data(),
-          })),
-        ];
+        const querySnapshot = await getDocs(collection(db, "users", user.uid, "operations"));
+        const data = querySnapshot.docs.map((operationDoc) => ({
+          id: operationDoc.id,
+          ...operationDoc.data(),
+        }));
         try {
           const sessionSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
           if (!cancelled) setSessions(sessionSnapshot.docs.map(sessionDoc => ({ id: sessionDoc.id, ...sessionDoc.data() })));
@@ -258,8 +246,7 @@ const History = () => {
         arbitrageType: targetSession?.strategy || (operationToEdit.source === "binance_p2p" ? "Binance P2P" : ""),
       };
 
-      const collectionName = includeBybitPreview && operationToEdit.source === "bybit_p2p" ? "previewOperations" : "operations";
-      await updateDoc(doc(db, "users", user.uid, collectionName, operationToEdit.id), updates);
+      await updateDoc(doc(db, "users", user.uid, "operations", operationToEdit.id), updates);
       setOperations((previous) => previous.map((operation) =>
         operation.id === operationToEdit.id ? { ...operation, ...updates } : operation
       ));
@@ -286,9 +273,7 @@ const History = () => {
     if (!operationToDelete) return;
 
     try {
-      const operationRecord = operations.find((item) => item.id === operationToDelete);
-      const collectionName = includeBybitPreview && operationRecord?.source === "bybit_p2p" ? "previewOperations" : "operations";
-      await deleteDoc(doc(db, "users", user.uid, collectionName, operationToDelete));
+      await deleteDoc(doc(db, "users", user.uid, "operations", operationToDelete));
       setOperations((previous) => previous.filter((op) => op.id !== operationToDelete));
       setIsDeleteDialogOpen(false);
       setOperationToDelete(null);

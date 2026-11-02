@@ -32,7 +32,6 @@ const emptyMetrics = {
 
 const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbitrages, theme, onToggleTheme }) => {
   const { user } = useAuth();
-  const includeBybitPreview = process.env.REACT_APP_BYBIT_P2P_PREVIEW_MODE === "true";
   const [metrics, setMetrics] = useState(emptyMetrics);
   const [activeArbitrages, setActiveArbitrages] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -79,22 +78,11 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
       setError("");
       setSessionsWarning("");
       try {
-        const [snapshot, previewOperationsSnapshot] = await Promise.all([
-          getDocs(collection(db, "users", user.uid, "operations")),
-          includeBybitPreview
-            ? getDocs(collection(db, "users", user.uid, "previewOperations"))
-            : Promise.resolve({ docs: [] }),
-        ]);
-        const operations = [
-          ...snapshot.docs.map((operationDoc) => ({
-            id: operationDoc.id,
-            ...operationDoc.data(),
-          })),
-          ...(previewOperationsSnapshot?.docs || []).map((operationDoc) => ({
-            id: operationDoc.id,
-            ...operationDoc.data(),
-          })),
-        ];
+        const snapshot = await getDocs(collection(db, "users", user.uid, "operations"));
+        const operations = snapshot.docs.map((operationDoc) => ({
+          id: operationDoc.id,
+          ...operationDoc.data(),
+        }));
         let activeCount = 0;
         let sessions = [];
         try {
