@@ -431,7 +431,8 @@ async function syncBinanceP2P(req, res) {
 }
 
 // The scheduler reuses this endpoint so the free Vercel plan does not need
-// another Serverless Function. GitHub Actions must pass a signed OIDC token.
+// another Serverless Function. GitHub Actions uses restricted OIDC; Cloudflare
+// uses the dedicated server-side scheduler secret.
 async function syncBinanceP2PForUser(uid) {
   const response = {
     statusCode: 200,
