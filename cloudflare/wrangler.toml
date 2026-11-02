@@ -1,0 +1,6 @@
+name = "jjxcapital-binance-p2p-sync"
+main = "binance-p2p-sync-worker.js"
+compatibility_date = "2026-11-02"
+
+[triggers]
+crons = ["* * * * *"]
