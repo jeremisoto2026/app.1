@@ -1,1 +1,1 @@
-restore patch without workflow modification; validate and push
+final trigger source restore after removing workflow write
