@@ -151,7 +151,7 @@ describe("Dashboard Pro promotion", () => {
   test("shows a professional active state and hides the setup button when both exchanges are connected", async () => {
     global.fetch.mockImplementation(async (url) => ({
       ok: true,
-      json: async () => ({ connected: !String(url).includes("provider=bybit") || true }),
+      json: async () => ({ connected: true }),
     }));
 
     await renderDashboard();
