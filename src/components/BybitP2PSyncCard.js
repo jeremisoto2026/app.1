@@ -46,11 +46,6 @@ export default function BybitP2PSyncCard() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [lastResult, setLastResult] = useState(null);
-  const [operationsOpen, setOperationsOpen] = useState(false);
-  const [operations, setOperations] = useState([]);
-  const [operationsTotal, setOperationsTotal] = useState(0);
-  const [loadingOperations, setLoadingOperations] = useState(false);
-  const [operationsError, setOperationsError] = useState("");
 
   const refreshStatus = useCallback(async () => {
     const payload = await callApi(user, "/api/integrations/binance-p2p/status?provider=bybit");
@@ -78,32 +73,6 @@ export default function BybitP2PSyncCard() {
     loadStatus();
     return () => { cancelled = true; };
   }, [user]);
-
-  const loadPreviewOperations = async () => {
-    setLoadingOperations(true);
-    setOperationsError("");
-    try {
-      const payload = await callApi(
-        user,
-        "/api/integrations/binance-p2p/status?provider=bybit&view=operations"
-      );
-      setOperations(Array.isArray(payload.operations) ? payload.operations : []);
-      setOperationsTotal(Number(payload.operationsTotal) || 0);
-    } catch (loadError) {
-      setOperationsError(loadError.message || "No se pudieron consultar las operaciones importadas.");
-    } finally {
-      setLoadingOperations(false);
-    }
-  };
-
-  const handleToggleOperations = () => {
-    const nextOpen = !operationsOpen;
-    setOperationsOpen(nextOpen);
-    if (nextOpen) loadPreviewOperations();
-  };
-
-  const formatAmount = (value, maximumFractionDigits = 6) =>
-    new Intl.NumberFormat("es-ES", { maximumFractionDigits }).format(Number(value) || 0);
 
   const handleConnect = async (event) => {
     event.preventDefault();
@@ -273,74 +242,6 @@ export default function BybitP2PSyncCard() {
             >
               {disconnecting ? "Desconectando…" : "Desconectar"}
             </button>
-          </div>
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={handleToggleOperations}
-              className="jjx-button-secondary rounded-xl px-4 py-3 text-sm font-semibold"
-              aria-expanded={operationsOpen}
-            >
-              {operationsOpen ? "Ocultar operaciones importadas" : "Ver operaciones importadas"}
-            </button>
-            {operationsOpen && (
-              <section className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4 space-y-3" aria-label={"Operaciones importadas " + (status.previewMode ? "en Preview" : "en Producción")}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-white">Operaciones importadas {status.previewMode ? "en Preview" : "en Producción"}</p>
-                    <p className="text-xs text-slate-500">Mostrando {operations.length} de {operationsTotal} operaciones. Solo lectura.</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={loadPreviewOperations}
-                    disabled={loadingOperations}
-                    className="jjx-button-secondary rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-60"
-                  >
-                    {loadingOperations ? "Actualizando…" : "Actualizar"}
-                  </button>
-                </div>
-                {operationsError && <p role="alert" className="text-sm text-rose-400">{operationsError}</p>}
-                {loadingOperations && <p role="status" className="text-sm text-slate-500">Consultando el historial de Preview…</p>}
-                {!loadingOperations && !operationsError && operations.length === 0 && (
-                  <p className="text-sm text-slate-500">Todavía no hay operaciones importadas en este espacio de pruebas.</p>
-                )}
-                <div className="space-y-2">
-                  {operations.map((operation) => (
-                    <article key={operation.id} className="rounded-lg border border-white/[0.08] bg-black/5 p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className={"rounded-full px-2.5 py-1 text-xs font-semibold " +
-                          (operation.operationType === "Compra" ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-400")}>
-                          {operation.operationType}
-                        </span>
-                        <span className="text-xs text-slate-500">{formatDate(operation.timestamp)}</span>
-                      </div>
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                        <div>
-                          <p className="text-xs text-slate-500">Cantidad en cripto</p>
-                          <p className="text-sm font-semibold text-white">{formatAmount(operation.cryptoAmount)} {operation.crypto}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Importe fiat</p>
-                          <p className="text-sm font-semibold text-white">{formatAmount(operation.fiatAmount, 2)} {operation.fiat}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Tasa</p>
-                          <p className="text-sm text-slate-200">{formatAmount(operation.exchangeRate)} {operation.fiat}/{operation.crypto}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Vinculación</p>
-                          <p className="text-sm text-slate-200">{operation.sessionId ? operation.sessionName || "Sesión vinculada" : "Sin sesión compatible"}</p>
-                        </div>
-                      </div>
-                      <p className="mt-2 break-all text-[11px] text-slate-500">Orden: {operation.orderId}</p>
-                    </article>
-                  ))}
-                </div>
-                {operationsTotal > operations.length && (
-                  <p className="text-xs text-slate-500">Se muestran las 25 más recientes. El total importado en Preview es {operationsTotal}.</p>
-                )}
-              </section>
-            )}
           </div>
           {lastResult && (
             <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4 text-sm space-y-2">
