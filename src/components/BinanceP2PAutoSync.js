@@ -45,4 +45,40 @@ const pollBinanceP2P = async (user) => {
   });
 };
 
-export default func¶»§q«^
+export default function BinanceP2PAutoSync() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user?.uid) return undefined;
+    let stopped = false;
+    let inFlight = false;
+
+    const run = async () => {
+      if (stopped || inFlight || document.visibilityState === "hidden") return;
+      inFlight = true;
+      try { await pollBinanceP2P(user); } catch {
+        // Keep the other provider independent if Binance is temporarily unavailable.
+      }
+      try { await pollBybitP2P(user); } catch {
+        // Background sync is best-effort; each provider has its own manual status.
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    void run();
+    const interval = window.setInterval(run, 5 * 60 * 1000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void run();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      stopped = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [user?.uid]);
+
+  return null;
+}
