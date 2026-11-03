@@ -37,7 +37,6 @@ jobs:
 
           git fetch --no-tags origin a97971e0e3897e77bcb1b7f0e6d381e3c7fa3ade
           git checkout a97971e0e3897e77bcb1b7f0e6d381e3c7fa3ade -- \
-            .github/workflows/binance-p2p-background-sync.yml \
             docs/bybit-p2p-preview.md \
             lib/bybit-p2p-api.js lib/payments.js \
             src/components/ArbitrageSessions.js \
@@ -54,6 +53,7 @@ jobs:
           npm install --no-audit --no-fund
           CI=true npm test -- --watchAll=false --runInBand
           npm run build
+          rm -f package-lock.json
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
