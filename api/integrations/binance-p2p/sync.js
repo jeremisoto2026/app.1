@@ -238,6 +238,31 @@ async function syncBinanceP2P(req, res) {
       throw new HttpError(409, "Ya hay una sincronización de Binance en curso. Espera unos segundos e inténtalo de nuevo.");
     }
 
+    const userPath = "users/" + claims.sub;
+    const userProfile = await getDocument(userPath);
+    if (!userProfile) throw new HttpError(409, "No se encontró el perfil de tu cuenta.");
+    const proActive = isProSubscriptionActive(userProfile.data);
+    const savedOrderUsage = getStoredPlanUsage(userProfile.data, "registeredOrdersUsed", ["movementsUsed"]);
+    const storedOrderDocuments = await countDocuments(operationsPathFor(claims.sub), FREE_PLAN_LIMITS.orders + 1);
+    const currentOrderUsage = Math.max(savedOrderUsage, storedOrderDocuments);
+    if (!proActive && (state.orderQuotaBlocked === true || currentOrderUsage >= FREE_PLAN_LIMITS.orders)) {
+      await commitWrites([createWrite(integrationPath, {
+        orderQuotaBlocked: true,
+        lastSyncStatus: "quota",
+        lastSyncAttemptAt: new Date(),
+      }, integration.updateTime ? { updateTime: integration.updateTime } : { exists: true })]);
+      return sendJson(res, 200, {
+        success: true,
+        imported: 0,
+        skipped: 0,
+        completedOrdersFound: 0,
+        quotaReached: true,
+        orderQuotaBlocked: true,
+        hasMoreHistory: true,
+        message: "Has alcanzado el límite gratuito de 300 órdenes. La sincronización está pausada para conservar las órdenes pendientes. Activa JJXCAPITAL Pro para continuar.",
+      });
+    }
+
     const credentials = decryptCredentials(state.encryptedCredentials);
     lockId = crypto.randomBytes(16).toString("hex");
     await commitWrites([createWrite(
