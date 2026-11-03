@@ -124,3 +124,341 @@ html[data-jjx-theme="light"] body .app-shell :is(input, textarea, select)::place
   color: #77869c !important;
   opacity: 1;
 }
+
+
+/* JJXCAPITAL LIGHT · High-contrast signature palette */
+html[data-jjx-theme="light"] body .app-shell {
+  --jjx-ink: #14213d;
+  --jjx-body: #334764;
+  --jjx-muted-text: #53657f;
+  --jjx-label: #5142b7;
+  --jjx-violet: #6652d8;
+  --jjx-blue: #2868c9;
+  --jjx-cyan: #147fa8;
+  --jjx-green: #087b59;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-page {
+  background:
+    radial-gradient(ellipse at 4% 0%, rgba(91, 115, 226, .15), transparent 31%),
+    radial-gradient(ellipse at 100% 18%, rgba(144, 91, 220, .13), transparent 32%),
+    linear-gradient(135deg, #e3e9f5 0%, #e9edf7 48%, #e7eafa 100%) !important;
+}
+
+/* A deep-indigo workspace bar anchors the lighter canvas. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-topbar {
+  margin-top: 10px;
+  padding: 12px 16px;
+  border: 1px solid rgba(48, 57, 119, .22) !important;
+  border-radius: 16px;
+  background: linear-gradient(110deg, #182747 0%, #26356a 58%, #433778 100%) !important;
+  box-shadow: 0 13px 30px rgba(38, 47, 100, .19), inset 0 1px rgba(255,255,255,.13) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-brand strong { color: #fff !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-brand small { color: #c0cbed !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-profile-button,
+html[data-jjx-theme="light"] body .app-shell .jjx-theme-toggle {
+  color: #f4f5ff !important;
+  border: 1px solid rgba(220,226,255,.25) !important;
+  background: rgba(255,255,255,.10) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.12) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-profile-button:hover,
+html[data-jjx-theme="light"] body .app-shell .jjx-theme-toggle:hover {
+  color: #fff !important;
+  border-color: rgba(211,202,255,.6) !important;
+  background: rgba(255,255,255,.19) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-profile-button svg,
+html[data-jjx-theme="light"] body .app-shell .jjx-theme-toggle svg {
+  color: #d7d2ff !important;
+}
+
+/* Navigation: dark glass with a luminous active state, while the workspace stays light. */
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] {
+  border: 1px solid rgba(48,57,119,.2) !important;
+  background: linear-gradient(112deg, #192747 0%, #27376d 60%, #3c3471 100%) !important;
+  box-shadow: 0 12px 28px rgba(35,45,95,.18), inset 0 1px rgba(255,255,255,.1) !important;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button {
+  color: #c4cde3 !important;
+  font-weight: 700;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.10) !important;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button[aria-current="page"],
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button[data-state="active"] {
+  color: #fff !important;
+  background: linear-gradient(115deg, #7766ed, #367fda) !important;
+  box-shadow: 0 5px 16px rgba(18,22,65,.27), inset 0 1px rgba(255,255,255,.22) !important;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button[aria-current="page"] svg {
+  color: #fff !important;
+}
+
+/* A confident welcome panel: blue-to-violet light, not plain white. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-welcome {
+  position: relative;
+  overflow: hidden;
+  margin: 20px 0 16px;
+  padding: 24px 26px;
+  border: 1px solid #b9c8ec !important;
+  border-radius: 19px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(123,94,226,.24), transparent 43%),
+    linear-gradient(112deg, #d8e7ff 0%, #e6e8ff 55%, #eee4ff 100%) !important;
+  box-shadow: 0 13px 30px rgba(61,82,151,.13), inset 0 1px rgba(255,255,255,.75) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-welcome h1 {
+  color: #172649 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-welcome h1 span {
+  background: linear-gradient(100deg, #5236c4, #176ac7) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-welcome p {
+  color: #425574 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-eyebrow {
+  color: #4d40ad !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-eyebrow span {
+  background: #6654d4 !important;
+  box-shadow: 0 0 0 4px rgba(102,84,212,.15) !important;
+}
+
+/* Each metric family gets its own recognizable hue. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card {
+  position: relative;
+  overflow: hidden;
+  border-width: 1px !important;
+  box-shadow: 0 9px 22px rgba(31,48,83,.09), inset 0 1px rgba(255,255,255,.85) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  content: "";
+  pointer-events: none;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(1) {
+  border-color: #b7cbed !important;
+  background: linear-gradient(145deg, #e8f1ff, #dce9fb) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(1)::before { background: linear-gradient(90deg, #2868c9, #65a3f1); }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(2) {
+  border-color: #c9b9ef !important;
+  background: linear-gradient(145deg, #f0eaff, #e6e0fb) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(2)::before { background: linear-gradient(90deg, #6847cf, #a18af2); }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(3) {
+  border-color: #b1dfcb !important;
+  background: linear-gradient(145deg, #e5f7ef, #d9f0e6) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(3)::before { background: linear-gradient(90deg, #087b59, #48bf91); }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(4) {
+  border-color: #afd7e9 !important;
+  background: linear-gradient(145deg, #e5f5fc, #d8edf7) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(4)::before { background: linear-gradient(90deg, #147fa8, #46b5d5); }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(5) {
+  border-color: #efd3a4 !important;
+  background: linear-gradient(145deg, #fff4df, #f9e9c9) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(5)::before { background: linear-gradient(90deg, #b76b12, #edaa3d); }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(1) .metric-primary-value { color: #1c55ad !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(2) .metric-primary-value,
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-currency-values strong { color: #5936b9 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(3) .metric-primary-value { color: #087653 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(4) .metric-primary-value { color: #126d99 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(5) .metric-primary-value { color: #a65c08 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card .metric-card-heading > span:first-child {
+  color: #34445f !important;
+  font-weight: 800 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card > p,
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card .metric-card-foot {
+  color: #4e607b !important;
+}
+html[data-jjx-theme="light"] body .app-shell .metric-icon-blue { color: #1f62c1 !important; background: #cbdfff !important; }
+html[data-jjx-theme="light"] body .app-shell .metric-icon-purple { color: #6242c5 !important; background: #ded3ff !important; }
+html[data-jjx-theme="light"] body .app-shell .metric-icon-teal { color: #087b59 !important; background: #c6ecdc !important; }
+
+/* The analysis panels use a clearly deeper slate layer beneath the metric row. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel {
+  border-color: #c3cee1 !important;
+  background: linear-gradient(145deg, #e1e8f3 0%, #dce4f0 100%) !important;
+  box-shadow: 0 11px 27px rgba(32,48,82,.09), inset 0 1px rgba(255,255,255,.75) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel-heading {
+  border-bottom-color: #c7d2e4 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel-heading h2 { color: #172746 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel-heading p { color: #4d607c !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel-kicker { color: #5747b8 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-guidance-item,
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel-note {
+  border-color: #cbd5e5 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-text-action,
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel-link {
+  color: #4c3bb1 !important;
+  font-weight: 800 !important;
+}
+
+/* P2P sync is the signature dark-indigo feature panel in the light workspace. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-promo {
+  border: 1px solid rgba(93,79,190,.36) !important;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(90,125,255,.25), transparent 38%),
+    radial-gradient(ellipse at 100% 100%, rgba(169,104,255,.23), transparent 39%),
+    linear-gradient(112deg, #17294c 0%, #263675 57%, #473678 100%) !important;
+  box-shadow: 0 16px 34px rgba(39,45,106,.22), inset 0 1px rgba(255,255,255,.11) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-promo-kicker { color: #d4ccff !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-promo h2 { color: #fff !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-promo h2 span {
+  background: linear-gradient(100deg, #d2c7ff, #8fd2ff) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-promo-main > p { color: #d0d9f0 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-promo-action { border-left-color: rgba(218,214,255,.26) !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-promo-action > span,
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-promo-action small { color: #d0d7ed !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-provider {
+  color: #f0f3ff !important;
+  border-color: rgba(221,225,255,.23) !important;
+  background: rgba(255,255,255,.10) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-readonly { color: #c9d4ef !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-connected-heading { color: #edfff7 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-exchanges-connected-state > small { color: #c7d5eb !important; }
+
+/* PRO callout gets a richer violet identity. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-pro-promo {
+  border-color: #b4a2ed !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(255,255,255,.26), transparent 43%),
+    linear-gradient(115deg, #e4dcff 0%, #d9e4ff 55%, #eadcff 100%) !important;
+  box-shadow: 0 13px 30px rgba(89,69,166,.16), inset 0 1px rgba(255,255,255,.8) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-pro-promo-kicker { color: #563bb8 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-pro-promo h2,
+html[data-jjx-theme="light"] body .app-shell .dashboard-pro-promo-price strong { color: #25234e !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-pro-promo-main > p,
+html[data-jjx-theme="light"] body .app-shell .dashboard-pro-promo-benefits span,
+html[data-jjx-theme="light"] body .app-shell .dashboard-pro-promo-price span { color: #4b4d78 !important; }
+
+/* Profile identity hero and Pro plan bring the same premium contrast to the account area. */
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-hero {
+  border-color: rgba(91,81,183,.42) !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(135,112,255,.36), transparent 48%),
+    linear-gradient(112deg, #182746 0%, #263a70 58%, #483675 100%) !important;
+  box-shadow: 0 17px 36px rgba(39,45,106,.2), inset 0 1px rgba(255,255,255,.12) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-hero :is(
+  .profile-user-name, .profile-hero-plan strong
+) { color: #fff !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-hero :is(
+  .profile-user-email, .profile-member-since, .profile-hero-plan > span:last-child
+) { color: #d3dcf1 !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-hero .profile-account-label,
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-hero .profile-mini-label { color: #c7c1ff !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-private-note {
+  color: #39466b !important;
+  border-color: #c4c9e7 !important;
+  background: #e9e9ff !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-plan-card-free {
+  border-color: #b9cbed !important;
+  background: linear-gradient(145deg, #e6f0ff, #d9e7fb) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-plan-card-pro {
+  border-color: #8f7be0 !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(191,170,255,.26), transparent 52%),
+    linear-gradient(145deg, #28245c, #40358b 68%, #493d98) !important;
+  box-shadow: 0 15px 32px rgba(74,54,151,.22), inset 0 1px rgba(255,255,255,.12) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-plan-card-pro :is(h3, p, li) {
+  color: #f5f2ff !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-plan-card-pro .jjx-eyebrow { color: #d3c7ff !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-plan-card-pro button {
+  color: #fff !important;
+}
+
+/* Provider-specific colors make Binance and Bybit instantly recognizable. */
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-binance {
+  border-color: #e1c66f !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(246,194,55,.2), transparent 45%),
+    linear-gradient(145deg, #fff8e4, #f5edcf) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-bybit {
+  border-color: #e9b28d !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(249,137,69,.18), transparent 45%),
+    linear-gradient(145deg, #fff0e4, #f8e6d8) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-title { color: #192743 !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-title span {
+  color: #4b5870 !important;
+  background: rgba(255,255,255,.64) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-eyebrow { color: #596982 !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-heading > p:not(.p2p-sync-card-description) { color: #33445f !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-heading .p2p-sync-card-description { color: #56657b !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-header { border-bottom-color: rgba(67,83,113,.2) !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-provider-mark-binance {
+  color: #936600 !important;
+  border-color: #dfbd55 !important;
+  background: linear-gradient(145deg, #ffeaa4, #f6d878) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-provider-mark-bybit {
+  color: #a64a12 !important;
+  border-color: #e5a06f !important;
+  background: linear-gradient(145deg, #ffd0a7, #ffad73) !important;
+}
+
+/* Tables, fields, and secondary actions use richer blue accents and stronger contrast. */
+html[data-jjx-theme="light"] body .app-shell table thead {
+  color: #fff !important;
+  background: linear-gradient(100deg, #23345f, #35437b) !important;
+}
+html[data-jjx-theme="light"] body .app-shell table th { color: #f4f5ff !important; }
+html[data-jjx-theme="light"] body .app-shell table tbody tr:nth-child(odd) { background: rgba(255,255,255,.38) !important; }
+html[data-jjx-theme="light"] body .app-shell table tbody tr:nth-child(even) { background: rgba(199,213,236,.42) !important; }
+html[data-jjx-theme="light"] body .app-shell table tbody tr:hover { background: #dce5ff !important; }
+html[data-jjx-theme="light"] body .app-shell .jjx-button-secondary,
+html[data-jjx-theme="light"] body .app-shell .dashboard-action-secondary {
+  color: #34417c !important;
+  border-color: #b8c5e2 !important;
+  background: linear-gradient(145deg, #f1f3ff, #e1e8fa) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .jjx-button-secondary:hover,
+html[data-jjx-theme="light"] body .app-shell .dashboard-action-secondary:hover {
+  color: #fff !important;
+  border-color: #5d51c9 !important;
+  background: linear-gradient(105deg, #6554d5, #3478ce) !important;
+}
+html[data-jjx-theme="light"] body .app-shell :is(input, textarea, select) {
+  color: #17243d !important;
+  border-color: #aebcda !important;
+  background: #e8eef9 !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.75);
+}
+html[data-jjx-theme="light"] body .app-shell :is(input, textarea, select):focus {
+  border-color: #6655d2 !important;
+  box-shadow: 0 0 0 3px rgba(102,85,210,.18) !important;
+}
+html[data-jjx-theme="light"] body .app-shell label,
+html[data-jjx-theme="light"] body .app-shell .jjx-field-label {
+  color: #394879 !important;
+}
