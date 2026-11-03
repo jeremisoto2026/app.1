@@ -1,40 +1,48 @@
-# JJXCAPITAL · sincronización Binance P2P cada minuto
+# JJXCAPITAL · sincronización Binance + Bybit P2P cada minuto
 
-Este Worker activa el endpoint interno de JJXCAPITAL cada minuto. No contiene claves de Binance ni consulta Binance directamente: solo inicia la sincronización ya implementada en Vercel.
+El Worker existente `jjxcapital-binance-p2p-sync` activa los endpoints internos de JJXCAPITAL cada minuto. No contiene claves de los exchanges ni consulta directamente a Binance o Bybit: solo inicia la sincronización ya implementada en Vercel.
 
-## Despliegue desde el panel de Cloudflare
+## Actualizar el Worker existente
 
-1. Crea o inicia sesión en una cuenta gratuita de Cloudflare.
-2. Abre **Workers & Pages** y crea un Worker.
-3. Usa el nombre `jjxcapital-binance-p2p-sync` y pega el contenido de `binance-p2p-sync-worker.js` desde este repositorio.
-4. En **Settings → Variables and Secrets**, añade el secreto `BINANCE_P2P_SCHEDULER_SECRET`.
-5. En **Settings → Triggers → Cron Triggers**, configura `* * * * *`.
-6. Guarda y despliega el Worker.
+No crees un segundo Worker ni cambies el nombre actual. Actualiza el Worker `jjxcapital-binance-p2p-sync` con el contenido de `binance-p2p-sync-worker.js` de este repositorio.
 
-El mismo secreto debe configurarse como variable de entorno de producción en Vercel, proyecto `app-1`. No guardes el secreto en el repositorio ni en el archivo TOML.
+En **Settings → Variables and Secrets**, deben existir estos dos secretos:
+
+| Secreto de Cloudflare | Uso |
+| --- | --- |
+| `BINANCE_P2P_SCHEDULER_SECRET` | Autenticar la sincronización de Binance |
+| `BYBIT_P2P_SCHEDULER_SECRET` | Autenticar la sincronización de Bybit |
+
+Cada secreto debe tener al menos 32 caracteres aleatorios y coincidir exactamente con la variable sensible correspondiente del entorno **Production** del proyecto `app-1` en Vercel. Son secretos independientes: no reutilices el secreto de Binance para Bybit. No los guardes en Git ni en `wrangler.toml`.
+
+En **Settings → Triggers → Cron Triggers**, conserva `* * * * *`. Después de actualizar el código y los secretos, guarda y despliega el Worker.
 
 ## Despliegue desde la terminal (alternativa)
 
 Desde esta carpeta:
 
 1. Ejecuta `npx wrangler login` y autoriza tu cuenta Cloudflare.
-2. Ejecuta `npx wrangler secret put BINANCE_P2P_SCHEDULER_SECRET` e introduce el secreto compartido.
-3. Ejecuta `npx wrangler deploy`.
+2. Configura el secreto de Binance: `npx wrangler secret put BINANCE_P2P_SCHEDULER_SECRET`.
+3. Configura el secreto de Bybit: `npx wrangler secret put BYBIT_P2P_SCHEDULER_SECRET`.
+4. Ejecuta `npx wrangler deploy`.
 
-El archivo `wrangler.toml` configura el cron `* * * * *` (cada minuto).
+El archivo `wrangler.toml` conserva el nombre del Worker existente y configura el cron `* * * * *` (cada minuto).
 
 ## Funcionamiento
 
-- Cada ejecución procesa hasta ocho lotes, reutilizando el cursor y el bloqueo global de Firestore.
-- Cada lote procesa como máximo una cuenta conectada, igual que el proceso actual.
-- Si detecta otra ejecución activa, termina sin duplicar el trabajo.
-- GitHub Actions conserva su ejecución cada cinco minutos como respaldo.
+- Cada ejecución intenta sincronizar Binance y Bybit de forma independiente.
+- Cada exchange dispone de su propio secreto, endpoint, bloqueo y cursor de Firestore.
+- Se procesan hasta ocho lotes por exchange y ejecución; cada lote procesa como máximo una cuenta conectada.
+- Binance continúa usando el endpoint original. Bybit usa el mismo endpoint con `?provider=bybit`.
+- Si Bybit no tiene todavía configurado su secreto en Cloudflare, se omite únicamente Bybit; la sincronización de Binance continúa.
+- Si un proveedor falla, el Worker igualmente intenta ejecutar el otro y registra el error.
+- GitHub Actions conserva la ejecución cada cinco minutos como respaldo.
 - El botón «Sincronizar ahora» continúa disponible.
 
 ## Límites del plan gratuito
 
-Cloudflare Workers Free incluye 100.000 solicitudes por día y 50 subsolicitudes por ejecución. Este Worker se programa 1.440 veces al día y realiza como máximo ocho llamadas al endpoint de JJXCAPITAL por ejecución, dentro de esos límites según el uso previsto. Cloudflare no factura las subsolicitudes salientes del Worker como solicitudes de entrada.
+El Worker se programa 1.440 veces al día. Cada ejecución puede realizar hasta ocho llamadas para Binance y ocho para Bybit (16 en total), por debajo del límite de 50 subsolicitudes por ejecución. Supervisa el uso real de tu plan Cloudflare.
 
 ## Seguridad
 
-El endpoint acepta el secreto externo solo cuando coincide con `BINANCE_P2P_SCHEDULER_SECRET`, comparándolo en tiempo constante. La verificación OIDC restringida a GitHub Actions sigue activa para el programador de respaldo. El secreto no se incluye en el código ni en Git.
+Los endpoints comprueban su secreto correspondiente con comparación en tiempo constante. El programador de respaldo de GitHub Actions mantiene la verificación OIDC. Las API Keys de los exchanges nunca se envían a Cloudflare: permanecen cifradas en Firestore y solo las descifra el backend de Vercel.
