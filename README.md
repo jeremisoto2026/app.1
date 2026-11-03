@@ -1,70 +1,111 @@
 # JJXCAPITAL
 
-Aplicación web para registrar operaciones manuales de compra y venta de criptomonedas, calcular el beneficio realizado con el coste de compra conocido y consultar el historial.
+JJXCAPITAL es una aplicación web para **registrar, organizar y analizar operaciones P2P y arbitrajes de criptomonedas**. Permite combinar operaciones manuales con el historial importado desde Binance P2P y Bybit P2P mediante conexiones API de solo lectura.
 
-## Funciones disponibles
+La aplicación no custodia fondos, no ejecuta compras ni ventas y no envía órdenes a los exchanges. El usuario sigue operando directamente desde sus plataformas.
 
-- Registro manual de compras y ventas con cantidades, moneda de cotización, tasa de cambio y comisiones.
-- Resumen de beneficio realizado por moneda de cotización.
-- Método FIFO para emparejar ventas con compras registradas.
-- Simuladores P2P y de arbitraje. Son estimaciones manuales: no envían órdenes.
-- Historial filtrable y exportación CSV ordenada cronológicamente.
-- Navegación adaptable a escritorio y móvil.
-- Acceso mediante correo/contraseña o Google.
+## Funcionalidades
 
-## Funciones retiradas o no habilitadas
+### Órdenes y conexiones P2P
 
-- La interfaz ya no ofrece conexión de una cuenta de Binance mediante API.
-- No hay pasarela de pago ni contratación de suscripciones habilitada.
-- Las notificaciones push no están habilitadas en esta versión.
-- Se retiró el seguimiento de analítica de terceros que venía en la plantilla; no se inicializa PostHog desde la página.
+- Registro manual de compras y ventas.
+- Conexión de Binance P2P y Bybit P2P mediante API.
+- Importación de órdenes P2P completadas; las conexiones se utilizan para consultar el historial, no para operar.
+- Sincronización automática de las conexiones mediante los procesos programados del proyecto.
+- Detección de órdenes ya importadas para evitar duplicados.
+- Vinculación de operaciones importadas con el arbitraje correspondiente cuando la información permite identificar una única sesión.
+- Desconexión de las integraciones desde el perfil.
 
-**Nota sobre el backend:** esta rama solo modifica `app.1`. Si existe un servicio de Binance API desplegado por separado (por ejemplo, en Railway), estos cambios del frontend no lo apagan ni eliminan las credenciales que estén guardadas allí. Para deshabilitar también ese servicio se necesita un cambio y un despliegue independiente. Si alguna API key ya se conectó y quieres dejar de usarla, revócala desde la gestión de API de Binance.
+Las credenciales API se procesan en el servidor y se almacenan cifradas. El usuario debe crear claves en el exchange con los permisos mínimos de consulta necesarios. Nunca debe habilitar permisos de retirada ni de trading para esta aplicación.
 
-## Reglas de cálculo
+### Arbitrajes y análisis
 
-- En una compra, el importe en la moneda de cotización es el coste y la comisión indicada se resta de la cantidad de cripto recibida.
-- En una venta, la comisión indicada se resta del importe recibido en la moneda de cotización.
-- El beneficio se calcula por par de criptomoneda/moneda de cotización mediante FIFO, solo sobre cantidades cuyo coste de adquisición consta en el historial.
-- Las ganancias se muestran con el código de moneda correspondiente (por ejemplo, `USD`, `USDT`, `USDC`, `EUR` o `VES`). No se suman monedas diferentes como si fueran equivalentes.
-- La aplicación conserva el nombre técnico histórico `fiat` en los documentos, pero ese campo representa la moneda de cotización: puede ser una moneda tradicional (EUR, USD, VES) o una stablecoin (USDT, USDC).
-- Las ventas que exceden la cripto comprada registrada no se cuentan como ventas totalmente cerradas para la tasa de éxito.
-- Las operaciones antiguas de Firestore no se migran ni reescriben automáticamente. Si a un registro histórico le faltan fechas, cantidades, coste o comisiones, los datos originales deben revisarse por separado.
+- Creación de arbitrajes/sesiones por par de monedas y estrategia.
+- Un solo arbitraje activo por par de monedas; una sesión cerrada puede conservarse en el historial.
+- Registro y asociación de órdenes manuales o importadas a las sesiones.
+- Resumen de resultados y beneficio realizado.
+- Cálculo FIFO para relacionar las ventas con las compras registradas.
+- Simuladores P2P como herramientas de estimación; no ejecutan operaciones.
+- Historial con filtros y herramientas de consulta.
 
-## Desarrollo y validación
+### Perfil y suscripción
+
+El modelo de uso gratuito contempla estos límites:
+
+| Recurso | Límite gratuito |
+|---|---:|
+| Órdenes registradas (manuales + Binance + Bybit) | 300 |
+| Arbitrajes/sesiones creados | 150 |
+| Exportaciones del historial | 50 |
+
+Las órdenes importadas desde Binance y Bybit también consumen el límite de 300 órdenes. El límite de 150 corresponde a arbitrajes creados, no a movimientos u órdenes.
+
+**JJXCAPITAL Pro** ofrece uso ilimitado durante 30 días por 15 USDT. En la versión actual, el método de pago implementado es USDT en BNB Smart Chain (BEP20), con verificación en blockchain antes de activar la suscripción. Los pagos están deshabilitados en los despliegues Preview para impedir que las pruebas utilicen la cartera de Producción.
+
+## Criterios de cálculo
+
+- Las compras y ventas se analizan por par de criptomoneda/moneda de cotización.
+- El beneficio realizado se calcula mediante FIFO, utilizando el coste de adquisición disponible en el historial.
+- Las comisiones deben interpretarse en la moneda en la que realmente se cobran. Una comisión bancaria o del método de pago (por ejemplo, una comisión cobrada por Revolut al enviar una transferencia) es un coste externo de la operación P2P y no debe confundirse con una comisión cobrada por Binance o Bybit.
+- Las monedas distintas no se suman como si tuvieran el mismo valor. Los resultados se muestran con su código de moneda (por ejemplo, EUR, USD, VES, USDT o USDC).
+- Si una venta supera la cantidad de cripto cuyo coste de compra está registrado, la parte sin coste conocido no debe presentarse como beneficio realizado plenamente calculado.
+- Los datos históricos incompletos deben revisarse; la aplicación no reescribe automáticamente operaciones antiguas para inventar datos que no existan.
+
+Los resultados son herramientas de seguimiento y organización, no asesoramiento financiero ni garantía de rentabilidad.
+
+## Arquitectura y seguridad
+
+- **Frontend:** React con Create React App y CRACO.
+- **Backend:** funciones serverless en Vercel.
+- **Autenticación y datos:** Firebase Authentication y Cloud Firestore.
+- **Integraciones:** APIs de consulta de Binance P2P y Bybit P2P.
+- **Sincronización:** Cloudflare Worker programado y GitHub Actions como mecanismo de respaldo.
+- **Pagos:** verificación de transferencias USDT en BNB Smart Chain (BEP20).
+
+Las operaciones y los datos privados se aíslan por UID de Firebase. Las reglas de Firestore del repositorio son restrictivas y deniegan por defecto las rutas no contempladas. La configuración de reglas versionada no se aplica automáticamente a Firebase: cualquier despliegue de reglas debe dirigirse expresamente al proyecto correcto y probarse con cuentas separadas.
+
+### Entornos Preview y Producción
+
+Preview debe utilizar un proyecto Firebase independiente de Producción (jjxcapital-2), variables de entorno separadas y claves de cifrado independientes para Binance y Bybit. No se permite que Preview herede silenciosamente las variables genéricas de Producción. Si falta la configuración Firebase de pruebas o apunta al proyecto de Producción, el entorno Preview queda bloqueado.
+
+La guía para preparar este entorno se encuentra en docs/PREVIEW_FIREBASE_SETUP.md. No se deben copiar al Preview credenciales, claves de cifrado, cuentas de servicio ni datos reales de Producción.
+
+**Regla de publicación:** los cambios se desarrollan y validan en ramas y despliegues Preview. No se fusionan a main ni se publican en Producción hasta completar las comprobaciones correspondientes y revisar el cambio.
+
+## Desarrollo local
 
 Requisitos: Node.js y npm.
 
+Instalación:
+
 ```bash
 npm install --legacy-peer-deps
+```
+
+Pruebas:
+
+```bash
 npm test -- --watchAll=false --runInBand
+```
+
+Compilación:
+
+```bash
 npm run build
 ```
 
-La compilación solo genera la carpeta `build`; no publica automáticamente la aplicación.
+La compilación genera la carpeta build; no publica automáticamente la aplicación.
 
-## Configuración y seguridad
+## Estado técnico y trabajo pendiente
 
-La autenticación y los datos se gestionan con Firebase. Esta rama incluye una configuración de reglas base en `firestore.rules` y `firebase.json`:
+- El proyecto todavía utiliza Create React App/CRACO. La migración a una herramienta de compilación mantenida (por ejemplo, Vite) debe planificarse y ejecutarse en una fase independiente, con pruebas de regresión.
+- Debe mantenerse alineada la versión de Node.js entre CI y Vercel.
+- Debe incorporarse y mantenerse un lockfile reproducible antes de considerar cerrada la configuración de dependencias.
+- La preparación del lanzamiento requiere completar la configuración y las pruebas funcionales de Firebase Preview, validar el aislamiento entre cuentas, probar la sincronización con varias cuentas y revisar el flujo de pagos.
+- Antes de abrir el servicio al público deben completarse la documentación legal y de privacidad aplicable al mercado objetivo, el procedimiento de soporte y la revisión jurídica del modelo de servicio.
 
-- Cada usuario autenticado solo puede leer su propio documento `users/{uid}` y la subcolección `users/{uid}/operations`.
-- No se permite enumerar perfiles de usuarios.
-- El alta del perfil exige el plan `free`; el cliente no puede cambiar por su cuenta el plan ni la fecha de creación de la cuenta.
-- Cualquier ruta de Firestore no contemplada queda denegada.
+## Documentación relacionada
 
-**Importante:** añadir estos archivos al repositorio no cambia las reglas activas en Firebase. Antes de desplegarlas, compáralas con las reglas actuales de la consola y prueba al menos dos cuentas distintas: cada cuenta debe poder leer y escribir sus operaciones, pero no acceder al perfil ni a las operaciones de la otra. La publicación de reglas es independiente del despliegue de Vercel y puede bloquear funciones de otra aplicación si el mismo proyecto de Firebase se comparte con otros clientes.
-
-Una vez revisadas y probadas con el proyecto correcto, se pueden desplegar explícitamente con `firebase deploy --only firestore:rules --project jjxcapital-2` usando Firebase CLI autenticado. **No se han desplegado desde esta PR.** No se deben guardar claves de cuentas de servicio, tokens ni secretos de Firebase en el frontend o en GitHub.
-
-La configuración cliente del SDK de Firebase está diseñada para ser visible; la seguridad real depende de reglas restrictivas, autenticación y restricciones adecuadas de las API.
-
-## Diseño y experiencia de usuario
-
-- Portada responsive con una jerarquía visual más clara, llamadas a la acción concisas y una vista previa ilustrativa que no presenta cifras ficticias como si fueran datos reales.
-- Identidad visual consistente para el espacio de trabajo: fondos oscuros sobrios, acentos violeta/azul, superficies con contraste y controles de formulario unificados.
-- Resumen financiero orientado a datos reales, estados vacíos explícitos, flujos de trabajo recomendados y accesos rápidos al registro y al historial.
-- Formularios de autenticación y edición adaptables a pantallas pequeñas, con foco de teclado visible y soporte para la preferencia de movimiento reducido.
-- Desde el historial se pueden editar las cantidades, el par de monedas, la plataforma y las comisiones de una operación. La edición vuelve a calcular importes derivados y conserva la fecha original; cambiar importes puede alterar el beneficio FIFO de ventas posteriores. El historial también permite ordenar por fecha, limpiar filtros, consultar recuentos y navegar por páginas de diez operaciones; la paginación se ajusta al eliminar registros.
-- Metadatos de navegador actualizados y tipografía basada en fuentes del sistema para evitar una solicitud de fuente externa innecesaria.
-
-La interfaz no promete beneficios, no ejecuta órdenes de trading y no sustituye la verificación de los registros financieros. Antes de publicar se deben validar visualmente los principales flujos con una sesión real y probar los permisos de Firebase con cuentas separadas.
+- Configuración aislada de Firebase para Preview: docs/PREVIEW_FIREBASE_SETUP.md
+- Reglas de Firestore: firestore.rules
+- Configuración Firebase: firebase.json
