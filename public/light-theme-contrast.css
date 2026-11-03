@@ -462,3 +462,494 @@ html[data-jjx-theme="light"] body .app-shell label,
 html[data-jjx-theme="light"] body .app-shell .jjx-field-label {
   color: #394879 !important;
 }
+
+
+/* ==========================================================================
+   JJXCAPITAL LIGHT · Premium finishing layer
+   Consistent blue / indigo identity, considered accents and responsive polish.
+   ========================================================================== */
+html[data-jjx-theme="light"] body .app-shell {
+  --jjx-bg: #e8edf6;
+  --jjx-surface: #f7f9fd;
+  --jjx-surface-raised: #eef2f9;
+  --jjx-surface-inset: #e2e9f4;
+  --jjx-ink: #152541;
+  --jjx-body: #3d506d;
+  --jjx-muted-text: #64758f;
+  --jjx-line: #cbd6e6;
+  --jjx-accent: #5a4bd0;
+  --jjx-accent-strong: #3d62c8;
+  color: var(--jjx-ink) !important;
+  background:
+    radial-gradient(ellipse at 7% 0%, rgba(87,119,222,.13), transparent 30%),
+    radial-gradient(ellipse at 94% 12%, rgba(134,93,214,.11), transparent 32%),
+    linear-gradient(145deg, #e7edf7 0%, #edf1f8 48%, #e9edf8 100%) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content { background: transparent !important; }
+html[data-jjx-theme="light"] body .app-shell .jjx-page {
+  background: radial-gradient(ellipse at 92% 0%, rgba(103,91,203,.085), transparent 34%),
+    linear-gradient(145deg, rgba(235,240,248,.55), rgba(231,237,247,.35)) !important;
+}
+
+/* Deep-glass navigation. */
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] {
+  border-color: rgba(31,47,91,.24) !important;
+  background: linear-gradient(112deg, #172746 0%, #24366a 58%, #38316c 100%) !important;
+  box-shadow: 0 13px 32px rgba(31,44,91,.22), inset 0 1px rgba(255,255,255,.12) !important;
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] > div {
+  max-width: 1240px;
+  min-height: 66px;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button {
+  min-height: 43px;
+  padding: 9px 15px !important;
+  border: 1px solid transparent;
+  border-radius: 12px !important;
+  color: #c6d0e5 !important;
+  font-size: 12px;
+  font-weight: 700 !important;
+  transition: background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button svg {
+  color: #aab9df !important;
+  transition: color .18s ease, transform .18s ease;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button:hover {
+  color: #fff !important;
+  border-color: rgba(218,226,255,.12);
+  background: rgba(255,255,255,.085) !important;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button:hover svg {
+  color: #e3e7ff !important;
+  transform: translateY(-1px);
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button[aria-current="page"],
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button[data-state="active"] {
+  color: #fff !important;
+  border-color: rgba(206,199,255,.24) !important;
+  background: linear-gradient(115deg, #6c5bd9, #397bd2) !important;
+  box-shadow: 0 6px 17px rgba(20,27,78,.28), inset 0 1px rgba(255,255,255,.2) !important;
+}
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button[aria-current="page"] svg,
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button[data-state="active"] svg { color: #fff !important; }
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button[aria-current="page"] > span.absolute {
+  background: #8bf0c4 !important;
+  box-shadow: 0 0 0 3px rgba(139,240,196,.13);
+}
+@media (max-width: 767px) {
+  html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] {
+    border: 1px solid rgba(189,199,234,.26) !important;
+    border-radius: 19px !important;
+    background: linear-gradient(112deg, rgba(23,39,70,.97), rgba(43,50,104,.97)) !important;
+  }
+  html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] > div {
+    min-height: 0;
+    padding: 7px !important;
+  }
+  html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button {
+    min-height: 49px;
+    padding: 7px 3px !important;
+    gap: 4px;
+    font-size: 10px;
+  }
+}
+
+/* Dashboard masthead and controls. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-container {
+  width: min(1280px, calc(100% - 48px));
+  padding-top: 12px;
+  padding-bottom: 38px;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-topbar {
+  margin-top: 5px;
+  padding: 11px 15px;
+  border: 1px solid rgba(48,57,119,.24) !important;
+  border-radius: 16px;
+  background: linear-gradient(110deg, #182747 0%, #26356a 58%, #433778 100%) !important;
+  box-shadow: 0 12px 29px rgba(38,47,100,.17), inset 0 1px rgba(255,255,255,.13) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-brand-mark {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(221,224,255,.22);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #7364e4, #3678cb);
+  box-shadow: 0 5px 14px rgba(10,20,62,.2), inset 0 1px rgba(255,255,255,.24);
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-brand-mark img { width: 26px; height: 26px; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-profile-button,
+html[data-jjx-theme="light"] body .app-shell .dashboard-theme-toggle {
+  min-height: 39px;
+  border: 1px solid rgba(220,226,255,.24) !important;
+  border-radius: 11px;
+  color: #f4f5ff !important;
+  background: rgba(255,255,255,.095) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.1);
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-profile-button:hover,
+html[data-jjx-theme="light"] body .app-shell .dashboard-theme-toggle:hover {
+  border-color: rgba(221,216,255,.48) !important;
+  background: rgba(255,255,255,.17) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-profile-button svg,
+html[data-jjx-theme="light"] body .app-shell .dashboard-theme-toggle svg { color: #d7d2ff !important; }
+
+/* Welcome banner: a confident blue-lavender surface with deliberate spacing. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-welcome {
+  margin: 19px 0 17px;
+  padding: clamp(23px, 3vw, 31px);
+  border-color: #b9c8e9 !important;
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(119,91,222,.22), transparent 42%),
+    radial-gradient(ellipse at 0% 100%, rgba(80,146,220,.12), transparent 37%),
+    linear-gradient(112deg, #d8e8ff 0%, #e5e9ff 54%, #eee5ff 100%) !important;
+  box-shadow: 0 14px 32px rgba(53,75,145,.12), inset 0 1px rgba(255,255,255,.8) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-welcome h1 {
+  color: #172649 !important;
+  font-size: clamp(30px, 3.1vw, 41px);
+  letter-spacing: -.058em;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-welcome p {
+  max-width: 600px;
+  color: #405674 !important;
+  font-size: 13px;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-welcome-actions { gap: 10px; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-action {
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-action-primary {
+  border-color: rgba(76,72,180,.38) !important;
+  background: linear-gradient(108deg, #6653d4, #3477d0) !important;
+  box-shadow: 0 8px 19px rgba(67,76,177,.24), inset 0 1px rgba(255,255,255,.18) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-action-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 11px 22px rgba(67,76,177,.3), inset 0 1px rgba(255,255,255,.2) !important;
+}
+
+/* Metric cards: cohesive silhouette, subtle lift, one standout value. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-metrics { gap: 14px; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card {
+  min-height: 178px;
+  padding: 20px;
+  border-radius: 17px;
+  box-shadow: 0 9px 23px rgba(31,48,83,.085), inset 0 1px rgba(255,255,255,.86) !important;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 29px rgba(31,48,83,.13), inset 0 1px rgba(255,255,255,.9) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card::before { height: 4px; opacity: .95; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(1) { background: linear-gradient(145deg, #edf4ff, #e0ecff) !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(2) { background: linear-gradient(145deg, #f1edff, #e8e3ff) !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(3) { background: linear-gradient(145deg, #eaf8f1, #dff3e9) !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(4) { background: linear-gradient(145deg, #eaf7fc, #dff1f8) !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(5) { background: linear-gradient(145deg, #fff6e7, #f9edda) !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card.dashboard-metric-featured {
+  border-color: #786bce !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(159,142,255,.28), transparent 47%),
+    linear-gradient(135deg, #342d78 0%, #3d438f 56%, #28558e 100%) !important;
+  box-shadow: 0 13px 28px rgba(63,56,143,.22), inset 0 1px rgba(255,255,255,.15) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-card-heading > span:first-child,
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-primary-value,
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-no-data { color: #fff !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-card-heading > span:first-child { color: #e1e2ff !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-currency-values .metric-positive { color: #a9f0d1 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-currency-values .metric-negative { color: #ffc0ca !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured > p,
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-card-foot { color: #d1d5f2 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-card-foot { border-top-color: rgba(228,229,255,.19) !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-card-foot svg { color: #b5c7ff !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card .metric-primary-value { font-size: clamp(27px, 2.4vw, 34px); }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(1) .metric-primary-value { color: #205bb5 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(3) .metric-primary-value { color: #087653 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(4) .metric-primary-value { color: #126d99 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:nth-child(5) .metric-primary-value { color: #a65c08 !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card .metric-card-heading { color: #34445f !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card > p,
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card:not(.dashboard-metric-featured) .metric-card-foot { color: #4e607b !important; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card .metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured .metric-icon-purple {
+  color: #fff !important;
+  border: 1px solid rgba(232,229,255,.24);
+  background: rgba(255,255,255,.15) !important;
+}
+
+/* Analysis panels and their inner content. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-lower-grid { gap: 16px; margin-top: 18px; }
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel {
+  padding: 24px;
+  border-color: #c4d0e2 !important;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #e4eaf4 0%, #dce5f1 100%) !important;
+  box-shadow: 0 12px 27px rgba(32,48,82,.085), inset 0 1px rgba(255,255,255,.74) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel-heading {
+  padding-bottom: 17px;
+  border-bottom-color: #c6d2e4 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .panel-heading-icon {
+  color: #5141b6 !important;
+  border-color: #c7c9eb !important;
+  background: linear-gradient(145deg, #f0edff, #dce7ff) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .monthly-profit-list { gap: 17px; }
+html[data-jjx-theme="light"] body .app-shell .currency-code {
+  display: inline-flex;
+  min-width: 48px;
+  justify-content: center;
+  padding: 5px 8px;
+  border: 1px solid #c5d2e6;
+  border-radius: 8px;
+  color: #354c72 !important;
+  background: #edf2fa;
+}
+html[data-jjx-theme="light"] body .app-shell .monthly-profit-track { height: 7px; background: #cbd6e6 !important; }
+html[data-jjx-theme="light"] body .app-shell .monthly-profit-bar { background: linear-gradient(90deg, #6755d6, #3989d8) !important; }
+html[data-jjx-theme="light"] body .app-shell .monthly-profit-bar-negative { background: linear-gradient(90deg, #d65e7b, #ee8d9d) !important; }
+html[data-jjx-theme="light"] body .app-shell .guidance-item { padding: 14px 0; border-bottom-color: #cbd6e5 !important; }
+html[data-jjx-theme="light"] body .app-shell .guidance-item strong { color: #223650 !important; }
+html[data-jjx-theme="light"] body .app-shell .guidance-item p,
+html[data-jjx-theme="light"] body .app-shell .dashboard-empty-state p { color: #52647e !important; }
+html[data-jjx-theme="light"] body .app-shell .guidance-index {
+  color: #5042b5 !important;
+  border-color: #c8c8e9 !important;
+  background: linear-gradient(145deg, #f2efff, #e2e7ff) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel-note {
+  color: #60718a !important;
+  border-top-color: #c8d3e4 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-disclaimer {
+  border-color: #c9d4e5 !important;
+  border-radius: 13px;
+  background: linear-gradient(120deg, #e7edf8, #e1e8f3) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-disclaimer p { color: #52647e !important; }
+
+/* Profile section rhythm and account cards. */
+html[data-jjx-theme="light"] body .app-shell .profile-page { padding-top: 32px; padding-bottom: 56px; }
+html[data-jjx-theme="light"] body .app-shell .profile-container { max-width: 1180px; }
+html[data-jjx-theme="light"] body .app-shell .profile-page-heading { margin-bottom: 9px; }
+html[data-jjx-theme="light"] body .app-shell .profile-page-heading h1 {
+  font-size: clamp(28px, 3vw, 36px);
+  letter-spacing: -.05em;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page-heading .profile-private-note {
+  border-color: #c8d2e6 !important;
+  background: linear-gradient(145deg, #eef1ff, #e2e9fb) !important;
+  box-shadow: 0 5px 14px rgba(52,69,125,.07);
+}
+html[data-jjx-theme="light"] body .app-shell .profile-section-heading { margin-bottom: 18px; }
+html[data-jjx-theme="light"] body .app-shell .profile-section-heading h2 { font-size: clamp(19px, 2vw, 23px); }
+html[data-jjx-theme="light"] body .app-shell .profile-usage-grid { gap: 15px; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 185px;
+  border-radius: 17px;
+  box-shadow: 0 10px 23px rgba(35,53,88,.085), inset 0 1px rgba(255,255,255,.86) !important;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 28px rgba(35,53,88,.13), inset 0 1px rgba(255,255,255,.9) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  content: "";
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(1) {
+  border-color: #c4b8ec !important;
+  background: linear-gradient(145deg, #f0ecff, #e5e2fb) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(1)::before { background: linear-gradient(90deg, #674bd0, #a18bf0); }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(2) {
+  border-color: #b8cbed !important;
+  background: linear-gradient(145deg, #eaf2ff, #dfeafa) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(2)::before { background: linear-gradient(90deg, #2868c9, #69a4e8); }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(3) {
+  border-color: #b6dfd0 !important;
+  background: linear-gradient(145deg, #e8f8f1, #def2e9) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(3)::before { background: linear-gradient(90deg, #087b59, #53c29a); }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card .profile-usage-value { color: #1b3151 !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(1) .profile-usage-value { color: #583bb7 !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(2) .profile-usage-value { color: #225db1 !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card:nth-child(3) .profile-usage-value { color: #087653 !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-usage-footnote {
+  border-color: #c8d5e7 !important;
+  background: linear-gradient(120deg, #e6edf8, #e0e8f3) !important;
+}
+
+/* Exchange and plan panels retain their own brand signals. */
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card {
+  border-radius: 18px;
+  box-shadow: 0 12px 27px rgba(44,55,79,.09), inset 0 1px rgba(255,255,255,.8) !important;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 31px rgba(44,55,79,.13), inset 0 1px rgba(255,255,255,.85) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-binance {
+  background: radial-gradient(ellipse at 100% 0%, rgba(255,204,69,.28), transparent 44%),
+    linear-gradient(145deg, #fff9e8, #f5edcf) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .p2p-sync-card-bybit {
+  background: radial-gradient(ellipse at 100% 0%, rgba(255,150,90,.24), transparent 44%),
+    linear-gradient(145deg, #fff2e8, #f7e5d9) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-plan-grid { gap: 16px; }
+html[data-jjx-theme="light"] body .app-shell .profile-plan-card {
+  border-radius: 18px;
+  box-shadow: 0 12px 27px rgba(37,52,86,.09) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-plan-card-free { background: linear-gradient(145deg, #eaf2ff, #dfeafa) !important; }
+html[data-jjx-theme="light"] body .app-shell .profile-plan-card-pro {
+  background: radial-gradient(ellipse at 100% 0%, rgba(194,176,255,.28), transparent 51%),
+    linear-gradient(145deg, #28245c, #40358b 68%, #493d98) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-surface,
+html[data-jjx-theme="light"] body .app-shell .profile-account-section {
+  border-radius: 17px;
+  box-shadow: 0 10px 24px rgba(33,49,81,.07), inset 0 1px rgba(255,255,255,.78) !important;
+}
+
+/* The rest of the workspace: shared forms, tables and accessible controls. */
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(.jjx-panel, .rounded-xl.border, .rounded-2xl.border) {
+  border-color: #cbd6e6 !important;
+  box-shadow: 0 9px 23px rgba(33,49,81,.075), inset 0 1px rgba(255,255,255,.76);
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(.jjx-inset, .bg-gray-800, .bg-gray-900, .bg-slate-800) {
+  border-color: #cbd6e6 !important;
+  background: linear-gradient(145deg, #e8eef7, #e1e9f4) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(input, textarea, select, button[role="combobox"]) {
+  min-height: 40px;
+  border: 1px solid #bdcbe0 !important;
+  border-radius: 10px;
+  color: #1d2d49 !important;
+  background: linear-gradient(180deg, #f8faff, #edf2fa) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.9);
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page textarea { min-height: 90px; }
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(input, textarea, select, button[role="combobox"]):focus {
+  border-color: #6a5bd2 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 3px rgba(106,91,210,.16), inset 0 1px rgba(255,255,255,.9) !important;
+  outline: none;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(input, textarea, select)::placeholder {
+  color: #8290a6 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page table {
+  overflow: hidden;
+  border-color: #c7d3e5 !important;
+  border-radius: 13px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page table thead {
+  background: linear-gradient(105deg, #23345f, #35437b) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page table th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  color: #f6f7ff !important;
+  font-size: 10px;
+  font-weight: 850 !important;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page table td { color: #263750 !important; }
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page table tbody tr:nth-child(odd) { background: rgba(255,255,255,.53) !important; }
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page table tbody tr:nth-child(even) { background: rgba(213,224,241,.45) !important; }
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page table tbody tr:hover { background: #dce6ff !important; }
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(button, a) {
+  transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(button, a):focus-visible,
+html[data-jjx-theme="light"] body .app-shell nav[aria-label="Navegación principal"] button:focus-visible {
+  outline: 3px solid rgba(88,104,216,.5) !important;
+  outline-offset: 3px;
+}
+html[data-jjx-theme="light"] body .app-shell .jjx-button-secondary {
+  border-color: #bac8e1 !important;
+  border-radius: 11px;
+  color: #35477a !important;
+  background: linear-gradient(145deg, #f5f6ff, #e5eafb) !important;
+}
+html[data-jjx-theme="light"] body .app-shell .jjx-button-secondary:hover {
+  color: #fff !important;
+  border-color: #6153c6 !important;
+  background: linear-gradient(105deg, #6655d5, #367bd0) !important;
+}
+html[data-jjx-theme="light"] body .app-shell :is(.jjx-status, .status-badge) {
+  border-color: #b7dfca !important;
+  color: #126c4c !important;
+  background: #e0f5e9 !important;
+}
+
+/* Responsive finish and motion accessibility. */
+@media (max-width: 760px) {
+  html[data-jjx-theme="light"] body .app-shell .dashboard-container {
+    width: calc(100% - 28px);
+    padding-top: 8px;
+    padding-bottom: 30px;
+  }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-topbar {
+    margin-top: 3px;
+    padding: 9px 10px;
+    border-radius: 14px;
+  }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-brand strong { font-size: 10px; letter-spacing: .13em; }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-brand small { font-size: 7px; }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-welcome {
+    margin-top: 15px;
+    padding: 20px 18px;
+    border-radius: 17px;
+  }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card { min-height: 166px; padding: 15px; }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-panel { padding: 18px; border-radius: 16px; }
+  html[data-jjx-theme="light"] body .app-shell .profile-page { padding: 22px 12px 38px; }
+  html[data-jjx-theme="light"] body .app-shell .profile-page .profile-usage-card { min-height: 160px; }
+}
+@media (max-width: 390px) {
+  html[data-jjx-theme="light"] body .app-shell .dashboard-container { width: calc(100% - 20px); }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-brand-mark { width: 34px; height: 34px; }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-brand-mark img { width: 22px; height: 22px; }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-profile-button { padding: 0 8px; }
+  html[data-jjx-theme="light"] body .app-shell .dashboard-theme-toggle { padding: 0 8px; font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-jjx-theme="light"] body .app-shell * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
