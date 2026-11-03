@@ -2168,3 +2168,264 @@ html[data-jjx-theme="light"] .app-shell .profile-page :is(.text-emerald-100, .te
 html[data-jjx-theme="light"] .app-shell .profile-page :is(.text-violet-200, .text-violet-300, .text-purple-200, .text-purple-300) { color: #5144b8 !important; }
 html[data-jjx-theme="light"] .app-shell .profile-page :is(.text-amber-100, .text-amber-200) { color: #845500 !important; }
 html[data-jjx-theme="light"] .app-shell .profile-page :is(.text-rose-200, .text-rose-300) { color: #a12e3b !important; }
+
+
+/* Dashboard promotion for native Binance / Bybit P2P integrations. */
+.dashboard-exchanges-promo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 26px;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: 17px;
+  padding: 23px 25px;
+  border: 1px solid rgba(139,124,246,.25);
+  border-radius: 17px;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(240,185,11,.075), transparent 34%),
+    radial-gradient(ellipse at 100% 100%, rgba(247,147,26,.08), transparent 38%),
+    linear-gradient(110deg, rgba(26,34,56,.97), rgba(13,21,37,.98) 58%, rgba(24,25,43,.97));
+  box-shadow: 0 14px 35px rgba(3,6,18,.16), inset 0 1px rgba(255,255,255,.035);
+}
+.dashboard-exchanges-promo-main { min-width: 0; flex: 1 1 auto; }
+.dashboard-exchanges-promo-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #b8adff;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .15em;
+}
+.dashboard-exchanges-promo-kicker > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9e90ff;
+  box-shadow: 0 0 0 4px rgba(158,144,255,.1);
+}
+.dashboard-exchanges-promo h2 {
+  margin-top: 9px;
+  color: #f2f5fc;
+  font-size: clamp(18px,2.1vw,23px);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -.04em;
+}
+.dashboard-exchanges-promo h2 span {
+  color: #aaa3ff;
+  background: linear-gradient(100deg,#b8aaff,#7eb9ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.dashboard-exchanges-promo-main > p {
+  max-width: 680px;
+  margin-top: 7px;
+  color: #9eabc0;
+  font-size: 11px;
+  line-height: 1.75;
+}
+.dashboard-exchanges-provider-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 16px;
+}
+.dashboard-exchanges-provider {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 6px 7px;
+  border: 1px solid rgba(148,163,184,.16);
+  border-radius: 999px;
+  color: #e2e8f2;
+  background: rgba(255,255,255,.035);
+  font-size: 10px;
+  font-weight: 750;
+}
+.dashboard-exchanges-provider b {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 900;
+}
+.dashboard-exchanges-provider-binance b {
+  border: 1px solid rgba(240,185,11,.33);
+  color: #f6c945;
+  background: rgba(240,185,11,.14);
+}
+.dashboard-exchanges-provider-bybit b {
+  border: 1px solid rgba(247,147,26,.33);
+  color: #ffac58;
+  background: rgba(247,147,26,.14);
+}
+.dashboard-exchanges-readonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8bd9bd;
+  font-size: 10px;
+  font-weight: 700;
+}
+.dashboard-exchanges-readonly svg { width: 14px; height: 14px; }
+.dashboard-exchanges-promo-action {
+  display: flex;
+  flex: 0 0 205px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  padding-left: 22px;
+  border-left: 1px solid rgba(167,139,250,.17);
+}
+.dashboard-exchanges-promo-action > span {
+  color: #a8b5c8;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.dashboard-exchanges-promo-action .dashboard-action {
+  width: 100%;
+  justify-content: center;
+  white-space: nowrap;
+}
+.dashboard-exchanges-promo-action small {
+  color: #7f8da4;
+  font-size: 9px;
+  line-height: 1.5;
+  text-align: center;
+}
+.dashboard-exchanges-promo .dashboard-action:focus-visible {
+  outline: 2px solid #b4aaff;
+  outline-offset: 3px;
+}
+@media (max-width: 820px) {
+  .dashboard-exchanges-promo {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px;
+  }
+  .dashboard-exchanges-promo-action {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(150px,.9fr);
+    align-items: center;
+    gap: 8px 14px;
+    padding: 15px 0 0;
+    border-top: 1px solid rgba(167,139,250,.17);
+    border-left: 0;
+  }
+  .dashboard-exchanges-promo-action small { grid-column: 1 / -1; text-align: left; }
+}
+@media (max-width: 480px) {
+  .dashboard-exchanges-promo { padding: 17px; border-radius: 14px; }
+  .dashboard-exchanges-promo-action { grid-template-columns: minmax(0,1fr); }
+  .dashboard-exchanges-promo-action small { grid-column: auto; }
+}
+
+/* Public landing-page exchange comparison panel. */
+.exchange-promo-card { padding: 21px; }
+.exchange-promo-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.exchange-promo-heading > div { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.exchange-promo-heading > div > span {
+  color: #8795ac;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .15em;
+}
+.exchange-promo-heading > div > strong {
+  color: #eef2fa;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+.exchange-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+.exchange-provider-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 13px 11px;
+  border: 1px solid rgba(148,163,184,.16);
+  border-radius: 13px;
+  background: rgba(255,255,255,.025);
+}
+.exchange-provider-tile-binance { border-color: rgba(240,185,11,.22); }
+.exchange-provider-tile-bybit { border-color: rgba(247,147,26,.23); }
+.exchange-provider-monogram {
+  display: grid;
+  place-items: center;
+  flex: 0 0 37px;
+  width: 37px;
+  height: 37px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: -.04em;
+}
+.exchange-provider-tile-binance .exchange-provider-monogram {
+  border: 1px solid rgba(240,185,11,.3);
+  color: #f6c945;
+  background: rgba(240,185,11,.13);
+}
+.exchange-provider-tile-bybit .exchange-provider-monogram {
+  border: 1px solid rgba(247,147,26,.3);
+  color: #ffad59;
+  background: rgba(247,147,26,.13);
+}
+.exchange-provider-name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.exchange-provider-name strong {
+  color: #eaf0f8;
+  font-size: 12px;
+  font-weight: 800;
+}
+.exchange-provider-name small {
+  color: #8492a8;
+  font-size: 9px;
+}
+.exchange-provider-check { flex: 0 0 13px; width: 13px; color: #79d9b8; }
+.exchange-promo-card .binance-card-divider { margin: 17px 0; }
+.exchange-promo-card .binance-flow { margin-bottom: 1px; }
+@media (max-width: 420px) {
+  .exchange-promo-card { padding: 16px; }
+  .exchange-provider-grid { grid-template-columns: minmax(0,1fr); }
+  .exchange-promo-heading { align-items: flex-start; flex-direction: column; }
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-promo {
+  border-color: rgba(100,116,139,.22);
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(240,185,11,.07), transparent 34%),
+    radial-gradient(ellipse at 100% 100%, rgba(247,147,26,.07), transparent 38%),
+    linear-gradient(110deg,#ffffff,#f7f8fc 62%,#faf7f2);
+  box-shadow: 0 12px 28px rgba(15,23,42,.06);
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-promo h2 { color: #1d2b43; }
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-promo-main > p { color: #58677d; }
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-provider {
+  border-color: rgba(100,116,139,.18);
+  color: #26364d;
+  background: rgba(15,23,42,.025);
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-promo-action > span,
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-promo-action small { color: #64748b; }
