@@ -390,14 +390,17 @@ async function syncBinanceP2P(req, res) {
     const bothDone = nextBuyPage === null && nextSellPage === null;
     const updated = {
       connectedAt: state.connectedAt || new Date(connectionFloor),
-      lastSyncStatus: "success",
+      lastSyncStatus: quotaBlocked ? "quota" : "success",
       lastSyncError: null,
       lastSyncAttemptAt: new Date(),
-      lastImportedCount: fresh.length,
-      lastSkippedCount: Math.max(0, candidates.length - fresh.length),
+      lastImportedCount: freshToImport.length,
+      lastSkippedCount: Math.max(0, candidates.length - freshToImport.length),
+      orderQuotaBlocked: quotaBlocked,
     };
 
-    if (backfill) {
+    if (quotaBlocked) {
+      // Keep this page/window cursor unchanged. Pro can resume it without losing orders.
+    } else if (backfill) {
       updated.initialBackfillComplete = bothDone;
       updated.nextBuyPage = nextBuyPage;
       updated.nextSellPage = nextSellPage;
