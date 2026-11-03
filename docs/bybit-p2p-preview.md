@@ -22,6 +22,7 @@ The connector reads users/{uid}/sessions for unique pair-and-time session matchi
 - Completed orders only (status 50) are imported.
 - Deterministic document IDs and order-ID checks prevent duplicate imports.
 - Session matching requires the same crypto/fiat pair and an order timestamp within a unique session's active interval. Orders without a compatible session remain imported but unlinked.
+- On subsequent syncs, Bybit also retries session assignment for previously imported Bybit orders that remain unassigned. It updates only session metadata and never overwrites an existing session assignment or financial fields, matching Binance behavior.
 
 Existing imported operation documents are not deleted automatically when the connection cutoff is changed. The new cutoff governs the initial and future synchronization windows.
 

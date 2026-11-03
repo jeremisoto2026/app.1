@@ -252,6 +252,9 @@ export default function BybitP2PSyncCard() {
               {lastResult.sessionAssignments && (
                 <p className="text-sm text-slate-500">
                   Vinculadas a una sesión: {Number(lastResult.sessionAssignments.matched) || 0}. Sin sesión compatible: {Number(lastResult.sessionAssignments.unmatched) || 0}.
+                  {lastResult.sessionAssignments.relinkedExisting
+                    ? " Se vincularon " + lastResult.sessionAssignments.relinkedExisting + " operaciones que ya estaban importadas."
+                    : ""}
                 </p>
               )}
             </div>
