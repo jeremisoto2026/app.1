@@ -244,11 +244,16 @@ export default function BybitP2PSyncCard() {
             </button>
           </div>
           {lastResult && (
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4 text-sm space-y-2">
-              <p className="font-semibold text-white">Resultado de la sincronización</p>
-              <p>Encontradas: <strong>{Number(lastResult.completedOrdersFound) || 0}</strong>. Nuevas: <strong>{Number(lastResult.imported) || 0}</strong>. Ya registradas: <strong>{Number(lastResult.skipped) || 0}</strong>.</p>
-              <p>Vinculadas a una sesión: <strong>{Number(lastResult.sessionAssignments?.matched) || 0}</strong>. Sin sesión compatible: <strong>{Number(lastResult.sessionAssignments?.unmatched) || 0}</strong>.</p>
-              {lastResult.hasMoreHistory && <p className="text-amber-500">Hay más páginas pendientes.</p>}
+            <div className="space-y-1" role="status" aria-live="polite">
+              <p className="text-sm text-slate-500">
+                Encontradas: {Number(lastResult.completedOrdersFound) || 0}. Nuevas: {Number(lastResult.imported) || 0}. Ya registradas: {Number(lastResult.skipped) || 0}.
+                {lastResult.hasMoreHistory ? " Hay más páginas pendientes." : ""}
+              </p>
+              {lastResult.sessionAssignments && (
+                <p className="text-sm text-slate-500">
+                  Vinculadas a una sesión: {Number(lastResult.sessionAssignments.matched) || 0}. Sin sesión compatible: {Number(lastResult.sessionAssignments.unmatched) || 0}.
+                </p>
+              )}
             </div>
           )}
         </div>
