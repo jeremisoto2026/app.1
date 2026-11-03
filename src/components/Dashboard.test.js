@@ -117,6 +117,27 @@ describe("Dashboard Pro promotion", () => {
     expect(onOpenProfile).toHaveBeenCalledTimes(1);
   });
 
+  test("shows the Binance and Bybit integration promotion and opens the profile", async () => {
+    const onOpenProfile = jest.fn();
+
+    await renderDashboard(onOpenProfile);
+
+    expect(container.textContent).toContain("Conecta Binance y Bybit.");
+    expect(container.textContent).toContain("Binance P2P");
+    expect(container.textContent).toContain("Bybit P2P");
+    expect(container.textContent).toContain("API de solo lectura");
+
+    const cta = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent.includes("Configurar conexiones")
+    );
+    expect(cta).toBeTruthy();
+
+    act(() => {
+      cta.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(onOpenProfile).toHaveBeenCalledTimes(1);
+  });
+
   test("does not show the Pro promotion when the subscription is active", async () => {
     firestoreMocks.getDoc.mockResolvedValue({
       exists: () => true,
