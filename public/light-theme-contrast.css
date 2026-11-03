@@ -1,0 +1,126 @@
+/* JJXCAPITAL · Light theme: readable hierarchy, with soft layered surfaces. */
+html[data-jjx-theme="light"] body .app-shell {
+  --jjx-ink: #17243d;
+  --jjx-body: #34445f;
+  --jjx-muted-text: #64748b;
+  --jjx-label: #5147a8;
+}
+html[data-jjx-theme="light"] body .app-shell :is(
+  .dashboard-welcome h1, .dashboard-panel-heading h2, .dashboard-pro-promo h2,
+  .dashboard-state h2, .profile-page-heading h1, .profile-user-name,
+  .profile-section-heading h2, .profile-card-heading h2, .profile-payment-heading h3,
+  .profile-plan-card h3
+) {
+  color: #17243d !important;
+  font-weight: 800 !important;
+  letter-spacing: -.035em;
+}
+html[data-jjx-theme="light"] body .app-shell :is(
+  .dashboard-welcome p, .dashboard-panel-heading p, .dashboard-pro-promo-main > p,
+  .dashboard-metric-card > p, .dashboard-disclaimer p, .profile-page-subtitle,
+  .profile-section-heading p, .profile-card-heading p, .profile-body-copy,
+  .profile-plan-card p, .profile-plan-card li, .profile-payment-heading p
+) { color: #34445f !important; }
+html[data-jjx-theme="light"] body .app-shell :is(
+  .dashboard-eyebrow, .dashboard-panel-kicker, .dashboard-pro-promo-kicker,
+  .jjx-eyebrow, .jjx-field-label, .profile-account-label, .profile-mini-label
+) {
+  color: #5147a8 !important;
+  font-weight: 850 !important;
+  letter-spacing: .11em;
+}
+html[data-jjx-theme="light"] body .app-shell .metric-card-heading > span:first-child {
+  color: #3b4b66 !important;
+  font-size: 11px;
+  font-weight: 800 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .metric-primary-value,
+html[data-jjx-theme="light"] body .app-shell .profile-usage-value {
+  color: #14213a !important;
+  font-weight: 850 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .metric-card-foot,
+html[data-jjx-theme="light"] body .app-shell .profile-usage-caption,
+html[data-jjx-theme="light"] body .app-shell .profile-usage-footnote,
+html[data-jjx-theme="light"] body .app-shell .profile-member-since,
+html[data-jjx-theme="light"] body .app-shell .profile-user-email {
+  color: #61718a !important;
+}
+html[data-jjx-theme="light"] body .app-shell .metric-currency-values .metric-positive {
+  color: #087b55 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .metric-currency-values .metric-negative {
+  color: #b8324b !important;
+}
+/* Cool grey-blue backgrounds instead of a wall of white cards. */
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-card {
+  background: linear-gradient(148deg, #f1f4f9, #e8edf5) !important;
+  border-color: #d0d9e7 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-metric-featured {
+  background: radial-gradient(ellipse at 100% 0%, rgba(111,99,194,.16), transparent 56%),
+    linear-gradient(145deg, #eeedfa, #e5ebf5) !important;
+  border-color: #c9c8e7 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-panel {
+  background: linear-gradient(145deg, #e9eef6, #e4eaf3) !important;
+  border-color: #ccd6e5 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .dashboard-pro-promo {
+  background: radial-gradient(ellipse at 100% 0%, rgba(103,91,190,.15), transparent 55%),
+    linear-gradient(125deg, #eeedfb, #e5ecf6) !important;
+  border-color: #cbc9e7 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-hero {
+  background: radial-gradient(ellipse at 96% 0%, rgba(103,91,190,.17), transparent 49%),
+    linear-gradient(112deg, #e8edf5, #e3eaf4 58%, #e9eaf6) !important;
+  border-color: #cbd5e4 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page :is(
+  .profile-account-section, .profile-surface, .profile-usage-card
+) {
+  background: linear-gradient(145deg, #f0f3f8, #e8edf5) !important;
+  border-color: #d0d9e6 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .profile-details-grid .jjx-inset,
+html[data-jjx-theme="light"] body .app-shell .jjx-inset,
+html[data-jjx-theme="light"] body .app-shell .history-empty-state {
+  background: linear-gradient(145deg, #e7edf5, #e1e8f1) !important;
+  border-color: #cbd5e2 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-page .jjx-inset p:not(.jjx-field-label) {
+  color: #263650 !important;
+  font-size: 13px;
+  font-weight: 700;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-usage-card-heading p {
+  color: #34445f !important;
+  font-size: 12px;
+  font-weight: 800 !important;
+}
+html[data-jjx-theme="light"] body .app-shell .profile-usage-card-heading > div > span {
+  color: #61718a !important;
+}
+html[data-jjx-theme="light"] body .app-shell table thead {
+  background: #e1e8f2 !important;
+}
+html[data-jjx-theme="light"] body .app-shell table th {
+  color: #354761 !important;
+  font-weight: 850 !important;
+}
+html[data-jjx-theme="light"] body .app-shell table td {
+  color: #263750 !important;
+}
+html[data-jjx-theme="light"] body .app-shell label {
+  color: #455671;
+  font-weight: 700;
+}
+html[data-jjx-theme="light"] body .app-shell :is(input, textarea, select) {
+  color: #1c2a43 !important;
+  background: #edf1f7 !important;
+  border-color: #c3cede !important;
+}
+html[data-jjx-theme="light"] body .app-shell :is(input, textarea, select)::placeholder {
+  color: #77869c !important;
+  opacity: 1;
+}
