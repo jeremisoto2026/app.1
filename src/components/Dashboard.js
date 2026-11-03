@@ -271,6 +271,28 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
           </article>
         </section>
 
+        <section className="dashboard-exchanges-promo" aria-labelledby="dashboard-exchanges-promo-heading">
+          <div className="dashboard-exchanges-promo-main">
+            <span className="dashboard-exchanges-promo-kicker"><span /> SINCRONIZACIÓN AUTOMÁTICA P2P</span>
+            <h2 id="dashboard-exchanges-promo-heading">Conecta Binance y Bybit. <span>Tu historial se actualiza automáticamente.</span></h2>
+            <p>
+              Vincula una o ambas APIs en modo de solo lectura. JJXCAPITAL importa las órdenes P2P completadas desde el momento de conexión y las organiza en tus operaciones.
+            </p>
+            <div className="dashboard-exchanges-provider-list" aria-label="Exchanges compatibles">
+              <span className="dashboard-exchanges-provider dashboard-exchanges-provider-binance"><b>BN</b> Binance P2P</span>
+              <span className="dashboard-exchanges-provider dashboard-exchanges-provider-bybit"><b>BY</b> Bybit P2P</span>
+              <span className="dashboard-exchanges-readonly"><ShieldCheckIcon aria-hidden="true" /> API de solo lectura</span>
+            </div>
+          </div>
+          <div className="dashboard-exchanges-promo-action">
+            <span>Sin permisos para operar ni retirar fondos</span>
+            <button type="button" className="dashboard-action dashboard-action-primary" onClick={onOpenProfile}>
+              Configurar conexiones <ArrowRightIcon aria-hidden="true" />
+            </button>
+            <small>Gestiona ambas conexiones desde Mi perfil.</small>
+          </div>
+        </section>
+
         {hasActivePro === false && (
           <section className="dashboard-pro-promo" aria-labelledby="dashboard-pro-promo-heading">
             <div className="dashboard-pro-promo-glow" aria-hidden="true" />
@@ -375,7 +397,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
 
         <footer className="dashboard-disclaimer">
           <ShieldCheckIcon aria-hidden="true" />
-          <p>JJXCAPITAL organiza operaciones manuales y órdenes sincronizadas desde Binance P2P. Los simuladores son estimaciones; la API no ejecuta órdenes ni retira fondos.</p>
+          <p>JJXCAPITAL organiza operaciones manuales y órdenes sincronizadas desde Binance P2P y Bybit P2P. Los simuladores son estimaciones; las APIs solo consultan el historial y no ejecutan órdenes ni retiran fondos.</p>
         </footer>
       </div>
     </div>

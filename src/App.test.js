@@ -55,6 +55,17 @@ describe("authentication dialog lifecycle", () => {
     container.remove();
   });
 
+  test("promotes both Binance and Bybit read-only P2P integrations on the public landing page", async () => {
+    await act(async () => {
+      root.render(<App />);
+    });
+
+    expect(container.textContent).toContain("Binance + Bybit.");
+    expect(container.textContent).toContain("INTEGRACIONES BINANCE + BYBIT P2P");
+    expect(container.textContent).toContain("APIs de solo lectura");
+    expect(container.textContent).toContain("Importación automática");
+  });
+
   test("closes the create-account dialog when Firebase confirms Google authentication", async () => {
     await act(async () => {
       root.render(<App />);
