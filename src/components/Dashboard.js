@@ -39,6 +39,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
   const [error, setError] = useState("");
   const [sessionsWarning, setSessionsWarning] = useState("");
   const [hasActivePro, setHasActivePro] = useState(null);
+  const [exchangeConnections, setExchangeConnections] = useState({ binance: null, bybit: null, loading: true, error: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +62,56 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
 
     return () => { cancelled = true; };
   }, [user?.uid]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkExchangeConnections = async () => {
+      if (!user?.getIdToken) {
+        setExchangeConnections({ binance: null, bybit: null, loading: false, error: true });
+        return;
+      }
+
+      setExchangeConnections((current) => ({ ...current, loading: true }));
+      try {
+        const token = await user.getIdToken();
+        const headers = { Authorization: "Bearer " + token };
+        const fetchStatus = async (path) => {
+          const response = await fetch(path, { method: "GET", headers, cache: "no-store" });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.error || "No se pudo comprobar la conexión.");
+          return payload;
+        };
+
+        const [binanceStatus, bybitStatus] = await Promise.all([
+          fetchStatus("/api/integrations/binance-p2p/status"),
+          fetchStatus("/api/integrations/binance-p2p/status?provider=bybit"),
+        ]);
+
+        if (!cancelled) {
+          setExchangeConnections({
+            binance: Boolean(binanceStatus.connected),
+            bybit: Boolean(bybitStatus.connected),
+            loading: false,
+            error: false,
+          });
+        }
+      } catch (statusError) {
+        console.warn("No se pudo comprobar el estado de las conexiones P2P:", statusError);
+        if (!cancelled) {
+          setExchangeConnections({ binance: null, bybit: null, loading: false, error: true });
+        }
+      }
+    };
+
+    checkExchangeConnections();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
+
+  const exchangeConnectionsKnown = !exchangeConnections.loading && !exchangeConnections.error;
+  const connectedExchangeCount = [exchangeConnections.binance, exchangeConnections.bybit]
+    .filter(Boolean).length;
+  const bothExchangesConnected = exchangeConnectionsKnown && connectedExchangeCount === 2;
 
   useEffect(() => {
     let cancelled = false;
@@ -273,23 +324,76 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
 
         <section className="dashboard-exchanges-promo" aria-labelledby="dashboard-exchanges-promo-heading">
           <div className="dashboard-exchanges-promo-main">
-            <span className="dashboard-exchanges-promo-kicker"><span /> SINCRONIZACIÓN AUTOMÁTICA P2P</span>
-            <h2 id="dashboard-exchanges-promo-heading">Conecta Binance y Bybit. <span>Tu historial se actualiza automáticamente.</span></h2>
+            <span className="dashboard-exchanges-promo-kicker">
+              <span /> {bothExchangesConnected ? "CONEXIONES ACTIVAS · SINCRONIZACIÓN P2P" : "SINCRONIZACIÓN AUTOMÁTICA P2P"}
+            </span>
+            <h2 id="dashboard-exchanges-promo-heading">
+              {bothExchangesConnected
+                ? <>Binance y Bybit están conectadas. <span>Tu historial P2P se actualiza automáticamente.</span></>
+                : connectedExchangeCount === 1
+                  ? <>Ya tienes una conexión activa. <span>Completa tu configuración P2P.</span></>
+                  : <>Conecta Binance y Bybit. <span>Tu historial se actualiza automáticamente.</span></>}
+            </h2>
             <p>
-              Vincula una o ambas APIs en modo de solo lectura. JJXCAPITAL importa las órdenes P2P completadas desde el momento de conexión y las organiza en tus operaciones.
+              {bothExchangesConnected
+                ? "Las dos APIs están vinculadas en modo de solo lectura. Tus órdenes P2P completadas se incorporan automáticamente a tus operaciones."
+                : connectedExchangeCount === 1
+                  ? "Una de tus APIs ya está funcionando en modo de solo lectura. Conecta el otro exchange para centralizar tus órdenes P2P completadas en JJXCAPITAL."
+                  : "Vincula una o ambas APIs en modo de solo lectura. JJXCAPITAL importa las órdenes P2P completadas desde el momento de conexión y las organiza en tus operaciones."}
             </p>
-            <div className="dashboard-exchanges-provider-list" aria-label="Exchanges compatibles">
-              <span className="dashboard-exchanges-provider dashboard-exchanges-provider-binance"><b>BN</b> Binance P2P</span>
-              <span className="dashboard-exchanges-provider dashboard-exchanges-provider-bybit"><b>BY</b> Bybit P2P</span>
+            <div className="dashboard-exchanges-provider-list" aria-label="Estado de las conexiones P2P">
+              <span className="dashboard-exchanges-provider dashboard-exchanges-provider-binance">
+                <b>BN</b> Binance P2P
+                {exchangeConnectionsKnown && (
+                  <small className={exchangeConnections.binance ? "dashboard-exchanges-provider-state-connected" : "dashboard-exchanges-provider-state-pending"}>
+                    {exchangeConnections.binance ? "Conectado" : "Pendiente"}
+                  </small>
+                )}
+              </span>
+              <span className="dashboard-exchanges-provider dashboard-exchanges-provider-bybit">
+                <b>BY</b> Bybit P2P
+                {exchangeConnectionsKnown && (
+                  <small className={exchangeConnections.bybit ? "dashboard-exchanges-provider-state-connected" : "dashboard-exchanges-provider-state-pending"}>
+                    {exchangeConnections.bybit ? "Conectado" : "Pendiente"}
+                  </small>
+                )}
+              </span>
               <span className="dashboard-exchanges-readonly"><ShieldCheckIcon aria-hidden="true" /> API de solo lectura</span>
             </div>
           </div>
-          <div className="dashboard-exchanges-promo-action">
-            <span>Sin permisos para operar ni retirar fondos</span>
-            <button type="button" className="dashboard-action dashboard-action-primary" onClick={onOpenProfile}>
-              Configurar conexiones <ArrowRightIcon aria-hidden="true" />
-            </button>
-            <small>Gestiona ambas conexiones desde Mi perfil.</small>
+          <div className={"dashboard-exchanges-promo-action" + (bothExchangesConnected ? " dashboard-exchanges-promo-action-connected" : "")}>
+            {exchangeConnections.loading ? (
+              <div className="dashboard-exchanges-connection-checking" role="status">Comprobando conexiones…</div>
+            ) : bothExchangesConnected ? (
+              <div className="dashboard-exchanges-connected-state" role="status">
+                <div className="dashboard-exchanges-connected-heading">
+                  <CheckCircleIcon aria-hidden="true" />
+                  <strong>Ambas conexiones activas</strong>
+                </div>
+                <span>2 de 2 exchanges conectados</span>
+                <small>Importación automática habilitada. Sin permisos para operar ni retirar fondos.</small>
+              </div>
+            ) : (
+              <>
+                <span>
+                  {exchangeConnections.error
+                    ? "No se pudo verificar el estado de las APIs."
+                    : connectedExchangeCount === 1
+                      ? "1 de 2 exchanges conectado"
+                      : "Sin permisos para operar ni retirar fondos"}
+                </span>
+                <button type="button" className="dashboard-action dashboard-action-primary" onClick={onOpenProfile}>
+                  {connectedExchangeCount === 1 ? "Completar configuración" : "Configurar conexiones"} <ArrowRightIcon aria-hidden="true" />
+                </button>
+                <small>
+                  {exchangeConnections.error
+                    ? "Consulta o configura tus conexiones desde Mi perfil."
+                    : connectedExchangeCount === 1
+                      ? "Conecta el exchange pendiente desde Mi perfil."
+                      : "Gestiona ambas conexiones desde Mi perfil."}
+                </small>
+              </>
+            )}
           </div>
         </section>
 

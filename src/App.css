@@ -2429,3 +2429,81 @@ html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-provider {
 }
 html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-promo-action > span,
 html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-promo-action small { color: #64748b; }
+
+.dashboard-exchanges-provider small {
+  margin-left: 2px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+.dashboard-exchanges-provider-state-connected {
+  color: #7ed7b2;
+  background: rgba(16,185,129,.12);
+}
+.dashboard-exchanges-provider-state-pending {
+  color: #f4c36c;
+  background: rgba(245,158,11,.12);
+}
+.dashboard-exchanges-connected-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+}
+.dashboard-exchanges-connected-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dff8ed;
+  font-size: 12px;
+}
+.dashboard-exchanges-connected-heading svg {
+  width: 19px;
+  height: 19px;
+  color: #45c995;
+}
+.dashboard-exchanges-connected-state > span {
+  padding: 6px 10px;
+  border: 1px solid rgba(52,211,153,.2);
+  border-radius: 999px;
+  color: #85dfbb;
+  background: rgba(16,185,129,.09);
+  font-size: 10px;
+  font-weight: 800;
+}
+.dashboard-exchanges-connected-state > small {
+  color: #a8b5c8;
+  font-size: 9px;
+  line-height: 1.55;
+}
+.dashboard-exchanges-connection-checking {
+  color: #a8b5c8;
+  font-size: 10px;
+}
+@media (max-width: 820px) {
+  .dashboard-exchanges-promo-action-connected {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-provider-state-connected {
+  color: #087c57;
+  background: rgba(16,185,129,.1);
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-provider-state-pending {
+  color: #9a5a08;
+  background: rgba(245,158,11,.12);
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-connected-heading { color: #1d3c33; }
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-connected-heading svg { color: #0f9b69; }
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-connected-state > span {
+  border-color: rgba(16,185,129,.22);
+  color: #087c57;
+  background: rgba(16,185,129,.08);
+}
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-connected-state > small,
+html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-connection-checking { color: #64748b; }
