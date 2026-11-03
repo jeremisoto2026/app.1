@@ -33,8 +33,8 @@ const features = [
     icon: FaMoneyBillWave,
     title: "Operaciones bajo control",
     description:
-      "Importa órdenes P2P completadas de Binance y registra también tus operaciones con sus datos claramente identificados.",
-    tag: "BINANCE P2P + REGISTRO",
+      "Importa automáticamente órdenes P2P completadas de Binance y Bybit, y organiza también tus operaciones manuales.",
+    tag: "BINANCE + BYBIT P2P",
   },
   {
     number: "02",
@@ -137,14 +137,14 @@ const MainApp = () => {
                 GESTIÓN DE OPERACIONES CRIPTO
               </div>
               <h1>
-                Binance P2P.
+                Binance + Bybit.
                 <br />
-                <span>Bajo tu control.</span>
+                <span>P2P bajo tu control.</span>
                 <br />
                 Con claridad.
               </h1>
               <p className="landing-lead">
-                JJXCAPITAL importa automáticamente tus nuevas órdenes P2P completadas mediante una API de solo lectura y las organiza junto a tus sesiones de arbitraje.
+                Conecta Binance P2P y Bybit P2P con APIs de solo lectura. JJXCAPITAL importa automáticamente las órdenes completadas desde el momento de conexión y las organiza junto a tus sesiones de arbitraje.
               </p>
 
               <div className="landing-hero-actions">
@@ -167,9 +167,9 @@ const MainApp = () => {
               </div>
 
               <div className="landing-assurances">
-                <span><FaCheck aria-hidden="true" /> Sin permisos para operar</span>
-                <span><FaCheck aria-hidden="true" /> Sin permisos de retirada</span>
-                <span><FaCheck aria-hidden="true" /> Historial organizado</span>
+                <span><FaCheck aria-hidden="true" /> Binance y Bybit P2P</span>
+                <span><FaCheck aria-hidden="true" /> APIs de solo lectura</span>
+                <span><FaCheck aria-hidden="true" /> Importación automática</span>
               </div>
             </div>
 
@@ -218,43 +218,57 @@ const MainApp = () => {
             </div>
           </section>
 
-          <section className="landing-binance" aria-labelledby="landing-binance-title">
+          <section className="landing-binance landing-exchanges" aria-labelledby="landing-exchanges-title">
             <div className="landing-binance-copy">
-              <span className="landing-eyebrow"><span className="eyebrow-line" /> INTEGRACIÓN BINANCE P2P</span>
-              <h2 id="landing-binance-title">Tus órdenes, <span>en su sitio.</span></h2>
+              <span className="landing-eyebrow"><span className="eyebrow-line" /> INTEGRACIONES BINANCE + BYBIT P2P</span>
+              <h2 id="landing-exchanges-title">Tus exchanges, <span>en automático.</span></h2>
               <p>
-                Conecta una API limitada a consulta. Mientras usas JJXCAPITAL, la plataforma comprueba nuevas órdenes completadas y las incorpora a tu historial para que puedas analizarlas.
+                Conecta Binance y/o Bybit mediante APIs limitadas a consulta. JJXCAPITAL comprueba las órdenes P2P completadas y las incorpora a tu historial desde el momento en que conectas cada API.
               </p>
               <ul className="landing-binance-assurances">
-                <li><FaCheck aria-hidden="true" /><span>Importación automática de órdenes completadas desde que conectas la API.</span></li>
-                <li><FaCheck aria-hidden="true" /><span>La clave no necesita permisos para crear operaciones ni retirar fondos.</span></li>
-                <li><FaCheck aria-hidden="true" /><span>Los registros se mantienen dentro de tu cuenta de JJXCAPITAL.</span></li>
+                <li><FaCheck aria-hidden="true" /><span>Importación automática de nuevas órdenes P2P completadas de Binance y Bybit.</span></li>
+                <li><FaCheck aria-hidden="true" /><span>Permisos de solo lectura: la API no puede crear órdenes, realizar pagos ni liberar activos.</span></li>
+                <li><FaCheck aria-hidden="true" /><span>Las operaciones quedan organizadas en tu historial y pueden vincularse a sesiones compatibles.</span></li>
               </ul>
               <button className="landing-button landing-button-secondary landing-binance-cta" type="button" onClick={() => openAuth("register")}>
-                Conocer la plataforma <FaArrowRight aria-hidden="true" />
+                Crear cuenta y conectar <FaArrowRight aria-hidden="true" />
               </button>
             </div>
 
-            <div className="landing-binance-visual" aria-label="Vista ilustrativa del flujo de sincronización P2P">
+            <div className="landing-binance-visual" aria-label="Vista ilustrativa de las integraciones Binance y Bybit P2P">
               <div className="binance-card-glow" aria-hidden="true" />
-              <div className="binance-card">
-                <div className="binance-card-header">
-                  <div className="binance-provider-icon"><FaSyncAlt aria-hidden="true" /></div>
-                  <div className="binance-provider-copy"><strong>Binance P2P</strong><span>Conexión de historial</span></div>
+              <div className="binance-card exchange-promo-card">
+                <div className="exchange-promo-heading">
+                  <div>
+                    <span>CONEXIONES P2P</span>
+                    <strong>Dos exchanges. Un historial.</strong>
+                  </div>
                   <span className="binance-readonly-pill"><FaKey aria-hidden="true" /> Solo lectura</span>
                 </div>
-                <div className="binance-card-divider" />
-                <div className="binance-flow-heading"><span>FLUJO DE SINCRONIZACIÓN</span><span>3 pasos</span></div>
-                <div className="binance-flow">
-                  <div className="binance-flow-step"><span className="binance-flow-index"><FaKey aria-hidden="true" /></span><span><strong>Conectas tu API</strong><small>Permisos de consulta</small></span><FaCheck className="binance-flow-check" aria-hidden="true" /></div>
-                  <div className="binance-flow-connector" aria-hidden="true" />
-                  <div className="binance-flow-step"><span className="binance-flow-index"><FaSyncAlt aria-hidden="true" /></span><span><strong>Se importan las nuevas órdenes</strong><small>Solo órdenes P2P completadas</small></span><FaCheck className="binance-flow-check" aria-hidden="true" /></div>
-                  <div className="binance-flow-connector" aria-hidden="true" />
-                  <div className="binance-flow-step"><span className="binance-flow-index"><FaChartLine aria-hidden="true" /></span><span><strong>Revisas y analizas</strong><small>Desde tu historial JJXCAPITAL</small></span><FaArrowRight className="binance-flow-arrow" aria-hidden="true" /></div>
+                <div className="exchange-provider-grid">
+                  <div className="exchange-provider-tile exchange-provider-tile-binance">
+                    <span className="exchange-provider-monogram">BN</span>
+                    <span className="exchange-provider-name"><strong>Binance</strong><small>Binance P2P</small></span>
+                    <FaCheck className="exchange-provider-check" aria-hidden="true" />
+                  </div>
+                  <div className="exchange-provider-tile exchange-provider-tile-bybit">
+                    <span className="exchange-provider-monogram">BY</span>
+                    <span className="exchange-provider-name"><strong>Bybit</strong><small>Bybit P2P</small></span>
+                    <FaCheck className="exchange-provider-check" aria-hidden="true" />
+                  </div>
                 </div>
-                <div className="binance-card-footer"><FaShieldAlt aria-hidden="true" /><span>La API no puede operar ni retirar fondos</span></div>
+                <div className="binance-card-divider" />
+                <div className="binance-flow-heading"><span>ASÍ FUNCIONA</span><span>3 pasos</span></div>
+                <div className="binance-flow">
+                  <div className="binance-flow-step"><span className="binance-flow-index"><FaKey aria-hidden="true" /></span><span><strong>Conectas tus APIs</strong><small>Permisos de consulta únicamente</small></span><FaCheck className="binance-flow-check" aria-hidden="true" /></div>
+                  <div className="binance-flow-connector" aria-hidden="true" />
+                  <div className="binance-flow-step"><span className="binance-flow-index"><FaSyncAlt aria-hidden="true" /></span><span><strong>Se importan nuevas órdenes</strong><small>Solo operaciones P2P completadas</small></span><FaCheck className="binance-flow-check" aria-hidden="true" /></div>
+                  <div className="binance-flow-connector" aria-hidden="true" />
+                  <div className="binance-flow-step"><span className="binance-flow-index"><FaChartLine aria-hidden="true" /></span><span><strong>Analizas tu actividad</strong><small>Operaciones, sesiones y resultados</small></span><FaArrowRight className="binance-flow-arrow" aria-hidden="true" /></div>
+                </div>
+                <div className="binance-card-footer"><FaShieldAlt aria-hidden="true" /><span>Las APIs no pueden operar ni retirar fondos</span></div>
               </div>
-              <p className="binance-visual-caption">La sincronización requiere conectar tu cuenta de Binance.</p>
+              <p className="binance-visual-caption">La importación comienza al conectar cada API en tu perfil.</p>
             </div>
           </section>
 
@@ -309,7 +323,7 @@ const MainApp = () => {
               <button className="landing-button landing-button-primary" type="button" onClick={() => openAuth("register")}>
                 Crear cuenta gratis <FaArrowRight aria-hidden="true" />
               </button>
-              <span>La conexión de Binance solo sincroniza historial; nunca ejecuta órdenes.</span>
+              <span>Las conexiones de Binance y Bybit solo consultan historial; nunca ejecutan órdenes ni retiran fondos.</span>
             </div>
           </section>
 
