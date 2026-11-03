@@ -2507,3 +2507,440 @@ html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-connected-state > s
 }
 html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-connected-state > small,
 html[data-jjx-theme="light"] .app-shell .dashboard-exchanges-connection-checking { color: #64748b; }
+
+
+/* JJXCAPITAL LIGHT THEME · porcelain, slate and soft indigo */
+html[data-jjx-theme="light"] {
+  color-scheme: light;
+  --jjx-bg: #e9edf4;
+  --jjx-bg-raised: #f0f3f8;
+  --jjx-panel: #f8faff;
+  --jjx-panel-raised: #eef2f8;
+  --jjx-border: rgba(78, 94, 123, .18);
+  --jjx-border-strong: rgba(91, 79, 183, .30);
+  --jjx-text: #1b2740;
+  --jjx-muted: #53627a;
+  --jjx-subtle: #7a879b;
+  --jjx-purple: #5c52bd;
+  --jjx-blue: #3977bd;
+  --jjx-teal: #168b82;
+  --jjx-success: #16845a;
+  --jjx-danger: #bd3d50;
+}
+
+html[data-jjx-theme="light"] body {
+  color: #1b2740;
+  background: #e9edf4 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell {
+  color: var(--jjx-text) !important;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(112, 101, 198, .105), transparent 31%),
+    radial-gradient(ellipse at 96% 17%, rgba(74, 132, 184, .085), transparent 29%),
+    linear-gradient(180deg, #eef1f7 0%, #e8edf4 52%, #edf0f6 100%) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .app-content,
+html[data-jjx-theme="light"] .app-shell .jjx-page,
+html[data-jjx-theme="light"] .app-shell .profile-page {
+  color: var(--jjx-text) !important;
+  background: transparent !important;
+}
+
+/* Replace inherited dark utility surfaces with a layered cool-neutral scale. */
+html[data-jjx-theme="light"] .app-shell :is(
+  [class*="bg-black"],
+  [class*="bg-gray-9"],
+  [class*="bg-slate-9"],
+  [class*="bg-[#0"],
+  [class*="bg-[#1"]
+) {
+  background-color: #f1f4f9 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(
+  [class*="bg-gray-8"],
+  [class*="bg-slate-8"],
+  [class*="bg-gray-7"],
+  [class*="bg-slate-7"]
+) {
+  background-color: #e9eef5 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell [class*="bg-white/"] {
+  background-color: #edf1f7 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell [class~="bg-white"] {
+  background-color: #fafbfe !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(
+  [class*="text-white"],
+  [class*="text-gray-1"],
+  [class*="text-slate-1"],
+  [class*="text-gray-2"],
+  [class*="text-slate-2"]
+) {
+  color: #1b2740 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(
+  [class*="text-gray-3"],
+  [class*="text-slate-3"],
+  [class*="text-gray-4"],
+  [class*="text-slate-4"],
+  [class*="text-gray-5"],
+  [class*="text-slate-5"],
+  [class*="text-gray-6"],
+  [class*="text-slate-6"],
+  [class*="text-gray-7"],
+  [class*="text-slate-7"]
+) {
+  color: #596981 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(
+  [class*="border-gray-"],
+  [class*="border-slate-"],
+  [class*="border-white"],
+  [class*="border-zinc-"]
+) {
+  border-color: #d4dce8 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(input, textarea, select, option) {
+  color: #1b2740 !important;
+  border-color: #cbd5e3 !important;
+  background-color: #f9fbfe !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(input, textarea, select)::placeholder {
+  color: #7c899d !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(input, textarea, select):focus {
+  border-color: #7469d0 !important;
+  box-shadow: 0 0 0 3px rgba(105, 94, 198, .14) !important;
+}
+
+/* Workspace navigation: translucent glass, not a flat white strip. */
+html[data-jjx-theme="light"] .app-shell nav[aria-label="Navegación principal"] {
+  border-color: rgba(116, 130, 157, .23) !important;
+  background: rgba(246, 248, 252, .86) !important;
+  box-shadow: 0 12px 34px rgba(38, 54, 83, .12), inset 0 1px rgba(255,255,255,.8) !important;
+  backdrop-filter: blur(22px) saturate(145%);
+}
+
+html[data-jjx-theme="light"] .app-shell nav[aria-label="Navegación principal"] button {
+  color: #63718a !important;
+}
+
+html[data-jjx-theme="light"] .app-shell nav[aria-label="Navegación principal"] button:hover {
+  color: #3e4d68 !important;
+  background: rgba(106, 98, 190, .075) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell nav[aria-label="Navegación principal"] button[aria-current="page"],
+html[data-jjx-theme="light"] .app-shell nav[aria-label="Navegación principal"] button[data-state="active"] {
+  color: #4c43a7 !important;
+  background: linear-gradient(120deg, #e8e7fb, #e6effa) !important;
+  box-shadow: inset 0 0 0 1px rgba(102, 94, 186, .13);
+}
+
+html[data-jjx-theme="light"] .app-shell nav[aria-label="Navegación principal"] button[aria-current="page"] svg {
+  color: #5b52bd !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-topbar {
+  border-bottom-color: rgba(106, 122, 150, .2) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-brand strong {
+  color: #1d2a42 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-brand small {
+  color: #75839a !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-profile-button {
+  color: #465671 !important;
+  border-color: #d2dbe8 !important;
+  background: rgba(250, 251, 254, .8) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-profile-button:hover {
+  border-color: #b8b2e2 !important;
+  background: #f0effb !important;
+}
+
+/* Dashboard: separate the canvas, metric tiles and analysis panels. */
+html[data-jjx-theme="light"] .app-shell .dashboard-welcome h1,
+html[data-jjx-theme="light"] .app-shell .dashboard-state,
+html[data-jjx-theme="light"] .app-shell .dashboard-state h2 {
+  color: #1b2740 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-welcome p,
+html[data-jjx-theme="light"] .app-shell .dashboard-state > p {
+  color: #596981 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-eyebrow,
+html[data-jjx-theme="light"] .app-shell .dashboard-panel-kicker,
+html[data-jjx-theme="light"] .app-shell .dashboard-pro-promo-kicker {
+  color: #5d53ba !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-metric-card {
+  border-color: #d6deea !important;
+  background: linear-gradient(148deg, #fbfcff 0%, #f2f5fa 100%) !important;
+  box-shadow: 0 9px 25px rgba(42, 57, 84, .065), inset 0 1px rgba(255,255,255,.9) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-metric-featured {
+  border-color: rgba(113, 103, 197, .25) !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(113, 103, 197, .11), transparent 55%),
+    linear-gradient(145deg, #f5f4ff, #edf2fa) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-panel {
+  border-color: #d7dfeb !important;
+  background: linear-gradient(145deg, #f8faff 0%, #eef2f8 100%) !important;
+  box-shadow: 0 10px 28px rgba(42, 57, 84, .055), inset 0 1px rgba(255,255,255,.8) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-panel-heading,
+html[data-jjx-theme="light"] .app-shell .dashboard-panel-note,
+html[data-jjx-theme="light"] .app-shell .dashboard-guidance-item {
+  border-color: #dfe5ef !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-pro-promo {
+  border-color: #d1cdef !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(109, 96, 196, .12), transparent 54%),
+    linear-gradient(125deg, #f7f6ff 0%, #edf3fb 100%) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-pro-promo h2,
+html[data-jjx-theme="light"] .app-shell .dashboard-pro-promo-price strong {
+  color: #202b47 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-pro-promo-main > p,
+html[data-jjx-theme="light"] .app-shell .dashboard-pro-promo-benefits span,
+html[data-jjx-theme="light"] .app-shell .dashboard-pro-promo-price span {
+  color: #5c6981 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-disclaimer {
+  border-color: #d8e0eb !important;
+  background: rgba(244, 247, 251, .82) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .dashboard-disclaimer p {
+  color: #69778d !important;
+}
+
+/* Shared cards and inset surfaces. */
+html[data-jjx-theme="light"] .app-shell :is(.jjx-panel, [role="dialog"], .jjx-edit-dialog) {
+  color: #1b2740 !important;
+  border-color: #d5deea !important;
+  background: linear-gradient(145deg, #fafbfe 0%, #f1f4f9 100%) !important;
+  box-shadow: 0 12px 32px rgba(38, 54, 82, .075), inset 0 1px rgba(255,255,255,.85) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .jjx-inset,
+html[data-jjx-theme="light"] .app-shell .history-empty-state {
+  color: #26344d !important;
+  border-color: #dce3ed !important;
+  background: linear-gradient(145deg, #eef2f8, #e9eef5) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .jjx-eyebrow,
+html[data-jjx-theme="light"] .app-shell .jjx-field-label {
+  color: #5d53b5 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .jjx-button-secondary,
+html[data-jjx-theme="light"] .app-shell .dashboard-action-secondary {
+  color: #40506a !important;
+  border-color: #cbd5e3 !important;
+  background: linear-gradient(145deg, #fbfcfe, #f0f3f8) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .jjx-button-secondary:hover,
+html[data-jjx-theme="light"] .app-shell .dashboard-action-secondary:hover {
+  color: #443b9e !important;
+  border-color: #b8b1df !important;
+  background: #efeffb !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(.dashboard-action-primary, .jjx-button-primary, button[class*="bg-gradient-to-r"], a[class*="bg-gradient-to-r"]) {
+  color: #fff !important;
+  border-color: rgba(88, 81, 174, .28) !important;
+  box-shadow: 0 8px 20px rgba(73, 83, 166, .18) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(.dashboard-action-primary, .jjx-button-primary, button[class*="bg-gradient-to-r"], a[class*="bg-gradient-to-r"]) [class*="text-white"],
+html[data-jjx-theme="light"] .app-shell :is(.dashboard-action-primary, .jjx-button-primary, button[class*="bg-gradient-to-r"], a[class*="bg-gradient-to-r"]) svg {
+  color: #fff !important;
+}
+
+html[data-jjx-theme="light"] .app-shell table {
+  color: #27354d;
+  border-color: #d6deea !important;
+}
+
+html[data-jjx-theme="light"] .app-shell table thead {
+  background: #e9eef6;
+}
+
+html[data-jjx-theme="light"] .app-shell table th {
+  color: #52617a !important;
+  border-color: #d6deea !important;
+}
+
+html[data-jjx-theme="light"] .app-shell table td {
+  color: #29374f !important;
+  border-color: #e0e6ef !important;
+}
+
+html[data-jjx-theme="light"] .app-shell table tbody tr:nth-child(even) {
+  background: rgba(222, 229, 239, .28);
+}
+
+html[data-jjx-theme="light"] .app-shell table tbody tr:hover {
+  background: rgba(101, 93, 186, .055);
+}
+
+/* Profile: porcelain account hero, calm cards and a lavender Pro surface. */
+html[data-jjx-theme="light"] .app-shell .profile-page {
+  background:
+    radial-gradient(ellipse at 88% 0%, rgba(107, 97, 195, .09), transparent 32%),
+    radial-gradient(ellipse at 0% 35%, rgba(62, 123, 175, .055), transparent 28%),
+    transparent !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .profile-hero {
+  border-color: #d1d9e8 !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(101, 92, 190, .10), transparent 48%),
+    linear-gradient(115deg, #f9f9ff 0%, #edf3fb 62%, #f0f2fa 100%) !important;
+  box-shadow: 0 15px 34px rgba(43, 58, 86, .08), inset 0 1px #fff !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page :is(.profile-account-section, .profile-surface, .profile-usage-card) {
+  border-color: #d7dfeb !important;
+  background: linear-gradient(145deg, #fbfcff, #f0f4f9) !important;
+  box-shadow: 0 9px 25px rgba(43, 58, 86, .055), inset 0 1px rgba(255,255,255,.9) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .profile-plan-card-free {
+  border-color: #d8dfeb !important;
+  background: linear-gradient(145deg, #f7f9fc, #edf1f7) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .profile-plan-card-pro {
+  border-color: #cbc6ec !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(107, 96, 195, .13), transparent 54%),
+    linear-gradient(145deg, #f7f6ff, #edf2fb) !important;
+  box-shadow: 0 12px 30px rgba(68, 61, 133, .09), inset 0 1px rgba(255,255,255,.9) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .profile-hero :is(.profile-user-name, .profile-hero-plan strong),
+html[data-jjx-theme="light"] .app-shell .profile-page :is(.profile-page-heading h1, .profile-section-heading h2, .profile-card-heading h2, .profile-payment-heading h3, .profile-plan-card h3) {
+  color: #1d2a42 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page :is(.profile-page-subtitle, .profile-user-email, .profile-member-since, .profile-mini-label, .profile-section-heading p, .profile-section-aside, .profile-usage-caption, .profile-usage-footnote, .profile-payment-heading p, .profile-card-heading p, .profile-body-copy, .profile-footer-note, .profile-plan-card p, .profile-plan-card li) {
+  color: #596981 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .profile-details-grid .jjx-inset,
+html[data-jjx-theme="light"] .app-shell .profile-page :is(.profile-payment-method, .payment-history-tools, .payment-history-scroll, .profile-usage-footnote, .profile-footer-note) {
+  border-color: #dbe2ed !important;
+  background: linear-gradient(145deg, #eef2f8, #e9eef5) !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .profile-plan-card-pro :is(h3, p, li) {
+  color: #293650 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .payment-history-row {
+  border-color: #dfe5ef !important;
+  background: #f8faff !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .payment-history-row:hover {
+  background: #f0effb !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-page .p2p-sync-card {
+  border-color: #d3dce9 !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(112, 124, 170, .08), transparent 48%),
+    linear-gradient(145deg, #f8faff, #edf2f8) !important;
+  box-shadow: 0 12px 28px rgba(42, 57, 84, .07), inset 0 1px rgba(255,255,255,.9) !important;
+}
+
+/* Connection badges and plan states keep their semantic color in the light palette. */
+html[data-jjx-theme="light"] .app-shell :is(.profile-plan-status-pro, .profile-billing-status-active, .jjx-status) {
+  color: #176b49 !important;
+  border-color: #bfe4d1 !important;
+  background: #eaf7f0 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(.profile-plan-status-free, .profile-billing-status-free) {
+  color: #52627a !important;
+  border-color: #d6deea !important;
+  background: #edf1f6 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(.profile-billing-status-pending, .profile-alert-warning) {
+  color: #805600 !important;
+  border-color: #ecd9a8 !important;
+  background: #fbf5e6 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell .profile-alert-error {
+  color: #a12e3b !important;
+  border-color: #efc4ca !important;
+  background: #fff1f3 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(.text-emerald-100, .text-emerald-200, .text-emerald-300) {
+  color: #176b49 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(.text-violet-200, .text-violet-300, .text-purple-200, .text-purple-300, .text-indigo-200, .text-indigo-300) {
+  color: #5549ad !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(.text-amber-100, .text-amber-200) {
+  color: #805600 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell :is(.text-rose-200, .text-rose-300) {
+  color: #a12e3b !important;
+}
+
+html[data-jjx-theme="light"] .app-shell ::-webkit-scrollbar-thumb {
+  background: #bdc8d8 !important;
+}
+
+html[data-jjx-theme="light"] .app-shell ::-webkit-scrollbar-thumb:hover {
+  background: #9eabc0 !important;
+}
+
+html[data-jjx-theme="light"] .jjx-theme-toggle {
+  color: #4c43a7 !important;
+  border-color: #ccd5e4 !important;
+  background: rgba(248, 250, 254, .92) !important;
+  box-shadow: 0 8px 22px rgba(39, 54, 83, .12) !important;
+}
