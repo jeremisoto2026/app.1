@@ -1,0 +1,61 @@
+name: Restore complete Bybit Preview sources
+
+on:
+  push:
+    branches:
+      - recovery/bybit-complete-source
+    paths:
+      - restore/READY
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout recovery payload
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: payload
+
+      - name: Checkout isolated Bybit branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: feat/bybit-p2p-preview-isolated
+          path: target
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restore full sources and apply the verified patch
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat ../payload/restore/chunk-*.txt > /tmp/bybit-restore.patch.gz.b64
+          base64 --decode /tmp/bybit-restore.patch.gz.b64 | gzip -d > /tmp/bybit-restore.patch
+
+          git checkout a97971e0e3897e77bcb1b7f0e6d381e3c7fa3ade -- \
+            .github/workflows/binance-p2p-background-sync.yml \
+            docs/bybit-p2p-preview.md \
+            lib/bybit-p2p-api.js lib/payments.js \
+            src/components/ArbitrageSessions.js \
+            src/components/BinanceP2PAutoSync.js \
+            src/components/BybitP2PSyncCard.js \
+            src/components/Dashboard.js src/components/History.js \
+            src/components/Operations.js src/components/Profile.js \
+            src/utils/bybitP2P.test.js
+          rm -f lib/bybit-p2p-scheduler.js src/utils/bybitP2POperations.js
+
+          git apply --check /tmp/bybit-restore.patch
+          git apply /tmp/bybit-restore.patch
+
+          npm install --no-audit --no-fund
+          CI=true npm test -- --watchAll=false --runInBand
+          npm run build
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: restore full Bybit integration sources"
+          git push origin HEAD:refs/heads/feat/bybit-p2p-preview-isolated
