@@ -348,13 +348,23 @@ async function syncBinanceP2P(req, res) {
 
     const existingOrderDocuments = await findExistingOrderDocuments(claims.sub, assignedCandidates);
     const fresh = assignedCandidates.filter((item) => !existingOrderDocuments.has(item.order_id));
-    const writes = fresh.map((operation) => ({
+    const remainingOrderQuota = proActive
+      ? fresh.length
+      : Math.max(0, FREE_PLAN_LIMITS.orders - currentOrderUsage);
+    const freshToImport = fresh.slice(0, remainingOrderQuota);
+    const quotaBlocked = freshToImport.length < fresh.length;
+    const writes = freshToImport.map((operation) => ({
       update: {
         name: documentName(operationsPathFor(claims.sub) + "/" + deterministicId(operation.order_id)),
         fields: toFields(operation),
       },
       currentDocument: { exists: false },
     }));
+    if (freshToImport.length) {
+      writes.push(createWrite(userPath, {
+        registeredOrdersUsed: currentOrderUsage + freshToImport.length,
+      }, userProfile.updateTime ? { updateTime: userProfile.updateTime } : { exists: true }));
+    }
 
     // If a previous version imported this Binance order without a session, attach it now
     // only when the session match is unique and the record is an existing Binance import.
