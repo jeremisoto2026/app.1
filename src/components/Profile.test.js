@@ -94,13 +94,13 @@ describe("Profile", () => {
 
     expect(container.textContent).toContain("Información del perfil");
     expect(container.textContent).toContain("Uso de tu cuenta");
-    expect(container.textContent).toContain("Movimientos registrados");
+    expect(container.textContent).toContain("Arbitrajes creados");
     expect(container.textContent).toContain("2");
     expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
     expect(container.textContent).toContain("TIPO DE PLAN ACTUAL");
-    expect(container.textContent).toContain("Órdenes / arbitrajes");
+    expect(container.textContent).toContain("Órdenes registradas");
     expect(container.textContent).toContain("Máximo 300");
-    expect(container.textContent).toContain("150 máximo");
+    expect(container.textContent).toContain("Máximo 150");
     expect(container.textContent).toContain("Máximo 50");
     expect(container.textContent).toContain("Método de pago");
     expect(container.textContent).toContain("Historial de pagos");
@@ -128,7 +128,7 @@ describe("Profile", () => {
     });
 
     expect(container.textContent).toContain("Información del perfil");
-    expect(container.textContent).toContain("no se pudo consultar el contador de movimientos");
+    expect(container.textContent).toContain("no se pudo consultar el contador de órdenes");
     expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
     expect(container.textContent).toContain("Método de pago");
     expect(container.textContent).toContain("Historial de pagos");
