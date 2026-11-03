@@ -565,7 +565,7 @@ export default function Profile() {
                   <span className="jjx-eyebrow">PLAN AMPLIADO</span>
                   <h3 className="mt-4 text-xl font-semibold text-white">JJXCAPITAL Pro</h3>
                   <p className="mt-1 text-3xl font-semibold tracking-tight text-white">15 USDT <span className="text-xs font-medium text-slate-500">/ 30 días</span></p>
-                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Pago de 15 USDT por 30 días. Órdenes registradas, arbitrajes creados y exportaciones ilimitados durante la suscripción activa.</p>
+                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Pago de 15 USDT por 30 días. Órdenes registradas, arbitrajes creados y exportaciones sin límites durante la suscripción activa.</p>
                   <ul className="mt-5 space-y-3 text-sm text-slate-300">
                     <li className="flex items-start gap-2"><BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Órdenes y arbitrajes ilimitados</li>
                     <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Órdenes registradas y exportaciones ilimitadas</li>
