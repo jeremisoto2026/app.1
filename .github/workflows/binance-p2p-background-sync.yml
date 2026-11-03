@@ -41,4 +41,41 @@ jobs:
               -H "X-JJXCapital-Scheduler: binance-p2p" \
               -H "Content-Type: application/json" \
               --data '{}')"
-            echo "$respon¶»§q«^
+            echo "$response"
+
+            success="$(printf '%s' "$response" | jq --raw-output '.success // false')"
+            failed="$(printf '%s' "$response" | jq --raw-output '.failed // 0')"
+            has_more="$(printf '%s' "$response" | jq --raw-output '.hasMore // false')"
+
+            if [[ "$success" != "true" ]]; then
+              echo "::warning::At least one Binance P2P account could not be synchronized in batch $batch."
+            fi
+            if [[ "$has_more" != "true" ]]; then
+              break
+            fi
+            if [[ "$failed" != "0" ]]; then
+              echo "::warning::Continuing to the next batch despite a partial account failure."
+            fi
+          done
+
+          # Run the same protected background batches for Bybit P2P.
+          for batch in 1 2 3 4 5 6 7 8; do
+            response="$(curl --fail --silent --show-error --max-time 65 \
+              --retry 2 --retry-all-errors --retry-delay 2 \
+              -X POST "$SYNC_ENDPOINT?provider=bybit" \
+              -H "Authorization: Bearer $oidc_token" \
+              -H "X-JJXCapital-Scheduler: bybit-p2p" \
+              -H "Content-Type: application/json" \
+              --data '{}')"
+            echo "$response"
+
+            success="$(printf '%s' "$response" | jq --raw-output '.success // false')"
+            has_more="$(printf '%s' "$response" | jq --raw-output '.hasMore // false')"
+
+            if [[ "$success" != "true" ]]; then
+              echo "::warning::Bybit P2P background synchronization reported a partial failure in batch $batch."
+            fi
+            if [[ "$has_more" != "true" ]]; then
+              break
+            fi
+          done
