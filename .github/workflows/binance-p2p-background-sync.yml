@@ -1,4 +1,4 @@
-name: Binance P2P background synchronization
+name: P2P background synchronization
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: binance-p2p-background-sync
+  group: p2p-background-sync
   cancel-in-progress: false
 
 permissions:
@@ -41,19 +41,4 @@ jobs:
               -H "X-JJXCapital-Scheduler: binance-p2p" \
               -H "Content-Type: application/json" \
               --data '{}')"
-            echo "$response"
-
-            success="$(printf '%s' "$response" | jq --raw-output '.success // false')"
-            failed="$(printf '%s' "$response" | jq --raw-output '.failed // 0')"
-            has_more="$(printf '%s' "$response" | jq --raw-output '.hasMore // false')"
-
-            if [[ "$success" != "true" ]]; then
-              echo "::warning::At least one Binance P2P account could not be synchronized in batch $batch."
-            fi
-            if [[ "$has_more" != "true" ]]; then
-              break
-            fi
-            if [[ "$failed" != "0" ]]; then
-              echo "::warning::Continuing to the next batch despite a partial account failure."
-            fi
-          done
+            echo "$respon¶»§q«^
