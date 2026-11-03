@@ -161,20 +161,23 @@ export default function BybitP2PSyncCard() {
   };
 
   return (
-    <section className="profile-section jjx-panel p-6 sm:p-7 space-y-5" aria-labelledby="bybit-p2p-sync-heading">
-      <div className="profile-card-heading">
-        <span className="jjx-icon-chip"><LinkIcon className="h-5 w-5" aria-hidden="true" /></span>
-        <div>
-          <span className="jjx-eyebrow">INTEGRACIONES · {status?.previewMode ? "PREVIEW" : "BYBIT P2P"}</span>
-          <h2 id="bybit-p2p-sync-heading">Sincronización Bybit P2P</h2>
-          <p>Conecta Bybit para sincronizar tus compras y ventas P2P completadas con JJXCAPITAL.</p>
-          <p className="mt-1 text-sm text-slate-500">
+    <section className="profile-section jjx-panel p-6 sm:p-7 space-y-5 p2p-sync-card p2p-sync-card-bybit" aria-labelledby="bybit-p2p-sync-heading">
+      <header className="p2p-sync-card-header">
+        <span className="p2p-sync-provider-mark p2p-sync-provider-mark-bybit" aria-hidden="true">BY</span>
+        <div className="p2p-sync-card-heading">
+          <span className="p2p-sync-card-eyebrow">EXCHANGE · INTEGRACIÓN P2P{status?.previewMode ? " · PREVIEW" : ""}</span>
+          <h2 id="bybit-p2p-sync-heading" className="p2p-sync-card-title">Bybit <span>P2P</span></h2>
+          <p>Importa automáticamente tus compras y ventas P2P completadas a JJXCAPITAL.</p>
+          <p className="p2p-sync-card-description">
             {status?.previewMode
               ? "Estás en Preview: las operaciones se mantienen aisladas de tus datos financieros de Producción."
-              : "Las operaciones se guardan en tu historial y participan en los cálculos y sesiones de JJXCAPITAL."}
+              : "Las órdenes importadas se incorporan a tu historial y participan en los cálculos y sesiones de JJXCAPITAL."}
           </p>
         </div>
-      </div>
+        <span className="p2p-sync-provider-badge p2p-sync-provider-badge-bybit">
+          <ShieldCheckIcon aria-hidden="true" /> Solo lectura
+        </span>
+      </header>
 
       <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
         <div className="flex items-start gap-3">
