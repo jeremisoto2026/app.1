@@ -66,11 +66,15 @@ Las operaciones y los datos privados se aíslan por UID de Firebase. Las reglas 
 
 ### Entornos Preview y Producción
 
-Preview debe utilizar un proyecto Firebase independiente de Producción (jjxcapital-2), variables de entorno separadas y claves de cifrado independientes para Binance y Bybit. No se permite que Preview herede silenciosamente las variables genéricas de Producción. Si falta la configuración Firebase de pruebas o apunta al proyecto de Producción, el entorno Preview queda bloqueado.
+Preview y Producción son dos destinos de despliegue de **la misma aplicación**, el mismo repositorio GitHub y el mismo proyecto de Vercel (`app-1`). No son dos aplicaciones distintas ni requieren duplicar el frontend.
 
-La guía para preparar este entorno se encuentra en docs/PREVIEW_FIREBASE_SETUP.md. No se deben copiar al Preview credenciales, claves de cifrado, cuentas de servicio ni datos reales de Producción.
+Los cambios se desarrollan en ramas y se prueban en el despliegue Preview de esa misma aplicación. Para proteger los datos reales, Preview utiliza un proyecto Firebase de pruebas propio (Auth, Firestore y cuenta de servicio), además de variables y claves de cifrado específicas. Así se prueba el mismo código y la misma estructura funcional sin escribir en las cuentas, operaciones o sesiones reales de Producción.
 
-**Regla de publicación:** los cambios se desarrollan y validan en ramas y despliegues Preview. No se fusionan a main ni se publican en Producción hasta completar las comprobaciones correspondientes y revisar el cambio.
+Preview no puede recurrir a las credenciales genéricas de Producción si falta su configuración. Los pagos BEP20 están deshabilitados y la cartera receptora real no se muestra en ese entorno. No se deben introducir API keys ni datos reales en Preview.
+
+La guía para preparar este entorno se encuentra en docs/PREVIEW_FIREBASE_SETUP.md.
+
+**Regla de publicación:** primero se valida en Preview; después de revisar y aprobar las pruebas, se integra el cambio en `main` para su publicación en Producción. Nunca se fusiona ni se publica automáticamente una mejora solo por haber generado un Preview.
 
 ## Desarrollo local
 
