@@ -6,6 +6,7 @@ import { ArrowDownTrayIcon, PlusIcon, CheckCircleIcon, PlayIcon, TrashIcon, Bolt
 import { calculateArbitrageSessionResult, calculateDashboardMetrics, getAccountingCryptoAmount, getOperationDate } from "../utils/financialCalculations";
 import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { formatCurrencyAmount } from "../utils/numberFormatting";
+import { loadBybitPreviewOperations } from "../utils/bybitP2POperations";
 
 const FIAT_CURRENCIES = ["EUR", "USD", "VES", "COP", "ARS", "MXN", "BRL", "PEN", "CLP", "GBP"];
 const CRYPTO_CURRENCIES = ["USDT", "USDC", "BTC", "ETH", "BNB", "DAI"];
@@ -44,6 +45,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       const records = sessionSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
       records.sort((a, b) => (getOperationDate(b.createdAt)?.getTime() || 0) - (getOperationDate(a.createdAt)?.getTime() || 0));
       const savedOperations = operationSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+      savedOperations.push(...await loadBybitPreviewOperations(user));
       savedOperations.sort((a, b) => (getOperationDate(b.timestamp)?.getTime() || 0) - (getOperationDate(a.timestamp)?.getTime() || 0));
       setSessions(records);
       setOperations(savedOperations);

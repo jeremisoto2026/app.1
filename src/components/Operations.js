@@ -5,6 +5,7 @@ import { db } from '../firebase';
 import { saveOperation } from '../services/database';
 import { calculateOperationAmounts, calculateArbitrageSessionBalances } from '../utils/financialCalculations';
 import { formatCryptoAmount, formatFiatAmount } from '../utils/numberFormatting';
+import { loadBybitPreviewOperations } from '../utils/bybitP2POperations';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -53,6 +54,7 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
         ]);
         const records = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
         const operationRecords = operationsSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+        operationRecords.push(...await loadBybitPreviewOperations(user));
         const active = records.filter(item => item.status === 'active');
         if (!cancelled) {
           setSessions(records);

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./Profile.css";
 import BinanceP2PSyncCard from "./BinanceP2PSyncCard";
+import BybitP2PSyncCard from "./BybitP2PSyncCard";
+import { loadBybitPreviewOperations } from "../utils/bybitP2POperations";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { collection, doc, getDoc, getDocs, onSnapshot } from "firebase/firestore";
@@ -237,7 +239,8 @@ export default function Profile() {
 
       try {
         const operationsSnapshot = await getDocs(collection(db, "users", user.uid, "operations"));
-        if (!cancelled) setOperationCount(operationsSnapshot.size);
+        const previewBybitOperations = await loadBybitPreviewOperations(user);
+        if (!cancelled) setOperationCount(operationsSnapshot.size + previewBybitOperations.length);
       } catch (error) {
         console.error("No se pudo contar el historial:", error);
         if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de movimientos.");
@@ -463,6 +466,7 @@ export default function Profile() {
         </section>
 
         <BinanceP2PSyncCard />
+        <BybitP2PSyncCard />
 
         <section aria-labelledby="profile-usage-heading" className="profile-section space-y-4">
           <div className="profile-section-heading">

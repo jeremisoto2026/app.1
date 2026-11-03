@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { calculateDashboardSummaryMetrics } from "../utils/financialCalculations";
 import { isProSubscriptionActive } from "../utils/planLimits";
 import { formatCurrencyAmount } from "../utils/numberFormatting";
+import { loadBybitPreviewOperations } from "../utils/bybitP2POperations";
 import {
   ArrowDownTrayIcon,
   ArrowRightIcon,
@@ -83,6 +84,7 @@ const Dashboard = ({ onOpenProfile, onOpenOperations, onOpenHistory, onOpenArbit
           id: operationDoc.id,
           ...operationDoc.data(),
         }));
+        operations.push(...await loadBybitPreviewOperations(user));
         let activeCount = 0;
         let sessions = [];
         try {

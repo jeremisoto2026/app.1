@@ -1,6 +1,28 @@
 import { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
+const pollBybitP2P = async (user) => {
+  if (!user?.getIdToken) return;
+  const token = await user.getIdToken();
+  const statusResponse = await fetch("/api/integrations/binance-p2p/status?provider=bybit", {
+    method: "GET",
+    headers: { Authorization: "Bearer " + token },
+    cache: "no-store",
+  });
+  if (!statusResponse.ok) return;
+  const status = await statusResponse.json().catch(() => ({}));
+  if (!status.connected || !status.encryptionConfigured) return;
+  await fetch("/api/integrations/binance-p2p/sync?provider=bybit", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
+    body: "{}",
+    cache: "no-store",
+  });
+};
+
 const pollBinanceP2P = async (user) => {
   if (!user?.getIdToken) return;
   const token = await user.getIdToken();
@@ -34,11 +56,11 @@ export default function BinanceP2PAutoSync() {
     const run = async () => {
       if (stopped || inFlight || document.visibilityState === "hidden") return;
       inFlight = true;
-      try {
-        await pollBinanceP2P(user);
-      } catch {
-        // Background sync is best-effort. The Profile panel surfaces detailed errors
-        // when the user initiates a manual synchronization.
+      try { await pollBinanceP2P(user); } catch {
+        // Keep the other provider independent if Binance is temporarily unavailable.
+      }
+      try { await pollBybitP2P(user); } catch {
+        // Background sync is best-effort; each provider has its own manual status.
       } finally {
         inFlight = false;
       }

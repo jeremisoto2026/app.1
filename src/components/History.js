@@ -31,6 +31,7 @@ import {
 import { format } from 'date-fns';
 import { Label } from "./ui/label";
 import { useAuth } from "../contexts/AuthContext";
+import { loadBybitPreviewOperations } from "../utils/bybitP2POperations";
 import {
   Dialog,
   DialogContent,
@@ -122,6 +123,7 @@ const History = () => {
           id: operationDoc.id,
           ...operationDoc.data(),
         }));
+        data.push(...await loadBybitPreviewOperations(user));
         try {
           const sessionSnapshot = await getDocs(collection(db, "users", user.uid, "sessions"));
           if (!cancelled) setSessions(sessionSnapshot.docs.map(sessionDoc => ({ id: sessionDoc.id, ...sessionDoc.data() })));
@@ -642,28 +644,32 @@ const History = () => {
                 : "bg-red-500/20 text-red-400 border-red-500/30"}>
                 {operation.operation_type || "N/A"}
               </Badge>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => openEditDialog(operation)}
-                aria-label={`Editar operación ${operation.order_id || operation.id}`}
-                title="Editar operación"
-                className="hover:bg-indigo-500/10 text-indigo-300 rounded-xl"
-              >
-                <PencilSquareIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => confirmDelete(operation.id)}
-                aria-label={`Eliminar operación ${operation.order_id || operation.id}`}
-                title="Eliminar operación"
-                className="hover:bg-red-500/10 text-red-400 rounded-xl"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
+              {!operation._previewOnly && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEditDialog(operation)}
+                    aria-label="Editar operación"
+                    title="Editar operación"
+                    className="hover:bg-indigo-500/10 text-indigo-300 rounded-xl"
+                  >
+                    <PencilSquareIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => confirmDelete(operation.id)}
+                    aria-label="Eliminar operación"
+                    title="Eliminar operación"
+                    className="hover:bg-red-500/10 text-red-400 rounded-xl"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </CardHeader>
