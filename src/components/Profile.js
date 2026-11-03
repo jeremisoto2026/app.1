@@ -312,6 +312,8 @@ export default function Profile() {
           subscriptionExpiresAt: data.subscriptionExpiresAt || previous.subscriptionExpiresAt || null,
           ordersUsed: data.ordersUsed === undefined ? previous.ordersUsed : Number(data.ordersUsed),
           movementsUsed: data.movementsUsed === undefined ? previous.movementsUsed : Number(data.movementsUsed),
+          arbitragesUsed: data.arbitragesUsed === undefined ? previous.arbitragesUsed : Number(data.arbitragesUsed),
+          registeredOrdersUsed: data.registeredOrdersUsed === undefined ? previous.registeredOrdersUsed : Number(data.registeredOrdersUsed),
           exportsUsed: data.exportsUsed === undefined ? previous.exportsUsed : Number(data.exportsUsed),
           usage: data.usage || previous.usage,
         } : previous);
@@ -367,18 +369,30 @@ export default function Profile() {
   const photoURL = asText(profileData.photoURL) || asText(user?.photoURL);
   const proActive = isProSubscriptionActive(profileData);
   const planLabel = proActive ? "Pro activo" : "Plan gratuito";
-  const storedOrderCount = Number(profileData.ordersUsed);
-  const storedMovementCount = Number(profileData.movementsUsed);
-  const hasStoredOrderCount = Number.isFinite(storedOrderCount) && storedOrderCount >= 0;
-  const hasStoredMovementCount = Number.isFinite(storedMovementCount) && storedMovementCount >= 0;
-  const ordersAvailable = Number.isFinite(orderCount) || hasStoredOrderCount;
-  const operationsAvailable = Number.isFinite(operationCount) || hasStoredMovementCount;
-  const ordersUsed = Math.max(Number.isFinite(orderCount) ? orderCount : 0, hasStoredOrderCount ? storedOrderCount : 0);
-  const movementsUsed = Math.max(Number.isFinite(operationCount) ? operationCount : 0, hasStoredMovementCount ? storedMovementCount : 0);
+  const storedArbitrageCount = Math.max(
+    Number(profileData.arbitragesUsed) || 0,
+    Number(profileData.ordersUsed) || 0
+  );
+  const storedRegisteredOrderCount = Math.max(
+    Number(profileData.registeredOrdersUsed) || 0,
+    Number(profileData.movementsUsed) || 0
+  );
+  const arbitragesAvailable = Number.isFinite(orderCount) ||
+    Number.isFinite(storedArbitrageCount);
+  const registeredOrdersAvailable = Number.isFinite(operationCount) ||
+    Number.isFinite(storedRegisteredOrderCount);
+  const arbitragesUsed = Math.max(
+    Number.isFinite(orderCount) ? orderCount : 0,
+    storedArbitrageCount
+  );
+  const registeredOrdersUsed = Math.max(
+    Number.isFinite(operationCount) ? operationCount : 0,
+    storedRegisteredOrderCount
+  );
   const exports = Number.isFinite(exportCount) ? exportCount : countFromProfile(profileData);
   const memberSince = formatDate(profileData.createdAt, user?.metadata?.creationTime);
-  const orderUsage = ordersAvailable ? getLimitProgress(ordersUsed, FREE_PLAN_LIMITS.orders) : null;
-  const movementUsage = operationsAvailable ? getLimitProgress(movementsUsed, FREE_PLAN_LIMITS.movements) : null;
+  const orderUsage = registeredOrdersAvailable ? getLimitProgress(registeredOrdersUsed, FREE_PLAN_LIMITS.orders) : null;
+  const arbitrageUsage = arbitragesAvailable ? getLimitProgress(arbitragesUsed, FREE_PLAN_LIMITS.arbitrages) : null;
   const exportUsage = getLimitProgress(exports, FREE_PLAN_LIMITS.exports);
   const currentExpiryLabel = proActive ? formatPaymentDate(profileData.subscriptionExpiresAt) : "";
   const expiredPaymentCount = payments.filter(
@@ -427,7 +441,7 @@ export default function Profile() {
               <div className="profile-hero-plan">
                 <span className="profile-mini-label">PLAN ACTUAL</span>
                 <strong>{proActive ? "Pro · Ilimitado" : "Gratuito"}</strong>
-                <span>{proActive ? "Vence el " + currentExpiryLabel : "Hasta 300 órdenes · 150 movimientos · 50 exportaciones"}</span>
+                <span>{proActive ? "Vence el " + currentExpiryLabel : "Hasta 300 órdenes · 150 arbitrajes · 50 exportaciones"}</span>
               </div>
               <button type="button" onClick={handleSignOut} disabled={signingOut} className="jjx-button-secondary profile-signout" aria-label="Cerrar sesión">
                 <ArrowLeftOnRectangleIcon className="h-4 w-4" />
@@ -487,10 +501,10 @@ export default function Profile() {
             <article className="profile-usage-card jjx-panel p-5">
               <div className="profile-usage-card-heading">
                 <span className="profile-usage-icon profile-usage-icon-orders"><BoltIcon className="h-5 w-5" aria-hidden="true" /></span>
-                <div><p>Órdenes / arbitrajes</p><span>{proActive ? "Sin límite" : "Máximo 300"}</span></div>
+                <div><p>Órdenes registradas</p><span>{proActive ? "Sin límite" : "Máximo 300"}</span></div>
               </div>
-              <p className="profile-usage-value">{proActive ? "Ilimitado" : ordersAvailable ? ordersUsed : "—"}</p>
-              {!proActive && <p className="profile-usage-caption">{ordersAvailable ? `de ${FREE_PLAN_LIMITS.orders} · ${orderUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
+              <p className="profile-usage-value">{proActive ? "Ilimitado" : registeredOrdersAvailable ? registeredOrdersUsed : "—"}</p>
+              {!proActive && <p className="profile-usage-caption">{registeredOrdersAvailable ? `de ${FREE_PLAN_LIMITS.orders} · ${orderUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
               {!proActive && <div className="profile-progress-track"><span style={{ width: `${orderUsage?.percent || 0}%` }} /></div>}
               {proActive && <p className="profile-usage-caption profile-usage-positive">Incluido durante tu suscripción</p>}
             </article>
@@ -498,11 +512,11 @@ export default function Profile() {
             <article className="profile-usage-card jjx-panel p-5">
               <div className="profile-usage-card-heading">
                 <span className="profile-usage-icon profile-usage-icon-movements"><ChartBarIcon className="h-5 w-5" aria-hidden="true" /></span>
-                <div><p>Movimientos registrados</p><span>{proActive ? "Sin límite" : "150 máximo"}</span></div>
+                <div><p>Arbitrajes creados</p><span>{proActive ? "Sin límite" : "Máximo 150"}</span></div>
               </div>
-              <p className="profile-usage-value">{proActive ? "Ilimitado" : operationsAvailable ? movementsUsed : "—"}</p>
-              {!proActive && <p className="profile-usage-caption">{operationsAvailable ? `de ${FREE_PLAN_LIMITS.movements} · ${movementUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
-              {!proActive && <div className="profile-progress-track"><span style={{ width: `${movementUsage?.percent || 0}%` }} /></div>}
+              <p className="profile-usage-value">{proActive ? "Ilimitado" : arbitragesAvailable ? arbitragesUsed : "—"}</p>
+              {!proActive && <p className="profile-usage-caption">{arbitragesAvailable ? `de ${FREE_PLAN_LIMITS.arbitrages} · ${arbitrageUsage.remaining} disponibles` : "No se pudo cargar el contador"}</p>}
+              {!proActive && <div className="profile-progress-track"><span style={{ width: `${arbitrageUsage?.percent || 0}%` }} /></div>}
               {proActive && <p className="profile-usage-caption profile-usage-positive">Incluido durante tu suscripción</p>}
             </article>
 
@@ -555,10 +569,10 @@ export default function Profile() {
                   <span className="jjx-eyebrow">PLAN AMPLIADO</span>
                   <h3 className="mt-4 text-xl font-semibold text-white">JJXCAPITAL Pro</h3>
                   <p className="mt-1 text-3xl font-semibold tracking-tight text-white">15 USDT <span className="text-xs font-medium text-slate-500">/ 30 días</span></p>
-                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Pago de 15 USDT por 30 días. Órdenes/arbitrajes, movimientos y exportaciones ilimitados durante la suscripción activa.</p>
+                  <p className="mt-3 min-h-[42px] text-sm leading-5 text-slate-400">Pago de 15 USDT por 30 días. Órdenes registradas, arbitrajes creados y exportaciones ilimitados durante la suscripción activa.</p>
                   <ul className="mt-5 space-y-3 text-sm text-slate-300">
                     <li className="flex items-start gap-2"><BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Órdenes y arbitrajes ilimitados</li>
-                    <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Movimientos y exportaciones ilimitados</li>
+                    <li className="flex items-start gap-2"><CreditCardIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Órdenes registradas y exportaciones ilimitadas</li>
                     <li className="flex items-start gap-2"><ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" /> Acceso ilimitado durante 30 días desde la confirmación</li>
                   </ul>
                   <button
