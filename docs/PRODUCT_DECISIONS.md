@@ -47,10 +47,13 @@ Las órdenes importadas cuentan dentro del mismo límite de 300 que las órdenes
 
 ## 6. Entornos y despliegues
 
-- Todo cambio se desarrolla primero en una rama y se valida en Vercel Preview.
-- Producción no debe recibir cambios por despliegues de Preview ni por pruebas manuales.
-- Preview debe utilizar un proyecto Firebase exclusivo, claves de cifrado propias y variables separadas. Nunca debe recurrir como alternativa a las credenciales de Producción.
-- No conectar cuentas reales de Binance/Bybit ni introducir datos reales en Preview hasta verificar que Auth y Firestore pertenecen al proyecto de pruebas.
+- Preview y Producción son dos destinos de despliegue de **la misma aplicación**, el mismo repositorio GitHub y el mismo proyecto de Vercel `app-1`. No se mantiene una segunda aplicación ni se duplica el frontend.
+- Todo cambio se desarrolla primero en una rama y se valida en su despliegue Vercel Preview. Solo después de revisar y aprobar los resultados se integra en `main`, que alimenta Producción.
+- La separación necesaria está en los datos y secretos: Preview utiliza un proyecto Firebase de pruebas, con Auth, Firestore y cuenta de servicio propios. Así se conserva el mismo código y estructura de aplicación, pero los registros de prueba no pueden modificar perfiles, operaciones ni sesiones reales.
+- Preview utiliza claves de cifrado propias y variables con destino Preview. Nunca debe recurrir como alternativa a las credenciales de Producción.
+- Los pagos BEP20 están deshabilitados en Preview y no se debe exponer la cartera receptora de Producción.
+- No conectar API keys reales ni introducir datos reales en Preview. Para validar las integraciones se usan cuentas/credenciales de prueba con permisos de solo lectura.
+- No usar bases de datos adicionales de Firestore en Public Preview como sustituto de un entorno de prueba soportado.
 - La guía operativa está en PREVIEW_FIREBASE_SETUP.md.
 - El dominio propio y el cambio de Vercel Hobby a Pro se posponen hasta que la plataforma esté completa y lista para el lanzamiento.
 
