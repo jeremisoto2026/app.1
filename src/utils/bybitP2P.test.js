@@ -7,7 +7,6 @@ const {
   normalizeCompletedOrder,
 } = require("../../lib/bybit-p2p");
 const {
-  INITIAL_BACKFILL_DAYS,
   INITIAL_BACKFILL_VERSION,
   getInitialBackfillWindow,
   serializeBybitOperation,
@@ -47,41 +46,55 @@ describe("Bybit P2P connector", () => {
     expect(extractItems({ data: { items: [order] } })).toEqual([order]);
   });
 
-  test("reopens the initial backfill for 30 days on an existing legacy connection", () => {
+  test("starts the initial import at the exact API connection time, including legacy connections", () => {
     const connectionTime = Date.UTC(2026, 10, 3, 0, 25, 0);
     const now = connectionTime + 60_000;
     const window = getInitialBackfillWindow({
       initialBackfillComplete: true,
-      backfillStartTimestamp: null,
-      backfillEndTimestamp: null,
+      initialBackfillVersion: 2,
+      backfillStartTimestamp: connectionTime - 30 * 24 * 60 * 60 * 1000,
+      backfillEndTimestamp: connectionTime,
     }, connectionTime, now);
 
-    expect(INITIAL_BACKFILL_DAYS).toBe(30);
     expect(window).toEqual({
       needsReset: true,
-      beginTime: connectionTime - 30 * 24 * 60 * 60 * 1000,
-      endTime: connectionTime,
+      beginTime: connectionTime,
+      endTime: now,
       page: 1,
     });
   });
 
-  test("preserves the page cursor while continuing a versioned 30-day backfill", () => {
+  test("preserves pagination while continuing the initial import from connection time", () => {
     const connectionTime = Date.UTC(2026, 10, 3, 0, 25, 0);
-    const start = connectionTime - 30 * 24 * 60 * 60 * 1000;
     const end = connectionTime + 60_000;
     const window = getInitialBackfillWindow({
       initialBackfillVersion: INITIAL_BACKFILL_VERSION,
-      backfillStartTimestamp: start,
+      backfillStartTimestamp: connectionTime,
       backfillEndTimestamp: end,
       nextPage: 3,
     }, connectionTime, end + 10_000);
 
     expect(window).toEqual({
       needsReset: false,
-      beginTime: start,
+      beginTime: connectionTime,
       endTime: end,
       page: 3,
     });
+  });
+
+  test("never moves a saved import window earlier than the current connection time", () => {
+    const connectionTime = Date.UTC(2026, 10, 3, 0, 25, 0);
+    const end = connectionTime + 60_000;
+    const window = getInitialBackfillWindow({
+      initialBackfillVersion: INITIAL_BACKFILL_VERSION,
+      backfillStartTimestamp: connectionTime - 30 * 24 * 60 * 60 * 1000,
+      backfillEndTimestamp: end,
+      nextPage: 2,
+    }, connectionTime, end + 10_000);
+
+    expect(window.beginTime).toBe(connectionTime);
+    expect(window.endTime).toBe(end);
+    expect(window.page).toBe(2);
   });
 
   test("normalizes Bybit fiat total and token quantity separately", () => {
