@@ -1,10 +1,11 @@
 const crypto = require("crypto");
 const {
   HttpError, sendJson, requirePost, requireFirebaseUser, getDocument,
-  listDocumentsMatchingAnyField, listAllDocuments, commitWrites, createWrite, documentName, toFields, errorResponse,
+  listDocumentsMatchingAnyField, listAllDocuments, countDocuments, commitWrites, createWrite, documentName, toFields, errorResponse,
 } = require("../../../lib/payments");
 const { decryptCredentials, fetchHistory } = require("../../../lib/binance-p2p");
 const { createBinanceP2PScheduler } = require("../../../lib/binance-p2p-scheduler");
+const { FREE_PLAN_LIMITS, getStoredPlanUsage, isProSubscriptionActive } = require("../../../lib/plans");
 
 const integrationPathFor = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
 const operationsPathFor = (uid) => "users/" + uid + "/operations";
