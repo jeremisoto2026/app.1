@@ -243,7 +243,7 @@ export default function Profile() {
         if (!cancelled) setOperationCount(operationsSnapshot.size + previewBybitOperations.length);
       } catch (error) {
         console.error("No se pudo contar el historial:", error);
-        if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de movimientos.");
+        if (!cancelled) setProfileError("El perfil está disponible, pero no se pudo consultar el contador de órdenes.");
       }
 
       try {
@@ -369,18 +369,14 @@ export default function Profile() {
   const photoURL = asText(profileData.photoURL) || asText(user?.photoURL);
   const proActive = isProSubscriptionActive(profileData);
   const planLabel = proActive ? "Pro activo" : "Plan gratuito";
-  const storedArbitrageCount = Math.max(
-    Number(profileData.arbitragesUsed) || 0,
-    Number(profileData.ordersUsed) || 0
-  );
-  const storedRegisteredOrderCount = Math.max(
-    Number(profileData.registeredOrdersUsed) || 0,
-    Number(profileData.movementsUsed) || 0
-  );
-  const arbitragesAvailable = Number.isFinite(orderCount) ||
-    Number.isFinite(storedArbitrageCount);
-  const registeredOrdersAvailable = Number.isFinite(operationCount) ||
-    Number.isFinite(storedRegisteredOrderCount);
+  const storedArbitrageCounters = [profileData.arbitragesUsed, profileData.ordersUsed]
+    .map(Number).filter((value) => Number.isFinite(value) && value >= 0);
+  const storedOrderCounters = [profileData.registeredOrdersUsed, profileData.movementsUsed]
+    .map(Number).filter((value) => Number.isFinite(value) && value >= 0);
+  const storedArbitrageCount = storedArbitrageCounters.length ? Math.max(...storedArbitrageCounters) : 0;
+  const storedRegisteredOrderCount = storedOrderCounters.length ? Math.max(...storedOrderCounters) : 0;
+  const arbitragesAvailable = Number.isFinite(orderCount) || storedArbitrageCounters.length > 0;
+  const registeredOrdersAvailable = Number.isFinite(operationCount) || storedOrderCounters.length > 0;
   const arbitragesUsed = Math.max(
     Number.isFinite(orderCount) ? orderCount : 0,
     storedArbitrageCount
