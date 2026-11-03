@@ -244,7 +244,7 @@ export default function BybitP2PSyncCard() {
             </div>
             {status.initialBackfillPending ? (
               <p className="mt-3 text-sm text-amber-600">
-                La próxima sincronización recuperará las órdenes completadas de los 30 días anteriores a la conexión.
+                La importación inicial incluirá únicamente órdenes completadas desde el momento en que conectaste la API.
               </p>
             ) : status.hasMoreHistory ? (
               <p className="mt-3 text-sm text-amber-600">
@@ -260,7 +260,7 @@ export default function BybitP2PSyncCard() {
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               <ArrowPathIcon className={"h-4 w-4 " + (syncing ? "animate-spin" : "")} aria-hidden="true" />
-              {syncing ? "Sincronizando…" : status.initialBackfillPending ? "Importar últimos 30 días" : status.hasMoreHistory ? "Continuar sincronización" : "Sincronizar ahora"}
+              {syncing ? "Sincronizando…" : status.initialBackfillPending ? "Importar desde la conexión" : status.hasMoreHistory ? "Continuar sincronización" : "Sincronizar ahora"}
             </button>
             <button
               type="button"
@@ -281,10 +281,10 @@ export default function BybitP2PSyncCard() {
               {operationsOpen ? "Ocultar operaciones importadas" : "Ver operaciones importadas"}
             </button>
             {operationsOpen && (
-              <section className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4 space-y-3" aria-label="Operaciones importadas en Preview">
+              <section className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4 space-y-3" aria-label={"Operaciones importadas " + (status.previewMode ? "en Preview" : "en Producción")}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="font-semibold text-white">Operaciones importadas en Preview</p>
+                    <p className="font-semibold text-white">Operaciones importadas {status.previewMode ? "en Preview" : "en Producción"}</p>
                     <p className="text-xs text-slate-500">Mostrando {operations.length} de {operationsTotal} operaciones. Solo lectura.</p>
                   </div>
                   <button
