@@ -120,6 +120,25 @@ describe("Profile", () => {
     expect(supportLink.getAttribute("rel")).toContain("noopener");
   });
 
+  test("hides the Production payment wallet and checkout in Preview", async () => {
+    const originalVercelEnvironment = process.env.REACT_APP_VERCEL_ENV;
+    process.env.REACT_APP_VERCEL_ENV = "preview";
+
+    try {
+      await act(async () => {
+        root.render(<Profile />);
+      });
+
+      expect(container.textContent).toContain("Pagos deshabilitados en Preview");
+      expect(container.textContent).not.toContain("0x4c64b783f1babc0a2fe62f174873f415393c2269");
+      expect(container.textContent).not.toContain("0x55d398326f99059fF775485246999027B3197955");
+      expect(container.textContent).not.toContain("Crear orden y pagar con BEP20");
+    } finally {
+      if (originalVercelEnvironment === undefined) delete process.env.REACT_APP_VERCEL_ENV;
+      else process.env.REACT_APP_VERCEL_ENV = originalVercelEnvironment;
+    }
+  });
+
   test("keeps the profile visible when the operation counter cannot load", async () => {
     firestoreMocks.getDocs.mockRejectedValueOnce(new Error("Permission denied"));
 
