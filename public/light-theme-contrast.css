@@ -847,7 +847,7 @@ html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(.jjx-ins
   border-color: #cbd6e6 !important;
   background: linear-gradient(145deg, #e8eef7, #e1e9f4) !important;
 }
-html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(input, textarea, select, button[role="combobox"]) {
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select, button[role="combobox"]) {
   min-height: 40px;
   border: 1px solid #bdcbe0 !important;
   border-radius: 10px;
@@ -857,7 +857,7 @@ html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(input, t
   transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
 }
 html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page textarea { min-height: 90px; }
-html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(input, textarea, select, button[role="combobox"]):focus {
+html[data-jjx-theme="light"] body .app-shell .app-content .jjx-page :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select, button[role="combobox"]):focus {
   border-color: #6a5bd2 !important;
   background: #fff !important;
   box-shadow: 0 0 0 3px rgba(106,91,210,.16), inset 0 1px rgba(255,255,255,.9) !important;
@@ -908,7 +908,7 @@ html[data-jjx-theme="light"] body .app-shell .jjx-button-secondary:hover {
   border-color: #6153c6 !important;
   background: linear-gradient(105deg, #6655d5, #367bd0) !important;
 }
-html[data-jjx-theme="light"] body .app-shell :is(.jjx-status, .status-badge) {
+html[data-jjx-theme="light"] body .app-shell .jjx-status {
   border-color: #b7dfca !important;
   color: #126c4c !important;
   background: #e0f5e9 !important;
