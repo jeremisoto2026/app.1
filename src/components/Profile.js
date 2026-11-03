@@ -599,6 +599,15 @@ export default function Profile() {
                   </div>
                 </div>
 
+                {process.env.REACT_APP_VERCEL_ENV === "preview" ? (
+                  <div className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.05] p-4" role="status">
+                    <p className="text-sm font-semibold text-amber-100">Pagos deshabilitados en Preview</p>
+                    <p className="mt-2 text-xs leading-6 text-slate-300">
+                      No envíes USDT desde esta versión. El pago BEP20 solo se habilitará cuando exista una cartera y una configuración de pruebas independientes.
+                    </p>
+                  </div>
+                ) : (
+                  <>
                 <div className="mt-5 space-y-3">
                   <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -702,6 +711,8 @@ export default function Profile() {
                   <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
                   <p className="text-xs leading-5 text-slate-400">La verificación consulta la blockchain y comprueba el token, la red, el destinatario, el importe exacto y las 12 confirmaciones antes de activar Pro.</p>
                 </div>
+                  </>
+                )}
               </section>
 
             <section className="profile-surface jjx-panel p-5 sm:p-6" aria-labelledby="payment-history-heading">
