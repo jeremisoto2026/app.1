@@ -450,20 +450,24 @@ async function syncBinanceP2P(req, res) {
     }, latest.updateTime ? { updateTime: latest.updateTime } : { exists: true })]);
     ownsLock = false;
 
-    const hasMore = !bothDone;
+    const hasMore = quotaBlocked || !bothDone;
     return sendJson(res, 200, {
       success: true,
-      imported: fresh.length,
-      skipped: Math.max(0, candidates.length - fresh.length),
+      imported: freshToImport.length,
+      skipped: Math.max(0, candidates.length - freshToImport.length),
+      quotaReached: quotaBlocked,
+      orderQuotaBlocked: quotaBlocked,
       completedOrdersFound: candidates.length,
       sessionAssignments: { ...sessionAssignments, relinkedExisting },
       hasMoreHistory: hasMore,
-      initialBackfillComplete: backfill ? bothDone : state.initialBackfillComplete === true,
+      initialBackfillComplete: backfill ? (!quotaBlocked && bothDone) : state.initialBackfillComplete === true,
       lastSyncAt: updated.lastSyncAt || state.lastSyncAt || null,
-      message: fresh.length
-        ? "Sincronización completada: se han importado " + fresh.length + " operaciones nuevas. Vinculadas automáticamente a una sesión: " + sessionAssignments.matched + "."
-        : "Sincronización completada: no había operaciones completadas nuevas para importar." +
-          (relinkedExisting ? " Se han vinculado " + relinkedExisting + " operaciones importadas previamente a su sesión." : ""),
+      message: quotaBlocked
+        ? "Has alcanzado el límite gratuito de 300 órdenes. Se han importado las que quedaban disponibles y la sincronización se ha pausado sin avanzar la página pendiente. Activa JJXCAPITAL Pro para continuar."
+        : freshToImport.length
+          ? "Sincronización completada: se han importado " + freshToImport.length + " operaciones nuevas. Vinculadas automáticamente a una sesión: " + sessionAssignments.matched + "."
+          : "Sincronización completada: no había operaciones completadas nuevas para importar." +
+            (relinkedExisting ? " Se han vinculado " + relinkedExisting + " operaciones importadas previamente a su sesión." : ""),
     });
   } catch (error) {
     if (ownsLock && integrationPath && lockId) {
