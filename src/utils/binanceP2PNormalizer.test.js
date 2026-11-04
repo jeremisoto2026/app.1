@@ -82,9 +82,10 @@ describe("Binance P2P imported buy commissions", () => {
     expect(metrics.realizedProfitByOperation[laterSale.id]).toMatchObject({
       matchedQuantity: 99.9,
       matchedCost: 95,
-      matchedProceeds: 100,
       fullyMatched: true,
     });
+    // Floating-point arithmetic can represent this exact 100 EUR as 99.99999999999999.
+    expect(metrics.realizedProfitByOperation[laterSale.id].matchedProceeds).toBeCloseTo(100, 8);
     expect(metrics.profitByCurrency.EUR).toBeCloseTo(5, 8);
     expect(metrics.closedSales).toBe(1);
   });
