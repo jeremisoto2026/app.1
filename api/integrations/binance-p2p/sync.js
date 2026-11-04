@@ -5,6 +5,7 @@ const {
 } = require("../../../lib/payments");
 const { decryptCredentials, fetchHistory } = require("../../../lib/binance-p2p");
 const { createBinanceP2PScheduler } = require("../../../lib/binance-p2p-scheduler");
+const { normalizeOrder } = require("../../../lib/binance-p2p-normalizer");
 const { FREE_PLAN_LIMITS, getStoredPlanUsage, isProSubscriptionActive } = require("../../../lib/plans");
 
 const integrationPathFor = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
@@ -36,61 +37,6 @@ function parseTime(value) {
 function isCompleted(row) {
   const status = String(row?.orderStatus ?? row?.status ?? "").trim().toUpperCase();
   return status === "COMPLETED" || status === "4";
-}
-function normalizeOrder(row) {
-  const orderNumber = String(row?.orderNumber ?? row?.orderNo ?? row?.orderId ?? "").trim();
-  const tradeType = String(row?.tradeType ?? "").trim().toUpperCase();
-  const crypto = String(row?.asset ?? row?.crypto ?? "").trim().toUpperCase();
-  const fiat = String(row?.fiat ?? row?.fiatUnit ?? "").trim().toUpperCase();
-  const cryptoAmount = num(row?.amount);
-  const fiatAmount = num(row?.totalPrice);
-  const rawRate = num(row?.unitPrice ?? row?.price);
-  const rate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : fiatAmount / cryptoAmount;
-  const timestamp = parseTime(row?.createTime ?? row?.createdAt ?? row?.timestamp);
-  if (!orderNumber || orderNumber.length > 160 ||
-      (tradeType !== "BUY" && tradeType !== "SELL") ||
-      !crypto || !fiat || crypto === fiat ||
-      !Number.isFinite(cryptoAmount) || cryptoAmount <= 0 ||
-      !Number.isFinite(fiatAmount) || fiatAmount <= 0 ||
-      !Number.isFinite(rate) || rate <= 0 || !timestamp) return null;
-
-  const commission = num(row?.commission);
-  const takerCommission = num(row?.takerCommission);
-  const takerAmount = num(row?.takerAmount);
-  const advertisementRole = String(row?.advertisementRole ?? "").trim().toUpperCase();
-  const sourceFee = advertisementRole === "TAKER"
-    ? (Number.isFinite(takerCommission) ? takerCommission : commission)
-    : (Number.isFinite(commission) ? commission : takerCommission);
-  const fee = Number.isFinite(sourceFee) && sourceFee > 0 ? sourceFee : 0;
-  return {
-    order_id: orderNumber,
-    source: "binance_p2p",
-    sourceOrderId: orderNumber,
-    sourceStatus: String(row?.orderStatus ?? row?.status ?? ""),
-    sourceCommission: Number.isFinite(commission) ? commission : null,
-    sourceTakerCommission: Number.isFinite(takerCommission) ? takerCommission : null,
-    sourceTakerAmount: Number.isFinite(takerAmount) ? takerAmount : null,
-    sourceAdvertisementNumber: String(row?.advNo ?? row?.advOrderNumber ?? "").trim() || null,
-    sourceFiatSymbol: String(row?.fiatSymbol ?? "").trim() || null,
-    sourcePayMethodName: String(row?.payMethodName ?? "").trim() || null,
-    sourceAdvertisementRole: advertisementRole || null,
-    exchange: "Binance",
-    operation_type: tradeType === "BUY" ? "Compra" : "Venta",
-    crypto,
-    fiat,
-    crypto_amount: cryptoAmount,
-    fiat_amount: fiatAmount,
-    exchange_rate: rate,
-    // Binance documents this commission in crypto; preserve it without subtracting it twice
-    // from the gross amounts already reported by the order-history endpoint.
-    fee,
-    fee_currency: crypto,
-    timestamp,
-    importedAt: new Date(),
-    sessionId: null,
-    sessionName: "Binance P2P · Importado",
-    arbitrageType: "Binance P2P",
-  };
 }
 function deterministicId(orderNumber) {
   return "binance-p2p-" + crypto.createHash("sha256").update(orderNumber).digest("hex").slice(0, 40);
