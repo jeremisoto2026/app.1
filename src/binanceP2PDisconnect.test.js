@@ -33,6 +33,17 @@ describe("Binance P2P disconnect endpoint", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     payments.requirePost.mockReturnValue(true);
+    payments.documentName.mockImplementation((path) => path);
+    payments.sendJson.mockImplementation((res, status, payload) => {
+      res.statusCode = status;
+      res.body = payload;
+      return res;
+    });
+    payments.errorResponse.mockImplementation((res, error) => {
+      res.statusCode = error.statusCode || 500;
+      res.body = { error: error.message };
+      return res;
+    });
     payments.requireFirebaseUser.mockResolvedValue({ sub: "disconnect-test-user" });
     payments.getDocument.mockResolvedValue({
       updateTime: "2026-11-05T12:00:00.000Z",
