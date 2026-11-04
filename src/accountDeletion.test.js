@@ -87,7 +87,8 @@ describe("Account deletion data cleanup", () => {
     });
 
     const allWrites = payments.commitWrites.mock.calls.flatMap(([writes]) => writes);
-    const anonymizeWrite = allWrites.find((write) => write.update?.name === "doc:paymentTransactions/bep20_" + "a".repeat(64));
+    const anonymizeWrite = allWrites.find((write) => write.update?.fields?.anonymized === true);
+    expect(anonymizeWrite).toBeDefined();
     expect(anonymizeWrite.update.fields).toEqual(expect.objectContaining({
       provider: "blockchain_bep20",
       anonymized: true,
@@ -108,9 +109,11 @@ describe("Account deletion data cleanup", () => {
     );
 
     await expect(deletion.deleteUserAccountData("user-a")).rejects.toMatchObject({ statusCode: 503 });
-    expect(payments.commitWrites).toHaveBeenCalledTimes(1);
-    // Payment refs were anonymized first; the user tree itself is not partially deleted.
-    expect(payments.commitWrites.mock.calls[0][0][0].update).toBeDefined();
+    expect(payments.commitWrites).toHaveBeenCalledTimes(3);
+    // Global payment references/indexes may be sanitized, but no user document is deleted.
+    const writes = payments.commitWrites.mock.calls.flatMap(([batch]) => batch);
+    expect(writes.some((write) => write.delete?.startsWith("doc:users/"))).toBe(false);
+    expect(writes.some((write) => write.update?.fields?.anonymized === true)).toBe(true);
   });
 
   test("creates and renews deletion locks, but rejects a concurrent active lease", async () => {

@@ -34,10 +34,31 @@ const deleteAccount = require("../lib/account-delete-endpoint");
 
 describe("Account deletion endpoint", () => {
   const now = Math.floor(Date.now() / 1000);
+  let originalLockFlag;
+
+  beforeAll(() => {
+    originalLockFlag = process.env.FIRESTORE_ACCOUNT_DELETION_LOCKS_ACTIVE;
+  });
+
+  afterAll(() => {
+    if (originalLockFlag === undefined) delete process.env.FIRESTORE_ACCOUNT_DELETION_LOCKS_ACTIVE;
+    else process.env.FIRESTORE_ACCOUNT_DELETION_LOCKS_ACTIVE = originalLockFlag;
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    payments.requirePost.mockReturnValue(true);
+    process.env.FIRESTORE_ACCOUNT_DELETION_LOCKS_ACTIVE = "true";
+    payments.requirePost.mockImplementation(() => true);
+    payments.sendJson.mockImplementation((res, status, payload) => {
+      res.statusCode = status;
+      res.body = payload;
+      return res;
+    });
+    payments.errorResponse.mockImplementation((res, error) => {
+      res.statusCode = error.statusCode || 500;
+      res.body = { error: error.message };
+      return res;
+    });
     payments.requireFirebaseUser.mockResolvedValue({ sub: "authenticated-user", auth_time: now });
     deletion.acquireAccountDeletionLock.mockResolvedValue({});
     deletion.deleteUserAccountData.mockResolvedValue({
@@ -49,6 +70,21 @@ describe("Account deletion endpoint", () => {
     firebaseSession.deleteFirebaseAuthAccount.mockResolvedValue({ deleted: true });
     deletion.releaseAccountDeletionLock.mockResolvedValue({});
     deletion.markAccountDeletionRetryable.mockResolvedValue({});
+  });
+
+  test("keeps deletion disabled until lock-aware Firestore rules are enabled", async () => {
+    process.env.FIRESTORE_ACCOUNT_DELETION_LOCKS_ACTIVE = "false";
+    const res = {};
+    await deleteAccount({
+      method: "POST",
+      headers: { authorization: "Bearer test-id-token" },
+      body: { confirmation: "DELETE_MY_ACCOUNT" },
+    }, res);
+
+    expect(res.statusCode).toBe(503);
+    expect(payments.requireFirebaseUser).not.toHaveBeenCalled();
+    expect(deletion.acquireAccountDeletionLock).not.toHaveBeenCalled();
+    expect(deletion.deleteUserAccountData).not.toHaveBeenCalled();
   });
 
   test("requires explicit confirmation before changing any data", async () => {
