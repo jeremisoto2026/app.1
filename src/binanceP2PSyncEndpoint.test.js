@@ -119,6 +119,19 @@ describe("Binance P2P sync endpoint", () => {
   });
 
 
+  test("blocks repeated sync attempts during the per-user 15-second cooldown", async () => {
+    integrationState.lastSyncAttemptAt = new Date(Date.now() - 5000);
+    const response = {};
+
+    await syncBinanceP2P({ method: "POST", headers: {}, body: {} }, response);
+
+    expect(response.statusCode).toBe(429);
+    expect(response.body.error).toMatch(/sincronización hace muy poco/i);
+    expect(binance.decryptCredentials).not.toHaveBeenCalled();
+    expect(binance.fetchHistory).not.toHaveBeenCalled();
+    expect(payments.commitWrites).not.toHaveBeenCalled();
+  });
+
   test("pauses imports at the 300-order free limit without calling Binance", async () => {
     payments.countDocuments.mockResolvedValue(300);
     const response = {};
