@@ -30,7 +30,7 @@ jest.mock("../lib/firebase-session", () => ({
 const payments = require("../lib/payments");
 const deletion = require("../lib/account-deletion");
 const firebaseSession = require("../lib/firebase-session");
-const deleteAccount = require("../api/account/delete");
+const deleteAccount = require("../lib/account-delete-endpoint");
 
 describe("Account deletion endpoint", () => {
   const now = Math.floor(Date.now() / 1000);
