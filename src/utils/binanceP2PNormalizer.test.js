@@ -95,3 +95,65 @@ describe("Binance P2P imported buy commissions", () => {
     expect(normalizeOrder({ ...takerBuyRow, tradeType: "CANCELLED" })).toBeNull();
   });
 });
+
+describe("Binance P2P imported sell commissions", () => {
+  test.each([
+    ["MAKER", "0.20", 0.2, 100.2],
+    ["TAKER", "0.30", 0.3, 100.3],
+  ])(
+    "applies the %s commission to crypto consumed by a sale exactly once",
+    (advertisementRole, expectedFee, expectedFeeAmount, expectedConsumedCrypto) => {
+      const importedSale = normalizeOrder({
+        orderNumber: `BINANCE-SELL-${advertisementRole}-TEST`,
+        tradeType: "SELL",
+        asset: "USDT",
+        fiat: "EUR",
+        amount: "100",
+        totalPrice: "100",
+        unitPrice: "1",
+        createTime: "2026-11-04T13:00:00.000Z",
+        commission: "0.20",
+        takerCommission: "0.30",
+        advertisementRole,
+        orderStatus: "COMPLETED",
+      });
+
+      expect(importedSale).toMatchObject({
+        operation_type: "Venta",
+        crypto_amount: 100,
+        fiat_amount: 100,
+        fee: expectedFeeAmount,
+        fee_currency: "USDT",
+      });
+      expect(importedSale.fee).toBeCloseTo(Number(expectedFee), 10);
+      expect(getAccountingCryptoAmount(importedSale)).toBeCloseTo(expectedConsumedCrypto, 10);
+
+      // The prior inventory covers the crypto sent plus the crypto-denominated fee.
+      const priorBuy = {
+        id: `BINANCE-SELL-${advertisementRole}-BUY`,
+        source: "manual",
+        sessionId: null,
+        operation_type: "Compra",
+        crypto: "USDT",
+        fiat: "EUR",
+        crypto_amount: expectedConsumedCrypto,
+        fiat_amount: 90,
+        timestamp: new Date("2026-11-04T12:00:00.000Z"),
+      };
+
+      const metrics = calculateDashboardMetrics(
+        [priorBuy, { ...importedSale, id: importedSale.order_id }],
+        new Date("2026-11-05T00:00:00.000Z")
+      );
+      const saleResult = metrics.realizedProfitByOperation[importedSale.order_id];
+
+      expect(saleResult.matchedQuantity).toBeCloseTo(expectedConsumedCrypto, 10);
+      expect(saleResult.matchedCost).toBeCloseTo(90, 10);
+      expect(saleResult.matchedProceeds).toBeCloseTo(100, 10);
+      expect(saleResult.profit).toBeCloseTo(10, 10);
+      expect(saleResult.fullyMatched).toBe(true);
+      expect(metrics.profitByCurrency.EUR).toBeCloseTo(10, 10);
+      expect(metrics.closedSales).toBe(1);
+    }
+  );
+});
