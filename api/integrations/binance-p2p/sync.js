@@ -7,6 +7,7 @@ const { decryptCredentials, fetchHistory } = require("../../../lib/binance-p2p")
 const { createBinanceP2PScheduler } = require("../../../lib/binance-p2p-scheduler");
 const { normalizeOrder } = require("../../../lib/binance-p2p-normalizer");
 const { FREE_PLAN_LIMITS, getStoredPlanUsage, isProSubscriptionActive } = require("../../../lib/plans");
+const { getRemainingCooldownMs } = require("../../../lib/integration-rate-limit");
 
 const integrationPathFor = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
 const operationsPathFor = (uid) => "users/" + uid + "/operations";
@@ -15,6 +16,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_PAGES_PER_SIDE_PER_REQUEST = 2;
 const LOOKUP_CHUNK = 30;
 const LOCK_MS = 5 * 60 * 1000;
+const USER_SYNC_COOLDOWN_MS = 15 * 1000;
 
 function num(value) {
   if (typeof value === "string" && !value.trim()) return NaN;
@@ -184,6 +186,15 @@ async function syncBinanceP2P(req, res) {
       throw new HttpError(409, "Ya hay una sincronización de Binance en curso. Espera unos segundos e inténtalo de nuevo.");
     }
 
+    const cooldownRemainingMs = getRemainingCooldownMs(
+      state.lastSyncAttemptAt,
+      requestNow,
+      USER_SYNC_COOLDOWN_MS
+    );
+    if (cooldownRemainingMs > 0) {
+      throw new HttpError(429, "Has solicitado una sincronización hace muy poco. Espera unos segundos antes de volver a intentarlo.");
+    }
+
     const userPath = "users/" + claims.sub;
     const userProfile = await getDocument(userPath);
     if (!userProfile) throw new HttpError(409, "No se encontró el perfil de tu cuenta.");
@@ -213,7 +224,7 @@ async function syncBinanceP2P(req, res) {
     lockId = crypto.randomBytes(16).toString("hex");
     await commitWrites([createWrite(
       integrationPath,
-      { syncLockId: lockId, syncLockExpiresAt: new Date(requestNow + LOCK_MS) },
+      { syncLockId: lockId, syncLockExpiresAt: new Date(requestNow + LOCK_MS), lastSyncAttemptAt: new Date(requestNow) },
       integration.updateTime ? { updateTime: integration.updateTime } : { exists: true }
     )]);
     ownsLock = true;
