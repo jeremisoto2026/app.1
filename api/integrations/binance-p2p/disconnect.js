@@ -28,6 +28,14 @@ module.exports = async function disconnectBinanceP2P(req, res) {
     const claims = await requireFirebaseUser(req);
     const path = INTEGRATION_PATH(claims.sub);
     const existing = await getDocument(path);
+    if (existing?.data?.syncLockId) {
+      const lockExpiry = existing.data.syncLockExpiresAt
+        ? new Date(existing.data.syncLockExpiresAt).getTime()
+        : 0;
+      if (Number.isFinite(lockExpiry) && lockExpiry > Date.now()) {
+        throw new HttpError(409, "Hay una sincronización de Binance en curso. Espera a que termine antes de desconectar.");
+      }
+    }
     if (existing) {
       await commitWrites([{
         delete: documentName(path),
