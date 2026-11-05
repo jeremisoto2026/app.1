@@ -86,16 +86,17 @@ describe("Account deletion data cleanup", () => {
       deletedUserDocuments: 4,
     });
 
-    const allWrites = payments.commitWrites.mock.calls.flatMap(([writes]) => writes);
-    const anonymizeWrite = allWrites.find((write) => write.update?.fields?.anonymized === true);
-    expect(anonymizeWrite).toBeDefined();
-    expect(anonymizeWrite.update.fields).toEqual(expect.objectContaining({
+    expect(payments.toFields).toHaveBeenCalledWith(expect.objectContaining({
       provider: "blockchain_bep20",
       anonymized: true,
       retentionPurpose: "duplicate_payment_prevention",
     }));
-    expect(anonymizeWrite.update.fields).not.toHaveProperty("uid");
-    expect(anonymizeWrite.update.fields).not.toHaveProperty("paymentId");
+    const anonymizedFields = payments.toFields.mock.calls
+      .map(([fields]) => fields)
+      .find((fields) => fields?.anonymized === true);
+    expect(anonymizedFields).toBeDefined();
+    expect(anonymizedFields).not.toHaveProperty("uid");
+    expect(anonymizedFields).not.toHaveProperty("paymentId");
     expect(allWrites.some((write) => write.delete === "doc:paymentOrderIndex/private-order-index")).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:blockchainAmountIndex/private-amount-index")).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:users/user-a/privateIntegrations/binanceP2P/secrets/secret-1")).toBe(true);
@@ -113,7 +114,10 @@ describe("Account deletion data cleanup", () => {
     // Global payment references/indexes may be sanitized, but no user document is deleted.
     const writes = payments.commitWrites.mock.calls.flatMap(([batch]) => batch);
     expect(writes.some((write) => write.delete?.startsWith("doc:users/"))).toBe(false);
-    expect(writes.some((write) => write.update?.fields?.anonymized === true)).toBe(true);
+    expect(payments.toFields).toHaveBeenCalledWith(expect.objectContaining({
+      anonymized: true,
+      retentionPurpose: "duplicate_payment_prevention",
+    }));
   });
 
   test("creates and renews deletion locks, but rejects a concurrent active lease", async () => {
