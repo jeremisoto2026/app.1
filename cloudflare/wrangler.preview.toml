@@ -1,0 +1,9 @@
+name = "jjxcapital-p2p-sync-preview"
+main = "binance-p2p-sync-worker.js"
+compatibility_date = "2026-11-02"
+
+[vars]
+JJXCAPITAL_SYNC_ENDPOINT = "https://app-1-git-feat-preview-quota-model-jeremis-projects-53da5f18.vercel.app/api/integrations/binance-p2p/sync"
+
+[triggers]
+crons = ["*/5 * * * *"]
