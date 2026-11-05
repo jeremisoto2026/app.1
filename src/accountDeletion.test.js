@@ -16,6 +16,11 @@ jest.mock("../lib/payment-reference", () => ({
   getPaymentTransactionReferencePath: jest.fn((provider) =>
     "paymentTransactions/hmac_v1_" + provider + "_" + "b".repeat(64)
   ),
+  getLegacyPaymentTransactionPath: jest.fn((provider, reference) =>
+    provider === "blockchain_bep20"
+      ? "paymentTransactions/bep20_" + String(reference).toLowerCase().slice(2)
+      : "paymentTransactions/binance_" + String(reference).replace(/[^a-zA-Z0-9_-]/g, "_")
+  ),
   isHmacPaymentTransactionId: jest.fn((id) => String(id || "").startsWith("hmac_v1_")),
 }));
 
@@ -31,6 +36,11 @@ describe("Account deletion data cleanup", () => {
     payments.toFields.mockImplementation((data) => data);
     paymentReference.getPaymentTransactionReferencePath.mockImplementation((provider) =>
       "paymentTransactions/hmac_v1_" + provider + "_" + "b".repeat(64)
+    );
+    paymentReference.getLegacyPaymentTransactionPath.mockImplementation((provider, reference) =>
+      provider === "blockchain_bep20"
+        ? "paymentTransactions/bep20_" + String(reference).toLowerCase().slice(2)
+        : "paymentTransactions/binance_" + String(reference).replace(/[^a-zA-Z0-9_-]/g, "_")
     );
     paymentReference.isHmacPaymentTransactionId.mockImplementation((id) => String(id || "").startsWith("hmac_v1_"));
     payments.commitWrites.mockResolvedValue({});
