@@ -97,6 +97,7 @@ describe("Account deletion data cleanup", () => {
     expect(anonymizedFields).toBeDefined();
     expect(anonymizedFields).not.toHaveProperty("uid");
     expect(anonymizedFields).not.toHaveProperty("paymentId");
+    const allWrites = payments.commitWrites.mock.calls.flatMap(([writes]) => writes);
     expect(allWrites.some((write) => write.delete === "doc:paymentOrderIndex/private-order-index")).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:blockchainAmountIndex/private-amount-index")).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:users/user-a/privateIntegrations/binanceP2P/secrets/secret-1")).toBe(true);
