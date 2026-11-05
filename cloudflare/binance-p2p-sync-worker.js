@@ -4,6 +4,12 @@ const SYNC_PATH = "/api/integrations/binance-p2p/sync";
 const MAX_BATCHES_PER_RUN = 8;
 const REQUEST_TIMEOUT_MS = 65_000;
 
+function createRequestTimeoutSignal() {
+  const AbortSignalConstructor = globalThis.AbortSignal;
+  if (typeof AbortSignalConstructor?.timeout !== "function") return undefined;
+  return AbortSignalConstructor.timeout(REQUEST_TIMEOUT_MS);
+}
+
 export function resolveSyncTarget(env) {
   const configuredEndpoint = String(env?.JJXCAPITAL_SYNC_ENDPOINT || "").trim();
   if (!configuredEndpoint) {
@@ -54,7 +60,7 @@ async function runProviderBackgroundSync({ provider, scheduler, secret, target, 
       method: "POST",
       headers,
       body: "{}",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: createRequestTimeoutSignal(),
     });
 
     const text = await response.text();
