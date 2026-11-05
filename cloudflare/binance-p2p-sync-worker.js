@@ -32,7 +32,7 @@ export function resolveSyncTarget(env) {
   return { endpoint: url.toString(), preview, bypassSecret };
 }
 
-async function runProviderBackgroundSync({ provider, scheduler, secret, target }) {
+async function runProviderBackgroundSync({ provider, scheduler, secret, target, fetchImpl }) {
   if (String(secret || "").length < 32) {
     throw new Error("Missing or weak " + provider.toUpperCase() + "_P2P_SCHEDULER_SECRET.");
   }
@@ -50,7 +50,7 @@ async function runProviderBackgroundSync({ provider, scheduler, secret, target }
     };
     if (target.preview) headers["x-vercel-protection-bypass"] = target.bypassSecret;
 
-    const response = await fetch(endpoint.toString(), {
+    const response = await fetchImpl(endpoint.toString(), {
       method: "POST",
       headers,
       body: "{}",
@@ -77,7 +77,8 @@ async function runProviderBackgroundSync({ provider, scheduler, secret, target }
   console.log(JSON.stringify({ event: provider + "_p2p_background_sync", processed, imported }));
 }
 
-async function runBackgroundSync(env) {
+async function runBackgroundSync(env, fetchImpl = globalThis.fetch) {
+  if (typeof fetchImpl !== "function") throw new Error("Fetch is not available in this Worker runtime.");
   const target = resolveSyncTarget(env);
   const failures = [];
   const binanceSecret = String(env.BINANCE_P2P_SCHEDULER_SECRET || "");
@@ -89,6 +90,7 @@ async function runBackgroundSync(env) {
       scheduler: "binance-p2p",
       secret: binanceSecret,
       target,
+      fetchImpl,
     });
   } catch (error) {
     failures.push(error);
@@ -102,6 +104,7 @@ async function runBackgroundSync(env) {
         scheduler: "bybit-p2p",
         secret: bybitSecret,
         target,
+        fetchImpl,
       });
     } catch (error) {
       failures.push(error);
@@ -113,6 +116,8 @@ async function runBackgroundSync(env) {
 
   if (failures.length) throw new Error("One or more JJXCapital P2P providers could not be synchronized.");
 }
+
+export { runBackgroundSync };
 
 export default {
   async scheduled(controller, env) {
