@@ -18,6 +18,9 @@ const deletion = require("../lib/account-deletion");
 describe("Account deletion data cleanup", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    payments.createWrite.mockImplementation((path, data, precondition) => ({ path, data, precondition }));
+    payments.documentName.mockImplementation((path) => "doc:" + path);
+    payments.toFields.mockImplementation((data) => data);
     payments.commitWrites.mockResolvedValue({});
     payments.getDocument.mockResolvedValue({
       updateTime: "root-version",
@@ -98,18 +101,10 @@ describe("Account deletion data cleanup", () => {
     expect(anonymizedFields).not.toHaveProperty("uid");
     expect(anonymizedFields).not.toHaveProperty("paymentId");
     const allWrites = payments.commitWrites.mock.calls.flatMap(([writes]) => writes);
-    expect(payments.listRootDocumentsMatchingField.mock.calls).toEqual(expect.arrayContaining([
-      ["paymentOrderIndex", "uid", "user-a"],
-      ["blockchainAmountIndex", "uid", "user-a"],
-    ]));
-    expect(payments.commitWrites.mock.calls.map(([writes]) => writes)).toEqual(expect.arrayContaining([
-      expect.arrayContaining([
-        expect.objectContaining({ delete: "doc:paymentOrderIndex/private-order-index" }),
-      ]),
-      expect.arrayContaining([
-        expect.objectContaining({ delete: "doc:blockchainAmountIndex/private-amount-index" }),
-      ]),
-    ]));
+    expect(payments.listRootDocumentsMatchingField).toHaveBeenCalledWith("paymentOrderIndex", "uid", "user-a");
+    expect(payments.listRootDocumentsMatchingField).toHaveBeenCalledWith("blockchainAmountIndex", "uid", "user-a");
+    expect(allWrites.some((write) => write.delete === "doc:paymentOrderIndex/private-order-index")).toBe(true);
+    expect(allWrites.some((write) => write.delete === "doc:blockchainAmountIndex/private-amount-index")).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:users/user-a/privateIntegrations/binanceP2P/secrets/secret-1")).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:users/user-a")).toBe(true);
     expect(payments.listRootDocumentsMatchingField).toHaveBeenCalledWith("paymentTransactions", "uid", "user-a");
