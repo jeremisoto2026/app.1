@@ -62,7 +62,7 @@ describe("Account deletion endpoint", () => {
     payments.requireFirebaseUser.mockResolvedValue({ sub: "authenticated-user", auth_time: now });
     deletion.acquireAccountDeletionLock.mockResolvedValue({});
     deletion.deleteUserAccountData.mockResolvedValue({
-      anonymizedPaymentTransactions: 2,
+      pseudonymizedPaymentTransactions: 2,
       deletedPaymentOrderIndexes: 1,
       deletedBlockchainAmountIndexes: 1,
       deletedUserDocuments: 8,
@@ -117,12 +117,12 @@ describe("Account deletion endpoint", () => {
     expect(deletion.acquireAccountDeletionLock).not.toHaveBeenCalled();
   });
 
-  test("uses the verified UID and anonymizes data before deleting Firebase Auth", async () => {
+  test("uses the verified UID and pseudonymizes data before deleting Firebase Auth", async () => {
     const order = [];
     deletion.acquireAccountDeletionLock.mockImplementation(async (uid) => order.push("lock:" + uid));
     deletion.deleteUserAccountData.mockImplementation(async (uid) => {
       order.push("cleanup:" + uid);
-      return { anonymizedPaymentTransactions: 2 };
+      return { pseudonymizedPaymentTransactions: 2 };
     });
     firebaseSession.deleteFirebaseAuthAccount.mockImplementation(async ({ idToken }) => {
       order.push("auth:" + idToken);
@@ -151,7 +151,7 @@ describe("Account deletion endpoint", () => {
     expect(res.body).toMatchObject({
       success: true,
       deleted: true,
-      retainedAnonymizedPaymentReferences: 2,
+      retainedPseudonymizedPaymentReferences: 2,
     });
   });
 

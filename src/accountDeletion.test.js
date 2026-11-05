@@ -12,7 +12,15 @@ jest.mock("../lib/payments", () => ({
   toFields: jest.fn((data) => data),
 }));
 
+jest.mock("../lib/payment-reference", () => ({
+  getPaymentTransactionReferencePath: jest.fn((provider) =>
+    "paymentTransactions/hmac_v1_" + provider + "_" + "b".repeat(64)
+  ),
+  isHmacPaymentTransactionId: jest.fn((id) => String(id || "").startsWith("hmac_v1_")),
+}));
+
 const payments = require("../lib/payments");
+const paymentReference = require("../lib/payment-reference");
 const deletion = require("../lib/account-deletion");
 
 describe("Account deletion data cleanup", () => {
@@ -21,11 +29,15 @@ describe("Account deletion data cleanup", () => {
     payments.createWrite.mockImplementation((path, data, precondition) => ({ path, data, precondition }));
     payments.documentName.mockImplementation((path) => "doc:" + path);
     payments.toFields.mockImplementation((data) => data);
+    paymentReference.getPaymentTransactionReferencePath.mockImplementation((provider) =>
+      "paymentTransactions/hmac_v1_" + provider + "_" + "b".repeat(64)
+    );
+    paymentReference.isHmacPaymentTransactionId.mockImplementation((id) => String(id || "").startsWith("hmac_v1_"));
     payments.commitWrites.mockResolvedValue({});
-    payments.getDocument.mockResolvedValue({
+    payments.getDocument.mockImplementation(async (path) => path === "users/user-a" ? ({
       updateTime: "root-version",
       data: { uid: "user-a", email: "private@example.com", plan: "pro" },
-    });
+    }) : null);
     payments.listRootDocumentsMatchingField.mockImplementation(async (collection) => {
       if (collection === "paymentTransactions") {
         return [{
@@ -56,8 +68,8 @@ describe("Account deletion data cleanup", () => {
     });
   });
 
-  test("retains only a minimal anonymous payment reference", () => {
-    const result = deletion.anonymizedTransactionFields({
+  test("retains only a minimal pseudonymized payment reference", () => {
+    const result = deletion.pseudonymizedTransactionFields({
       id: "bep20_" + "b".repeat(64),
       data: {
         uid: "user-a",
@@ -70,7 +82,7 @@ describe("Account deletion data cleanup", () => {
 
     expect(result).toMatchObject({
       provider: "blockchain_bep20",
-      anonymized: true,
+      pseudonymized: true,
       retentionPurpose: "duplicate_payment_prevention",
     });
     expect(result).not.toHaveProperty("uid");
@@ -83,26 +95,31 @@ describe("Account deletion data cleanup", () => {
     const summary = await deletion.deleteUserAccountData("user-a");
 
     expect(summary).toEqual({
-      anonymizedPaymentTransactions: 1,
+      pseudonymizedPaymentTransactions: 1,
       deletedPaymentOrderIndexes: 1,
       deletedBlockchainAmountIndexes: 1,
       deletedUserDocuments: 4,
     });
 
-    expect(payments.toFields).toHaveBeenCalledWith(expect.objectContaining({
+    const markerWrite = payments.createWrite.mock.calls.find(([path]) =>
+      path.startsWith("paymentTransactions/hmac_v1_blockchain_bep20_")
+    );
+    expect(markerWrite).toBeDefined();
+    expect(markerWrite[0]).not.toContain("a".repeat(64));
+    expect(markerWrite[1]).toMatchObject({
       provider: "blockchain_bep20",
-      anonymized: true,
+      pseudonymized: true,
       retentionPurpose: "duplicate_payment_prevention",
-    }));
-    const anonymizedFields = payments.toFields.mock.calls
-      .map(([fields]) => fields)
-      .find((fields) => fields?.anonymized === true);
-    expect(anonymizedFields).toBeDefined();
-    expect(anonymizedFields).not.toHaveProperty("uid");
-    expect(anonymizedFields).not.toHaveProperty("paymentId");
+    });
+    expect(markerWrite[1]).not.toHaveProperty("uid");
+    expect(markerWrite[1]).not.toHaveProperty("paymentId");
+    expect(markerWrite[1]).not.toHaveProperty("txHash");
+    expect(markerWrite[1]).not.toHaveProperty("transactionId");
     const allWrites = payments.commitWrites.mock.calls.flatMap(([writes]) => writes);
     expect(payments.listRootDocumentsMatchingField).toHaveBeenCalledWith("paymentOrderIndex", "uid", "user-a");
     expect(payments.listRootDocumentsMatchingField).toHaveBeenCalledWith("blockchainAmountIndex", "uid", "user-a");
+    expect(allWrites.some((write) => write.delete === "doc:paymentTransactions/bep20_" + "a".repeat(64))).toBe(true);
+    expect(allWrites.some((write) => write.path === markerWrite[0])).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:paymentOrderIndex/private-order-index")).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:blockchainAmountIndex/private-amount-index")).toBe(true);
     expect(allWrites.some((write) => write.delete === "doc:users/user-a/privateIntegrations/binanceP2P/secrets/secret-1")).toBe(true);
@@ -120,10 +137,11 @@ describe("Account deletion data cleanup", () => {
     // Global payment references/indexes may be sanitized, but no user document is deleted.
     const writes = payments.commitWrites.mock.calls.flatMap(([batch]) => batch);
     expect(writes.some((write) => write.delete?.startsWith("doc:users/"))).toBe(false);
-    expect(payments.toFields).toHaveBeenCalledWith(expect.objectContaining({
-      anonymized: true,
-      retentionPurpose: "duplicate_payment_prevention",
-    }));
+    expect(payments.createWrite).toHaveBeenCalledWith(
+      expect.stringContaining("paymentTransactions/hmac_v1_blockchain_bep20_"),
+      expect.objectContaining({ pseudonymized: true, retentionPurpose: "duplicate_payment_prevention" }),
+      { exists: false }
+    );
   });
 
   test("creates and renews deletion locks, but rejects a concurrent active lease", async () => {
