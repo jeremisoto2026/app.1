@@ -127,6 +127,50 @@ describe("Account deletion data cleanup", () => {
     expect(payments.listRootDocumentsMatchingField).toHaveBeenCalledWith("paymentTransactions", "uid", "user-a");
   });
 
+  test("migrates legacy Binance Pay references without retaining the raw transaction ID", async () => {
+    payments.listRootDocumentsMatchingField.mockResolvedValueOnce([{
+      id: "binance_txn-123",
+      updateTime: "binance-version",
+      data: {
+        uid: "user-a",
+        paymentId: "private-payment-id",
+        provider: "binance_pay",
+        transactionId: "txn-123",
+        amount: 15,
+      },
+    }]);
+
+    const count = await deletion.pseudonymizePaymentTransactions("user-a");
+
+    expect(count).toBe(1);
+    expect(paymentReference.getPaymentTransactionReferencePath).toHaveBeenCalledWith("binance_pay", "txn-123");
+    const markerWrite = payments.createWrite.mock.calls[0];
+    expect(markerWrite[0]).toBe("paymentTransactions/hmac_v1_binance_pay_" + "b".repeat(64));
+    expect(markerWrite[1]).toMatchObject({
+      provider: "binance_pay",
+      pseudonymized: true,
+      retentionPurpose: "duplicate_payment_prevention",
+    });
+    expect(markerWrite[1]).not.toHaveProperty("uid");
+    expect(markerWrite[1]).not.toHaveProperty("paymentId");
+    expect(markerWrite[1]).not.toHaveProperty("transactionId");
+
+    const writes = payments.commitWrites.mock.calls.flatMap(([batch]) => batch);
+    expect(writes.some((write) => write.delete === "doc:paymentTransactions/binance_txn-123")).toBe(true);
+    expect(writes.some((write) => write.path === markerWrite[0])).toBe(true);
+  });
+
+  test("stops migration when a historical payment ID does not match its legacy document ID", async () => {
+    payments.listRootDocumentsMatchingField.mockResolvedValueOnce([{
+      id: "binance_wrong-id",
+      updateTime: "binance-version",
+      data: { uid: "user-a", provider: "binance_pay", transactionId: "txn-123" },
+    }]);
+
+    await expect(deletion.pseudonymizePaymentTransactions("user-a"))
+      .rejects.toMatchObject({ statusCode: 503 });
+    expect(payments.commitWrites).not.toHaveBeenCalled();
+  });
   test("fails closed when account hierarchy exceeds the safe document cap", async () => {
     payments.listAllDocuments.mockImplementation(async () =>
       Array.from({ length: 10001 }, (_, index) => ({ id: "doc-" + index }))

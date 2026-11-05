@@ -15,7 +15,7 @@ The secret is server-only. It must never use a `REACT_APP_` prefix or be sent to
 
 New BEP20 and Binance Pay transactions use an HMAC reference ID. Both payment handlers also check their former raw-ID path while older records may still exist.
 
-During account deletion, a legacy raw-ID marker is copied to its HMAC path with a Firestore `exists:false` precondition, then the old raw-ID document is deleted in the same commit. If the HMAC marker already exists, it is retained and only the old document is deleted. Deletion stops safely when a historical provider or reference cannot be recovered.
+During account deletion, a legacy raw-ID marker is copied to its HMAC path with a Firestore `exists:false` precondition, then the old raw-ID document is deleted in the same commit. If the HMAC marker already exists, it is retained and only the old document is deleted. Before migration, the recovered reference is checked against the exact legacy document ID. Deletion stops safely when a historical provider, reference, or matching ID cannot be verified.
 
 After the account is deleted, the retained HMAC marker contains only the provider, the pseudonymization flag, the duplicate-prevention purpose, and the timestamp. It contains no UID, payment ID, raw TxID, raw Binance transaction ID, or amount.
 
