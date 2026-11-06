@@ -72,3 +72,5 @@ No despliegues Preview hasta que las dos claves de programador estén guardadas 
 - Las claves API de los exchanges permanecen cifradas en Firestore y solo se descifran en el backend.
 - El backend selecciona explícitamente secretos Production o Preview según `VERCEL_ENV`; Preview nunca utiliza un secreto de Production como alternativa.
 - Los endpoints validan los secretos con comparación en tiempo constante; GitHub Actions mantiene la verificación OIDC.
+
+<!-- Cloudflare Preview build trigger: documentation-only change; no Worker configuration changed. -->
