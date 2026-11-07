@@ -176,6 +176,11 @@ export default function BinanceP2PSyncCard() {
               La clave de cifrado del servidor no está disponible. La sincronización está desactivada hasta corregir BINANCE_P2P_ENCRYPTION_KEY en Vercel.
             </div>
           )}
+          {status.orderQuotaBlocked && (
+            <div role="status" className="profile-alert profile-alert-warning">
+              Se alcanzó el límite gratuito de 300 órdenes. La sincronización está pausada y las órdenes pendientes se conservarán. Al activar Pro podrás reanudarla.
+            </div>
+          )}
           {status.lastSyncStatus === "error" && (
             <div role="status" className="profile-alert profile-alert-warning">
               La última sincronización no terminó correctamente. Pulsa «Sincronizar ahora» para reintentar; código interno: {status.lastSyncErrorCode || "no disponible"}.

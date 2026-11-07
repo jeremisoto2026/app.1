@@ -6,6 +6,7 @@ const {
   extractItems,
   normalizeCompletedOrder,
 } = require("../../lib/bybit-p2p");
+const { calculateDashboardMetrics, getAccountingCryptoAmount } = require("./financialCalculations");
 const {
   INITIAL_BACKFILL_VERSION,
   getInitialBackfillWindow,
@@ -129,6 +130,82 @@ describe("Bybit P2P connector", () => {
     });
     expect(normalized.timestamp).toBeInstanceOf(Date);
   });
+
+  test.each([
+    ["BUY", 0, "64.4", "0.92", "2026-11-04T12:00:00.000Z"],
+    ["SELL", 1, "70", "1", "2026-11-04T13:00:00.000Z"],
+  ])(
+    "keeps Bybit %s commission at zero and does not adjust FIFO crypto quantity",
+    (tradeSide, side, fiatAmount, price, timestamp) => {
+      const imported = normalizeCompletedOrder({
+        id: `BYBIT-${tradeSide}-FEE-ZERO-TEST`,
+        side,
+        tokenId: "USDT",
+        notifyTokenId: "USDT",
+        amount: fiatAmount,
+        currencyId: "EUR",
+        price,
+        notifyTokenQuantity: "70",
+        fee: "0",
+        status: 50,
+        createDate: String(new Date(timestamp).getTime()),
+        orderType: "ORIGIN",
+      });
+
+      expect(imported).toMatchObject({
+        source: "bybit_p2p",
+        operation_type: tradeSide === "BUY" ? "Compra" : "Venta",
+        crypto: "USDT",
+        fiat: "EUR",
+        crypto_amount: 70,
+        fee: 0,
+        fee_currency: null,
+        sourceFee: 0,
+      });
+      expect(getAccountingCryptoAmount(imported)).toBeCloseTo(70, 10);
+
+      const manualBuy = {
+        id: `BYBIT-${tradeSide}-FIFO-BUY`,
+        source: "manual",
+        sessionId: null,
+        operation_type: "Compra",
+        crypto: "USDT",
+        fiat: "EUR",
+        crypto_amount: 70,
+        fiat_amount: 64.4,
+        timestamp: new Date("2026-11-04T11:00:00.000Z"),
+      };
+      const manualSale = {
+        id: `BYBIT-${tradeSide}-FIFO-SALE`,
+        source: "manual",
+        sessionId: null,
+        operation_type: "Venta",
+        crypto: "USDT",
+        fiat: "EUR",
+        crypto_amount: 70,
+        fiat_amount: 70,
+        timestamp: new Date("2026-11-04T14:00:00.000Z"),
+      };
+      const operations = tradeSide === "BUY"
+        ? [{ ...imported, id: imported.order_id }, manualSale]
+        : [manualBuy, { ...imported, id: imported.order_id }];
+
+      const metrics = calculateDashboardMetrics(
+        operations,
+        new Date("2026-11-05T00:00:00.000Z")
+      );
+      const saleId = tradeSide === "BUY" ? manualSale.id : imported.order_id;
+      const saleResult = metrics.realizedProfitByOperation[saleId];
+
+      expect(saleResult.matchedQuantity).toBeCloseTo(70, 10);
+      expect(saleResult.matchedCost).toBeCloseTo(64.4, 10);
+      expect(saleResult.matchedProceeds).toBeCloseTo(70, 10);
+      expect(saleResult.profit).toBeCloseTo(5.6, 10);
+      expect(saleResult.fullyMatched).toBe(true);
+      expect(metrics.profitByCurrency.EUR).toBeCloseTo(5.6, 10);
+      expect(metrics.closedSales).toBe(1);
+    }
+  );
 
   test("relinks an existing unassigned Bybit import when it receives a unique compatible session", () => {
     const operation = {

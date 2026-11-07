@@ -1,6 +1,6 @@
 export const FREE_PLAN_LIMITS = Object.freeze({
   orders: 300,
-  movements: 150,
+  arbitrages: 150,
   exports: 50,
 });
 

@@ -6,6 +6,10 @@ const {
   activateProWithPayment,
   errorResponse,
 } = require("../../../lib/payments");
+const {
+  getPaymentTransactionReferencePath,
+  getLegacyPaymentTransactionPath,
+} = require("../../../lib/payment-reference");
 
 async function readRawBody(req) {
   if (Buffer.isBuffer(req.body)) return req.body.toString("utf8");
@@ -106,14 +110,22 @@ module.exports = async function binancePayWebhook(req, res) {
       return sendJson(res, 200, { returnCode: "SUCCESS", returnMessage: null });
     }
 
-    const transactionPath = "paymentTransactions/binance_" + transactionId.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const existingTransaction = await getDocument(transactionPath);
-    if (existingTransaction) {
-      const existing = existingTransaction.data || {};
-      if (existing.uid === uid && existing.paymentId === paymentId) {
+    const transactionPath = getPaymentTransactionReferencePath("binance_pay", transactionId);
+    const legacyTransactionPath = getLegacyPaymentTransactionPath("binance_pay", transactionId);
+    const [hmacTransaction, legacyTransaction] = await Promise.all([
+      getDocument(transactionPath),
+      getDocument(legacyTransactionPath),
+    ]);
+    const existingTransactions = [hmacTransaction, legacyTransaction].filter(Boolean);
+    if (existingTransactions.length) {
+      const samePayment = existingTransactions.every((document) => {
+        const existing = document.data || {};
+        return existing.uid === uid && existing.paymentId === paymentId;
+      });
+      if (samePayment) {
         return sendJson(res, 200, { returnCode: "SUCCESS", returnMessage: null });
       }
-      console.error("Binance transaction ID was already claimed:", transactionId);
+      console.error("Binance Pay transaction reference was already claimed by another payment.");
       return sendJson(res, 200, { returnCode: "SUCCESS", returnMessage: null });
     }
 
@@ -136,7 +148,6 @@ module.exports = async function binancePayWebhook(req, res) {
         uid,
         paymentId,
         provider: "binance_pay",
-        transactionId,
         amount: paidAmount,
         currency,
         verifiedAt: now,

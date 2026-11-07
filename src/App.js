@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { firebaseEnvironmentStatus } from "./firebase";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AuthForms from "./components/AuthForms";
 import NavigationBar from "./components/NavigationBar";
@@ -385,7 +386,45 @@ const MainApp = () => {
   );
 };
 
+function FirebasePreviewSetupNotice() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-5 py-12 text-slate-100">
+      <section className="w-full max-w-2xl rounded-3xl border border-amber-300/20 bg-slate-900/90 p-7 shadow-2xl sm:p-10" role="alert">
+        <div className="mb-5 inline-flex rounded-full border border-amber-300/20 bg-amber-300/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
+          Entorno de pruebas protegido
+        </div>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">JJXCAPITAL Preview aún no está conectado</h1>
+        <p className="mt-4 text-sm leading-7 text-slate-300">
+          Para proteger tus datos, esta versión no utiliza el proyecto Firebase de Producción. El acceso permanecerá bloqueado hasta configurar un proyecto Firebase independiente para pruebas.
+        </p>
+        {firebaseEnvironmentStatus.reason === "production-project-rejected" ? (
+          <p className="mt-5 rounded-xl border border-rose-300/20 bg-rose-300/[0.06] p-4 text-sm leading-6 text-rose-100">
+            Se ha detectado el identificador del proyecto de Producción. La aplicación lo ha rechazado y no intentará conectarse.
+          </p>
+        ) : (
+          <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
+            <p className="text-sm font-semibold text-white">Configuración pendiente</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Faltan los datos públicos de la aplicación web Firebase de Preview. No introduzcas aquí las credenciales de Producción.
+            </p>
+            {firebaseEnvironmentStatus.missingFields.length > 0 && (
+              <p className="mt-3 break-words font-mono text-xs leading-6 text-slate-500">
+                Campos pendientes: {firebaseEnvironmentStatus.missingFields.join(", ")}
+              </p>
+            )}
+          </div>
+        )}
+        <p className="mt-6 text-xs leading-6 text-slate-500">
+          Producción continúa funcionando de forma independiente. Esta pantalla no modifica ni elimina información.
+        </p>
+      </section>
+    </main>
+  );
+}
+
 function App() {
+  if (!firebaseEnvironmentStatus.ready) return <FirebasePreviewSetupNotice />;
+
   return (
     <AuthProvider>
       <MainApp />

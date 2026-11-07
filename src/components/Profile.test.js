@@ -94,13 +94,13 @@ describe("Profile", () => {
 
     expect(container.textContent).toContain("Información del perfil");
     expect(container.textContent).toContain("Uso de tu cuenta");
-    expect(container.textContent).toContain("Movimientos registrados");
+    expect(container.textContent).toContain("Arbitrajes creados");
     expect(container.textContent).toContain("2");
     expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
     expect(container.textContent).toContain("TIPO DE PLAN ACTUAL");
-    expect(container.textContent).toContain("Órdenes / arbitrajes");
+    expect(container.textContent).toContain("Órdenes registradas");
     expect(container.textContent).toContain("Máximo 300");
-    expect(container.textContent).toContain("150 máximo");
+    expect(container.textContent).toContain("Máximo 150");
     expect(container.textContent).toContain("Máximo 50");
     expect(container.textContent).toContain("Método de pago");
     expect(container.textContent).toContain("Historial de pagos");
@@ -120,6 +120,25 @@ describe("Profile", () => {
     expect(supportLink.getAttribute("rel")).toContain("noopener");
   });
 
+  test("hides the Production payment wallet and checkout in Preview", async () => {
+    const originalVercelEnvironment = process.env.REACT_APP_VERCEL_ENV;
+    process.env.REACT_APP_VERCEL_ENV = "preview";
+
+    try {
+      await act(async () => {
+        root.render(<Profile />);
+      });
+
+      expect(container.textContent).toContain("Pagos deshabilitados en Preview");
+      expect(container.textContent).not.toContain("0x4c64b783f1babc0a2fe62f174873f415393c2269");
+      expect(container.textContent).not.toContain("0x55d398326f99059fF775485246999027B3197955");
+      expect(container.textContent).not.toContain("Crear orden y pagar con BEP20");
+    } finally {
+      if (originalVercelEnvironment === undefined) delete process.env.REACT_APP_VERCEL_ENV;
+      else process.env.REACT_APP_VERCEL_ENV = originalVercelEnvironment;
+    }
+  });
+
   test("keeps the profile visible when the operation counter cannot load", async () => {
     firestoreMocks.getDocs.mockRejectedValueOnce(new Error("Permission denied"));
 
@@ -128,7 +147,7 @@ describe("Profile", () => {
     });
 
     expect(container.textContent).toContain("Información del perfil");
-    expect(container.textContent).toContain("no se pudo consultar el contador de movimientos");
+    expect(container.textContent).toContain("no se pudo consultar el contador de órdenes");
     expect(container.textContent).toContain("PLANES Y FACTURACIÓN");
     expect(container.textContent).toContain("Método de pago");
     expect(container.textContent).toContain("Historial de pagos");
