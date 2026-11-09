@@ -181,7 +181,11 @@ export default function BybitP2PSyncCard() {
 
       {loadingStatus ? (
         <p className="text-sm text-slate-500" role="status">Comprobando conexión de Bybit…</p>
-      ) : status?.connected ? (
+      ) : !status ? (
+        <p className="text-sm text-amber-600" role="status">
+          No se ha podido verificar el estado de Bybit. Por seguridad, los campos para introducir API Keys permanecen ocultos hasta recuperar la sesión de Firebase.
+        </p>
+      ) : status.connected ? (
         <div className="space-y-4">
           {!status.encryptionConfigured && (
             <div role="alert" className="profile-alert profile-alert-warning">

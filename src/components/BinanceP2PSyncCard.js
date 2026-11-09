@@ -32,6 +32,10 @@ const formatDate = (value) => {
     : "Fecha no disponible";
 };
 
+const BINANCE_ENCRYPTION_KEY_ENV = process.env.REACT_APP_VERCEL_ENV === "preview"
+  ? "BINANCE_P2P_PREVIEW_ENCRYPTION_KEY"
+  : "BINANCE_P2P_ENCRYPTION_KEY";
+
 export default function BinanceP2PSyncCard() {
   const { user } = useAuth();
   const [status, setStatus] = useState(null);
@@ -169,7 +173,11 @@ export default function BinanceP2PSyncCard() {
 
       {loadingStatus ? (
         <p className="text-sm text-slate-500" role="status">Comprobando conexión de Binance…</p>
-      ) : status?.connected ? (
+      ) : !status ? (
+        <p className="text-sm text-amber-600" role="status">
+          No se ha podido verificar el estado de Binance. Por seguridad, los campos para introducir API Keys permanecen ocultos hasta recuperar la sesión de Firebase.
+        </p>
+      ) : status.connected ? (
         <div className="space-y-4">
           {!status.encryptionConfigured && (
             <div role="alert" className="profile-alert profile-alert-warning">
@@ -255,7 +263,7 @@ export default function BinanceP2PSyncCard() {
               <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
               <span>
                 Antes de conectar Binance, el administrador debe configurar el secreto de cifrado
-                <code className="mx-1 rounded bg-slate-500/10 px-1 py-0.5">BINANCE_P2P_ENCRYPTION_KEY</code>
+                <code className="mx-1 rounded bg-slate-500/10 px-1 py-0.5">{BINANCE_ENCRYPTION_KEY_ENV}</code>
                 en las variables de entorno de servidor de Vercel. No introduzcas tus claves hasta que este aviso desaparezca.
               </span>
             </div>
