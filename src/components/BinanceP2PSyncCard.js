@@ -133,11 +133,13 @@ export default function BinanceP2PSyncCard() {
       <header className="p2p-sync-card-header">
         <span className="p2p-sync-provider-mark p2p-sync-provider-mark-binance" aria-hidden="true">BN</span>
         <div className="p2p-sync-card-heading">
-          <span className="p2p-sync-card-eyebrow">EXCHANGE · INTEGRACIÓN P2P</span>
+          <span className="p2p-sync-card-eyebrow">EXCHANGE · INTEGRACIÓN P2P{status?.previewMode ? " · PREVIEW" : ""}</span>
           <h2 id="binance-p2p-sync-heading" className="p2p-sync-card-title">Binance <span>P2P</span></h2>
           <p>Importa automáticamente tus compras y ventas P2P completadas a JJXCAPITAL.</p>
           <p className="p2p-sync-card-description">
-            La importación comienza desde que conectas la API. Para vincular órdenes a un arbitraje, crea antes una sesión con el mismo par de monedas.
+            {status?.previewMode
+              ? "Estás en Preview: los datos se mantienen aislados de Producción."
+              : "La importación comienza desde que conectas la API. Para vincular órdenes a un arbitraje, crea antes una sesión con el mismo par de monedas."}
           </p>
         </div>
         <span className="p2p-sync-provider-badge p2p-sync-provider-badge-binance">
@@ -157,6 +159,13 @@ export default function BinanceP2PSyncCard() {
           </div>
         </div>
       </div>
+
+      {status?.previewMode && (
+        <div role="status" className="profile-alert profile-alert-warning">
+          <p className="font-semibold">Conexión deshabilitada en Preview</p>
+          <p className="mt-1 text-sm">Por seguridad, JJXCAPITAL no acepta ni guarda claves API de Binance o Bybit en este entorno. No introduzcas credenciales reales. El servidor también bloquea cualquier intento de conexión.</p>
+        </div>
+      )}
 
       {error && (
         <div role="alert" className="profile-alert profile-alert-error flex items-start gap-2">
@@ -299,11 +308,11 @@ export default function BinanceP2PSyncCard() {
           </div>
           <button
             type="submit"
-            disabled={!status?.encryptionConfigured || !apiKey.trim() || !apiSecret.trim() || connecting || syncing}
+            disabled={status?.previewMode || !status?.encryptionConfigured || !apiKey.trim() || !apiSecret.trim() || connecting || syncing}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             <ShieldCheckIcon className="h-4 w-4" aria-hidden="true" />
-            {connecting ? "Verificando conexión…" : "Conectar Binance en modo de solo lectura"}
+            {connecting ? "Verificando conexión…" : status?.previewMode ? "Conexión deshabilitada en Preview" : "Conectar Binance en modo de solo lectura"}
           </button>
           <p className="text-xs text-slate-500">
             Crea una clave únicamente para leer el historial P2P. No habilites Spot, Margin, Futures, transferencias o retiradas.

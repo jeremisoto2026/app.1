@@ -33,6 +33,7 @@ module.exports = async function binanceP2PStatus(req, res) {
     const encryptionConfigured = /^[0-9a-f]{64}$/i.test(String(encryptionKey || "").trim());
     return sendJson(res, 200, {
       connected: Boolean(data.encryptedCredentials && data.connectionStatus === "connected"),
+      previewMode: process.env.VERCEL_ENV === "preview",
       encryptionConfigured,
       apiKeyHint: data.apiKeyHint || null,
       connectedAt: data.connectedAt || null,
