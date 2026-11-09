@@ -64,11 +64,27 @@ async function runProviderBackgroundSync({ provider, scheduler, secret, target, 
     });
 
     const text = await response.text();
-    let result;
-    try { result = text ? JSON.parse(text) : {}; }
-    catch { throw new Error("JJXCAPITAL returned a non-JSON " + provider + " scheduler response."); }
+    let result = null;
+    try { result = text ? JSON.parse(text) : {}; } catch { /* Keep non-JSON responses opaque. */ }
     if (!response.ok) {
+      const rawError = typeof result?.error === "string"
+        ? result.error
+        : typeof result?.message === "string"
+          ? result.message
+          : "";
+      let safeError = rawError.replace(/[\\r\\n]+/g, " ").slice(0, 240);
+      if (secret) safeError = safeError.split(secret).join("[redacted]");
+      if (target.bypassSecret) safeError = safeError.split(target.bypassSecret).join("[redacted]");
+      console.error("JJXCAPITAL scheduler request rejected:", JSON.stringify({
+        provider,
+        status: response.status,
+        contentType: response.headers.get("content-type") || "unknown",
+        responseError: safeError || (result ? "no_error_field" : "non_json_response"),
+      }));
       throw new Error("JJXCAPITAL " + provider + " scheduler returned HTTP " + response.status + ".");
+    }
+    if (!result) {
+      throw new Error("JJXCAPITAL returned a non-JSON " + provider + " scheduler response.");
     }
     if (result.skipped === "another_run_is_active") break;
 
@@ -89,6 +105,23 @@ async function runBackgroundSync(env, fetchImpl = globalThis.fetch) {
   const failures = [];
   const binanceSecret = String(env.BINANCE_P2P_SCHEDULER_SECRET || "");
   const bybitSecret = String(env.BYBIT_P2P_SCHEDULER_SECRET || "");
+
+  console.info("JJXCAPITAL Preview scheduler configuration:", JSON.stringify({
+    target: target.preview ? "preview" : "production",
+    host: new URL(target.endpoint).hostname,
+    bypassSecret: {
+      configured: target.preview ? target.bypassSecret.length >= 32 : null,
+      length: target.preview ? target.bypassSecret.length : null,
+    },
+    binanceSecret: {
+      configured: binanceSecret.length >= 32,
+      length: binanceSecret.length,
+    },
+    bybitSecret: {
+      configured: bybitSecret.length >= 32,
+      length: bybitSecret.length,
+    },
+  }));
 
   try {
     await runProviderBackgroundSync({
