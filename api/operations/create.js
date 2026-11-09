@@ -13,7 +13,7 @@ const {
   toFields,
   errorResponse,
 } = require("../../lib/payments");
-const { assertPlanAllows } = require("../../lib/plans");
+const { assertPlanAllows, getStoredPlanUsage, FREE_PLAN_LIMITS } = require("../../lib/plans");
 
 const EXCHANGES = ["Binance", "Bybit", "OKX", "KuCoin"];
 const OPERATION_TYPES = ["Compra", "Venta"];
@@ -119,10 +119,12 @@ module.exports = async function createOperation(req, res) {
     const nextCryptoBalance = operationType === "Venta"
       ? availableCrypto - cryptoAmount
       : availableCrypto + cryptoAmount;
-    const storedMovements = Number(profile.data.movementsUsed);
-    const savedMovements = Number.isFinite(storedMovements) && storedMovements >= 0 ? storedMovements : 0;
-    const currentMovements = Math.max(savedMovements, await countDocuments(operationsPath, 151));
-    assertPlanAllows(profile.data, "movements", currentMovements);
+    const savedOrders = getStoredPlanUsage(profile.data, "registeredOrdersUsed", ["movementsUsed"]);
+    const currentOrders = Math.max(
+      savedOrders,
+      await countDocuments(operationsPath, FREE_PLAN_LIMITS.orders + 1)
+    );
+    assertPlanAllows(profile.data, "orders", currentOrders);
 
     const id = crypto.randomUUID().replace(/-/g, "");
     const timestamp = new Date();
@@ -160,7 +162,7 @@ module.exports = async function createOperation(req, res) {
         update: { name: documentName(operationsPath + "/" + id), fields: toFields(operation) },
         currentDocument: { exists: false },
       },
-      createWrite(userPath, { movementsUsed: currentMovements + 1 },
+      createWrite(userPath, { registeredOrdersUsed: currentOrders + 1 }, 
         profile.updateTime ? { updateTime: profile.updateTime } : { exists: true }),
       createWrite(sessionPath, sessionUpdate, { updateTime: sessionDocument.updateTime }),
     ];
@@ -168,7 +170,7 @@ module.exports = async function createOperation(req, res) {
 
     return sendJson(res, 201, {
       operation: { ...operation, id, timestamp: timestamp.toISOString() },
-      usage: { movements: currentMovements + 1, limit: 150 },
+      usage: { orders: currentOrders + 1, limit: FREE_PLAN_LIMITS.orders },
     });
   } catch (error) {
     return errorResponse(res, error);

@@ -188,6 +188,11 @@ export default function BybitP2PSyncCard() {
               La clave de cifrado de Bybit no está configurada en este entorno. La sincronización está desactivada.
             </div>
           )}
+          {status.orderQuotaBlocked && (
+            <div role="status" className="profile-alert profile-alert-warning">
+              Se alcanzó el límite gratuito de 300 órdenes. La sincronización está pausada y las órdenes pendientes se conservarán. Al activar Pro podrás reanudarla.
+            </div>
+          )}
           {status.lastSyncStatus === "error" && (
             <div role="status" className="profile-alert profile-alert-warning">
               La última sincronización no terminó correctamente. Pulsa «Sincronizar ahora» para reintentar. Código interno: {status.lastSyncErrorCode || "no disponible"}.
