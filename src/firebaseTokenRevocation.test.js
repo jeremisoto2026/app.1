@@ -157,7 +157,7 @@ describe("Firebase ID token session status enforcement", () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
-  test("fails closed if Firebase omits the revocation or disabled status fields", async () => {
+  test("accepts active accounts when Firebase omits default disabled=false and validSince=0 fields", async () => {
     const { token } = makeToken();
     global.fetch
       .mockResolvedValueOnce({
@@ -167,6 +167,29 @@ describe("Firebase ID token session status enforcement", () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ users: [{ localId: "user-123" }] }),
+      });
+
+    const claims = await payments.requireFirebaseUser({
+      headers: { authorization: "Bearer " + token },
+    });
+
+    expect(claims.sub).toBe("user-123");
+  });
+
+  test("rejects malformed explicit account status fields", async () => {
+    const { token } = makeToken();
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ keys: [publicJwk] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ users: [{
+          localId: "user-123",
+          disabled: "false",
+          validSince: "0",
+        }] }),
       });
 
     await expect(payments.requireFirebaseUser({
