@@ -252,6 +252,28 @@ describe("calculateArbitrageSessionResult", () => {
       profit: 0, initialCapital: 0, roi: 0, baseCurrency: "EUR", isCryptoBase: false,
     });
   });
+
+  test("keeps FIFO profit available without capital while ROI remains pending", () => {
+    const session = { id: "no-capital-fiat", fiat: "GBP", crypto: "USDC", initialCapitalType: "fiat" };
+    const operations = [
+      { id: "buy", sessionId: session.id, crypto: "USDC", fiat: "GBP", operation_type: "Compra", crypto_amount: 10, fiat_amount: 100, timestamp: date },
+      { id: "sell", sessionId: session.id, crypto: "USDC", fiat: "GBP", operation_type: "Venta", crypto_amount: 10, fiat_amount: 110, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+    ];
+    expect(calculateArbitrageSessionResult(session, operations)).toMatchObject({
+      profit: 10, roi: null, baseCurrency: "GBP", operationCount: 2,
+    });
+  });
+
+  test("tracks a crypto-start session without initial capital as net coin movement, not ROI", () => {
+    const session = { id: "no-capital-crypto", fiat: "GBP", crypto: "USDC", initialCapitalType: "crypto" };
+    const operations = [
+      { id: "sell", sessionId: session.id, crypto: "USDC", fiat: "GBP", operation_type: "Venta", crypto_amount: 10, fiat_amount: 100, timestamp: date },
+      { id: "buy", sessionId: session.id, crypto: "USDC", fiat: "GBP", operation_type: "Compra", crypto_amount: 10.5, fiat_amount: 99, timestamp: new Date("2026-10-02T12:00:00.000Z") },
+    ];
+    expect(calculateArbitrageSessionResult(session, operations)).toMatchObject({
+      profit: 0.5, roi: null, baseCurrency: "USDC", operationCount: 2,
+    });
+  });
 });
 
 

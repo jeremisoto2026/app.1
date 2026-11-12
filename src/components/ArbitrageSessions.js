@@ -26,7 +26,9 @@ export default function ArbitrageSessions({ onOpenOperations }) {
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selected, setSelected] = useState("");
-  const [draft, setDraft] = useState({ name: "", strategy: "Comercio P2P", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT" });
+  const [showCapitalEditor, setShowCapitalEditor] = useState(false);
+  const [capitalDraft, setCapitalDraft] = useState("");
+  const [draft, setDraft] = useState({ name: "", strategy: "Comercio P2P", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT", initialCapital: "" });
 
   const loadData = async () => {
     if (!user?.uid) {
@@ -131,6 +133,11 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       setError("Selecciona el tipo de inicio, una divisa fiat y una criptomoneda válidas.");
       return;
     }
+    if (draft.initialCapital.trim() !== "" &&
+        (!Number.isFinite(Number(draft.initialCapital)) || Number(draft.initialCapital) <= 0)) {
+      setError("El capital inicial debe ser un importe mayor que cero. Si aún no lo sabes, deja el campo vacío.");
+      return;
+    }
     const name = draft.name.trim() || (draft.fiat + " / " + draft.crypto + " · " + new Date().toLocaleDateString("es-ES"));
     setSaving(true);
     setError("");
@@ -148,6 +155,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
           fiat: draft.fiat,
           crypto: draft.crypto,
           initialCapitalType: draft.initialCapitalType,
+          initialCapital: draft.initialCapital.trim() === "" ? null : Number(draft.initialCapital),
         }),
       });
       const payload = await response.json().catch(() => ({}));
@@ -155,7 +163,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
         throw new Error(payload.error || "No se pudo crear el arbitraje.");
       }
       const created = payload.session;
-      setDraft({ name: "", strategy: "Comercio P2P", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT" });
+      setDraft({ name: "", strategy: "Comercio P2P", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT", initialCapital: "" });
       setShowCreate(false);
       setSelected(created.id);
       await loadData();
@@ -163,6 +171,37 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     } catch (saveError) {
       console.error("Error creating arbitrage:", saveError);
       setError(saveError?.message || "No se pudo crear el arbitraje. Comprueba la conexión e inténtalo de nuevo.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveSessionCapital = async (event) => {
+    event.preventDefault();
+    if (!selectedSession || !user?.uid) return;
+    const amount = Number(capitalDraft);
+    if (capitalDraft.trim() === "" || !Number.isFinite(amount) || amount <= 0) {
+      setError("Introduce un capital inicial válido mayor que cero.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/sessions/capital", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: selectedSession.id, initialCapital: amount }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "No se pudo guardar el capital inicial.");
+      setShowCapitalEditor(false);
+      setCapitalDraft("");
+      await loadData();
+      setSelected(selectedSession.id);
+    } catch (capitalError) {
+      console.error("Error saving session capital:", capitalError);
+      setError(capitalError?.message || "No se pudo guardar el capital inicial.");
     } finally {
       setSaving(false);
     }
@@ -312,34 +351,46 @@ export default function ArbitrageSessions({ onOpenOperations }) {
             </select>
           </label>
           <label className="text-sm text-slate-300">Iniciar arbitraje con
-            <select value={draft.initialCapitalType} onChange={e => setDraft(v => ({ ...v, initialCapitalType: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+            <select value={draft.initialCapitalType} onChange={e => setDraft(v => ({ ...v, initialCapitalType: e.target.value, initialCapital: "" }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
               <option value="fiat">Moneda Fiat</option>
               <option value="crypto">Criptomoneda</option>
             </select>
           </label>
           {draft.initialCapitalType === "fiat" ? <>
             <label className="text-sm text-slate-300">Moneda inicial (Fiat)
-              <select value={draft.fiat} onChange={e => setDraft(v => ({ ...v, fiat: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+              <select value={draft.fiat} onChange={e => setDraft(v => ({ ...v, fiat: e.target.value, initialCapital: "" }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
                 {FIAT_CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
               </select>
             </label>
             <label className="text-sm text-slate-300">Cripto a operar
-              <select value={draft.crypto} onChange={e => setDraft(v => ({ ...v, crypto: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+              <select value={draft.crypto} onChange={e => setDraft(v => ({ ...v, crypto: e.target.value, initialCapital: "" }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
                 {CRYPTO_CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
               </select>
             </label>
           </> : <>
             <label className="text-sm text-slate-300">Moneda inicial (Cripto)
-              <select value={draft.crypto} onChange={e => setDraft(v => ({ ...v, crypto: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+              <select value={draft.crypto} onChange={e => setDraft(v => ({ ...v, crypto: e.target.value, initialCapital: "" }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
                 {CRYPTO_CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
               </select>
             </label>
             <label className="text-sm text-slate-300">Fiat para las operaciones
-              <select value={draft.fiat} onChange={e => setDraft(v => ({ ...v, fiat: e.target.value }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
+              <select value={draft.fiat} onChange={e => setDraft(v => ({ ...v, fiat: e.target.value, initialCapital: "" }))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none">
                 {FIAT_CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
               </select>
             </label>
           </>}
+          <label className="text-sm text-slate-300">Capital inicial (opcional) · {draft.initialCapitalType === "crypto" ? draft.crypto : draft.fiat}
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={draft.initialCapital}
+              onChange={e => setDraft(v => ({ ...v, initialCapital: e.target.value }))}
+              placeholder="Déjalo vacío si aún no lo sabes"
+              className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none"
+            />
+            <span className="mt-1 block text-xs leading-5 text-slate-500">No es obligatorio. Puedes registrar operaciones sin este dato y añadirlo más adelante para calcular el ROI.</span>
+          </label>
           {duplicateActiveSession && <div role="alert" className="sm:col-span-2 lg:col-span-3 rounded-xl border border-amber-400/25 bg-amber-400/5 px-4 py-3 text-sm text-amber-100">
             Ya existe un arbitraje activo para <strong>{draft.fiat} / {draft.crypto}</strong> ({duplicateActiveSession.name}). No puedes crear otro con el mismo par mientras esté en curso. <button type="button" onClick={openExistingSession} className="font-semibold underline underline-offset-2">Abrir el arbitraje existente</button> o termínalo antes de iniciar una nueva sesión.
           </div>}
@@ -347,7 +398,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
             <button disabled={saving || Boolean(duplicateActiveSession)} type="submit" className="jjx-button-primary flex-1">{saving ? "Guardando…" : duplicateActiveSession ? "Ya existe una sesión activa" : "Crear arbitraje"}</button>
             <button type="button" onClick={() => setShowCreate(false)} className="jjx-button-secondary">Cancelar</button>
           </div>
-          <p className="sm:col-span-2 lg:col-span-3 text-xs leading-5 text-slate-500">El tipo de inicio solo determina la primera operación. En cada compra o venta introducirás la cantidad que realmente vas a mover. Los flujos se calculan a partir de las operaciones registradas y no representan el saldo real de tu exchange.</p>
+          <p className="sm:col-span-2 lg:col-span-3 text-xs leading-5 text-slate-500">El tipo de inicio determina si la primera operación será una compra o una venta. El capital inicial es opcional: si no lo conoces, déjalo vacío; podrás registrar compras y ventas normalmente y completarlo más adelante. Los flujos reflejan solo los movimientos anotados, no el saldo real de tu exchange.</p>
         </form>
       )}
 
@@ -363,7 +414,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
           ) : (
             <div className="space-y-2">
               {sessions.map(item => (
-                <button key={item.id} type="button" onClick={() => setSelected(item.id)} className={"w-full rounded-xl border p-4 text-left transition " + (selected === item.id ? "border-violet-400/40 bg-violet-400/10" : "border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.05]")}>
+                <button key={item.id} type="button" onClick={() => { setSelected(item.id); setShowCapitalEditor(false); setCapitalDraft(""); }} className={"w-full rounded-xl border p-4 text-left transition " + (selected === item.id ? "border-violet-400/40 bg-violet-400/10" : "border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.05]")}>
                   <span className="flex items-center justify-between gap-2">
                     <strong className="truncate text-sm text-white">{item.name}</strong>
                     <span className={"text-xs " + (item.status === "active" ? "text-emerald-300" : "text-slate-400")}>{item.status === "active" ? "En curso" : "Terminado"}</span>
@@ -395,6 +446,17 @@ export default function ArbitrageSessions({ onOpenOperations }) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedSession.status === "active" && <button type="button" onClick={() => onOpenOperations?.(selectedSession.id)} className="jjx-button-primary"><DocumentPlusIcon className="h-4 w-4" /> Registrar compra/venta</button>}
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => {
+                        setCapitalDraft(Number(selectedSession.initialCapital) > 0 ? String(selectedSession.initialCapital) : "");
+                        setShowCapitalEditor(value => !value);
+                      }}
+                      className="jjx-button-secondary"
+                    >
+                      {Number(selectedSession.initialCapital) > 0 ? "Editar capital inicial" : "Registrar capital inicial"}
+                    </button>
                     <button type="button" onClick={exportSession} className="jjx-button-secondary"><ArrowDownTrayIcon className="h-4 w-4" /> Exportar Excel</button>
                     {selectedSession.status === "active"
                       ? <button type="button" disabled={saving} onClick={() => setSessionStatus("closed")} className="jjx-button-secondary"><CheckCircleIcon className="h-4 w-4" /> Terminar</button>
@@ -402,16 +464,34 @@ export default function ArbitrageSessions({ onOpenOperations }) {
                     <button type="button" disabled={saving || stats.count > 0} onClick={removeSession} aria-label="Eliminar arbitraje vacío" title={stats.count > 0 ? "Un arbitraje con movimientos se conserva en el historial" : "Eliminar arbitraje vacío"} className="jjx-button-secondary disabled:cursor-not-allowed disabled:opacity-40"><TrashIcon className="h-4 w-4" /></button>
                   </div>
                 </div>
+                {showCapitalEditor && (
+                  <form onSubmit={saveSessionCapital} className="mt-5 grid grid-cols-1 gap-3 rounded-xl border border-violet-400/20 bg-violet-400/5 p-4 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+                    <label className="text-sm text-slate-300">Capital inicial ({selectedSession.initialCapitalType === "crypto" ? selectedSession.crypto : selectedSession.fiat})
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={capitalDraft}
+                        onChange={e => setCapitalDraft(e.target.value)}
+                        placeholder="Importe inicial"
+                        className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-white focus:border-violet-400 focus:outline-none"
+                      />
+                      <span className="mt-1 block text-xs text-slate-500">Puedes corregirlo después; se usará como referencia para los saldos y el ROI de esta sesión.</span>
+                    </label>
+                    <button type="submit" disabled={saving} className="jjx-button-primary">{saving ? "Guardando…" : "Guardar capital"}</button>
+                    <button type="button" disabled={saving} onClick={() => setShowCapitalEditor(false)} className="jjx-button-secondary">Cancelar</button>
+                  </form>
+                )}
                 <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-5">
-                  <div className="jjx-inset"><p className="jjx-field-label">{Number(selectedSession.initialCapital) > 0 ? "Capital inicial (sesión anterior)" : "Tipo de inicio"}</p><p className="mt-2 text-lg font-semibold text-white">{Number(selectedSession.initialCapital) > 0 ? money(selectedSession.initialCapital, stats.baseCurrency || selectedSession.initialCapitalCurrency || selectedSession.fiat || "EUR") : (selectedSession.initialCapitalType === "crypto" ? "Criptomoneda" : "Fiat")}</p></div>
-                  <div className="jjx-inset"><p className="jjx-field-label">Beneficio / pérdida en moneda base</p><p className={"mt-2 text-lg font-semibold " + (stats.profit >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profit, stats.baseCurrency || selectedSession.initialCapitalCurrency || selectedSession.fiat || "EUR")}</p><p className="mt-1 text-xs text-slate-500">{selectedSession.initialCapitalType === "crypto" ? (Number(selectedSession.initialCapital) > 0 ? "Saldo cripto neto frente al capital inicial" : "Variación neta en cripto registrada") : "FIFO · ventas emparejadas"}</p></div>
+                  <div className="jjx-inset"><p className="jjx-field-label">Capital inicial</p><p className="mt-2 text-lg font-semibold text-white">{Number(selectedSession.initialCapital) > 0 ? money(selectedSession.initialCapital, selectedSession.initialCapitalCurrency || (selectedSession.initialCapitalType === "crypto" ? selectedSession.crypto : selectedSession.fiat) || "EUR") : "No registrado"}</p><p className="mt-1 text-xs text-slate-500">{selectedSession.initialCapitalType === "crypto" ? "Inicio por criptomoneda" : "Inicio por fiat"}</p></div>
+                  <div className="jjx-inset"><p className="jjx-field-label">{selectedSession.initialCapitalType === "crypto" && !(Number(selectedSession.initialCapital) > 0) ? "Variación neta en cripto" : "Beneficio / pérdida en moneda base"}</p><p className={"mt-2 text-lg font-semibold " + (stats.profit >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profit, stats.baseCurrency || selectedSession.initialCapitalCurrency || selectedSession.fiat || "EUR")}</p><p className="mt-1 text-xs text-slate-500">{selectedSession.initialCapitalType === "crypto" ? (Number(selectedSession.initialCapital) > 0 ? "Resultado neto en cripto" : "Compras menos ventas registradas") : "FIFO · ventas emparejadas"}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">Beneficio equivalente en cripto</p><p className={"mt-2 text-lg font-semibold " + (stats.profitCrypto >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(stats.profitCrypto, selectedSession.crypto || "USDT")}</p><p className="mt-1 text-xs text-slate-500">{selectedSession.initialCapitalType === "crypto" ? "Beneficio en la moneda base" : "Equivalencia estimada"}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">{Number(selectedSession.initialCapital) > 0 ? "Saldo fiat estimado" : "Flujo neto fiat"}</p><p className={"mt-2 text-lg font-semibold " + (stats.fiatBalance >= 0 ? "text-white" : "text-rose-300")}>{money(stats.fiatBalance, selectedSession.fiat || "EUR")}</p></div>
                   <div className="jjx-inset"><p className="jjx-field-label">{Number(selectedSession.initialCapital) > 0 ? "Cripto neta" : "Variación neta cripto"}</p><p className="mt-2 text-lg font-semibold text-white">{money(stats.cryptoBalance, selectedSession.crypto || "USDT")}</p></div>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                   <span>{stats.count} movimientos · Compras: {money(stats.buyFiat, selectedSession.fiat || "EUR")} · Ventas: {money(stats.sellFiat, selectedSession.fiat || "EUR")}</span>
-                  <span>{Number.isFinite(stats.percentage) ? `ROI sobre capital inicial: ${stats.percentage.toFixed(2)}%` : "ROI no disponible: esta sesión no tiene capital inicial registrado."}</span>
+                  <span>{Number.isFinite(stats.percentage) ? `ROI sobre capital inicial: ${stats.percentage.toFixed(2)}%` : "ROI pendiente: registra el capital inicial cuando lo conozcas."}</span>
                 </div>
               </div>
 
@@ -423,7 +503,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-base font-semibold text-white">Ventas</h3><span className="text-xs text-slate-500">{sellOperations.length} registros</span></div>
                 {renderOperationTable(sellOperations, "ventas")}
               </div>
-              <p className="px-1 text-xs leading-5 text-slate-500">El beneficio fiat se calcula emparejando ventas con compras previas del mismo arbitraje y par de monedas (FIFO). Los flujos netos suman y restan los importes registrados; no representan el saldo real del exchange ni incluyen fondos externos. El ROI solo está disponible para sesiones antiguas que tengan un capital inicial guardado.</p>
+              <p className="px-1 text-xs leading-5 text-slate-500">Puedes operar sin registrar capital inicial. El FIFO solo calcula beneficio sobre ventas cubiertas por compras anteriores registradas en este arbitraje; si vendes cripto que ya tenías fuera del registro, su coste de adquisición no se puede deducir automáticamente. Los flujos muestran los movimientos anotados y el ROI queda pendiente hasta que indiques el capital inicial.</p>
             </>
           )}
         </section>
