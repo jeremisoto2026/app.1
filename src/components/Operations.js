@@ -320,12 +320,6 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              {success && (
-                <Alert className="border-green-500/30 bg-green-900/20 text-green-400 rounded-xl">
-                  <AlertDescription>{success}</AlertDescription>
-                </Alert>
-              )}
-
               {selectedSession && (
                 <div className="rounded-xl border border-purple-500/20 bg-purple-950/30 px-4 py-3 text-sm text-gray-300">
                   {selectedSession.initialCapitalType === 'crypto'
@@ -539,6 +533,16 @@ const Operations = ({ initialSessionId = '', onOpenArbitrages }) => {
                   </div>
                 </CardContent>
               </Card>
+
+              {success && (
+                <Alert
+                  role="status"
+                  aria-live="polite"
+                  className="border-green-500/30 bg-green-900/20 text-green-400 rounded-xl"
+                >
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              )}
 
               <Button
                 type="submit"
