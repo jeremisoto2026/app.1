@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowDownTrayIcon, PlusIcon, CheckCircleIcon, PlayIcon, TrashIcon, BoltIcon, DocumentPlusIcon } from "@heroicons/react/24/outline";
 import { calculateArbitrageSessionResult, calculateDashboardMetrics, getAccountingCryptoAmount, getOperationDate } from "../utils/financialCalculations";
-import { buildExcelXml, downloadExcelXml } from "../utils/spreadsheet";
+import { buildProfessionalExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { formatCurrencyAmount } from "../utils/numberFormatting";
 import { loadBybitPreviewOperations } from "../utils/bybitP2POperations";
 
@@ -273,15 +273,115 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "No se puede exportar con el plan actual.");
 
-      const headers = ["Arbitraje", "Estado", "Tipo", "Cripto", "Fiat", "Movimiento", "Plataforma", "Cantidad cripto", "Precio", "Importe fiat", "Comisión", "Fecha"];
-      const rows = sessionOperations.map(item => [
-        selectedSession.name, selectedSession.status, selectedSession.strategy || "Comercio P2P",
-        item.crypto || selectedSession.crypto, item.fiat || selectedSession.fiat,
-        item.operation_type || "", item.exchange || "", item.crypto_amount ?? "", item.exchange_rate ?? "",
-        item.fiat_amount ?? "", item.fee ?? "", formatDate(item.timestamp),
-      ]);
-      const excelXml = buildExcelXml(headers, rows);
-      downloadExcelXml("JJXCAPITAL-arbitraje-" + selectedSession.name.replace(/[^a-z0-9_-]/gi, "-") + ".xls", excelXml);
+      const fiatCurrency = selectedSession.fiat || "EUR";
+      const cryptoCurrency = selectedSession.crypto || "USDT";
+      const isCryptoStart = selectedSession.initialCapitalType === "crypto";
+      const initialCapital = Number(selectedSession.initialCapital);
+      const hasInitialCapital = Number.isFinite(initialCapital) && initialCapital > 0;
+      const capitalCurrency = selectedSession.initialCapitalCurrency || (isCryptoStart ? cryptoCurrency : fiatCurrency);
+      const baseCurrency = stats.baseCurrency || capitalCurrency || fiatCurrency;
+      const roiLabel = Number.isFinite(stats.percentage) ? stats.percentage.toFixed(2) + "%" : "Pendiente";
+      const profitLabel = isCryptoStart && !hasInitialCapital
+        ? "Variación neta en cripto"
+        : "Beneficio / pérdida en moneda base";
+      const fiatBalanceLabel = hasInitialCapital ? "Saldo fiat estimado" : "Flujo neto fiat";
+      const cryptoBalanceLabel = isCryptoStart && hasInitialCapital ? "Cripto neta" : "Variación neta cripto";
+
+      const summaryHeaders = ["Indicador", "Valor", "Moneda", "Detalle"];
+      const summaryRows = [
+        ["Arbitraje", selectedSession.name || "", "", ""],
+        ["Estado", selectedSession.status === "active" ? "En curso" : "Terminado", "", ""],
+        ["Tipo de arbitraje", selectedSession.strategy || "Comercio P2P", "", ""],
+        ["Par de monedas", fiatCurrency + " / " + cryptoCurrency, "", ""],
+        ["Inicio por", isCryptoStart ? "Criptomoneda" : "Fiat", "", ""],
+        ["Capital inicial", hasInitialCapital ? initialCapital : "No registrado", hasInitialCapital ? capitalCurrency : "", ""],
+        [profitLabel, stats.profit, baseCurrency, isCryptoStart && !hasInitialCapital ? "Compras menos ventas registradas" : "FIFO · ventas emparejadas"],
+        ["Beneficio equivalente en cripto", stats.profitCrypto, cryptoCurrency, "Equivalencia estimada"],
+        [fiatBalanceLabel, stats.fiatBalance, fiatCurrency, "Flujo calculado con los movimientos registrados"],
+        [cryptoBalanceLabel, stats.cryptoBalance, cryptoCurrency, "No representa el saldo real del exchange"],
+        ["ROI sobre capital inicial", Number.isFinite(stats.percentage) ? stats.percentage : "Pendiente", Number.isFinite(stats.percentage) ? "%" : "", hasInitialCapital ? "Calculado sobre el capital inicial registrado" : "Registra el capital inicial para calcular el ROI"],
+        ["Movimientos", stats.count, "", ""],
+        ["Compras", buyOperations.length, "", "Total fiat: " + money(stats.buyFiat, fiatCurrency) + " · Total cripto: " + money(stats.buyCrypto, cryptoCurrency)],
+        ["Ventas", sellOperations.length, "", "Total fiat: " + money(stats.sellFiat, fiatCurrency) + " · Total cripto: " + money(stats.sellCrypto, cryptoCurrency)],
+      ];
+
+      const accountingOperations = sessionOperations.filter(item =>
+        (!selectedSession.crypto || String(item.crypto || "").toUpperCase() === String(selectedSession.crypto).toUpperCase()) &&
+        (!selectedSession.fiat || String(item.fiat || "").toUpperCase() === String(selectedSession.fiat).toUpperCase())
+      );
+      const fifoMetrics = calculateDashboardMetrics(accountingOperations);
+      const sortedOperations = [...accountingOperations].sort((a, b) => {
+        const dateA = getOperationDate(a.timestamp)?.getTime() ?? Number.POSITIVE_INFINITY;
+        const dateB = getOperationDate(b.timestamp)?.getTime() ?? Number.POSITIVE_INFINITY;
+        return dateA - dateB;
+      });
+      const operationHeaders = [
+        "Movimiento", "Plataforma", "Cantidad cripto", "Activo cripto", "Precio de cambio",
+        "Moneda fiat", "Importe fiat", "Comisión", "Moneda de comisión", "Cantidad emparejada",
+        "Ingreso emparejado", "Coste emparejado", "Beneficio realizado", "Moneda de beneficio",
+        "Cobertura FIFO", "Fecha y hora"
+      ];
+      const operationRows = sortedOperations.map(item => {
+        const realization = item.operation_type === "Venta" ? fifoMetrics.realizedProfitByOperation?.[item.id] : null;
+        const knownProfit = realization && realization.matchedQuantity > 0;
+        const costCoverage = item.operation_type !== "Venta"
+          ? "No aplica (compra)"
+          : !realization
+            ? "No calculable"
+            : realization.fullyMatched
+              ? "Completo"
+              : knownProfit
+                ? "Parcial"
+                : "Sin coste conocido";
+        return [
+          item.operation_type || "",
+          item.exchange || "",
+          item.crypto_amount ?? "",
+          item.crypto || cryptoCurrency,
+          item.exchange_rate ?? "",
+          item.fiat || fiatCurrency,
+          item.fiat_amount ?? "",
+          item.fee ?? "",
+          item.fee_currency || (item.operation_type === "Venta" ? item.fiat : item.crypto) || "",
+          knownProfit ? realization.matchedQuantity : "",
+          knownProfit ? realization.matchedProceeds : "",
+          knownProfit ? realization.matchedCost : "",
+          knownProfit ? realization.profit : "",
+          knownProfit ? realization.currency : "",
+          costCoverage,
+          getOperationDate(item.timestamp) || "",
+        ];
+      });
+
+      const generatedAt = new Date().toLocaleString("es-ES");
+      const excelXml = buildProfessionalExcelXml({
+        headers: summaryHeaders,
+        rows: summaryRows,
+        title: "JJXCAPITAL · RESUMEN DE ARBITRAJE",
+        subtitle: (selectedSession.name || "Arbitraje") + " · " + fiatCurrency + " / " + cryptoCurrency + " · Exportado el " + generatedAt,
+        summary: [
+          { label: "CAPITAL INICIAL", value: hasInitialCapital ? money(initialCapital, capitalCurrency) : "No registrado" },
+          { label: "BENEFICIO / PÉRDIDA", value: money(stats.profit, baseCurrency) },
+          { label: "ROI", value: roiLabel },
+          { label: "MOVIMIENTOS", value: stats.count },
+        ],
+        note: "El resumen refleja únicamente los movimientos registrados en este arbitraje. Los saldos son estimaciones del registro y no representan el saldo real del exchange.",
+        sheetName: "Resumen",
+        numericColumns: [1],
+        additionalSheets: [{
+          name: "Movimientos y FIFO",
+          title: "JJXCAPITAL · Movimientos del arbitraje",
+          subtitle: "Detalle cronológico de compras y ventas · " + operationRows.length + " registros",
+          note: "El beneficio realizado y el coste emparejado se calculan con FIFO usando las compras registradas en esta sesión. Las operaciones sin coste conocido se identifican expresamente.",
+          headers: operationHeaders,
+          rows: operationRows,
+          numericColumns: [2, 4, 6, 7, 9, 10, 11, 12],
+          dateColumns: [15],
+          typeColumn: 0,
+          coverageColumn: 14,
+        }],
+      });
+      downloadExcelXml("JJXCAPITAL-arbitraje-" + (selectedSession.name || "sesion").replace(/[^a-z0-9_-]/gi, "-") + ".xls", excelXml);
     } catch (exportError) {
       setError(exportError?.message || "No se pudo exportar el arbitraje.");
     } finally {
