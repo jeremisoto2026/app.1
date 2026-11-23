@@ -1,10 +1,13 @@
 const crypto = require("crypto");
 const {
   HttpError, sendJson, requirePost, requireFirebaseUser, getDocument,
-  listDocumentsMatchingAnyField, listAllDocuments, commitWrites, createWrite, documentName, toFields, errorResponse,
+  listDocumentsMatchingAnyField, listAllDocuments, countDocuments, commitWrites, createWrite, documentName, toFields, errorResponse,
 } = require("../../../lib/payments");
 const { decryptCredentials, fetchHistory } = require("../../../lib/binance-p2p");
 const { createBinanceP2PScheduler } = require("../../../lib/binance-p2p-scheduler");
+const { normalizeOrder } = require("../../../lib/binance-p2p-normalizer");
+const { FREE_PLAN_LIMITS, getStoredPlanUsage, isProSubscriptionActive } = require("../../../lib/plans");
+const { getRemainingCooldownMs } = require("../../../lib/integration-rate-limit");
 
 const integrationPathFor = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
 const operationsPathFor = (uid) => "users/" + uid + "/operations";
@@ -13,6 +16,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_PAGES_PER_SIDE_PER_REQUEST = 2;
 const LOOKUP_CHUNK = 30;
 const LOCK_MS = 5 * 60 * 1000;
+const USER_SYNC_COOLDOWN_MS = 15 * 1000;
 
 function num(value) {
   if (typeof value === "string" && !value.trim()) return NaN;
@@ -35,61 +39,6 @@ function parseTime(value) {
 function isCompleted(row) {
   const status = String(row?.orderStatus ?? row?.status ?? "").trim().toUpperCase();
   return status === "COMPLETED" || status === "4";
-}
-function normalizeOrder(row) {
-  const orderNumber = String(row?.orderNumber ?? row?.orderNo ?? row?.orderId ?? "").trim();
-  const tradeType = String(row?.tradeType ?? "").trim().toUpperCase();
-  const crypto = String(row?.asset ?? row?.crypto ?? "").trim().toUpperCase();
-  const fiat = String(row?.fiat ?? row?.fiatUnit ?? "").trim().toUpperCase();
-  const cryptoAmount = num(row?.amount);
-  const fiatAmount = num(row?.totalPrice);
-  const rawRate = num(row?.unitPrice ?? row?.price);
-  const rate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : fiatAmount / cryptoAmount;
-  const timestamp = parseTime(row?.createTime ?? row?.createdAt ?? row?.timestamp);
-  if (!orderNumber || orderNumber.length > 160 ||
-      (tradeType !== "BUY" && tradeType !== "SELL") ||
-      !crypto || !fiat || crypto === fiat ||
-      !Number.isFinite(cryptoAmount) || cryptoAmount <= 0 ||
-      !Number.isFinite(fiatAmount) || fiatAmount <= 0 ||
-      !Number.isFinite(rate) || rate <= 0 || !timestamp) return null;
-
-  const commission = num(row?.commission);
-  const takerCommission = num(row?.takerCommission);
-  const takerAmount = num(row?.takerAmount);
-  const advertisementRole = String(row?.advertisementRole ?? "").trim().toUpperCase();
-  const sourceFee = advertisementRole === "TAKER"
-    ? (Number.isFinite(takerCommission) ? takerCommission : commission)
-    : (Number.isFinite(commission) ? commission : takerCommission);
-  const fee = Number.isFinite(sourceFee) && sourceFee > 0 ? sourceFee : 0;
-  return {
-    order_id: orderNumber,
-    source: "binance_p2p",
-    sourceOrderId: orderNumber,
-    sourceStatus: String(row?.orderStatus ?? row?.status ?? ""),
-    sourceCommission: Number.isFinite(commission) ? commission : null,
-    sourceTakerCommission: Number.isFinite(takerCommission) ? takerCommission : null,
-    sourceTakerAmount: Number.isFinite(takerAmount) ? takerAmount : null,
-    sourceAdvertisementNumber: String(row?.advNo ?? row?.advOrderNumber ?? "").trim() || null,
-    sourceFiatSymbol: String(row?.fiatSymbol ?? "").trim() || null,
-    sourcePayMethodName: String(row?.payMethodName ?? "").trim() || null,
-    sourceAdvertisementRole: advertisementRole || null,
-    exchange: "Binance",
-    operation_type: tradeType === "BUY" ? "Compra" : "Venta",
-    crypto,
-    fiat,
-    crypto_amount: cryptoAmount,
-    fiat_amount: fiatAmount,
-    exchange_rate: rate,
-    // Binance documents this commission in crypto; preserve it without subtracting it twice
-    // from the gross amounts already reported by the order-history endpoint.
-    fee,
-    fee_currency: crypto,
-    timestamp,
-    importedAt: new Date(),
-    sessionId: null,
-    sessionName: "Binance P2P · Importado",
-    arbitrageType: "Binance P2P",
-  };
 }
 function deterministicId(orderNumber) {
   return "binance-p2p-" + crypto.createHash("sha256").update(orderNumber).digest("hex").slice(0, 40);
@@ -237,11 +186,45 @@ async function syncBinanceP2P(req, res) {
       throw new HttpError(409, "Ya hay una sincronización de Binance en curso. Espera unos segundos e inténtalo de nuevo.");
     }
 
+    const cooldownRemainingMs = getRemainingCooldownMs(
+      state.lastSyncAttemptAt,
+      requestNow,
+      USER_SYNC_COOLDOWN_MS
+    );
+    if (cooldownRemainingMs > 0) {
+      throw new HttpError(429, "Has solicitado una sincronización hace muy poco. Espera unos segundos antes de volver a intentarlo.");
+    }
+
+    const userPath = "users/" + claims.sub;
+    const userProfile = await getDocument(userPath);
+    if (!userProfile) throw new HttpError(409, "No se encontró el perfil de tu cuenta.");
+    const proActive = isProSubscriptionActive(userProfile.data);
+    const savedOrderUsage = getStoredPlanUsage(userProfile.data, "registeredOrdersUsed", ["movementsUsed"]);
+    const storedOrderDocuments = await countDocuments(operationsPathFor(claims.sub), FREE_PLAN_LIMITS.orders + 1);
+    const currentOrderUsage = Math.max(savedOrderUsage, storedOrderDocuments);
+    if (!proActive && (state.orderQuotaBlocked === true || currentOrderUsage >= FREE_PLAN_LIMITS.orders)) {
+      await commitWrites([createWrite(integrationPath, {
+        orderQuotaBlocked: true,
+        lastSyncStatus: "quota",
+        lastSyncAttemptAt: new Date(),
+      }, integration.updateTime ? { updateTime: integration.updateTime } : { exists: true })]);
+      return sendJson(res, 200, {
+        success: true,
+        imported: 0,
+        skipped: 0,
+        completedOrdersFound: 0,
+        quotaReached: true,
+        orderQuotaBlocked: true,
+        hasMoreHistory: true,
+        message: "Has alcanzado el límite gratuito de 300 órdenes. La sincronización está pausada para conservar las órdenes pendientes. Activa JJXCAPITAL Pro para continuar.",
+      });
+    }
+
     const credentials = decryptCredentials(state.encryptedCredentials);
     lockId = crypto.randomBytes(16).toString("hex");
     await commitWrites([createWrite(
       integrationPath,
-      { syncLockId: lockId, syncLockExpiresAt: new Date(requestNow + LOCK_MS) },
+      { syncLockId: lockId, syncLockExpiresAt: new Date(requestNow + LOCK_MS), lastSyncAttemptAt: new Date(requestNow) },
       integration.updateTime ? { updateTime: integration.updateTime } : { exists: true }
     )]);
     ownsLock = true;
@@ -322,13 +305,23 @@ async function syncBinanceP2P(req, res) {
 
     const existingOrderDocuments = await findExistingOrderDocuments(claims.sub, assignedCandidates);
     const fresh = assignedCandidates.filter((item) => !existingOrderDocuments.has(item.order_id));
-    const writes = fresh.map((operation) => ({
+    const remainingOrderQuota = proActive
+      ? fresh.length
+      : Math.max(0, FREE_PLAN_LIMITS.orders - currentOrderUsage);
+    const freshToImport = fresh.slice(0, remainingOrderQuota);
+    const quotaBlocked = freshToImport.length < fresh.length;
+    const writes = freshToImport.map((operation) => ({
       update: {
         name: documentName(operationsPathFor(claims.sub) + "/" + deterministicId(operation.order_id)),
         fields: toFields(operation),
       },
       currentDocument: { exists: false },
     }));
+    if (freshToImport.length) {
+      writes.push(createWrite(userPath, {
+        registeredOrdersUsed: currentOrderUsage + freshToImport.length,
+      }, userProfile.updateTime ? { updateTime: userProfile.updateTime } : { exists: true }));
+    }
 
     // If a previous version imported this Binance order without a session, attach it now
     // only when the session match is unique and the record is an existing Binance import.
@@ -354,14 +347,17 @@ async function syncBinanceP2P(req, res) {
     const bothDone = nextBuyPage === null && nextSellPage === null;
     const updated = {
       connectedAt: state.connectedAt || new Date(connectionFloor),
-      lastSyncStatus: "success",
+      lastSyncStatus: quotaBlocked ? "quota" : "success",
       lastSyncError: null,
       lastSyncAttemptAt: new Date(),
-      lastImportedCount: fresh.length,
-      lastSkippedCount: Math.max(0, candidates.length - fresh.length),
+      lastImportedCount: freshToImport.length,
+      lastSkippedCount: Math.max(0, candidates.length - freshToImport.length),
+      orderQuotaBlocked: quotaBlocked,
     };
 
-    if (backfill) {
+    if (quotaBlocked) {
+      // Keep this page/window cursor unchanged. Pro can resume it without losing orders.
+    } else if (backfill) {
       updated.initialBackfillComplete = bothDone;
       updated.nextBuyPage = nextBuyPage;
       updated.nextSellPage = nextSellPage;
@@ -411,20 +407,24 @@ async function syncBinanceP2P(req, res) {
     }, latest.updateTime ? { updateTime: latest.updateTime } : { exists: true })]);
     ownsLock = false;
 
-    const hasMore = !bothDone;
+    const hasMore = quotaBlocked || !bothDone;
     return sendJson(res, 200, {
       success: true,
-      imported: fresh.length,
-      skipped: Math.max(0, candidates.length - fresh.length),
+      imported: freshToImport.length,
+      skipped: Math.max(0, candidates.length - freshToImport.length),
+      quotaReached: quotaBlocked,
+      orderQuotaBlocked: quotaBlocked,
       completedOrdersFound: candidates.length,
       sessionAssignments: { ...sessionAssignments, relinkedExisting },
       hasMoreHistory: hasMore,
-      initialBackfillComplete: backfill ? bothDone : state.initialBackfillComplete === true,
+      initialBackfillComplete: backfill ? (!quotaBlocked && bothDone) : state.initialBackfillComplete === true,
       lastSyncAt: updated.lastSyncAt || state.lastSyncAt || null,
-      message: fresh.length
-        ? "Sincronización completada: se han importado " + fresh.length + " operaciones nuevas. Vinculadas automáticamente a una sesión: " + sessionAssignments.matched + "."
-        : "Sincronización completada: no había operaciones completadas nuevas para importar." +
-          (relinkedExisting ? " Se han vinculado " + relinkedExisting + " operaciones importadas previamente a su sesión." : ""),
+      message: quotaBlocked
+        ? "Has alcanzado el límite gratuito de 300 órdenes. Se han importado las que quedaban disponibles y la sincronización se ha pausado sin avanzar la página pendiente. Activa JJXCAPITAL Pro para continuar."
+        : freshToImport.length
+          ? "Sincronización completada: se han importado " + freshToImport.length + " operaciones nuevas. Vinculadas automáticamente a una sesión: " + sessionAssignments.matched + "."
+          : "Sincronización completada: no había operaciones completadas nuevas para importar." +
+            (relinkedExisting ? " Se han vinculado " + relinkedExisting + " operaciones importadas previamente a su sesión." : ""),
     });
   } catch (error) {
     if (ownsLock && integrationPath && lockId) {

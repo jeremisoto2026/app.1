@@ -2,5 +2,8 @@ name = "jjxcapital-binance-p2p-sync"
 main = "binance-p2p-sync-worker.js"
 compatibility_date = "2026-11-02"
 
+[vars]
+JJXCAPITAL_SYNC_ENDPOINT = "https://app-1-nu-five.vercel.app/api/integrations/binance-p2p/sync"
+
 [triggers]
 crons = ["* * * * *"]

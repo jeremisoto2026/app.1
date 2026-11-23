@@ -32,6 +32,10 @@ const formatDate = (value) => {
     : "Fecha no disponible";
 };
 
+const BINANCE_ENCRYPTION_KEY_ENV = process.env.REACT_APP_VERCEL_ENV === "preview"
+  ? "BINANCE_P2P_PREVIEW_ENCRYPTION_KEY"
+  : "BINANCE_P2P_ENCRYPTION_KEY";
+
 export default function BinanceP2PSyncCard() {
   const { user } = useAuth();
   const [status, setStatus] = useState(null);
@@ -129,11 +133,13 @@ export default function BinanceP2PSyncCard() {
       <header className="p2p-sync-card-header">
         <span className="p2p-sync-provider-mark p2p-sync-provider-mark-binance" aria-hidden="true">BN</span>
         <div className="p2p-sync-card-heading">
-          <span className="p2p-sync-card-eyebrow">EXCHANGE · INTEGRACIÓN P2P</span>
+          <span className="p2p-sync-card-eyebrow">EXCHANGE · INTEGRACIÓN P2P{status?.previewMode ? " · PREVIEW" : ""}</span>
           <h2 id="binance-p2p-sync-heading" className="p2p-sync-card-title">Binance <span>P2P</span></h2>
           <p>Importa automáticamente tus compras y ventas P2P completadas a JJXCAPITAL.</p>
           <p className="p2p-sync-card-description">
-            La importación comienza desde que conectas la API. Para vincular órdenes a un arbitraje, crea antes una sesión con el mismo par de monedas.
+            {status?.previewMode
+              ? "Estás en Preview: los datos se mantienen aislados de Producción."
+              : "La importación comienza desde que conectas la API. Para vincular órdenes a un arbitraje, crea antes una sesión con el mismo par de monedas."}
           </p>
         </div>
         <span className="p2p-sync-provider-badge p2p-sync-provider-badge-binance">
@@ -154,6 +160,13 @@ export default function BinanceP2PSyncCard() {
         </div>
       </div>
 
+      {status?.previewMode && (
+        <div role="status" className="profile-alert profile-alert-warning">
+          <p className="font-semibold">Conexión deshabilitada en Preview</p>
+          <p className="mt-1 text-sm">Por seguridad, JJXCAPITAL no acepta ni guarda claves API de Binance o Bybit en este entorno. No introduzcas credenciales reales. El servidor también bloquea cualquier intento de conexión.</p>
+        </div>
+      )}
+
       {error && (
         <div role="alert" className="profile-alert profile-alert-error flex items-start gap-2">
           <XCircleIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
@@ -169,11 +182,20 @@ export default function BinanceP2PSyncCard() {
 
       {loadingStatus ? (
         <p className="text-sm text-slate-500" role="status">Comprobando conexión de Binance…</p>
-      ) : status?.connected ? (
+      ) : !status ? (
+        <p className="text-sm text-amber-600" role="status">
+          No se ha podido verificar el estado de Binance. Por seguridad, los campos para introducir API Keys permanecen ocultos hasta recuperar la sesión de Firebase.
+        </p>
+      ) : status.connected ? (
         <div className="space-y-4">
           {!status.encryptionConfigured && (
             <div role="alert" className="profile-alert profile-alert-warning">
               La clave de cifrado del servidor no está disponible. La sincronización está desactivada hasta corregir BINANCE_P2P_ENCRYPTION_KEY en Vercel.
+            </div>
+          )}
+          {status.orderQuotaBlocked && (
+            <div role="status" className="profile-alert profile-alert-warning">
+              Se alcanzó el límite gratuito de 300 órdenes. La sincronización está pausada y las órdenes pendientes se conservarán. Al activar Pro podrás reanudarla.
             </div>
           )}
           {status.lastSyncStatus === "error" && (
@@ -250,7 +272,7 @@ export default function BinanceP2PSyncCard() {
               <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
               <span>
                 Antes de conectar Binance, el administrador debe configurar el secreto de cifrado
-                <code className="mx-1 rounded bg-slate-500/10 px-1 py-0.5">BINANCE_P2P_ENCRYPTION_KEY</code>
+                <code className="mx-1 rounded bg-slate-500/10 px-1 py-0.5">{BINANCE_ENCRYPTION_KEY_ENV}</code>
                 en las variables de entorno de servidor de Vercel. No introduzcas tus claves hasta que este aviso desaparezca.
               </span>
             </div>
@@ -286,11 +308,11 @@ export default function BinanceP2PSyncCard() {
           </div>
           <button
             type="submit"
-            disabled={!status?.encryptionConfigured || !apiKey.trim() || !apiSecret.trim() || connecting || syncing}
+            disabled={status?.previewMode || !status?.encryptionConfigured || !apiKey.trim() || !apiSecret.trim() || connecting || syncing}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             <ShieldCheckIcon className="h-4 w-4" aria-hidden="true" />
-            {connecting ? "Verificando conexión…" : "Conectar Binance en modo de solo lectura"}
+            {connecting ? "Verificando conexión…" : status?.previewMode ? "Conexión deshabilitada en Preview" : "Conectar Binance en modo de solo lectura"}
           </button>
           <p className="text-xs text-slate-500">
             Crea una clave únicamente para leer el historial P2P. No habilites Spot, Margin, Futures, transferencias o retiradas.

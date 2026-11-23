@@ -13,6 +13,10 @@ const {
   rpc,
   errorResponse,
 } = require("../../../lib/payments");
+const {
+  getPaymentTransactionReferencePath,
+  getLegacyPaymentTransactionPath,
+} = require("../../../lib/payment-reference");
 
 const parseTopicAddress = (topic) => {
   const value = String(topic || "").toLowerCase();
@@ -77,11 +81,19 @@ module.exports = async function verifyBlockchainPayment(req, res) {
       throw new HttpError(503, "La orden no coincide con la configuración de USDT BEP20 esperada.");
     }
 
-    const claimedPath = "paymentTransactions/bep20_" + txHash.slice(2);
-    const previouslyClaimed = await getDocument(claimedPath);
-    if (previouslyClaimed) {
-      const prior = previouslyClaimed.data || {};
-      if (prior.uid === claims.sub && prior.paymentId === paymentId) {
+    const claimedPath = getPaymentTransactionReferencePath("blockchain_bep20", txHash);
+    const legacyClaimedPath = getLegacyPaymentTransactionPath("blockchain_bep20", txHash);
+    const [hmacClaim, legacyClaim] = await Promise.all([
+      getDocument(claimedPath),
+      getDocument(legacyClaimedPath),
+    ]);
+    const existingClaims = [hmacClaim, legacyClaim].filter(Boolean);
+    if (existingClaims.length) {
+      const samePayment = existingClaims.every((document) => {
+        const prior = document.data || {};
+        return prior.uid === claims.sub && prior.paymentId === paymentId;
+      });
+      if (samePayment) {
         return sendJson(res, 200, { success: true, alreadyVerified: true, message: "Este pago ya estaba verificado." });
       }
       throw new HttpError(409, "Esta transacción ya se ha utilizado para otro pago y no puede reutilizarse.");
@@ -154,7 +166,6 @@ module.exports = async function verifyBlockchainPayment(req, res) {
       uid: claims.sub,
       paymentId,
       provider: "blockchain_bep20",
-      txHash,
       amount: constants.amount,
       amountUnits8: constants.amountUnits8,
       currency: "USDT",

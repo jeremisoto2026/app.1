@@ -166,6 +166,13 @@ export default function BybitP2PSyncCard() {
         <p className="mt-1">Bybit exige ser anunciante general o superior. Esta primera versión utiliza el endpoint P2P de Bybit Global; la disponibilidad en cuentas de Bybit EU se comprobará por separado.</p>
       </div>
 
+      {status?.previewMode && (
+        <div role="status" className="profile-alert profile-alert-warning">
+          <p className="font-semibold">Conexión deshabilitada en Preview</p>
+          <p className="mt-1 text-sm">Por seguridad, JJXCAPITAL no acepta ni guarda claves API de Binance o Bybit en este entorno. No introduzcas credenciales reales. El servidor también bloquea cualquier intento de conexión.</p>
+        </div>
+      )}
+
       {error && (
         <div role="alert" className="profile-alert profile-alert-error flex items-start gap-2">
           <XCircleIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
@@ -181,11 +188,20 @@ export default function BybitP2PSyncCard() {
 
       {loadingStatus ? (
         <p className="text-sm text-slate-500" role="status">Comprobando conexión de Bybit…</p>
-      ) : status?.connected ? (
+      ) : !status ? (
+        <p className="text-sm text-amber-600" role="status">
+          No se ha podido verificar el estado de Bybit. Por seguridad, los campos para introducir API Keys permanecen ocultos hasta recuperar la sesión de Firebase.
+        </p>
+      ) : status.connected ? (
         <div className="space-y-4">
           {!status.encryptionConfigured && (
             <div role="alert" className="profile-alert profile-alert-warning">
               La clave de cifrado de Bybit no está configurada en este entorno. La sincronización está desactivada.
+            </div>
+          )}
+          {status.orderQuotaBlocked && (
+            <div role="status" className="profile-alert profile-alert-warning">
+              Se alcanzó el límite gratuito de 300 órdenes. La sincronización está pausada y las órdenes pendientes se conservarán. Al activar Pro podrás reanudarla.
             </div>
           )}
           {status.lastSyncStatus === "error" && (
@@ -294,11 +310,11 @@ export default function BybitP2PSyncCard() {
           </p>
           <button
             type="submit"
-            disabled={connecting || !apiKey.trim() || !apiSecret.trim()}
+            disabled={status?.previewMode || connecting || !apiKey.trim() || !apiSecret.trim()}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             <LinkIcon className="h-4 w-4" aria-hidden="true" />
-            {connecting ? "Verificando conexión…" : "Conectar Bybit"}
+            {connecting ? "Verificando conexión…" : status?.previewMode ? "Conexión deshabilitada en Preview" : "Conectar Bybit"}
           </button>
         </form>
       )}

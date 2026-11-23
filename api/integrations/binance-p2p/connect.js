@@ -16,6 +16,12 @@ const {
 const INTEGRATION_PATH = (uid) => "users/" + uid + "/privateIntegrations/binanceP2P";
 
 module.exports = async function connectBinanceP2P(req, res) {
+  if (process.env.VERCEL_ENV === "preview") {
+    return sendJson(res, 403, {
+      error: "Las conexiones P2P de Binance y Bybit están deshabilitadas en Preview. No introduzcas ni envíes credenciales reales en este entorno.",
+    });
+  }
+
   // Bybit is routed through this existing function to respect Vercel Hobby's 12-function cap.
   // Requests without provider=bybit keep the original Binance code path untouched.
   try {

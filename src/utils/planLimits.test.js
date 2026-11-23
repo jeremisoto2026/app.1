@@ -9,7 +9,7 @@ describe("plan limits", () => {
   test("defines the requested free plan quotas", () => {
     expect(FREE_PLAN_LIMITS).toEqual({
       orders: 300,
-      movements: 150,
+      arbitrages: 150,
       exports: 50,
     });
   });

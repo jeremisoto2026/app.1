@@ -27,9 +27,13 @@ module.exports = async function binanceP2PStatus(req, res) {
     const claims = await requireFirebaseUser(req);
     const document = await getDocument(INTEGRATION_PATH(claims.sub));
     const data = document?.data || {};
-    const encryptionConfigured = /^[0-9a-f]{64}$/i.test(String(process.env.BINANCE_P2P_ENCRYPTION_KEY || "").trim());
+    const encryptionKey = process.env.VERCEL_ENV === "preview"
+      ? process.env.BINANCE_P2P_PREVIEW_ENCRYPTION_KEY
+      : process.env.BINANCE_P2P_ENCRYPTION_KEY;
+    const encryptionConfigured = /^[0-9a-f]{64}$/i.test(String(encryptionKey || "").trim());
     return sendJson(res, 200, {
       connected: Boolean(data.encryptedCredentials && data.connectionStatus === "connected"),
+      previewMode: process.env.VERCEL_ENV === "preview",
       encryptionConfigured,
       apiKeyHint: data.apiKeyHint || null,
       connectedAt: data.connectedAt || null,
@@ -37,6 +41,7 @@ module.exports = async function binanceP2PStatus(req, res) {
       lastImportedCount: Number(data.lastImportedCount) || 0,
       lastSyncStatus: data.lastSyncStatus || null,
       lastSyncErrorCode: data.lastSyncError || null,
+      orderQuotaBlocked: data.orderQuotaBlocked === true,
       hasMoreHistory: data.initialBackfillComplete !== true ||
         Boolean(data.pendingWindowStart && (data.pendingNextBuyPage || data.pendingNextSellPage)),
     });

@@ -1,36 +1,90 @@
-const SYNC_ENDPOINT = "https://app-1-nu-five.vercel.app/api/integrations/binance-p2p/sync";
+const PRODUCTION_SYNC_HOST = "app-1-nu-five.vercel.app";
+const PREVIEW_SYNC_HOST = "app-1-git-feat-preview-quota-model-jeremis-projects-53da5f18.vercel.app";
+const SYNC_PATH = "/api/integrations/binance-p2p/sync";
 const MAX_BATCHES_PER_RUN = 8;
 const REQUEST_TIMEOUT_MS = 65_000;
 
-async function runProviderBackgroundSync({ provider, scheduler, secret }) {
-  if (secret.length < 32) {
+function createRequestTimeoutSignal() {
+  const AbortSignalConstructor = globalThis.AbortSignal;
+  if (typeof AbortSignalConstructor?.timeout !== "function") return undefined;
+  return AbortSignalConstructor.timeout(REQUEST_TIMEOUT_MS);
+}
+
+export function resolveSyncTarget(env) {
+  const configuredEndpoint = String(env?.JJXCAPITAL_SYNC_ENDPOINT || "").trim();
+  if (!configuredEndpoint) {
+    throw new Error("JJXCAPITAL_SYNC_ENDPOINT is required; the Worker will not guess an environment.");
+  }
+
+  let url;
+  try {
+    url = new URL(configuredEndpoint);
+  } catch {
+    throw new Error("JJXCAPITAL_SYNC_ENDPOINT must be a valid HTTPS URL.");
+  }
+
+  const allowedHost = url.hostname === PRODUCTION_SYNC_HOST || url.hostname === PREVIEW_SYNC_HOST;
+  if (url.protocol !== "https:" || !allowedHost || url.port || url.username || url.password ||
+      url.pathname !== SYNC_PATH || url.search || url.hash) {
+    throw new Error("JJXCAPITAL_SYNC_ENDPOINT is not an approved JJXCAPITAL endpoint.");
+  }
+
+  const preview = url.hostname === PREVIEW_SYNC_HOST;
+  const bypassSecret = String(env?.VERCEL_AUTOMATION_BYPASS_SECRET || "");
+  if (preview && bypassSecret.length < 32) {
+    throw new Error("Preview requires a VERCEL_AUTOMATION_BYPASS_SECRET to pass Vercel SSO protection.");
+  }
+
+  return { endpoint: url.toString(), preview, bypassSecret };
+}
+
+async function runProviderBackgroundSync({ provider, scheduler, secret, target, fetchImpl }) {
+  if (String(secret || "").length < 32) {
     throw new Error("Missing or weak " + provider.toUpperCase() + "_P2P_SCHEDULER_SECRET.");
   }
 
-  const endpoint = provider === "bybit"
-    ? SYNC_ENDPOINT + "?provider=bybit"
-    : SYNC_ENDPOINT;
+  const endpoint = new URL(target.endpoint);
+  if (provider === "bybit") endpoint.searchParams.set("provider", "bybit");
   let processed = 0;
   let imported = 0;
 
   for (let batch = 1; batch <= MAX_BATCHES_PER_RUN; batch += 1) {
-    const response = await fetch(endpoint, {
+    const headers = {
+      "Content-Type": "application/json",
+      "X-JJXCapital-Scheduler": scheduler,
+      "X-JJXCapital-Scheduler-Token": secret,
+    };
+    if (target.preview) headers["x-vercel-protection-bypass"] = target.bypassSecret;
+
+    const response = await fetchImpl(endpoint.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-JJXCapital-Scheduler": scheduler,
-        "X-JJXCapital-Scheduler-Token": secret,
-      },
+      headers,
       body: "{}",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: createRequestTimeoutSignal(),
     });
 
     const text = await response.text();
-    let result;
-    try { result = text ? JSON.parse(text) : {}; }
-    catch { throw new Error("JJXCAPITAL returned a non-JSON " + provider + " scheduler response."); }
+    let result = null;
+    try { result = text ? JSON.parse(text) : {}; } catch { /* Keep non-JSON responses opaque. */ }
     if (!response.ok) {
+      const rawError = typeof result?.error === "string"
+        ? result.error
+        : typeof result?.message === "string"
+          ? result.message
+          : "";
+      let safeError = rawError.replace(/[\\r\\n]+/g, " ").slice(0, 240);
+      if (secret) safeError = safeError.split(secret).join("[redacted]");
+      if (target.bypassSecret) safeError = safeError.split(target.bypassSecret).join("[redacted]");
+      console.error("JJXCAPITAL scheduler request rejected:", JSON.stringify({
+        provider,
+        status: response.status,
+        contentType: response.headers.get("content-type") || "unknown",
+        responseError: safeError || (result ? "no_error_field" : "non_json_response"),
+      }));
       throw new Error("JJXCAPITAL " + provider + " scheduler returned HTTP " + response.status + ".");
+    }
+    if (!result) {
+      throw new Error("JJXCAPITAL returned a non-JSON " + provider + " scheduler response.");
     }
     if (result.skipped === "another_run_is_active") break;
 
@@ -42,51 +96,67 @@ async function runProviderBackgroundSync({ provider, scheduler, secret }) {
     if (result.hasMore !== true) break;
   }
 
-  console.log(JSON.stringify({
-    event: provider + "_p2p_background_sync",
-    processed,
-    imported,
-  }));
+  console.log(JSON.stringify({ event: provider + "_p2p_background_sync", processed, imported }));
 }
 
-async function runBackgroundSync(env) {
+async function runBackgroundSync(env, fetchImpl = globalThis.fetch) {
+  if (typeof fetchImpl !== "function") throw new Error("Fetch is not available in this Worker runtime.");
+  const target = resolveSyncTarget(env);
   const failures = [];
   const binanceSecret = String(env.BINANCE_P2P_SCHEDULER_SECRET || "");
   const bybitSecret = String(env.BYBIT_P2P_SCHEDULER_SECRET || "");
 
-  // Keep Binance's existing one-minute schedule and authentication unchanged.
+  console.info("JJXCAPITAL Preview scheduler configuration:", JSON.stringify({
+    target: target.preview ? "preview" : "production",
+    host: new URL(target.endpoint).hostname,
+    bypassSecret: {
+      configured: target.preview ? target.bypassSecret.length >= 32 : null,
+      length: target.preview ? target.bypassSecret.length : null,
+    },
+    binanceSecret: {
+      configured: binanceSecret.length >= 32,
+      length: binanceSecret.length,
+    },
+    bybitSecret: {
+      configured: bybitSecret.length >= 32,
+      length: bybitSecret.length,
+    },
+  }));
+
   try {
     await runProviderBackgroundSync({
       provider: "binance",
       scheduler: "binance-p2p",
       secret: binanceSecret,
+      target,
+      fetchImpl,
     });
   } catch (error) {
     failures.push(error);
     console.error("Binance P2P background sync failed:", error?.message || "unknown_error");
   }
 
-  // Bybit uses its own Vercel/Cloudflare secret and the same protected minute Worker.
-  // Missing Bybit configuration must never interrupt the existing Binance sync.
   if (bybitSecret.length >= 32) {
     try {
       await runProviderBackgroundSync({
         provider: "bybit",
         scheduler: "bybit-p2p",
         secret: bybitSecret,
+        target,
+        fetchImpl,
       });
     } catch (error) {
       failures.push(error);
       console.error("Bybit P2P background sync failed:", error?.message || "unknown_error");
     }
   } else {
-    console.warn("Bybit P2P minute sync skipped: BYBIT_P2P_SCHEDULER_SECRET is not configured.");
+    console.warn("Bybit P2P sync skipped: BYBIT_P2P_SCHEDULER_SECRET is not configured.");
   }
 
-  if (failures.length) {
-    throw new Error("One or more JJXCAPITAL P2P providers could not be synchronized.");
-  }
+  if (failures.length) throw new Error("One or more JJXCapital P2P providers could not be synchronized.");
 }
+
+export { runBackgroundSync };
 
 export default {
   async scheduled(controller, env) {

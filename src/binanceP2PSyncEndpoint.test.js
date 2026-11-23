@@ -11,6 +11,7 @@ jest.mock("../lib/payments", () => {
     requirePost: jest.fn(() => true),
     requireFirebaseUser: jest.fn(),
     getDocument: jest.fn(),
+    countDocuments: jest.fn(),
     listDocumentsMatchingAnyField: jest.fn(),
     listAllDocuments: jest.fn(),
     commitWrites: jest.fn(),
@@ -84,6 +85,7 @@ describe("Binance P2P sync endpoint", () => {
       if (lockWrite) acquiredLockId = lockWrite.data.syncLockId;
       return {};
     });
+    payments.countDocuments.mockResolvedValue(0);
     payments.listDocumentsMatchingAnyField.mockResolvedValue([]);
     payments.listAllDocuments.mockResolvedValue([]);
     binance.decryptCredentials.mockReturnValue({
@@ -114,6 +116,46 @@ describe("Binance P2P sync endpoint", () => {
       hasMoreHistory: false,
     });
     expect(payments.commitWrites.mock.calls[1][0][0].data.syncLockId).toBeNull();
+  });
+
+
+  test("blocks repeated sync attempts during the per-user 15-second cooldown", async () => {
+    integrationState.lastSyncAttemptAt = new Date(Date.now() - 5000);
+    const response = {};
+
+    await syncBinanceP2P({ method: "POST", headers: {}, body: {} }, response);
+
+    expect(response.statusCode).toBe(429);
+    expect(response.body.error).toMatch(/sincronización hace muy poco/i);
+    expect(binance.decryptCredentials).not.toHaveBeenCalled();
+    expect(binance.fetchHistory).not.toHaveBeenCalled();
+    expect(payments.commitWrites).not.toHaveBeenCalled();
+  });
+
+  test("pauses imports at the 300-order free limit without calling Binance", async () => {
+    payments.countDocuments.mockResolvedValue(300);
+    const response = {};
+
+    await syncBinanceP2P({ method: "POST", headers: {}, body: {} }, response);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchObject({
+      success: true,
+      imported: 0,
+      quotaReached: true,
+      orderQuotaBlocked: true,
+    });
+    expect(binance.decryptCredentials).not.toHaveBeenCalled();
+    expect(binance.fetchHistory).not.toHaveBeenCalled();
+    expect(payments.commitWrites).toHaveBeenCalledWith([
+      expect.objectContaining({
+        path: "users/test-user/privateIntegrations/binanceP2P",
+        data: expect.objectContaining({
+          orderQuotaBlocked: true,
+          lastSyncStatus: "quota",
+        }),
+      }),
+    ]);
   });
 
   test("rejects a second sync while the existing lock is still active", async () => {

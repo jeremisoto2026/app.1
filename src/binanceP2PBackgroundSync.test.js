@@ -48,11 +48,17 @@ function makeResponse() {
 describe("Binance P2P background scheduler endpoint", () => {
   let storedState;
   let originalSchedulerSecret;
+  let originalPreviewSchedulerSecret;
+  let originalVercelEnv;
 
   beforeEach(() => {
     jest.clearAllMocks();
     originalSchedulerSecret = process.env.BINANCE_P2P_SCHEDULER_SECRET;
+    originalPreviewSchedulerSecret = process.env.BINANCE_P2P_PREVIEW_SCHEDULER_SECRET;
+    originalVercelEnv = process.env.VERCEL_ENV;
+    process.env.VERCEL_ENV = "production";
     delete process.env.BINANCE_P2P_SCHEDULER_SECRET;
+    delete process.env.BINANCE_P2P_PREVIEW_SCHEDULER_SECRET;
     payments.sendJson.mockImplementation((res, statusCode, payload) => {
       res.status(statusCode).setHeader("Cache-Control", "no-store");
       return res.json(payload);
@@ -97,6 +103,13 @@ describe("Binance P2P background scheduler endpoint", () => {
     } else {
       process.env.BINANCE_P2P_SCHEDULER_SECRET = originalSchedulerSecret;
     }
+    if (originalPreviewSchedulerSecret === undefined) {
+      delete process.env.BINANCE_P2P_PREVIEW_SCHEDULER_SECRET;
+    } else {
+      process.env.BINANCE_P2P_PREVIEW_SCHEDULER_SECRET = originalPreviewSchedulerSecret;
+    }
+    if (originalVercelEnv === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = originalVercelEnv;
   });
 
   test("syncs connected users using the verified scheduler identity", async () => {
@@ -168,6 +181,35 @@ describe("Binance P2P background scheduler endpoint", () => {
     expect(sync.syncUser).toHaveBeenCalledWith("user-a");
     expect(response.statusCode).toBe(200);
     expect(response.body.success).toBe(true);
+  });
+
+  test("uses only the dedicated Preview scheduler secret", async () => {
+    process.env.VERCEL_ENV = "preview";
+    const previewSecret = "v".repeat(64);
+    process.env.BINANCE_P2P_PREVIEW_SCHEDULER_SECRET = previewSecret;
+    process.env.BINANCE_P2P_SCHEDULER_SECRET = "p".repeat(64);
+    const response = makeResponse();
+
+    await cron({ method: "POST", headers: { "x-jjxcapital-scheduler-token": previewSecret } }, response);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(oidc.verifyGitHubActionsOidcToken).not.toHaveBeenCalled();
+    expect(sync.syncUser).toHaveBeenCalledWith("user-a");
+  });
+
+  test("rejects the Production scheduler secret in Preview when no Preview secret exists", async () => {
+    process.env.VERCEL_ENV = "preview";
+    const productionSecret = "p".repeat(64);
+    process.env.BINANCE_P2P_SCHEDULER_SECRET = productionSecret;
+    delete process.env.BINANCE_P2P_PREVIEW_SCHEDULER_SECRET;
+    const response = makeResponse();
+
+    await cron({ method: "POST", headers: { "x-jjxcapital-scheduler-token": productionSecret } }, response);
+
+    expect(response.statusCode).toBe(401);
+    expect(sync.syncUser).not.toHaveBeenCalled();
+    expect(payments.getDocument).not.toHaveBeenCalled();
   });
 
   test("rejects an incorrect Cloudflare scheduler secret before accessing Firestore", async () => {

@@ -6,6 +6,7 @@ const {
   extractItems,
   normalizeCompletedOrder,
 } = require("../../lib/bybit-p2p");
+const { calculateDashboardMetrics, getAccountingCryptoAmount } = require("./financialCalculations");
 const {
   INITIAL_BACKFILL_VERSION,
   getInitialBackfillWindow,
@@ -115,7 +116,7 @@ describe("Bybit P2P connector", () => {
     });
 
     expect(normalized).toMatchObject({
-      order_id: "BYBIT-1899742990873296896",
+      order_id: "1899742990873296896",
       source: "bybit_p2p",
       exchange: "Bybit",
       operation_type: "Venta",
@@ -130,9 +131,85 @@ describe("Bybit P2P connector", () => {
     expect(normalized.timestamp).toBeInstanceOf(Date);
   });
 
+  test.each([
+    ["BUY", 0, "64.4", "0.92", "2026-11-04T12:00:00.000Z"],
+    ["SELL", 1, "70", "1", "2026-11-04T13:00:00.000Z"],
+  ])(
+    "keeps Bybit %s commission at zero and does not adjust FIFO crypto quantity",
+    (tradeSide, side, fiatAmount, price, timestamp) => {
+      const imported = normalizeCompletedOrder({
+        id: `BYBIT-${tradeSide}-FEE-ZERO-TEST`,
+        side,
+        tokenId: "USDT",
+        notifyTokenId: "USDT",
+        amount: fiatAmount,
+        currencyId: "EUR",
+        price,
+        notifyTokenQuantity: "70",
+        fee: "0",
+        status: 50,
+        createDate: String(new Date(timestamp).getTime()),
+        orderType: "ORIGIN",
+      });
+
+      expect(imported).toMatchObject({
+        source: "bybit_p2p",
+        operation_type: tradeSide === "BUY" ? "Compra" : "Venta",
+        crypto: "USDT",
+        fiat: "EUR",
+        crypto_amount: 70,
+        fee: 0,
+        fee_currency: null,
+        sourceFee: 0,
+      });
+      expect(getAccountingCryptoAmount(imported)).toBeCloseTo(70, 10);
+
+      const manualBuy = {
+        id: `BYBIT-${tradeSide}-FIFO-BUY`,
+        source: "manual",
+        sessionId: null,
+        operation_type: "Compra",
+        crypto: "USDT",
+        fiat: "EUR",
+        crypto_amount: 70,
+        fiat_amount: 64.4,
+        timestamp: new Date("2026-11-04T11:00:00.000Z"),
+      };
+      const manualSale = {
+        id: `BYBIT-${tradeSide}-FIFO-SALE`,
+        source: "manual",
+        sessionId: null,
+        operation_type: "Venta",
+        crypto: "USDT",
+        fiat: "EUR",
+        crypto_amount: 70,
+        fiat_amount: 70,
+        timestamp: new Date("2026-11-04T14:00:00.000Z"),
+      };
+      const operations = tradeSide === "BUY"
+        ? [{ ...imported, id: imported.order_id }, manualSale]
+        : [manualBuy, { ...imported, id: imported.order_id }];
+
+      const metrics = calculateDashboardMetrics(
+        operations,
+        new Date("2026-11-05T00:00:00.000Z")
+      );
+      const saleId = tradeSide === "BUY" ? manualSale.id : imported.order_id;
+      const saleResult = metrics.realizedProfitByOperation[saleId];
+
+      expect(saleResult.matchedQuantity).toBeCloseTo(70, 10);
+      expect(saleResult.matchedCost).toBeCloseTo(64.4, 10);
+      expect(saleResult.matchedProceeds).toBeCloseTo(70, 10);
+      expect(saleResult.profit).toBeCloseTo(5.6, 10);
+      expect(saleResult.fullyMatched).toBe(true);
+      expect(metrics.profitByCurrency.EUR).toBeCloseTo(5.6, 10);
+      expect(metrics.closedSales).toBe(1);
+    }
+  );
+
   test("relinks an existing unassigned Bybit import when it receives a unique compatible session", () => {
     const operation = {
-      order_id: "BYBIT-123",
+      order_id: "123",
       sessionId: "session-abc",
       sessionName: "USDT / VES",
       arbitrageType: "P2P entre plataformas",
@@ -142,7 +219,7 @@ describe("Bybit P2P connector", () => {
       updateTime: "firestore-update-time",
       data: {
         source: "bybit_p2p",
-        order_id: "BYBIT-123",
+        order_id: "123",
         sessionId: null,
         fiat_amount: 250,
       },
@@ -150,39 +227,39 @@ describe("Bybit P2P connector", () => {
 
     expect(findRelinkableExistingOperations(
       [operation],
-      new Map([["BYBIT-123", [existingDocument]]])
+      new Map([["123", [existingDocument]]])
     )).toEqual([{ existing: existingDocument, operation }]);
     // Relinking metadata is selected separately; financial values remain untouched.
     expect(existingDocument.data.fiat_amount).toBe(250);
   });
 
   test("never overwrites an existing session or links another provider's operation", () => {
-    const operation = { order_id: "BYBIT-123", sessionId: "new-session" };
+    const operation = { order_id: "123", sessionId: "new-session" };
     const alreadyAssigned = {
       id: "already-assigned",
-      data: { source: "bybit_p2p", order_id: "BYBIT-123", sessionId: "old-session" },
+      data: { source: "bybit_p2p", order_id: "123", sessionId: "old-session" },
     };
     const anotherProvider = {
       id: "binance-document",
-      data: { source: "binance_p2p", order_id: "BYBIT-123", sessionId: null },
+      data: { source: "binance_p2p", order_id: "123", sessionId: null },
     };
 
     expect(findRelinkableExistingOperations(
       [operation],
-      new Map([["BYBIT-123", [alreadyAssigned, anotherProvider]]])
+      new Map([["123", [alreadyAssigned, anotherProvider]]])
     )).toEqual([]);
   });
 
   test("does not relink an existing Bybit import when no compatible session was found", () => {
-    const operation = { order_id: "BYBIT-123", sessionId: null };
+    const operation = { order_id: "123", sessionId: null };
     const existing = {
       id: "bybit-document-123",
-      data: { source: "bybit_p2p", order_id: "BYBIT-123", sessionId: null },
+      data: { source: "bybit_p2p", order_id: "123", sessionId: null },
     };
 
     expect(findRelinkableExistingOperations(
       [operation],
-      new Map([["BYBIT-123", [existing]]])
+      new Map([["123", [existing]]])
     )).toEqual([]);
   });
 
@@ -199,12 +276,19 @@ describe("Bybit P2P connector", () => {
     });
   });
 
+  test("uses the raw Bybit order number like Binance and normalizes legacy prefixed records", () => {
+    const { canonicalBybitOrderId } = require("../../lib/bybit-p2p-api");
+    expect(canonicalBybitOrderId({ order_id: "123456" })).toBe("123456");
+    expect(canonicalBybitOrderId({ order_id: "BYBIT-123456" })).toBe("123456");
+    expect(canonicalBybitOrderId({ order_id: "BYBIT-123456", sourceOrderId: "123456" })).toBe("123456");
+  });
+
   test("serializes only safe Bybit operation fields for the profile viewer", () => {
     const serialized = serializeBybitOperation({
       id: "bybit-p2p-document",
       data: {
         source: "bybit_p2p",
-        order_id: "BYBIT-123",
+        order_id: "123",
         sourceOrderId: "123",
         operation_type: "Venta",
         crypto: "USDT",
@@ -221,7 +305,7 @@ describe("Bybit P2P connector", () => {
 
     expect(serialized).toEqual({
       id: "bybit-p2p-document",
-      orderId: "BYBIT-123",
+      orderId: "123",
       operationType: "Venta",
       crypto: "USDT",
       fiat: "EUR",
