@@ -169,13 +169,28 @@ ${headerRow}${bodyRows}</Table>
 };
 
 export const downloadExcelXml = (filename, xml) => {
-  const blob = new Blob(["\uFEFF", xml], { type: "application/vnd.ms-excel;charset=utf-8;" });
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    throw new Error("La descarga solo está disponible en el navegador.");
+  }
+  if (typeof Blob === "undefined" || typeof URL.createObjectURL !== "function") {
+    throw new Error("Este navegador no permite generar la descarga de Excel. Prueba con una versión actualizada de Chrome, Edge o Firefox.");
+  }
+
+  const safeFilename = String(filename || "JJXCAPITAL-historial.xls")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-");
+  const blob = new Blob(["\uFEFF", String(xml || "")], { type: "application/vnd.ms-excel;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = filename;
+  link.download = safeFilename;
+  link.style.position = "fixed";
+  link.style.left = "-9999px";
   document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  try {
+    link.click();
+  } finally {
+    link.remove();
+    // Keep the Blob URL alive long enough for slower browsers to start the download.
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
 };
