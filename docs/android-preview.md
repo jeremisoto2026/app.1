@@ -81,3 +81,8 @@ Production remains on `main` with package `com.jjxcapital.app`. This Preview wor
 ## Current scope
 
 This is an Android Preview build pipeline. Before Play Store release, the Pro subscription flow needs a billing-policy review: Google Play generally requires Play Billing for digital app features and subscriptions.
+
+
+## Firebase Preview configuration refresh
+
+The repository Actions secret `FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON` must contain the latest `google-services.json` downloaded from the Firebase Android app `com.jjxcapital.preview` after registering the persistent Preview signing certificate SHA-1. Keep the Production Firebase configuration and secrets separate.
