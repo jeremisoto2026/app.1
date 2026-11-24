@@ -113,6 +113,7 @@ jobs:
 
           values = {
               "REACT_APP_VERCEL_ENV": "preview",
+              "REACT_APP_API_BASE_URL": "https://app-1-git-feat-android-capacit-6a6dd7-jeremis-projects-53da5f18.vercel.app",
               "REACT_APP_FIREBASE_PREVIEW_API_KEY": api_key,
               "REACT_APP_FIREBASE_PREVIEW_AUTH_DOMAIN": f"{project_id}.firebaseapp.com",
               "REACT_APP_FIREBASE_PREVIEW_PROJECT_ID": project_id,
