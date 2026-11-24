@@ -12,11 +12,21 @@ The Android Preview build is intentionally separate from the installed productio
 
 Do not change the production app's package, uninstall it, or install a Preview build with the production package.
 
-## Requirements
+## Automated APK build on GitHub
 
-- Node.js 22 or newer
-- Yarn 1.22.22
-- Android Studio with Android SDK API 24 or newer
+The workflow `.github/workflows/android-preview-apk.yml` builds a Preview debug APK in GitHub Actions. It runs only for the `feat/android-capacitor-preview` branch (or when manually started from that branch); it does not build or publish Production.
+
+The workflow generates the native `android/` project in the GitHub Actions runner from the checked-in Capacitor configuration. The generated project and APK are build outputs, not committed source files.
+
+Before the first build, add a repository Actions secret:
+
+1. Open the Firebase Preview project and register an Android app with package name `com.jjxcapital.preview`.
+2. Download that app's `google-services.json`.
+3. In GitHub, open Settings → Secrets and variables → Actions → New repository secret.
+4. Name it exactly `FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON`.
+5. Paste the complete contents of the Preview `google-services.json` file as the secret value. Never commit this file or use the Production Firebase configuration.
+
+After saving the secret, open Actions → JJXCAPITAL Preview APK → Run workflow and select `feat/android-capacitor-preview`. When the run succeeds, download the artifact named `JJXCAPITAL-Preview-debug`. The APK is a debug build for testing, not a Play Store release.
 
 ## Firebase setup (required for native Google sign-in)
 
@@ -24,13 +34,13 @@ Use the dedicated Firebase Preview project, not the production Firebase project.
 
 1. In Firebase Console, open the Preview project and add a separate Android app with package name `com.jjxcapital.preview`.
 2. Enable Google under Authentication → Sign-in method.
-3. Add the Android app's SHA-1 certificate fingerprint in Firebase project settings. For a local debug build, Android Studio/Gradle can show the debug signing report.
-4. Download the configuration for the `com.jjxcapital.preview` Android app and place it at `android/app/google-services.json`. The existing JSON for `com.jjxcapital.app` is not valid for this Preview package. Keep the JSON out of Git.
+3. Add the Android app's SHA-1 certificate fingerprint in Firebase project settings. For a local debug build, Android Studio/Gradle can show the debug signing report. For GitHub Actions debug signing, obtain the SHA-1 from the generated debug keystore/build environment before relying on native Google sign-in.
+4. The workflow writes the secret to `android/app/google-services.json` during the build. The existing JSON for `com.jjxcapital.app` is not valid for this Preview package.
 5. For a Google Play release, add the Play App Signing SHA-1 as a separate fingerprint and download the refreshed configuration file.
 
 Never connect real Binance or Bybit API credentials to Preview. Do not point an unreviewed mobile build at production data.
 
-## Generate and open the Android project
+## Generate and open the Android project locally
 
 From the repository root on branch `feat/android-capacitor-preview`:
 
@@ -64,6 +74,10 @@ npx cap open android
 
 Use Android Studio to build and install the debug APK on the test phone. Confirm the launcher label is `JJXCAPITAL Preview` and that the existing `JJXCAPITAL` production app remains installed. After web changes, run `yarn android:sync` before rebuilding.
 
+## Production separation
+
+Production remains on `main` with package `com.jjxcapital.app`. This Preview workflow cannot run from `main`, does not sign a Production APK, does not deploy to Google Play, and does not merge PR #28. A separate protected Production workflow will be designed only after Preview has been built and tested.
+
 ## Current scope
 
-This is a private Android preview scaffold. It does not publish to Google Play or change the production website. Before Play Store release, the Pro subscription flow needs a billing-policy review: Google Play generally requires Play Billing for digital app features and subscriptions.
+This is an Android Preview build pipeline. Before Play Store release, the Pro subscription flow needs a billing-policy review: Google Play generally requires Play Billing for digital app features and subscriptions.
