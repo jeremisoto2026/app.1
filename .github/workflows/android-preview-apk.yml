@@ -63,7 +63,7 @@ jobs:
 
       - name: Configure Firebase Preview
         env:
-          FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON }}
+          FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON: \${{ secrets.FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON }}
         run: |
           if [ -z "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" ]; then
             echo "::error::Add the FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON GitHub Actions secret before building."
@@ -90,12 +90,12 @@ jobs:
 
           variables = Path("android/variables.gradle")
           content = variables.read_text()
-          additions = "    rgcfaIncludeGoogle = true\\n    androidxCredentialsVersion = '1.3.0'\\n"
+          additions = "    rgcfaIncludeGoogle = true\n    androidxCredentialsVersion = '1.3.0'\n"
           if "rgcfaIncludeGoogle" not in content:
               marker = "ext {"
               if marker not in content:
                   raise SystemExit("Could not find ext { in android/variables.gradle")
-              content = content.replace(marker, marker + "\\n" + additions, 1)
+              content = content.replace(marker, marker + "\n" + additions, 1)
               variables.write_text(content)
 
           app_gradle = Path("android/app/build.gradle")
@@ -103,7 +103,7 @@ jobs:
           if 'applicationId "com.jjxcapital.preview"' not in gradle:
               import re
               gradle, count = re.subn(
-                  r'applicationId\\s+"[^"]+"',
+                  r'applicationId\s+"[^"]+"',
                   'applicationId "com.jjxcapital.preview"',
                   gradle,
                   count=1,
