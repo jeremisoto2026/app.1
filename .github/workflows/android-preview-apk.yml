@@ -1,7 +1,6 @@
 name: JJXCAPITAL Preview APK
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - feat/android-capacitor-preview
@@ -43,6 +42,9 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools;platforms;android-35;build-tools;35.0.0
+          accept-android-sdk-licenses: true
 
       - name: Install Yarn
         run: npm install --global yarn@1.22.22
