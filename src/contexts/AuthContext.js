@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   GoogleAuthProvider,
+  signInWithCredential,
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -11,6 +12,8 @@ import {
   updateProfile
 } from "firebase/auth";
 import { auth, db } from "../firebase";
+import { Capacitor } from "@capacitor/core";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext();
@@ -87,8 +90,17 @@ export const AuthProvider = ({ children }) => {
   // 🔹 Inicio de sesión con Google
   const signInWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
+      let result;
+      if (Capacitor.isNativePlatform()) {
+        const nativeResult = await FirebaseAuthentication.signInWithGoogle();
+        const credential = GoogleAuthProvider.credential(
+          nativeResult.credential?.idToken
+        );
+        result = await signInWithCredential(auth, credential);
+      } else {
+        const provider = new GoogleAuthProvider();
+        result = await signInWithPopup(auth, provider);
+      }
 
       // Crear el perfil solo si no existe. Nunca reiniciar el plan, el contador
       // de exportaciones ni la fecha de alta al iniciar sesión de nuevo.
@@ -130,6 +142,9 @@ export const AuthProvider = ({ children }) => {
   // 🔹 Cerrar sesión
   const signOut = async () => {
     try {
+      if (Capacitor.isNativePlatform()) {
+        await FirebaseAuthentication.signOut();
+      }
       return await firebaseSignOut(auth);
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
