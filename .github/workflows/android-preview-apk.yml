@@ -65,6 +65,68 @@ jobs:
       - name: Install dependencies
         run: yarn install --non-interactive
 
+      - name: Prepare Firebase Preview web configuration
+        env:
+          FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::Add the FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON GitHub Actions secret before building."
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          firebase = json.loads(os.environ["FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON"])
+          project = firebase.get("project_info", {})
+          clients = firebase.get("client", [])
+          client = next(
+              (
+                  item for item in clients
+                  if item.get("client_info", {}).get("android_client_info", {}).get("package_name")
+                  == "com.jjxcapital.preview"
+              ),
+              None,
+          )
+          if client is None:
+              raise SystemExit("Firebase JSON does not belong to com.jjxcapital.preview.")
+
+          api_keys = client.get("api_key", [])
+          api_key = next((item.get("current_key") for item in api_keys if item.get("current_key")), None)
+          project_id = project.get("project_id")
+          app_id = client.get("client_info", {}).get("mobilesdk_app_id")
+          sender_id = project.get("project_number")
+          storage_bucket = project.get("storage_bucket")
+
+          required = {
+              "apiKey": api_key,
+              "projectId": project_id,
+              "appId": app_id,
+              "messagingSenderId": sender_id,
+          }
+          missing = [key for key, value in required.items() if not value]
+          if missing:
+              raise SystemExit("Firebase Preview JSON is missing required fields: " + ", ".join(missing))
+          if project_id == "jjxcapital-2":
+              raise SystemExit("Refusing to build Preview with the Production Firebase project.")
+
+          values = {
+              "REACT_APP_VERCEL_ENV": "preview",
+              "REACT_APP_FIREBASE_PREVIEW_API_KEY": api_key,
+              "REACT_APP_FIREBASE_PREVIEW_AUTH_DOMAIN": f"{project_id}.firebaseapp.com",
+              "REACT_APP_FIREBASE_PREVIEW_PROJECT_ID": project_id,
+              "REACT_APP_FIREBASE_PREVIEW_STORAGE_BUCKET": storage_bucket or f"{project_id}.appspot.com",
+              "REACT_APP_FIREBASE_PREVIEW_MESSAGING_SENDER_ID": sender_id,
+              "REACT_APP_FIREBASE_PREVIEW_APP_ID": app_id,
+          }
+          Path(".env.production").write_text(
+              "".join(f"{key}={value}\n" for key, value in values.items()),
+              encoding="utf-8",
+          )
+          print(f"Firebase web configuration prepared for Preview project: {project_id}")
+          PY
+
       - name: Build web application
         run: yarn build
 
