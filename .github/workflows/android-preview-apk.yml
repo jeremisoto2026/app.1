@@ -130,6 +130,14 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon assembleDebug
 
+      - name: Report Preview signing certificate
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon :app:signingReport | tee signing-report.txt
+          echo "::group::Preview debug SHA-1"
+          awk '/Variant: debug/{show=1} show && /SHA1:/{print; exit}' signing-report.txt
+          echo "::endgroup::"
+
       - name: Upload Preview APK
         uses: actions/upload-artifact@v4
         with:
