@@ -73,11 +73,14 @@ module.exports = async function verifyBlockchainPayment(req, res) {
         constants.recipient !== "0x4c64b783f1babc0a2fe62f174873f415393c2269") {
       throw new HttpError(503, "La dirección de recepción configurada no coincide con esta orden. Contacta con soporte.");
     }
+    const isFixedAmountInvoice = paymentDocument.data.amountMode === "fixed_15_v1";
+    const isValidFixedAmount = constants.amountUnits8 === 1500000000 && constants.amount === 15;
+    const isValidLegacyAmount = Number.isSafeInteger(constants.amountUnits8) &&
+      constants.amountUnits8 >= 1500010000 && constants.amountUnits8 <= 1500990000 &&
+      constants.amountUnits8 % 10000 === 0 &&
+      Math.round(constants.amount * 100000000) === constants.amountUnits8;
     if (constants.tokenContract !== BSC_USDT_CONTRACT || constants.chainId !== 56 ||
-        !Number.isSafeInteger(constants.amountUnits8) ||
-        constants.amountUnits8 < 1500010000 || constants.amountUnits8 > 1500990000 ||
-        constants.amountUnits8 % 10000 !== 0 ||
-        Math.round(constants.amount * 100000000) !== constants.amountUnits8) {
+        (isFixedAmountInvoice ? !isValidFixedAmount : !isValidLegacyAmount)) {
       throw new HttpError(503, "La orden no coincide con la configuración de USDT BEP20 esperada.");
     }
 
@@ -117,7 +120,7 @@ module.exports = async function verifyBlockchainPayment(req, res) {
     const blockTimestampSeconds = Number.parseInt(transactionBlock?.timestamp || "", 16);
     const blockTimestampMs = blockTimestampSeconds * 1000;
     if (!Number.isFinite(blockTimestampMs) ||
-        blockTimestampMs < invoiceCreatedAt - 120_000 ||
+        blockTimestampMs < invoiceCreatedAt - (isFixedAmountInvoice ? 0 : 120_000) ||
         blockTimestampMs > invoiceExpiresAt) {
       throw new HttpError(410, "La transferencia se incluyó fuera del periodo de validez de esta orden. Contacta con soporte para revisar el ingreso.");
     }
@@ -156,7 +159,9 @@ module.exports = async function verifyBlockchainPayment(req, res) {
     const expectedUnits = BigInt(String(constants.amountUnits8)) *
       (10n ** BigInt(USDT_DECIMALS - fractionalDigits));
     if (!transferCount || receivedUnits !== expectedUnits) {
-      throw new HttpError(400, "No se ha encontrado una transferencia por el importe exacto de esta orden (con cuatro decimales) del contrato USDT BEP20 configurado a la dirección de recepción. Revisa la red, el token, el importe y el destinatario.");
+      throw new HttpError(400, isFixedAmountInvoice
+        ? "No se ha encontrado una transferencia de exactamente 15 USDT del contrato BEP20 configurado a la dirección de recepción. Revisa la red, el token y el destinatario."
+        : "No se ha encontrado una transferencia por el importe exacto de esta orden pendiente del contrato USDT BEP20 configurado a la dirección de recepción.");
     }
 
     const userDocument = await getDocument(userPath);
