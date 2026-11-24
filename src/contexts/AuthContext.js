@@ -93,9 +93,11 @@ export const AuthProvider = ({ children }) => {
       let result;
       if (Capacitor.isNativePlatform()) {
         const nativeResult = await FirebaseAuthentication.signInWithGoogle();
-        const credential = GoogleAuthProvider.credential(
-          nativeResult.credential?.idToken
-        );
+        const idToken = nativeResult.credential?.idToken;
+        if (!idToken) {
+          throw new Error("Google no devolvió un token de acceso válido.");
+        }
+        const credential = GoogleAuthProvider.credential(idToken);
         result = await signInWithCredential(auth, credential);
       } else {
         const provider = new GoogleAuthProvider();
