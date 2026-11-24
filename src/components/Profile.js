@@ -713,6 +713,7 @@ export default function Profile() {
                           onChange={(event) => setBlockchainTxHash(event.target.value.trim())}
                           className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-3 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
                         />
+                        <p role="note" className="rounded-lg border border-amber-300/20 bg-amber-300/[0.05] p-3 text-xs leading-5 text-amber-100"><strong>Seguridad:</strong> no compartas tu TxID. Introduce únicamente el hash de tu propia transferencia. Cada TxID se vincula a una sola orden y quien lo verifique primero será asociado a ese pago.</p>
                         <p className="text-[11px] leading-5 text-slate-500">Después de enviar el importe exacto indicado, pega aquí el TxID. El servidor comprobará contrato, destinatario, importe, ventana de la orden y 12 confirmaciones. Cada TxID solo puede activar un pago.</p>
                         <button type="submit" disabled={paymentActionLoading} className="jjx-button-primary w-full justify-center">
                           {paymentAction === "verify" ? "Verificando en blockchain…" : "Verificar transferencia automáticamente"}
@@ -804,6 +805,7 @@ export default function Profile() {
                                       }}
                                       className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-2.5 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
                                     />
+                                    <p role="note" className="rounded-lg border border-amber-300/20 bg-amber-300/[0.05] p-3 text-xs leading-5 text-amber-100"><strong>No compartas este TxID.</strong> Asegúrate de que sea el hash de tu propio pago; se vinculará a esta orden al verificarse.</p>
                                     <p className="text-[11px] leading-5 text-slate-500">Esta verificación corresponde únicamente a esta orden. Solo se aceptará si la transferencia se incluyó dentro de sus 30 minutos de validez.</p>
                                     {historyPaymentErrors[payment.paymentId || payment.id] && (
                                       <p role="alert" className="text-xs leading-5 text-rose-200">{historyPaymentErrors[payment.paymentId || payment.id]}</p>
