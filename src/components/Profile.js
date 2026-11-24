@@ -677,14 +677,14 @@ export default function Profile() {
 
                             <div className="blockchain-amount-value-wrap">
                               <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(4)} USDT`} className="blockchain-amount-value">
-                                {Number(blockchainInvoice.amount).toFixed(2)}
+                                {Number(blockchainInvoice.amount).toFixed(blockchainInvoice.amountMode === "fixed_15_v1" ? 2 : 4)}
                               </p>
                               <span className="blockchain-amount-currency">USDT</span>
                             </div>
 
                             <button
                               type="button"
-                              onClick={() => copyPaymentDetail(Number(blockchainInvoice.amount).toFixed(2), "Importe de 15 USDT")}
+                              onClick={() => copyPaymentDetail(Number(blockchainInvoice.amount).toFixed(blockchainInvoice.amountMode === "fixed_15_v1" ? 2 : 4), "Importe de la orden")}
                               className="blockchain-copy-amount-button"
                             >
                               <ClipboardDocumentIcon className="h-4 w-4" aria-hidden="true" />
@@ -693,7 +693,7 @@ export default function Profile() {
 
                             <div className="blockchain-amount-warning" role="note">
                               <ExclamationTriangleIcon className="blockchain-amount-warning-icon h-4 w-4" aria-hidden="true" />
-                              <p><strong>Importante:</strong> envía exactamente 15 USDT por BNB Smart Chain (BEP20). No envíes otro importe ni uses otra red.</p>
+                              <p><strong>Importante:</strong> envía exactamente {blockchainInvoice.amountMode === "fixed_15_v1" ? "15,00" : Number(blockchainInvoice.amount).toFixed(4)} USDT por BNB Smart Chain (BEP20). No envíes otro importe ni uses otra red.</p>
                             </div>
                           </div>
                           <p className="break-all font-mono text-[10px] text-slate-400">Orden: {blockchainInvoice.paymentId}</p>
@@ -713,7 +713,7 @@ export default function Profile() {
                           onChange={(event) => setBlockchainTxHash(event.target.value.trim())}
                           className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-3 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
                         />
-                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar 15 USDT exactos, pega aquí el TxID. El servidor comprobará contrato, destinatario, importe exacto, ventana de la orden y 12 confirmaciones. Cada TxID solo puede activar un pago.</p>
+                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar el importe exacto indicado, pega aquí el TxID. El servidor comprobará contrato, destinatario, importe, ventana de la orden y 12 confirmaciones. Cada TxID solo puede activar un pago.</p>
                         <button type="submit" disabled={paymentActionLoading} className="jjx-button-primary w-full justify-center">
                           {paymentAction === "verify" ? "Verificando en blockchain…" : "Verificar transferencia automáticamente"}
                         </button>
@@ -773,8 +773,8 @@ export default function Profile() {
                               <a className="mt-2 inline-block break-all text-xs text-violet-300 underline underline-offset-2" href={"https://bscscan.com/tx/" + payment.txHash} target="_blank" rel="noreferrer">Ver transacción en BscScan</a>
                             )}
                             {payment.transactionId && <p className="mt-2 break-all text-[10px] text-slate-500">Referencia: {payment.transactionId}</p>}
-                            {payment.provider === "blockchain_bep20" && effectiveStatus === "pending" &&
-                              Date.parse(payment.expiresAt || "") > paymentStatusNow && (
+                            {payment.provider === "blockchain_bep20" && payment.status === "pending" &&
+                              ["pending", "expired"].includes(effectiveStatus) && (
                               <div className="mt-3 max-w-md space-y-2">
                                 {expandedHistoryPaymentId === (payment.paymentId || payment.id) ? (
                                   <form
@@ -804,7 +804,7 @@ export default function Profile() {
                                       }}
                                       className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-2.5 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
                                     />
-                                    <p className="text-[11px] leading-5 text-slate-500">Esta verificación corresponde únicamente a esta orden. Puedes confirmar después del plazo si la transferencia quedó incluida dentro de sus 30 minutos.</p>
+                                    <p className="text-[11px] leading-5 text-slate-500">Esta verificación corresponde únicamente a esta orden. Solo se aceptará si la transferencia se incluyó dentro de sus 30 minutos de validez.</p>
                                     {historyPaymentErrors[payment.paymentId || payment.id] && (
                                       <p role="alert" className="text-xs leading-5 text-rose-200">{historyPaymentErrors[payment.paymentId || payment.id]}</p>
                                     )}
