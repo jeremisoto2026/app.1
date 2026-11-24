@@ -100,13 +100,6 @@ module.exports = async function createBlockchainInvoice(req, res) {
       instructions: "Envía exactamente 15 USDT por BNB Smart Chain (BEP20). El servidor verificará el TxID, el contrato, el destinatario, el importe y las confirmaciones.",
     });
   } catch (error) {
-        if (error instanceof HttpError && error.statusCode === 409) continue;
-        throw error;
-      }
-    }
-
-    throw new HttpError(503, "No hay una fracción de importe disponible ahora mismo. Inténtalo de nuevo cuando caduque alguna orden pendiente.");
-  } catch (error) {
     return errorResponse(res, error);
   }
 };
