@@ -676,7 +676,7 @@ export default function Profile() {
                             </div>
 
                             <div className="blockchain-amount-value-wrap">
-                              <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(4)} USDT`} className="blockchain-amount-value">
+                              <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(blockchainInvoice.amountMode === "fixed_15_v1" ? 2 : 4)} USDT`} className="blockchain-amount-value">
                                 {Number(blockchainInvoice.amount).toFixed(blockchainInvoice.amountMode === "fixed_15_v1" ? 2 : 4)}
                               </p>
                               <span className="blockchain-amount-currency">USDT</span>
