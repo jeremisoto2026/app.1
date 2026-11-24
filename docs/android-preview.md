@@ -26,7 +26,7 @@ Before the first build, add a repository Actions secret:
 4. Name it exactly `FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON`.
 5. Paste the complete contents of the Preview `google-services.json` file as the secret value. Never commit this file or use the Production Firebase configuration.
 
-After saving the secret, open Actions → JJXCAPITAL Preview APK → Run workflow and select `feat/android-capacitor-preview`. When the run succeeds, download the artifact named `JJXCAPITAL-Preview-debug`. The APK is a debug build for testing, not a Play Store release.
+After saving the secret, the next push affecting the Preview app or this workflow on `feat/android-capacitor-preview` starts the build automatically. Open Actions → JJXCAPITAL Preview APK, select the latest successful run, and download the artifact named `JJXCAPITAL-Preview-debug`. The APK is a debug build for testing, not a Play Store release.
 
 ## Firebase setup (required for native Google sign-in)
 
