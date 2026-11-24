@@ -7,6 +7,7 @@ import { calculateArbitrageSessionResult, calculateDashboardMetrics, getAccounti
 import { buildProfessionalExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { formatCurrencyAmount } from "../utils/numberFormatting";
 import { loadBybitPreviewOperations } from "../utils/bybitP2POperations";
+import { apiFetch } from "../utils/api";
 
 const FIAT_CURRENCIES = ["EUR", "USD", "VES", "COP", "ARS", "MXN", "BRL", "PEN", "CLP", "GBP"];
 const CRYPTO_CURRENCIES = ["USDT", "USDC", "BTC", "ETH", "BNB", "DAI"];
@@ -143,7 +144,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setError("");
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/sessions/create", {
+      const response = await apiFetch("/api/sessions/create", {
         method: "POST",
         headers: {
           Authorization: "Bearer " + token,
@@ -188,7 +189,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setError("");
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/sessions/capital", {
+      const response = await apiFetch("/api/sessions/capital", {
         method: "POST",
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: selectedSession.id, initialCapital: amount }),
@@ -213,7 +214,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setError("");
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/sessions/status", {
+      const response = await apiFetch("/api/sessions/status", {
         method: "POST",
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: selectedSession.id, status }),
@@ -242,7 +243,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setError("");
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/sessions/delete", {
+      const response = await apiFetch("/api/sessions/delete", {
         method: "POST",
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: selectedSession.id }),
@@ -265,7 +266,7 @@ export default function ArbitrageSessions({ onOpenOperations }) {
     setError("");
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/usage/record-export", {
+      const response = await apiFetch("/api/usage/record-export", {
         method: "POST",
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
         body: JSON.stringify({ source: "arbitrage_session" }),
