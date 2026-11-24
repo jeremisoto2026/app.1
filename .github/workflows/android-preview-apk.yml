@@ -48,7 +48,7 @@ jobs:
             echo "::error::Android SDK was not found on the GitHub runner."
             exit 1
           fi
-          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -mindepth 2 -maxdepth 2 -type f -name sdkmanager | sort -V | tail -n 1)"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
           if [ -z "$SDKMANAGER" ]; then
             echo "::error::Android SDK command-line tools were not found."
             exit 1
@@ -73,7 +73,7 @@ jobs:
 
       - name: Configure Firebase Preview
         env:
-          FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON: \${{ secrets.FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON }}
+          FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON }}
         run: |
           if [ -z "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" ]; then
             echo "::error::Add the FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON GitHub Actions secret before building."
