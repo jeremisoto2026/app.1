@@ -1,6 +1,7 @@
 name: JJXCAPITAL Preview APK
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - feat/android-capacitor-preview
@@ -43,7 +44,10 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: platform-tools;platforms;android-35;build-tools;35.0.0
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
           accept-android-sdk-licenses: true
 
       - name: Install Yarn
@@ -69,6 +73,22 @@ jobs:
           mkdir -p android/app
           printf '%s' "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" > android/app/google-services.json
           python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          firebase = json.loads(Path("android/app/google-services.json").read_text())
+          clients = firebase.get("client", [])
+          package_names = [
+              item.get("client_info", {}).get("android_client_info", {}).get("package_name")
+              for item in clients
+          ]
+          if "com.jjxcapital.preview" not in package_names:
+              raise SystemExit(
+                  "Firebase JSON does not belong to com.jjxcapital.preview; "
+                  f"found: {package_names}"
+              )
+          print("Firebase Preview package verified: com.jjxcapital.preview")
+
           from pathlib import Path
 
           variables = Path("android/variables.gradle")
