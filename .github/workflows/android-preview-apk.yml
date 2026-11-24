@@ -132,10 +132,29 @@ jobs:
             echo "::error::Add PREVIEW_ANDROID_KEYSTORE_BASE64 and PREVIEW_ANDROID_KEYSTORE_PASSWORD GitHub Actions secrets."
             exit 1
           fi
-          mkdir -p "$HOME/.android"
-          printf '%s' "$PREVIEW_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
-          chmod 600 "$HOME/.android/debug.keystore"
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass "$PREVIEW_ANDROID_KEYSTORE_PASSWORD" -alias jjxcapitalpreview >/dev/null
+          mkdir -p android/app
+          printf '%s' "$PREVIEW_ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/preview-signing.keystore
+          chmod 600 android/app/preview-signing.keystore
+          keytool -list -keystore android/app/preview-signing.keystore -storepass "$PREVIEW_ANDROID_KEYSTORE_PASSWORD" -alias jjxcapitalpreview >/dev/null
+          cat >> android/app/build.gradle <<'GRADLE'
+
+          // Dedicated, stable signing identity for JJXCAPITAL Preview only.
+          android {
+              signingConfigs {
+                  preview {
+                      storeFile file("preview-signing.keystore")
+                      storePassword System.getenv("PREVIEW_ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias "jjxcapitalpreview"
+                      keyPassword System.getenv("PREVIEW_ANDROID_KEYSTORE_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  debug {
+                      signingConfig signingConfigs.preview
+                  }
+              }
+          }
+          GRADLE
           echo "Persistent Preview signing key configured."
 
       - name: Sync Capacitor Android
