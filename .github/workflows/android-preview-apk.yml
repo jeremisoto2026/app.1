@@ -1,0 +1,110 @@
+name: JJXCAPITAL Preview APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/android-capacitor-preview
+    paths:
+      - "src/**"
+      - "public/**"
+      - "api/**"
+      - "lib/**"
+      - "capacitor.config.ts"
+      - "package.json"
+      - ".github/workflows/android-preview-apk.yml"
+      - "docs/android-preview.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jjxcapital-preview-apk
+  cancel-in-progress: true
+
+jobs:
+  build-preview:
+    name: Build Preview debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Preview branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Yarn
+        run: npm install --global yarn@1.22.22
+
+      - name: Install dependencies
+        run: yarn install --non-interactive
+
+      - name: Build web application
+        run: yarn build
+
+      - name: Generate Android project
+        run: npx cap add android
+
+      - name: Configure Firebase Preview
+        env:
+          FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::Add the FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON GitHub Actions secret before building."
+            exit 1
+          fi
+          mkdir -p android/app
+          printf '%s' "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          python3 - <<'PY'
+          from pathlib import Path
+
+          variables = Path("android/variables.gradle")
+          content = variables.read_text()
+          additions = "    rgcfaIncludeGoogle = true\n    androidxCredentialsVersion = '1.3.0'\n"
+          if "rgcfaIncludeGoogle" not in content:
+              marker = "ext {"
+              if marker not in content:
+                  raise SystemExit("Could not find ext { in android/variables.gradle")
+              content = content.replace(marker, marker + "\n" + additions, 1)
+              variables.write_text(content)
+
+          app_gradle = Path("android/app/build.gradle")
+          gradle = app_gradle.read_text()
+          if 'applicationId "com.jjxcapital.preview"' not in gradle:
+              import re
+              gradle, count = re.subn(
+                  r'applicationId\s+"[^"]+"',
+                  'applicationId "com.jjxcapital.preview"',
+                  gradle,
+                  count=1,
+              )
+              if count != 1:
+                  raise SystemExit("Could not set Preview applicationId in android/app/build.gradle")
+              app_gradle.write_text(gradle)
+          PY
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Upload Preview APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: JJXCAPITAL-Preview-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
