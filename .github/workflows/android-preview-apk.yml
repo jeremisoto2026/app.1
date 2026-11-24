@@ -123,6 +123,21 @@ jobs:
               app_gradle.write_text(gradle)
           PY
 
+      - name: Configure persistent Preview debug signing key
+        env:
+          PREVIEW_ANDROID_KEYSTORE_BASE64: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_BASE64 }}
+          PREVIEW_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$PREVIEW_ANDROID_KEYSTORE_BASE64" ] || [ -z "$PREVIEW_ANDROID_KEYSTORE_PASSWORD" ]; then
+            echo "::error::Add PREVIEW_ANDROID_KEYSTORE_BASE64 and PREVIEW_ANDROID_KEYSTORE_PASSWORD GitHub Actions secrets."
+            exit 1
+          fi
+          mkdir -p "$HOME/.android"
+          printf '%s' "$PREVIEW_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+          chmod 600 "$HOME/.android/debug.keystore"
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass "$PREVIEW_ANDROID_KEYSTORE_PASSWORD" -alias jjxcapitalpreview >/dev/null
+          echo "Persistent Preview signing key configured."
+
       - name: Sync Capacitor Android
         run: npx cap sync android
 
