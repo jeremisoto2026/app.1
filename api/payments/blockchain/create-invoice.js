@@ -5,6 +5,7 @@ const {
   requirePost,
   requireFirebaseUser,
   getDocument,
+  listDocuments,
   commitWrites,
   documentName,
   toFields,
