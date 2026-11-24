@@ -66,6 +66,10 @@ export default function Profile() {
   const [paymentMessage, setPaymentMessage] = useState("");
   const [blockchainInvoice, setBlockchainInvoice] = useState(null);
   const [blockchainTxHash, setBlockchainTxHash] = useState("");
+  const [historyTxHashes, setHistoryTxHashes] = useState({});
+  const [historyPaymentErrors, setHistoryPaymentErrors] = useState({});
+  const [historyPaymentMessages, setHistoryPaymentMessages] = useState({});
+  const [expandedHistoryPaymentId, setExpandedHistoryPaymentId] = useState("");
 
   useEffect(() => {
     const hasActiveExpiringPayment = payments.some((payment) => {
@@ -137,7 +141,7 @@ export default function Profile() {
       const data = await callPaymentApi("/api/payments/blockchain/create-invoice", {});
       setBlockchainInvoice(data);
       setBlockchainTxHash("");
-      setPaymentMessage("Orden creada. Envía el importe exacto que aparece abajo por BNB Smart Chain (BEP20), espera las confirmaciones e introduce el TxID.");
+      setPaymentMessage("Orden creada. Envía exactamente 15 USDT por BNB Smart Chain (BEP20), espera las confirmaciones e introduce el TxID.");
       await loadPaymentHistory();
     } catch (error) {
       setPaymentError(error.message || "No se pudo crear la orden BEP20.");
@@ -147,37 +151,52 @@ export default function Profile() {
     }
   };
 
-  const verifyBlockchainPayment = async (event) => {
-    event.preventDefault();
-    if (!blockchainInvoice?.paymentId) {
-      setPaymentError("Primero crea una orden de pago BEP20.");
+  const verifyBlockchainPayment = async (event, invoiceOverride = null, txHashOverride = null, fromHistory = false) => {
+    event?.preventDefault();
+    const invoice = invoiceOverride || blockchainInvoice;
+    const txHash = String(txHashOverride ?? blockchainTxHash).trim();
+    const paymentId = invoice?.paymentId || invoice?.id;
+    if (!paymentId) {
+      setPaymentError("No se encontró la orden BEP20 que quieres verificar.");
       return;
     }
-    if (!/^0x[a-fA-F0-9]{64}$/.test(blockchainTxHash.trim())) {
-      setPaymentError("Introduce un TxID válido de 66 caracteres que empiece por 0x.");
+    if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+      const message = "Introduce un TxID válido de 66 caracteres que empiece por 0x.";
+      if (fromHistory) setHistoryPaymentErrors((current) => ({ ...current, [paymentId]: message }));
+      else setPaymentError(message);
       return;
     }
     setPaymentActionLoading(true);
-    setPaymentAction("verify");
-    setPaymentError("");
-    setPaymentMessage("");
+    setPaymentAction(fromHistory ? "verify-history:" + paymentId : "verify");
+    if (fromHistory) {
+      setHistoryPaymentErrors((current) => ({ ...current, [paymentId]: "" }));
+      setHistoryPaymentMessages((current) => ({ ...current, [paymentId]: "" }));
+    } else {
+      setPaymentError("");
+      setPaymentMessage("");
+    }
     try {
-      const data = await callPaymentApi("/api/payments/blockchain/verify", {
-        paymentId: blockchainInvoice.paymentId,
-        txHash: blockchainTxHash.trim(),
-      });
+      const data = await callPaymentApi("/api/payments/blockchain/verify", { paymentId, txHash });
       setProfileData((previous) => previous ? {
         ...previous,
         plan: "pro",
         subscriptionStatus: "active",
         subscriptionExpiresAt: data.expiresAt || previous.subscriptionExpiresAt,
       } : previous);
-      setPaymentMessage(data.message || "Pago confirmado. JJXCAPITAL Pro está activo.");
-      setBlockchainInvoice(null);
-      setBlockchainTxHash("");
+      if (fromHistory) {
+        setHistoryPaymentMessages((current) => ({ ...current, [paymentId]: data.message || "Pago confirmado. JJXCAPITAL Pro está activo." }));
+        setExpandedHistoryPaymentId("");
+        setHistoryTxHashes((current) => ({ ...current, [paymentId]: "" }));
+      } else {
+        setPaymentMessage(data.message || "Pago confirmado. JJXCAPITAL Pro está activo.");
+        setBlockchainInvoice(null);
+        setBlockchainTxHash("");
+      }
       await loadPaymentHistory();
     } catch (error) {
-      setPaymentError(error.message || "No se pudo verificar la transacción.");
+      const message = error.message || "No se pudo verificar la transacción.";
+      if (fromHistory) setHistoryPaymentErrors((current) => ({ ...current, [paymentId]: message }));
+      else setPaymentError(message);
     } finally {
       setPaymentActionLoading(false);
       setPaymentAction("");
@@ -613,7 +632,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-white">USDT por blockchain · BEP20</p>
-                        <p className="mt-1 text-xs text-slate-400">Precio base: 15 USDT + una fracción identificadora inferior a 0,01 USDT. El importe está limitado a cuatro decimales.</p>
+                        <p className="mt-1 text-xs text-slate-400">Importe fijo: 15 USDT exactos por 30 días de JJXCAPITAL Pro.</p>
                       </div>
                       <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-[10px] font-bold text-amber-100">BNB Smart Chain</span>
                     </div>
@@ -658,14 +677,14 @@ export default function Profile() {
 
                             <div className="blockchain-amount-value-wrap">
                               <p aria-label={`Importe exacto ${Number(blockchainInvoice.amount).toFixed(4)} USDT`} className="blockchain-amount-value">
-                                {Number(blockchainInvoice.amount).toFixed(4)}
+                                {Number(blockchainInvoice.amount).toFixed(2)}
                               </p>
                               <span className="blockchain-amount-currency">USDT</span>
                             </div>
 
                             <button
                               type="button"
-                              onClick={() => copyPaymentDetail(Number(blockchainInvoice.amount).toFixed(4), "Importe exacto")}
+                              onClick={() => copyPaymentDetail(Number(blockchainInvoice.amount).toFixed(2), "Importe de 15 USDT")}
                               className="blockchain-copy-amount-button"
                             >
                               <ClipboardDocumentIcon className="h-4 w-4" aria-hidden="true" />
@@ -674,7 +693,7 @@ export default function Profile() {
 
                             <div className="blockchain-amount-warning" role="note">
                               <ExclamationTriangleIcon className="blockchain-amount-warning-icon h-4 w-4" aria-hidden="true" />
-                              <p><strong>Importante:</strong> no envíes 15 USDT exactos si el total de arriba es distinto. Envía exactamente el importe que aparece, con sus cuatro decimales.</p>
+                              <p><strong>Importante:</strong> envía exactamente 15 USDT por BNB Smart Chain (BEP20). No envíes otro importe ni uses otra red.</p>
                             </div>
                           </div>
                           <p className="break-all font-mono text-[10px] text-slate-400">Orden: {blockchainInvoice.paymentId}</p>
@@ -694,7 +713,7 @@ export default function Profile() {
                           onChange={(event) => setBlockchainTxHash(event.target.value.trim())}
                           className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-3 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
                         />
-                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar el importe exacto, pega aquí el hash. La orden añade una fracción identificadora de 0,0001 a 0,0099 USDT, compatible con cuatro decimales. El servidor comprobará contrato, destinatario, importe y 12 confirmaciones.</p>
+                        <p className="text-[11px] leading-5 text-slate-500">Después de enviar 15 USDT exactos, pega aquí el TxID. El servidor comprobará contrato, destinatario, importe exacto, ventana de la orden y 12 confirmaciones. Cada TxID solo puede activar un pago.</p>
                         <button type="submit" disabled={paymentActionLoading} className="jjx-button-primary w-full justify-center">
                           {paymentAction === "verify" ? "Verificando en blockchain…" : "Verificar transferencia automáticamente"}
                         </button>
@@ -754,6 +773,65 @@ export default function Profile() {
                               <a className="mt-2 inline-block break-all text-xs text-violet-300 underline underline-offset-2" href={"https://bscscan.com/tx/" + payment.txHash} target="_blank" rel="noreferrer">Ver transacción en BscScan</a>
                             )}
                             {payment.transactionId && <p className="mt-2 break-all text-[10px] text-slate-500">Referencia: {payment.transactionId}</p>}
+                            {payment.provider === "blockchain_bep20" && effectiveStatus === "pending" &&
+                              Date.parse(payment.expiresAt || "") > paymentStatusNow && (
+                              <div className="mt-3 max-w-md space-y-2">
+                                {expandedHistoryPaymentId === (payment.paymentId || payment.id) ? (
+                                  <form
+                                    onSubmit={(event) => verifyBlockchainPayment(
+                                      event,
+                                      payment,
+                                      historyTxHashes[payment.paymentId || payment.id] || "",
+                                      true
+                                    )}
+                                    className="space-y-2 rounded-lg border border-violet-300/20 bg-violet-300/[0.04] p-3"
+                                  >
+                                    <label htmlFor={"history-tx-" + (payment.paymentId || payment.id)} className="block text-xs font-semibold text-slate-300">
+                                      TxID para esta orden
+                                    </label>
+                                    <input
+                                      id={"history-tx-" + (payment.paymentId || payment.id)}
+                                      type="text"
+                                      inputMode="text"
+                                      autoComplete="off"
+                                      spellCheck="false"
+                                      maxLength={66}
+                                      placeholder="0x…"
+                                      value={historyTxHashes[payment.paymentId || payment.id] || ""}
+                                      onChange={(event) => {
+                                        const historyId = payment.paymentId || payment.id;
+                                        setHistoryTxHashes((current) => ({ ...current, [historyId]: event.target.value.trim() }));
+                                      }}
+                                      className="w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-2.5 font-mono text-xs text-white placeholder:text-slate-600 focus:border-violet-400 focus:outline-none"
+                                    />
+                                    <p className="text-[11px] leading-5 text-slate-500">Esta verificación corresponde únicamente a esta orden. Puedes confirmar después del plazo si la transferencia quedó incluida dentro de sus 30 minutos.</p>
+                                    {historyPaymentErrors[payment.paymentId || payment.id] && (
+                                      <p role="alert" className="text-xs leading-5 text-rose-200">{historyPaymentErrors[payment.paymentId || payment.id]}</p>
+                                    )}
+                                    <button type="submit" disabled={paymentActionLoading} className="jjx-button-primary w-full justify-center">
+                                      {paymentAction === "verify-history:" + (payment.paymentId || payment.id) ? "Verificando en blockchain…" : "Verificar TxID"}
+                                    </button>
+                                    <button type="button" onClick={() => setExpandedHistoryPaymentId("")} className="jjx-button-secondary w-full justify-center">
+                                      Cancelar
+                                    </button>
+                                  </form>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setHistoryPaymentErrors((current) => ({ ...current, [payment.paymentId || payment.id]: "" }));
+                                      setExpandedHistoryPaymentId(payment.paymentId || payment.id);
+                                    }}
+                                    className="jjx-button-secondary justify-center"
+                                  >
+                                    Ingresar TxID / verificar
+                                  </button>
+                                )}
+                                {historyPaymentMessages[payment.paymentId || payment.id] && (
+                                  <p role="status" className="text-xs leading-5 text-emerald-200">{historyPaymentMessages[payment.paymentId || payment.id]}</p>
+                                )}
+                              </div>
+                            )}
                           </div>
                           <span className={"inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold " + (
                             effectiveStatus === "paid"
