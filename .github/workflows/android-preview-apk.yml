@@ -162,10 +162,14 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
+        env:
+          PREVIEW_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
         run: ./gradlew --no-daemon assembleDebug
 
       - name: Report Preview signing certificate
         working-directory: android
+        env:
+          PREVIEW_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
         run: |
           ./gradlew --no-daemon :app:signingReport | tee signing-report.txt
           echo "::group::Preview debug SHA-1"
