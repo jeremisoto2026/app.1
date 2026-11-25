@@ -1,0 +1,248 @@
+name: JJXCAPITAL Preview APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/android-capacitor-preview
+    paths:
+      - "src/**"
+      - "public/**"
+      - "api/**"
+      - "lib/**"
+      - "capacitor.config.ts"
+      - "package.json"
+      - ".github/workflows/android-preview-apk.yml"
+      - "docs/android-preview.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jjxcapital-preview-apk
+  cancel-in-progress: true
+
+jobs:
+  build-preview:
+    name: Build Preview debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Preview branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install Android SDK packages
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          if [ -z "$SDK_ROOT" ] || [ ! -d "$SDK_ROOT/cmdline-tools" ]; then
+            echo "::error::Android SDK was not found on the GitHub runner."
+            exit 1
+          fi
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::Android SDK command-line tools were not found."
+            exit 1
+          fi
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses
+          set -o pipefail
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+
+      - name: Install Yarn
+        run: npm install --global yarn@1.22.22
+
+      - name: Install dependencies
+        run: yarn install --non-interactive
+
+      - name: Prepare Firebase Preview web configuration
+        env:
+          FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::Add the FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON GitHub Actions secret before building."
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          firebase = json.loads(os.environ["FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON"])
+          project = firebase.get("project_info", {})
+          clients = firebase.get("client", [])
+          client = next(
+              (
+                  item for item in clients
+                  if item.get("client_info", {}).get("android_client_info", {}).get("package_name")
+                  == "com.jjxcapital.preview"
+              ),
+              None,
+          )
+          if client is None:
+              raise SystemExit("Firebase JSON does not belong to com.jjxcapital.preview.")
+
+          api_keys = client.get("api_key", [])
+          api_key = next((item.get("current_key") for item in api_keys if item.get("current_key")), None)
+          project_id = project.get("project_id")
+          app_id = client.get("client_info", {}).get("mobilesdk_app_id")
+          sender_id = project.get("project_number")
+          storage_bucket = project.get("storage_bucket")
+
+          required = {
+              "apiKey": api_key,
+              "projectId": project_id,
+              "appId": app_id,
+              "messagingSenderId": sender_id,
+          }
+          missing = [key for key, value in required.items() if not value]
+          if missing:
+              raise SystemExit("Firebase Preview JSON is missing required fields: " + ", ".join(missing))
+          if project_id == "jjxcapital-2":
+              raise SystemExit("Refusing to build Preview with the Production Firebase project.")
+
+          values = {
+              "REACT_APP_VERCEL_ENV": "preview",
+              "REACT_APP_API_BASE_URL": "https://app-1-git-feat-android-capacit-6a6dd7-jeremis-projects-53da5f18.vercel.app",
+              "REACT_APP_FIREBASE_PREVIEW_API_KEY": api_key,
+              "REACT_APP_FIREBASE_PREVIEW_AUTH_DOMAIN": f"{project_id}.firebaseapp.com",
+              "REACT_APP_FIREBASE_PREVIEW_PROJECT_ID": project_id,
+              "REACT_APP_FIREBASE_PREVIEW_STORAGE_BUCKET": storage_bucket or f"{project_id}.appspot.com",
+              "REACT_APP_FIREBASE_PREVIEW_MESSAGING_SENDER_ID": sender_id,
+              "REACT_APP_FIREBASE_PREVIEW_APP_ID": app_id,
+          }
+          Path(".env.production").write_text(
+              "".join(f"{key}={value}\n" for key, value in values.items()),
+              encoding="utf-8",
+          )
+          print(f"Firebase web configuration prepared for Preview project: {project_id}")
+          PY
+
+      - name: Build web application
+        run: yarn build
+
+      - name: Generate Android project
+        run: npx cap add android
+
+      - name: Configure Firebase Preview
+        env:
+          FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::Add the FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON GitHub Actions secret before building."
+            exit 1
+          fi
+          mkdir -p android/app
+          printf '%s' "$FIREBASE_PREVIEW_GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          firebase = json.loads(Path("android/app/google-services.json").read_text())
+          clients = firebase.get("client", [])
+          package_names = [
+              item.get("client_info", {}).get("android_client_info", {}).get("package_name")
+              for item in clients
+          ]
+          if "com.jjxcapital.preview" not in package_names:
+              raise SystemExit(
+                  "Firebase JSON does not belong to com.jjxcapital.preview; "
+                  f"found: {package_names}"
+              )
+          print("Firebase Preview package verified: com.jjxcapital.preview")
+
+          variables = Path("android/variables.gradle")
+          content = variables.read_text()
+          additions = "    rgcfaIncludeGoogle = true\n    androidxCredentialsVersion = '1.3.0'\n"
+          if "rgcfaIncludeGoogle" not in content:
+              marker = "ext {"
+              if marker not in content:
+                  raise SystemExit("Could not find ext { in android/variables.gradle")
+              content = content.replace(marker, marker + "\n" + additions, 1)
+              variables.write_text(content)
+
+          app_gradle = Path("android/app/build.gradle")
+          gradle = app_gradle.read_text()
+          if 'applicationId "com.jjxcapital.preview"' not in gradle:
+              import re
+              gradle, count = re.subn(
+                  r'applicationId\s+"[^"]+"',
+                  'applicationId "com.jjxcapital.preview"',
+                  gradle,
+                  count=1,
+              )
+              if count != 1:
+                  raise SystemExit("Could not set Preview applicationId in android/app/build.gradle")
+              app_gradle.write_text(gradle)
+          PY
+
+      - name: Configure persistent Preview debug signing key
+        env:
+          PREVIEW_ANDROID_KEYSTORE_BASE64: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_BASE64 }}
+          PREVIEW_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$PREVIEW_ANDROID_KEYSTORE_BASE64" ] || [ -z "$PREVIEW_ANDROID_KEYSTORE_PASSWORD" ]; then
+            echo "::error::Add PREVIEW_ANDROID_KEYSTORE_BASE64 and PREVIEW_ANDROID_KEYSTORE_PASSWORD GitHub Actions secrets."
+            exit 1
+          fi
+          mkdir -p android/app
+          printf '%s' "$PREVIEW_ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/preview-signing.keystore
+          chmod 600 android/app/preview-signing.keystore
+          keytool -list -keystore android/app/preview-signing.keystore -storepass "$PREVIEW_ANDROID_KEYSTORE_PASSWORD" -alias jjxcapitalpreview >/dev/null
+          cat >> android/app/build.gradle <<'GRADLE'
+
+          // Dedicated, stable signing identity for JJXCAPITAL Preview only.
+          android {
+              signingConfigs {
+                  preview {
+                      storeFile file("preview-signing.keystore")
+                      storePassword System.getenv("PREVIEW_ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias "jjxcapitalpreview"
+                      keyPassword System.getenv("PREVIEW_ANDROID_KEYSTORE_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  debug {
+                      signingConfig signingConfigs.preview
+                  }
+              }
+          }
+          GRADLE
+          echo "Persistent Preview signing key configured."
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        env:
+          PREVIEW_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Report Preview signing certificate
+        working-directory: android
+        env:
+          PREVIEW_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          ./gradlew --no-daemon :app:signingReport | tee signing-report.txt
+          echo "::group::Preview debug SHA-1"
+          awk '/Variant: debug/{show=1} show && /SHA1:/{print; exit}' signing-report.txt
+          echo "::endgroup::"
+
+      - name: Upload Preview APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: JJXCAPITAL-Preview-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14

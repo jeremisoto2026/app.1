@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { db } from "../firebase";
+import { apiFetch } from "../utils/api";
 import { calculateArbitrageSessionResult, calculateDashboardMetrics, calculateOperationAmounts, getOperationDate } from "../utils/financialCalculations";
 import { buildProfessionalExcelXml, downloadExcelXml } from "../utils/spreadsheet";
 import { filterOperations } from "../utils/operationFilters";
@@ -502,7 +503,7 @@ const History = () => {
     // El servidor comprueba el plan y registra el uso antes de permitir la descarga.
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/usage/record-export", {
+      const response = await apiFetch("/api/usage/record-export", {
         method: "POST",
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
         body: JSON.stringify({ source: "operation_history" }),

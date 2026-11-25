@@ -9,5 +9,6 @@
     "api/integrations/binance-p2p/sync.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "installCommand": "npm install --legacy-peer-deps"
 }

@@ -10,6 +10,7 @@ import {
 import { db, auth } from "../firebase";
 import { calculateDashboardMetrics, calculateCryptoArbitrage, getOperationDate } from "../utils/financialCalculations";
 import { simulateP2P as runP2PSimulation } from "../utils/simulations";
+import { apiFetch } from "../utils/api";
 
 // --- Operations CRUD ---
 
@@ -20,7 +21,7 @@ export const saveOperation = async (userId, operationData) => {
       throw new Error("Tu sesión no está disponible. Vuelve a iniciar sesión.");
     }
     const token = await currentUser.getIdToken();
-    const response = await fetch("/api/operations/create", {
+    const response = await apiFetch("/api/operations/create", {
       method: "POST",
       headers: {
         Authorization: "Bearer " + token,
