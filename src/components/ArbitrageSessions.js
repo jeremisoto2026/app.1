@@ -161,7 +161,13 @@ export default function ArbitrageSessions({ onOpenOperations }) {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.session?.id) {
-        throw new Error(payload.error || "No se pudo crear el arbitraje.");
+        const apiError = payload?.error;
+        const message = typeof apiError === "string"
+          ? apiError
+          : apiError && typeof apiError === "object"
+            ? (apiError.message || apiError.error_description || apiError.details?.[0]?.message || apiError.code || JSON.stringify(apiError))
+            : (payload?.message || "No se pudo crear el arbitraje.");
+        throw new Error(String(message));
       }
       const created = payload.session;
       setDraft({ name: "", strategy: "Comercio P2P", initialCapitalType: "fiat", fiat: "EUR", crypto: "USDT", initialCapital: "" });
